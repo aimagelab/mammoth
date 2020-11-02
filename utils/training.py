@@ -100,6 +100,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     for t in range(dataset.N_TASKS):
         model.net.train()
         train_loader, test_loader = dataset.get_data_loaders()
+        if hasattr(model, 'begin_task'):
+            model.begin_task(dataset)
         if t:
             accs = evaluate(model, dataset, last=True)
             results[t-1] = results[t-1] + accs[0]
