@@ -109,6 +109,8 @@ class ICarl(ContinualModel):
 
     def begin_task(self, dataset):
         denorm = dataset.get_denormalization_transform()
+        if denorm is None:
+            denorm = lambda x: x
         if self.current_task > 0:
             dataset.train_loader.dataset.targets = np.concatenate(
                 [dataset.train_loader.dataset.targets,
