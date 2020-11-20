@@ -74,5 +74,5 @@ def progress_bar(i: int, max_iter: int, epoch: Union[int, str],
             task_number + 1 if isinstance(task_number, int) else task_number,
             epoch,
             progress_bar,
-            round(loss / (i + 1), 8)
+            round(loss, 8)
         ), file=sys.stderr, end='', flush=True)
