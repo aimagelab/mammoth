@@ -12,6 +12,7 @@ from utils.status import progress_bar
 import torch
 import numpy as np
 import math
+from torchvision import transforms
 
 
 def get_parser() -> ArgumentParser:
@@ -56,7 +57,8 @@ class Joint(ContinualModel):
                     all_data = np.concatenate([all_data, self.old_data[i]])
                     all_labels = np.concatenate([all_labels, self.old_labels[i]])
 
-            temp_dataset = ValidationDataset(all_data, all_labels, transform=dataset.TRANSFORM)
+            transform = dataset.TRANSFORM if dataset.TRANSFORM is not None else transforms.ToTensor()
+            temp_dataset = ValidationDataset(all_data, all_labels, transform=transform)
             loader = torch.utils.data.DataLoader(temp_dataset, batch_size=self.args.batch_size, shuffle=True)
 
             # train
