@@ -40,6 +40,8 @@ def main():
             best = best_args[args.dataset]['sgd']
         else:
             best = best_args[args.dataset][args.model]
+        if args.model == 'joint' and args.dataset == 'mnist-360':
+            args.model = 'joint_gcl'
         if hasattr(args, 'buffer_size'):
             best = best[args.buffer_size]
         else:
@@ -63,7 +65,7 @@ def main():
     if isinstance(dataset, ContinualDataset):
         train(model, dataset, args)
     else:
-        assert not hasattr(model, 'end_task')
+        assert not hasattr(model, 'end_task') or model.NAME == 'joint_gcl'
         ctrain(args)
 
 

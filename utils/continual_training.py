@@ -69,6 +69,9 @@ def train(args: Namespace):
             tb_logger.log_loss_gcl(loss, i)
         i += 1
 
+    if model.NAME == 'joint_gcl':
+      model.end_task(dataset)
+
     acc = evaluate(model, dataset)
     print('Accuracy:', acc)
 
