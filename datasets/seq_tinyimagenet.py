@@ -106,6 +106,9 @@ class MyTinyImagenet(TinyImagenet):
         if self.target_transform is not None:
             target = self.target_transform(target)
 
+        if hasattr(self, 'logits'):
+          return img, target, not_aug_img, self.logits[index]
+
         return img, target,  not_aug_img
 
 
