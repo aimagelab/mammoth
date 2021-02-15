@@ -57,9 +57,13 @@ Official repository of [Dark Experience for General Continual Learning: a Strong
 
 ```
 @inproceedings{buzzega2020dark,
-  title={Dark Experience for General Continual Learning: a Strong, Simple Baseline},
-  author={Buzzega, Pietro and Boschini, Matteo and Porrello, Angelo and Abati, Davide and Calderara, Simone},
-  booktitle=Advances in Neural Information Processing Systems 33,
-  year={2020}
+ author = {Buzzega, Pietro and Boschini, Matteo and Porrello, Angelo and Abati, Davide and Calderara, Simone},
+ booktitle = {Advances in Neural Information Processing Systems},
+ editor = {H. Larochelle and M. Ranzato and R. Hadsell and M. F. Balcan and H. Lin},
+ pages = {15920--15930},
+ publisher = {Curran Associates, Inc.},
+ title = {Dark Experience for General Continual Learning: a Strong, Simple Baseline},
+ volume = {33},
+ year = {2020}
 }
 ```
