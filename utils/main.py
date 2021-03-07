@@ -26,10 +26,10 @@ from utils.conf import set_random_seed
 
 
 def main():
-    parser = ArgumentParser(description='Mammoth Framework', allow_abbrev=False)
+    parser = ArgumentParser(description='mammoth', allow_abbrev=False)
     parser.add_argument('--model', type=str, required=True,
                         help='Model name.', choices=get_all_models())
-    parser.add_argument('--load_best_args', action='store_false',
+    parser.add_argument('--load_best_args', action='store_true',
                         help='Loads the best arguments for each method, '
                              'dataset and memory buffer.')
     add_management_args(parser)
