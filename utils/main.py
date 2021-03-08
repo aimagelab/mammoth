@@ -24,8 +24,15 @@ from utils.training import train
 from utils.best_args import best_args
 from utils.conf import set_random_seed
 
+def lecun_fix():
+    # Yann moved his website to CloudFlare. You need this now
+    from six.moves import urllib
+    opener = urllib.request.build_opener()
+    opener.addheaders = [('User-agent', 'Mozilla/5.0')]
+    urllib.request.install_opener(opener)
 
 def main():
+    lecun_fix()
     parser = ArgumentParser(description='mammoth', allow_abbrev=False)
     parser.add_argument('--model', type=str, required=True,
                         help='Model name.', choices=get_all_models())
