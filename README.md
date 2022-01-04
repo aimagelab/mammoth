@@ -1,5 +1,12 @@
 # Mammoth - An Extendible (General) Continual Learning Framework for Pytorch
 
+## NEWS
+
+**STAY TUNED:** We are working on an update of this repository to include the codebase of [our extended paper **Class-Incremental Continual Learning into the eXtended DER-verse**](https://arxiv.org/abs/2201.00766).
+
+-----------------------------
+
+
 Official repository of [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html)
 
 <p align="center">
