@@ -1,9 +1,10 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-best_args = {'perm-mnist': {
+best_args = {
+    'perm-mnist': {
     'sgd': {-1: {'lr': 0.2, 'batch_size': 128, 'n_epochs': 1}},
     'ewc_on': {-1: {'lr': 0.1,
                     'e_lambda': 0.7,
@@ -306,7 +307,7 @@ best_args = {'perm-mnist': {
                      'softmax_temp': 2.0,
                      'batch_size': 10,
                      'n_epochs': 1,
-                     'wd_reg': 0.0005}},
+                     'optim_wd': 0.0005}},
         'pnn': {-1: {'lr': 0.1, 'batch_size': 10, 'n_epochs': 1}},
         'er': {200: {'lr': 0.01,
                      'minibatch_size': 10,
@@ -414,17 +415,17 @@ best_args = {'perm-mnist': {
                           'n_epochs': 1}},
         'icarl': {200: {'lr': 0.1,
                         'minibatch_size': 10,
-                        'wd_reg': 0,
+                        'optim_wd': 0,
                         'batch_size': 10,
                         'n_epochs': 1},
                   500: {'lr': 0.1,
                         'minibatch_size': 10,
-                        'wd_reg': 0,
+                        'optim_wd': 0,
                         'batch_size': 10,
                         'n_epochs': 1},
                   5120: {'lr': 0.1,
                          'minibatch_size': 10,
-                         'wd_reg': 0,
+                         'optim_wd': 0,
                          'batch_size': 10,
                          'n_epochs': 1}},
         'fdr': {200: {'lr': 0.03,
@@ -493,7 +494,7 @@ best_args = {'perm-mnist': {
                                  'softmax_temp': 2.0,
                                  'batch_size': 32,
                                  'n_epochs': 50,
-                                 'wd_reg': 0.0005}},
+                                 'optim_wd': 0.0005}},
                     'pnn': {-1: {'lr': 0.03, 'batch_size': 32,
                                  'n_epochs': 50}},
                     'er': {200: {'lr': 0.1,
@@ -590,19 +591,19 @@ best_args = {'perm-mnist': {
                     'icarl': {200: {'lr': 0.1,
                                     'minibatch_size': 0,
                                     'softmax_temp': 2.0,
-                                    'wd_reg': 0.00001,
+                                    'optim_wd': 0.00001,
                                     'batch_size': 32,
                                     'n_epochs': 50},
                               500: {'lr': 0.1,
                                     'minibatch_size': 0,
                                     'softmax_temp': 2.0,
-                                    'wd_reg': 0.00001,
+                                    'optim_wd': 0.00001,
                                     'batch_size': 32,
                                     'n_epochs': 50},
                               5120: {'lr': 0.03,
                                      'minibatch_size': 0,
                                      'softmax_temp': 2.0,
-                                     'wd_reg': 0.00001,
+                                     'optim_wd': 0.00001,
                                      'batch_size': 32,
                                      'n_epochs': 50}},
                     'fdr': {200: {'lr': 0.03,
@@ -671,7 +672,7 @@ best_args = {'perm-mnist': {
                                  'softmax_temp': 2.0,
                                  'batch_size': 32,
                                  'n_epochs': 100,
-                                 'wd_reg': 0.0005}},
+                                 'optim_wd': 0.0005}},
                     'pnn': {-1: {'lr': 0.03, 'batch_size': 32,
                                  'n_epochs': 100}},
                     'er': {200: {'lr': 0.1,
@@ -713,19 +714,19 @@ best_args = {'perm-mnist': {
                     'icarl': {200: {'lr': 0.03,
                                     'minibatch_size': 32,
                                     'softmax_temp': 2.0,
-                                    'wd_reg': 0.00001,
+                                    'optim_wd': 0.00001,
                                     'batch_size': 32,
                                     'n_epochs': 100},
                               500: {'lr': 0.03,
                                     'minibatch_size': 32,
                                     'softmax_temp': 2.0,
-                                    'wd_reg': 0.00001,
+                                    'optim_wd': 0.00001,
                                     'batch_size': 32,
                                     'n_epochs': 100},
                               5120: {'lr': 0.03,
                                      'minibatch_size': 32,
                                      'softmax_temp': 2.0,
-                                     'wd_reg': 0.00001,
+                                     'optim_wd': 0.00001,
                                      'batch_size': 32,
                                      'n_epochs': 100}},
                     'fdr': {200: {'lr': 0.03,
@@ -837,5 +838,56 @@ best_args = {'perm-mnist': {
                          'batch_size': 16,
                          'minibatch_size': 128,
                          'alpha': 0.2,
-                         'beta': 1.0}}}
+                         'beta': 1.0}}},
+    'seq-cifar100': {
+        'sgd': {-1: {'lr': 0.03, 'optim_mom': 0, 'optim_wd': 0}},
+        'er': {
+            500: {'lr': 0.1, 'optim_mom': 0, 'optim_wd': 0},
+            2000: {'lr': 0.1, 'optim_mom': 0, 'optim_wd': 0}
+        },
+        'gdumb': {
+            500:  {'lr': 0.1, 'maxlr': 0.05, 'minlr': 5e-4, 'cutmix_alpha': 1, 'fitting_epochs': 250, 'optim_mom': 0.9, 'optim_wd': 1e-6},
+            2000: {'lr': 0.1, 'maxlr': 0.05, 'minlr': 5e-4, 'cutmix_alpha': 1, 'fitting_epochs': 250, 'optim_mom': 0, 'optim_wd': 1e-6},
+        },
+        'lucir': {
+            500: {'lr': 0.03, 'lr_finetune':0.01,  'optim_mom': 0.9, 'optim_wd': 0, 'lamda_base': 5, 'k_mr':  2, 'fitting_epochs': 20, 'mr_margin': 0.5, 'lamda_mr': 1.},
+            2000: {'lr': 0.03, 'lr_finetune':0.01,  'optim_mom': 0.9, 'optim_wd': 0, 'lamda_base': 5, 'k_mr':  2, 'fitting_epochs': 20, 'mr_margin': 0.5, 'lamda_mr': 1.},
+        },
+        
+        
+        'icarl': {
+            500: {'lr': 0.3, 'optim_mom': 0, 'optim_wd': 1e-05},
+            2000: {'lr': 0.3, 'optim_mom': 0, 'optim_wd': 1e-05}
+        },
+        'bic': {
+            500: {'lr': 0.03, 'optim_mom': 0, 'optim_wd': 0},
+            2000: {'lr': 0.03, 'optim_mom': 0, 'optim_wd': 0},
+        },
+        'lwf': {
+            -1: {'lr': 0.03, 'optim_mom': 0, 'optim_wd': 5e-4},
+        },
+
+
+        'er_ace': {
+            500: {'lr': 0.03, 'optim_mom': 0, 'optim_wd': 0},
+            2000: {'lr': 0.03, 'optim_mom': 0, 'optim_wd': 0}
+        },
+        'rpc': {
+            500: {'lr': 0.1, 'optim_mom': 0, 'optim_wd': 0},
+            2000: {'lr': 0.1, 'optim_mom': 0, 'optim_wd': 0}
+        },
+        'der': {
+            500: {'lr': 0.03, 'optim_mom': 0, 'optim_wd': 0, 'alpha': 0.3},
+            2000: {'lr': 0.03, 'optim_mom': 0, 'optim_wd': 0, 'alpha': 0.3}
+        },
+        'derpp': {
+            500: {'lr': 0.03, 'optim_mom': 0, 'optim_wd': 0, 'alpha': 0.1, 'beta': 0.5},
+            2000: {'lr': 0.03, 'optim_mom': 0, 'optim_wd': 0, 'alpha': 0.1, 'beta': 0.5}
+        },
+        'xder': {
+            500: {'m': 0.7, 'alpha':0.3, 'beta': 0.8, 'gamma': 0.85, 'optim_wd': 0, 'lambd': 0.05, 'eta': 0.001, 'lr': 0.03, 'simclr_temp': 5, 'optim_mom': 0, 'simclr_batch_size':64, 'simclr_num_aug': 2},
+            2000: {'m': 0.2, 'alpha':0.6, 'beta': 0.9, 'gamma': 0.85, 'optim_wd': 0, 'lambd': 0.05, 'eta': 0.01, 'lr': 0.03, 'simclr_temp': 5, 'optim_mom': 0, 'simclr_batch_size':64, 'simclr_num_aug': 2}
+        }
+    }
+
 }

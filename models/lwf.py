@@ -1,4 +1,4 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -15,12 +15,10 @@ def get_parser() -> ArgumentParser:
                                         ' Learning without Forgetting.')
     add_management_args(parser)
     add_experiment_args(parser)
-    parser.add_argument('--alpha', type=float, required=True,
+    parser.add_argument('--alpha', type=float, default=0.5,
                         help='Penalty weight.')
-    parser.add_argument('--softmax_temp', type=float, required=True,
+    parser.add_argument('--softmax_temp', type=float, default=2,
                         help='Temperature of the softmax function.')
-    parser.add_argument('--wd_reg', type=float, required=True,
-                        help='Coefficient of the weight decay regularizer.')
     return parser
 
 
@@ -59,7 +57,7 @@ class Lwf(ContinualModel):
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
                     opt.zero_grad()
                     with torch.no_grad():
-                        feats = self.net.features(inputs)
+                        feats = self.net(inputs, returnt='features')
                     mask = self.eye[(self.current_task + 1) * self.cpt - 1] ^ self.eye[self.current_task * self.cpt - 1]
                     outputs = self.net.classifier(feats)[:, mask]
                     loss = self.loss(outputs, labels - self.current_task * self.cpt)
@@ -90,7 +88,6 @@ class Lwf(ContinualModel):
             loss += self.args.alpha * modified_kl_div(smooth(self.soft(logits[:, mask]).to(self.device), 2, 1),
                                                       smooth(self.soft(outputs[:, mask]), 2, 1))
 
-        loss += self.args.wd_reg * torch.sum(self.net.get_params() ** 2)
         loss.backward()
         self.opt.step()
 

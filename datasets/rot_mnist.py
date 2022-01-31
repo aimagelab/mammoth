@@ -1,4 +1,4 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -23,10 +23,6 @@ class RotatedMNIST(ContinualDataset):
         train, test = store_mnist_loaders(transform, self)
         return train, test
 
-    def not_aug_dataloader(self, batch_size):
-        return DataLoader(self.train_loader.dataset,
-                          batch_size=batch_size, shuffle=True)
-
     @staticmethod
     def get_backbone():
         return MNISTMLP(28 * 28, RotatedMNIST.N_CLASSES_PER_TASK)
@@ -45,4 +41,8 @@ class RotatedMNIST(ContinualDataset):
 
     @staticmethod
     def get_denormalization_transform():
+        return None
+
+    @staticmethod
+    def get_scheduler(model, args):
         return None

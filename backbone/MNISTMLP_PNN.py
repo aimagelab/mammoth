@@ -1,4 +1,4 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -6,12 +6,12 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from backbone import xavier, num_flat_features
+from backbone import MammothBackbone, xavier, num_flat_features
 from backbone.utils.modules import ListModule, AlphaModule
 from typing import List
 
 
-class MNISTMLP_PNN(nn.Module):
+class MNISTMLP_PNN(MammothBackbone):
     """
     Network composed of two hidden layers, each containing 100 ReLU activations.
     Designed for the MNIST dataset, equipped with lateral connection.
@@ -79,7 +79,7 @@ class MNISTMLP_PNN(nn.Module):
             self.adaptor1.apply(xavier)
             self.adaptor2.apply(xavier)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, returnt='out') -> torch.Tensor:
         """
         Compute a forward pass.
         :param x: input tensor (batch_size, input_size)
@@ -101,50 +101,7 @@ class MNISTMLP_PNN(nn.Module):
             x = F.relu(self.fc1(x))
             x = F.relu(self.fc2(x))
             x = self.classifier(x)
-        return x
-
-    def get_params(self) -> torch.Tensor:
-        """
-        Returns all the parameters concatenated in a single tensor.
-        :return: parameters tensor (input_size * 100 + 100 + 100 * 100 + 100 +
-                                    + 100 * output_size + output_size)
-        """
-        params = []
-        for pp in list(self.parameters()):
-            params.append(pp.view(-1))
-        return torch.cat(params)
-
-    def set_params(self, new_params: torch.Tensor) -> None:
-        """
-        Sets the parameters to a given value.
-        :param new_params: concatenated values to be set (input_size * 100
-                    + 100 + 100 * 100 + 100 + 100 * output_size + output_size)
-        """
-        assert new_params.size() == self.get_params().size()
-        progress = 0
-        for pp in list(self.parameters()):
-            cand_params = new_params[progress: progress +
-                        torch.tensor(pp.size()).prod()].view(pp.size())
-            progress += torch.tensor(pp.size()).prod()
-            pp.data = cand_params
-
-    def get_grads(self) -> torch.Tensor:
-        """
-        Returns all the gradients concatenated in a single tensor.
-        :return: gradients tensor (input_size * 100 + 100 + 100 * 100 + 100 +
-                                   + 100 * output_size + output_size)
-        """
-        grads = []
-        for pp in list(self.parameters()):
-            grads.append(pp.grad.view(-1))
-        return torch.cat(grads)
-
-    def get_grads_list(self):
-        """
-        Returns a list containing the gradients (a tensor for each layer).
-        :return: gradients list
-        """
-        grads = []
-        for pp in list(self.parameters()):
-            grads.append(pp.grad.view(-1))
-        return grads
+        if returnt == 'out':
+            return x
+        
+        raise NotImplementedError("Unknown return type")

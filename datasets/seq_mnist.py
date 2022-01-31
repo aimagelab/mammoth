@@ -1,4 +1,4 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -73,20 +73,6 @@ class SequentialMNIST(ContinualDataset):
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
 
-    def not_aug_dataloader(self, batch_size):
-        transform = transforms.ToTensor()
-        train_dataset = MyMNIST(base_path() + 'MNIST',
-                                train=True, download=True, transform=transform)
-        train_mask = np.logical_and(np.array(train_dataset.targets) >= self.i -
-            self.N_CLASSES_PER_TASK, np.array(train_dataset.targets) < self.i)
-
-        train_dataset.data = train_dataset.data[train_mask]
-        train_dataset.targets = np.array(train_dataset.targets)[train_mask]
-
-        train_loader = DataLoader(train_dataset,
-                                  batch_size=batch_size, shuffle=True)
-        return train_loader
-
     @staticmethod
     def get_backbone():
         return MNISTMLP(28 * 28, SequentialMNIST.N_TASKS
@@ -106,4 +92,8 @@ class SequentialMNIST(ContinualDataset):
 
     @staticmethod
     def get_denormalization_transform():
+        return None
+
+    @staticmethod
+    def get_scheduler(model, args):
         return None

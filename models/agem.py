@@ -1,4 +1,4 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -39,7 +39,7 @@ class AGem(ContinualModel):
 
     def end_task(self, dataset):
         samples_per_task = self.args.buffer_size // dataset.N_TASKS
-        loader = dataset.not_aug_dataloader(samples_per_task)
+        loader = dataset.train_loader
         cur_y, cur_x = next(iter(loader))[1:]
         self.buffer.add_data(
             examples=cur_x.to(self.device),

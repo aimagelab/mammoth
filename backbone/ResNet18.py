@@ -1,4 +1,4 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.functional import relu, avg_pool2d
 from typing import List
+from backbone import MammothBackbone
 
 
 def conv3x3(in_planes: int, out_planes: int, stride: int=1) -> F.conv2d:
@@ -61,7 +62,7 @@ class BasicBlock(nn.Module):
         return out
 
 
-class ResNet(nn.Module):
+class ResNet(MammothBackbone):
     """
     ResNet network architecture. Designed for complex datasets.
     """
@@ -115,65 +116,35 @@ class ResNet(nn.Module):
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, returnt='out') -> torch.Tensor:
         """
         Compute a forward pass.
         :param x: input tensor (batch_size, *input_shape)
+        :param returnt: return type (a string among 'out', 'features', 'all')
         :return: output tensor (output_classes)
         """
-        out = relu(self.bn1(self.conv1(x)))
-        out = self.layer1(out)  # 64, 32, 32
-        out = self.layer2(out)  # 128, 16, 16
-        out = self.layer3(out)  # 256, 8, 8
-        out = self.layer4(out)  # 512, 4, 4
-        out = avg_pool2d(out, out.shape[2]) # 512, 1, 1
-        out = out.view(out.size(0), -1)  # 512
-        out = self.linear(out)
-        return out
+        
+        out = relu(self.bn1(self.conv1(x))) # 64, 32, 32
+        if hasattr(self, 'maxpool'):
+            out = self.maxpool(out)
+        out = self.layer1(out)  # -> 64, 32, 32
+        out = self.layer2(out)  # -> 128, 16, 16
+        out = self.layer3(out)  # -> 256, 8, 8
+        out = self.layer4(out)  # -> 512, 4, 4
+        out = avg_pool2d(out, out.shape[2]) # -> 512, 1, 1
+        feature = out.view(out.size(0), -1)  # 512
 
-    def features(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Returns the non-activated output of the second-last layer.
-        :param x: input tensor (batch_size, *input_shape)
-        :return: output tensor (??)
-        """
-        out = self._features(x)
-        out = avg_pool2d(out, out.shape[2])
-        feat = out.view(out.size(0), -1)
-        return feat
+        if returnt == 'features':
+            return feature
 
-    def get_params(self) -> torch.Tensor:
-        """
-        Returns all the parameters concatenated in a single tensor.
-        :return: parameters tensor (??)
-        """
-        params = []
-        for pp in list(self.parameters()):
-            params.append(pp.view(-1))
-        return torch.cat(params)
-
-    def set_params(self, new_params: torch.Tensor) -> None:
-        """
-        Sets the parameters to a given value.
-        :param new_params: concatenated values to be set (??)
-        """
-        assert new_params.size() == self.get_params().size()
-        progress = 0
-        for pp in list(self.parameters()):
-            cand_params = new_params[progress: progress +
-                torch.tensor(pp.size()).prod()].view(pp.size())
-            progress += torch.tensor(pp.size()).prod()
-            pp.data = cand_params
-
-    def get_grads(self) -> torch.Tensor:
-        """
-        Returns all the gradients concatenated in a single tensor.
-        :return: gradients tensor (??)
-        """
-        grads = []
-        for pp in list(self.parameters()):
-            grads.append(pp.grad.view(-1))
-        return torch.cat(grads)
+        out = self.classifier(feature)
+        
+        if returnt == 'out':
+            return out
+        elif returnt == 'all':
+            return (out, feature)
+        
+        raise NotImplementedError("Unknown return type")
 
 
 def resnet18(nclasses: int, nf: int=64) -> ResNet:

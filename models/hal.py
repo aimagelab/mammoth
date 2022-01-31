@@ -1,4 +1,4 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -10,7 +10,6 @@ from models.utils.continual_model import ContinualModel
 from datasets import get_dataset
 import numpy as np
 from torch.optim import SGD
-
 import sys
 
 
@@ -95,7 +94,7 @@ class HAL(ContinualModel):
                 cum_loss += loss.item()
 
                 self.spare_opt.zero_grad()
-                loss = torch.sum(self.gamma * (self.spare_model.features(e_t.unsqueeze(0)) - self.phi) ** 2)
+                loss = torch.sum(self.gamma * (self.spare_model(e_t.unsqueeze(0), returnt='features') - self.phi) ** 2)
                 assert not self.phi.requires_grad
                 loss.backward()
                 cum_loss += loss.item()
@@ -119,7 +118,7 @@ class HAL(ContinualModel):
         if not hasattr(self, 'phi'):
             print('Building phi', file=sys.stderr)
             with torch.no_grad():
-                self.phi = torch.zeros_like(self.net.features(inputs[0].unsqueeze(0)), requires_grad=False)
+                self.phi = torch.zeros_like(self.net(inputs[0].unsqueeze(0), returnt='features'), requires_grad=False)
             assert not self.phi.requires_grad
 
         if not self.buffer.is_empty():
@@ -155,7 +154,7 @@ class HAL(ContinualModel):
             self.opt.step()
 
         with torch.no_grad():
-            self.phi = self.beta * self.phi + (1 - self.beta) * self.net.features(inputs[:real_batch_size]).mean(0)
+            self.phi = self.beta * self.phi + (1 - self.beta) * self.net(inputs[:real_batch_size], returnt='features').mean(0)
 
         self.buffer.add_data(examples=not_aug_inputs,
                              labels=labels[:real_batch_size])

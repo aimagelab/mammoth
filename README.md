@@ -2,12 +2,12 @@
 
 ## NEWS
 
-**STAY TUNED:** We are working on an update of this repository to include the codebase of [our extended paper **Class-Incremental Continual Learning into the eXtended DER-verse**](https://arxiv.org/abs/2201.00766).
+**STAY TUNED:** The additional code for the MiniImagenet and NTU-60 experiments will be uploaded soon due to complications in the distribution of datasets.
 
 -----------------------------
 
 
-Official repository of [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html)
+Official repository of [Class-Incremental Continual Learning into the eXtended DER-verse](https://arxiv.org/abs/2201.00766) and [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html)
 
 <p align="center">
   <img width="112" height="112" src="seq_mnist.gif" alt="Sequential MNIST">
@@ -27,6 +27,16 @@ Official repository of [Dark Experience for General Continual Learning: a Strong
 
 ## Models
 
++ eXtended-DER (X-DER)
+
++ Dark Experience Replay (DER)
++ Dark Experience Replay++ (DER++)
+
++ Learning a Unified Classifier Incrementally via Rebalancing (LUCIR)
++ Greedy Sampler and Dumb Learner (GDumb)
++ Bias Correction (BiC)
++ Regular Polytope Classifier (RPC)
+
 + Gradient Episodic Memory (GEM)
 + A-GEM
 + A-GEM with Reservoir (A-GEM-R)
@@ -40,8 +50,6 @@ Official repository of [Dark Experience for General Continual Learning: a Strong
 + Synaptic Intelligence
 + Learning without Forgetting
 + Progressive Neural Networks
-+ Dark Experience Replay (DER)
-+ Dark Experience Replay++ (DER++)
 
 ## Datasets
 
@@ -50,6 +58,7 @@ Official repository of [Dark Experience for General Continual Learning: a Strong
 + Sequential MNIST
 + Sequential CIFAR-10
 + Sequential Tiny ImageNet
++ Sequential CIFAR-100
 
 **Domain-IL settings**
 
@@ -60,9 +69,16 @@ Official repository of [Dark Experience for General Continual Learning: a Strong
 
 + MNIST-360
 
-## Citing this work
+## Citing these works
 
 ```
+@article{boschini2022class,
+  title={Class-Incremental Continual Learning into the eXtended DER-verse},
+  author={Boschini, Matteo and Bonicelli, Lorenzo and Buzzega, Pietro and Porrello, Angelo and Calderara, Simone},
+  journal={arXiv preprint arXiv:2201.00766},
+  year={2022}
+}
+
 @inproceedings{buzzega2020dark,
  author = {Buzzega, Pietro and Boschini, Matteo and Porrello, Angelo and Abati, Davide and Calderara, Simone},
  booktitle = {Advances in Neural Information Processing Systems},
@@ -74,3 +90,7 @@ Official repository of [Dark Experience for General Continual Learning: a Strong
  year = {2020}
 }
 ```
+
+## Previous versions
+
+If you're interested in a version of this repo that only includes the code for [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html), please use our [neurips2020 tag](https://github.com/aimagelab/mammoth/releases/tag/neurips2020).

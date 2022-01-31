@@ -1,4 +1,4 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -77,8 +77,7 @@ class Joint(ContinualModel):
             self.old_data.append(dataset.train_loader)
             # train
             if len(dataset.test_loaders) != dataset.N_TASKS: return
-            loader_caches = [[] for _ in range(len(self.old_data))]
-            sources = torch.randint(5, (128,))
+            
             all_inputs = []
             all_labels = []
             for source in self.old_data:
@@ -88,6 +87,8 @@ class Joint(ContinualModel):
             all_inputs = torch.cat(all_inputs)
             all_labels = torch.cat(all_labels)
             bs = self.args.batch_size
+            scheduler = dataset.get_scheduler(self, self.args)
+
             for e in range(self.args.n_epochs):
                 order = torch.randperm(len(all_inputs))
                 for i in range(int(math.ceil(len(all_inputs) / bs))):
@@ -100,6 +101,9 @@ class Joint(ContinualModel):
                     loss.backward()
                     self.opt.step()
                     progress_bar(i, int(math.ceil(len(all_inputs) / bs)), e, 'J', loss.item())
+                
+                if scheduler is not None:
+                    scheduler.step()
 
     def observe(self, inputs, labels, not_aug_inputs):
         return 0

@@ -1,4 +1,4 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -14,7 +14,6 @@ from datasets.utils.continual_dataset import ContinualDataset
 from typing import Tuple
 from datasets import get_dataset
 import sys
-
 
 def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> None:
     """
@@ -46,21 +45,22 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
             continue
         correct, correct_mask_classes, total = 0.0, 0.0, 0.0
         for data in test_loader:
-            inputs, labels = data
-            inputs, labels = inputs.to(model.device), labels.to(model.device)
-            if 'class-il' not in model.COMPATIBILITY:
-                outputs = model(inputs, k)
-            else:
-                outputs = model(inputs)
+            with torch.no_grad():
+                inputs, labels = data
+                inputs, labels = inputs.to(model.device), labels.to(model.device)
+                if 'class-il' not in model.COMPATIBILITY:
+                    outputs = model(inputs, k)
+                else:
+                    outputs = model(inputs)
 
-            _, pred = torch.max(outputs.data, 1)
-            correct += torch.sum(pred == labels).item()
-            total += labels.shape[0]
-
-            if dataset.SETTING == 'class-il':
-                mask_classes(outputs, dataset, k)
                 _, pred = torch.max(outputs.data, 1)
-                correct_mask_classes += torch.sum(pred == labels).item()
+                correct += torch.sum(pred == labels).item()
+                total += labels.shape[0]
+
+                if dataset.SETTING == 'class-il':
+                    mask_classes(outputs, dataset, k)
+                    _, pred = torch.max(outputs.data, 1)
+                    correct_mask_classes += torch.sum(pred == labels).item()
 
         accs.append(correct / total * 100
                     if 'class-il' in model.COMPATIBILITY else 0)
@@ -81,13 +81,10 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     model.net.to(model.device)
     results, results_mask_classes = [], []
 
-    model_stash = create_stash(model, args, dataset)
-
     if args.csv_log:
         csv_logger = CsvLogger(dataset.SETTING, dataset.NAME, model.NAME)
     if args.tensorboard:
-        tb_logger = TensorboardLogger(args, dataset.SETTING, model_stash)
-        model_stash['tensorboard_name'] = tb_logger.get_name()
+        tb_logger = TensorboardLogger(args, dataset.SETTING)
 
     dataset_copy = get_dataset(args)
     for t in range(dataset.N_TASKS):
@@ -107,7 +104,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             results[t-1] = results[t-1] + accs[0]
             if dataset.SETTING == 'class-il':
                 results_mask_classes[t-1] = results_mask_classes[t-1] + accs[1]
-        for epoch in range(args.n_epochs):
+
+        scheduler = dataset.get_scheduler(model, args)
+        for epoch in range(model.args.n_epochs):
             for i, data in enumerate(train_loader):
                 if hasattr(dataset.train_loader.dataset, 'logits'):
                     inputs, labels, not_aug_inputs, logits = data
@@ -127,12 +126,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
                 if args.tensorboard:
                     tb_logger.log_loss(loss, args, epoch, t, i)
-
-                model_stash['batch_idx'] = i + 1
-            model_stash['epoch_idx'] = epoch + 1
-            model_stash['batch_idx'] = 0
-        model_stash['task_idx'] = t + 1
-        model_stash['epoch_idx'] = 0
+            
+            if scheduler is not None:
+                scheduler.step()
 
         if hasattr(model, 'end_task'):
             model.end_task(dataset)
@@ -144,7 +140,6 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         mean_acc = np.mean(accs, axis=1)
         print_mean_accuracy(mean_acc, t + 1, dataset.SETTING)
 
-        model_stash['mean_accs'].append(mean_acc)
         if args.csv_log:
             csv_logger.log(mean_acc)
         if args.tensorboard:

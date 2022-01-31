@@ -1,10 +1,11 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+
 import torch
-from datasets import get_gcl_dataset
+from datasets import get_dataset
 from models import get_model
 from utils.status import progress_bar
 from utils.tb_logger import *
@@ -44,7 +45,7 @@ def train(args: Namespace):
     if args.csv_log:
         from utils.loggers import CsvLogger
 
-    dataset = get_gcl_dataset(args)
+    dataset = get_dataset(args)
     backbone = dataset.get_backbone()
     loss = dataset.get_loss()
     model = get_model(args, backbone, loss, dataset.get_transform())

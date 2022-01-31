@@ -1,4 +1,4 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -143,16 +143,6 @@ class SequentialTinyImagenet(ContinualDataset):
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
 
-    def not_aug_dataloader(self, batch_size):
-        transform = transforms.Compose([transforms.ToTensor(), self.get_denormalization_transform()])
-
-        train_dataset = MyTinyImagenet(base_path() + 'TINYIMG',
-                            train=True, download=True, transform=transform)
-        train_loader = get_previous_train_loader(train_dataset, batch_size, self)
-
-        return train_loader
-
-
     @staticmethod
     def get_backbone():
         return resnet18(SequentialTinyImagenet.N_CLASSES_PER_TASK
@@ -178,3 +168,7 @@ class SequentialTinyImagenet(ContinualDataset):
         transform = DeNormalize((0.4802, 0.4480, 0.3975),
                                          (0.2770, 0.2691, 0.2821))
         return transform
+
+    @staticmethod
+    def get_scheduler(model, args):
+        return None

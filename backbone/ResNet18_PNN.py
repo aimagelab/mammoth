@@ -1,4 +1,4 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -110,7 +110,7 @@ class ResNetPNN(ResNet):
         layers.append(nn.ReLU())
         return nn.Sequential(*(layers[1:]))
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, returnt='out') -> torch.Tensor:
         """
         Compute a forward pass.
         :param x: input tensor (batch_size, *input_shape)
@@ -144,7 +144,11 @@ class ResNetPNN(ResNet):
             y = y.view(out.size(0), -1)
             y = self.lateral_classifier(y)
             out = self.linear(out) + y
-        return out
+        
+        if returnt == 'out':
+            return out
+
+        raise NotImplementedError("Unknown return type")
 
 
 def resnet18_pnn(nclasses: int, nf: int=64,

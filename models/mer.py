@@ -1,4 +1,4 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -38,6 +38,7 @@ class Mer(ContinualModel):
     def __init__(self, backbone, loss, args, transform):
         super(Mer, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size, self.device)
+        assert args.batch_size == 1, 'Mer only works with batch_size=1'
 
     def draw_batches(self, inp, lab):
         batches = []

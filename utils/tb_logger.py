@@ -1,7 +1,8 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+
 
 from utils.conf import base_path
 import os
@@ -11,19 +12,17 @@ import numpy as np
 
 
 class TensorboardLogger:
-    def __init__(self, args: Namespace, setting: str,
-                 stash: Dict[Any, str]=None) -> None:
+    def __init__(self, args: Namespace, setting: str) -> None:
         from torch.utils.tensorboard import SummaryWriter
 
         self.settings = [setting]
         if setting == 'class-il':
             self.settings.append('task-il')
         self.loggers = {}
-        self.name = stash['model_name']
+        self.name = args.model
         for a_setting in self.settings:
             self.loggers[a_setting] = SummaryWriter(
-                os.path.join(base_path(), 'tensorboard_runs', a_setting, self.name),
-                purge_step=stash['task_idx'] * args.n_epochs + stash['epoch_idx']+1)
+                os.path.join(base_path(), 'tensorboard_runs', a_setting, self.name))
         config_text = ', '.join(
             ["%s=%s" % (name, getattr(args, name)) for name in args.__dir__()
              if not name.startswith('_')])

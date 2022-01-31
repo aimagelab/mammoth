@@ -1,4 +1,4 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 from backbone.MNISTMLP import MNISTMLP
 from datasets.transforms.rotation import IncrementalRotation
 import torch.nn.functional as F
+from datasets.utils.gcl_dataset import GCLDataset
 from utils.conf import base_path
 from argparse import Namespace
 import numpy as np
@@ -19,7 +20,7 @@ from datasets.perm_mnist import MyMNIST
 from typing import Tuple
 
 
-class MNIST360:
+class MNIST360(GCLDataset):
     """
     MNIST-360 general continual dataset.
     """

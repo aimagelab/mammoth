@@ -115,8 +115,8 @@ class Gem(ContinualModel):
 
         # add data to the buffer
         samples_per_task = self.args.buffer_size // dataset.N_TASKS
-
-        loader = dataset.not_aug_dataloader(samples_per_task)
+        
+        loader = dataset.train_loader
         cur_y, cur_x = next(iter(loader))[1:]
         self.buffer.add_data(
             examples=cur_x.to(self.device),
@@ -124,6 +124,7 @@ class Gem(ContinualModel):
             task_labels=torch.ones(samples_per_task,
                 dtype=torch.long).to(self.device) * (self.current_task - 1)
         )
+
 
     def observe(self, inputs, labels, not_aug_inputs):
 

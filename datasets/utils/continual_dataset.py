@@ -1,4 +1,4 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
+# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from typing import Tuple
 from torchvision import datasets
 import numpy as np
-
+import torch.optim
 
 class ContinualDataset:
     """
@@ -39,16 +39,6 @@ class ContinualDataset:
         Creates and returns the training and test loaders for the current task.
         The current training loader and all test loaders are stored in self.
         :return: the current training and test loaders
-        """
-        pass
-
-    @abstractmethod
-    def not_aug_dataloader(self, batch_size: int) -> DataLoader:
-        """
-        Returns the dataloader of the current task,
-        not applying data augmentation.
-        :param batch_size: the batch size of the loader
-        :return: the current training loader
         """
         pass
 
@@ -91,6 +81,27 @@ class ContinualDataset:
         Returns the transform used for denormalizing the current dataset.
         """
         pass
+
+    @staticmethod
+    @abstractmethod
+    def get_scheduler(model, args: Namespace) -> torch.optim.lr_scheduler:
+        """
+        Returns the scheduler to be used for to the current dataset.
+        """
+        pass
+
+    @staticmethod
+    def get_epochs():
+        pass
+
+    @staticmethod
+    def get_batch_size():
+        pass
+
+    @staticmethod
+    def get_minibatch_size():
+        pass
+
 
 
 def store_masked_loaders(train_dataset: datasets, test_dataset: datasets,
