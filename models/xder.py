@@ -52,6 +52,8 @@ class XDer(ContinualModel):
         self.gpu_augmentation = strong_aug(self.dataset_shape, self.dataset_mean, self.dataset_std)
         self.simclr_lss = SupConLoss(temperature=self.args.simclr_temp, base_temperature=self.args.simclr_temp, reduction='sum')
 
+        if not hasattr(self.args, 'start_from'):
+            self.args.start_from=0
 
     def end_task(self, dataset):
 
@@ -110,7 +112,7 @@ class XDer(ContinualModel):
 
                     # Update future past logits
                     buf_idx, buf_inputs, buf_labels, buf_logits, _ = self.buffer.get_data(self.buffer.buffer_size, 
-                        transform=self.transform, return_index=True, to_device=self.device)
+                        transform=self.transform, return_index=True)
                     
                     
                     buf_outputs = []
@@ -159,7 +161,7 @@ class XDer(ContinualModel):
         if not self.buffer.is_empty():
             # Distillation Replay Loss (all heads)
             buf_idx1, buf_inputs1, buf_labels1, buf_logits1, buf_tl1 = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform, return_index=True, to_device=self.device)
+                self.args.minibatch_size, transform=self.transform, return_index=True)
             buf_outputs1 = self.net(buf_inputs1).float()
 
             buf_logits1 = buf_logits1.type(buf_outputs1.dtype)
@@ -168,7 +170,7 @@ class XDer(ContinualModel):
 
             # Label Replay Loss (past heads)
             buf_idx2, buf_inputs2, buf_labels2, buf_logits2, buf_tl2 = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform, return_index=True, to_device=self.device)
+                self.args.minibatch_size, transform=self.transform, return_index=True)
             buf_outputs2 = self.net(buf_inputs2).float()
             
             buf_ce = self.loss(buf_outputs2[:, :(self.task)*self.cpt], buf_labels2)
@@ -213,7 +215,7 @@ class XDer(ContinualModel):
             scl_labels = labels[:self.args.simclr_batch_size]
             scl_na_inputs = not_aug_inputs[:self.args.simclr_batch_size]
             if not self.buffer.is_empty():
-                buf_idxscl, buf_na_inputsscl, buf_labelsscl, buf_logitsscl, _ = self.buffer.get_data(self.args.simclr_batch_size, transform=None, return_index=True, to_device=self.device)
+                buf_idxscl, buf_na_inputsscl, buf_labelsscl, buf_logitsscl, _ = self.buffer.get_data(self.args.simclr_batch_size, transform=None, return_index=True)
                 scl_na_inputs = torch.cat([buf_na_inputsscl, scl_na_inputs])
                 scl_labels = torch.cat([buf_labelsscl, scl_labels])
             with torch.no_grad():
