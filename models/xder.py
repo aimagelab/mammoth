@@ -207,9 +207,8 @@ class XDer(ContinualModel):
                     self.buffer.task_labels[buf_idx[chosen]] = self.task
 
         # Consistency Loss (future heads)
-        loss_cons, loss_dp = torch.tensor(0.), torch.tensor(0.)
+        loss_cons = torch.tensor(0.)
         loss_cons = loss_cons.type(loss_stream.dtype)
-        loss_dp = loss_dp.type(loss_stream.dtype)
         if self.task < self.tasks - 1:
             
             scl_labels = labels[:self.args.simclr_batch_size]
@@ -224,18 +223,18 @@ class XDer(ContinualModel):
             with bn_track_stats(self, False):
                 scl_outputs = self.net(scl_inputs).float()
             
-            if self.task < self.tasks - 1:
-                scl_featuresFull = scl_outputs.reshape(-1, self.args.simclr_num_aug, scl_outputs.shape[-1]) # [N, n_aug, 100]
-                
-                scl_features = scl_featuresFull[:, :, (self.task+1)*self.cpt:] # [N, n_aug, 70]
-                scl_n_heads = self.tasks - self.task - 1
-                
-                scl_features = torch.stack(scl_features.split(self.cpt, 2), 1) # [N, 7, n_aug, 10]
+            
+            scl_featuresFull = scl_outputs.reshape(-1, self.args.simclr_num_aug, scl_outputs.shape[-1]) # [N, n_aug, 100]
+            
+            scl_features = scl_featuresFull[:, :, (self.task+1)*self.cpt:] # [N, n_aug, 70]
+            scl_n_heads = self.tasks - self.task - 1
+            
+            scl_features = torch.stack(scl_features.split(self.cpt, 2), 1) # [N, 7, n_aug, 10]
 
-                loss_cons = torch.stack([self.simclr_lss(features=F.normalize(scl_features[:,h], dim=2), labels=scl_labels) for h in range(scl_n_heads)]).sum()
-                
-                loss_cons /= scl_n_heads * scl_features.shape[0]
-                loss_cons *= self.args.lambd
+            loss_cons = torch.stack([self.simclr_lss(features=F.normalize(scl_features[:,h], dim=2), labels=scl_labels) for h in range(scl_n_heads)]).sum()
+            
+            loss_cons /= scl_n_heads * scl_features.shape[0]
+            loss_cons *= self.args.lambd
 
         # Past Logits Constraint
         loss_constr_past = torch.tensor(0.).type(loss_stream.dtype)
@@ -270,7 +269,7 @@ class XDer(ContinualModel):
             if (mask).any():
                 loss_constr_futu = self.args.eta * loss_constr[mask].mean()
             
-        loss = loss_stream + loss_der + loss_derpp + loss_cons + loss_dp + loss_constr_futu + loss_constr_past
+        loss = loss_stream + loss_der + loss_derpp + loss_cons + loss_constr_futu + loss_constr_past
         
         loss.backward()
         self.opt.step()
