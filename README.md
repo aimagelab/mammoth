@@ -75,8 +75,9 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 @article{boschini2022class,
   title={Class-Incremental Continual Learning into the eXtended DER-verse},
   author={Boschini, Matteo and Bonicelli, Lorenzo and Buzzega, Pietro and Porrello, Angelo and Calderara, Simone},
-  journal={arXiv preprint arXiv:2201.00766},
-  year={2022}
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  year={2022},
+  publisher={IEEE}
 }
 
 @inproceedings{buzzega2020dark,
