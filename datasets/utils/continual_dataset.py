@@ -92,15 +92,15 @@ class ContinualDataset:
 
     @staticmethod
     def get_epochs():
-        pass
+        raise NotImplementedError
 
     @staticmethod
     def get_batch_size():
-        pass
+        raise NotImplementedError
 
     @staticmethod
     def get_minibatch_size():
-        pass
+        raise NotImplementedError
 
 
 

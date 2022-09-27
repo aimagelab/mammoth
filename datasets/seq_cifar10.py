@@ -110,3 +110,15 @@ class SequentialCIFAR10(ContinualDataset):
     @staticmethod
     def get_scheduler(model, args):
         return None
+
+    @staticmethod
+    def get_epochs():
+        return 50
+
+    @staticmethod
+    def get_batch_size():
+        return 32
+
+    @staticmethod
+    def get_minibatch_size():
+        return SequentialCIFAR10.get_batch_size()
