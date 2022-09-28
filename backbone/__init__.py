@@ -47,6 +47,12 @@ class MammothBackbone(nn.Module):
         super(MammothBackbone, self).__init__()
 
     def forward(self, x: torch.Tensor, returnt='out') -> torch.Tensor:
+        """
+        Compute a forward pass.
+        :param x: input tensor (batch_size, *input_shape)
+        :param returnt: return type (a string among 'out', 'features', 'all')
+        :return: output tensor (output_classes)
+        """
         raise NotImplementedError
 
     def features(self, x: torch.Tensor) -> torch.Tensor:
