@@ -3,17 +3,19 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from torchvision.datasets import MNIST
-import torchvision.transforms as transforms
-from datasets.transforms.permutation import Permutation
-from torch.utils.data import DataLoader
-from backbone.MNISTMLP import MNISTMLP
+from typing import Tuple, Type
+
 import torch.nn.functional as F
-from utils.conf import base_path_dataset as base_path
+import torchvision.transforms as transforms
+from backbone.MNISTMLP import MNISTMLP
 from PIL import Image
-from datasets.utils.validation import get_train_val
-from typing import Tuple
+from torch.utils.data import DataLoader
+from torchvision.datasets import MNIST
+
+from datasets.transforms.permutation import Permutation
 from datasets.utils.continual_dataset import ContinualDataset
+from datasets.utils.validation import get_train_val
+from utils.conf import base_path_dataset as base_path
 
 
 def store_mnist_loaders(transform, setting):
@@ -45,7 +47,7 @@ class MyMNIST(MNIST):
         super(MyMNIST, self).__init__(root, train, transform,
                                       target_transform, download)
 
-    def __getitem__(self, index: int) -> Tuple[type(Image), int, type(Image)]:
+    def __getitem__(self, index: int) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
         :param index: index of the element to be returned
@@ -77,7 +79,7 @@ class PermutedMNIST(ContinualDataset):
         transform = transforms.Compose((transforms.ToTensor(), Permutation()))
         train, test = store_mnist_loaders(transform, self)
         return train, test
-        
+
     @staticmethod
     def get_backbone():
         return MNISTMLP(28 * 28, PermutedMNIST.N_CLASSES_PER_TASK)

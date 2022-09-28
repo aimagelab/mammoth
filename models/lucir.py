@@ -3,20 +3,22 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import math
 from copy import deepcopy
-from models.icarl import fill_buffer
-from utils.batch_norm import bn_track_stats
 
-from torch.utils.data.dataloader import DataLoader
+import numpy as np
 import torch
 import torch.nn.functional as F
 from datasets import get_dataset
-from utils.buffer import Buffer, icarl_replay
-from utils.args import *
-from models.utils.continual_model import ContinualModel
-import numpy as np
-import math
 from torch import nn
+from torch.utils.data.dataloader import DataLoader
+
+from models.icarl import fill_buffer
+from models.utils.continual_model import ContinualModel
+from utils.args import *
+from utils.batch_norm import bn_track_stats
+from utils.buffer import Buffer, icarl_replay
+
 
 def lucir_batch_hard_triplet_loss(labels, embeddings, k, margin, num_old_classes):
     """
@@ -143,13 +145,13 @@ class Lucir(ContinualModel):
             'params': fix_weights, 'lr': 0, 'momentum': self.args.optim_mom, 'weight_decay': 0}])
 
         self.ft_lr_strat = [10]
-    
+
         self.c_epoch = -1
 
     def update_classifier(self):
         self.net.classifier.task += 1
         self.net.classifier.reset_weight(self.task)
-        
+
     def forward(self, x):
         with torch.no_grad():
             outputs = self.net(x)
@@ -169,7 +171,7 @@ class Lucir(ContinualModel):
         loss.backward()
 
         self.opt.step()
-            
+
         return loss.item()
 
     def get_loss(self, inputs: torch.Tensor, labels: torch.Tensor,
@@ -186,7 +188,7 @@ class Lucir(ContinualModel):
         ac = (task_idx + 1) * self.dataset.N_CLASSES_PER_TASK
 
         outputs = self.net(inputs, returnt='features').float()
-        
+
         cos_output = self.net.classifier.noscale_forward(outputs)
         outputs = outputs.reshape(outputs.size(0), -1)
 
@@ -250,7 +252,7 @@ class Lucir(ContinualModel):
         self.lamda_cos_sim = math.sqrt(
             self.task)*float(self.args.lamda_base)
 
-        
+
     def imprint_weights(self, dataset):
         self.net.eval()
         old_embedding_norm = torch.cat([self.net.classifier.weights[i] for i in range(self.task)]).norm(

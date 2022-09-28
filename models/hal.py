@@ -3,14 +3,16 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import torch
-from utils.buffer import Buffer
-from utils.args import *
-from models.utils.continual_model import ContinualModel
-from datasets import get_dataset
-import numpy as np
-from torch.optim import SGD
 import sys
+
+import numpy as np
+import torch
+from datasets import get_dataset
+from torch.optim import SGD
+
+from models.utils.continual_model import ContinualModel
+from utils.args import *
+from utils.buffer import Buffer
 
 
 def get_parser() -> ArgumentParser:

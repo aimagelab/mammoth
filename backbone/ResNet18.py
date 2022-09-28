@@ -3,11 +3,13 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from typing import List
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.functional import relu, avg_pool2d
-from typing import List
+from torch.nn.functional import avg_pool2d, relu
+
 from backbone import MammothBackbone
 
 
@@ -123,7 +125,7 @@ class ResNet(MammothBackbone):
         :param returnt: return type (a string among 'out', 'features', 'all')
         :return: output tensor (output_classes)
         """
-        
+
         out = relu(self.bn1(self.conv1(x))) # 64, 32, 32
         if hasattr(self, 'maxpool'):
             out = self.maxpool(out)
@@ -138,12 +140,12 @@ class ResNet(MammothBackbone):
             return feature
 
         out = self.classifier(feature)
-        
+
         if returnt == 'out':
             return out
         elif returnt == 'all':
             return (out, feature)
-        
+
         raise NotImplementedError("Unknown return type")
 
 

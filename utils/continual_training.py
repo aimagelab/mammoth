@@ -4,13 +4,21 @@
 # LICENSE file in the root directory of this source tree.
 
 
+from argparse import Namespace
+
 import torch
 from datasets import get_dataset
 from models import get_model
-from utils.status import progress_bar
 from models.utils.continual_model import ContinualModel
-from argparse import Namespace
+
 from utils.loggers import *
+from utils.status import progress_bar
+
+try:
+    import wandb
+except ImportError:
+    wandb = None
+
 
 def evaluate(model: ContinualModel, dataset) -> float:
     """
@@ -40,7 +48,7 @@ def train(args: Namespace):
     :param dataset: the continual dataset at hand
     :param args: the arguments of the current execution
     """
-        
+
 
     dataset = get_dataset(args)
     backbone = dataset.get_backbone()
@@ -50,6 +58,11 @@ def train(args: Namespace):
 
     if not args.disable_log:
         logger = Logger(dataset.SETTING, dataset.NAME, model.NAME)
+
+    if not args.nowand:
+        assert wandb is not None, "Wandb not installed, please install it or run without wandb"
+        wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args))
+        args.wandb_url = wandb.run.get_url()
 
     model.net.train()
     epoch, i = 0, 0
@@ -67,8 +80,11 @@ def train(args: Namespace):
     acc = evaluate(model, dataset)
     print('Accuracy:', acc)
 
-    if args.csv_log:
+    if not args.disable_log:
         logger.log(acc)
         logger.write(vars(args))
-    
-    # TODO add wandb here
+
+    if not args.nowand:
+        wandb.log({'Accuracy': acc})
+        wandb.finish()
+

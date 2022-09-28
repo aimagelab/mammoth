@@ -2,14 +2,15 @@
 # Github repo: https://github.com/lukemelas/EfficientNet-PyTorch
 # With adjustments and added comments by workingcoder (github username).
 
-import torch
-import re
+import collections
 import math
-from torch.utils import model_zoo
+import re
+from functools import partial
+
+import torch
 from torch import nn
 from torch.nn import functional as F
-import collections
-from functools import partial
+from torch.utils import model_zoo
 
 from backbone import MammothBackbone
 
@@ -802,7 +803,7 @@ class EfficientNet(MammothBackbone):
         """
         # Stem
         x = self._swish(self._bn0(self._conv_stem(inputs)))
-        
+
         # Blocks
         for idx, block in enumerate(self._blocks):
             drop_connect_rate = self._global_params.drop_connect_rate
@@ -814,7 +815,7 @@ class EfficientNet(MammothBackbone):
         x = self._swish(self._bn1(self._conv_head(x)))
 
         return x
-        
+
     def activations_hook(self, grad):
         self.gradients = grad
 
@@ -828,7 +829,7 @@ class EfficientNet(MammothBackbone):
         Returns:
             Output of this model after processing.
         """
-        # Convolution layers 
+        # Convolution layers
         x = self.extract_features(inputs)
 
         # Pooling and final linear layer
@@ -942,7 +943,7 @@ class EfficientNet(MammothBackbone):
             Conv2d = get_same_padding_conv2d(image_size=self._global_params.image_size)
             out_channels = round_filters(32, self._global_params)
             self._conv_stem = Conv2d(in_channels, out_channels, kernel_size=3, stride=2, bias=False)
-    
+
     # TODO se va piallare
     # def get_params(self, discard_classifier=False) -> torch.Tensor:
     #     """

@@ -3,12 +3,14 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from typing import List
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from backbone import MammothBackbone, xavier, num_flat_features
-from backbone.utils.modules import ListModule, AlphaModule
-from typing import List
+
+from backbone import MammothBackbone, num_flat_features, xavier
+from backbone.utils.modules import AlphaModule, ListModule
 
 
 class MNISTMLP_PNN(MammothBackbone):
@@ -103,5 +105,5 @@ class MNISTMLP_PNN(MammothBackbone):
             x = self.classifier(x)
         if returnt == 'out':
             return x
-        
+
         raise NotImplementedError("Unknown return type")

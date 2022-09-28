@@ -3,17 +3,13 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from datetime import datetime
 import sys
-import os
-from utils.conf import base_path
-from typing import Any, Dict, Union
-from torch import nn
-from argparse import Namespace
+from datetime import datetime
 from time import time
-from datasets.utils.continual_dataset import ContinualDataset
+from typing import Union
 
-class ProgressBar():
+
+class ProgressBar:
     def __init__(self, verbose=True):
         self.old_time = 0
         self.running_sum = 0

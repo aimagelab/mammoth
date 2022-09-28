@@ -1,5 +1,6 @@
 import sys
-# persistent_locals2 has been co-authored with Andrea Maffezzoli
+
+# persistent_locals has been co-authored with Andrea Maffezzoli
 class persistent_locals(object):
     def __init__(self, func):
         self._locals = {}

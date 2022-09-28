@@ -3,15 +3,15 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import csv
 import os
 import sys
-from typing import Dict, Any
-from utils.metrics import *
+from typing import Any, Dict
+
+import numpy as np
 
 from utils import create_if_not_exists
 from utils.conf import base_path
-import numpy as np
+from utils.metrics import *
 
 useless_args = ['dataset', 'tensorboard', 'validation', 'model',
                 'csv_log', 'notes', 'load_best_args']
@@ -142,7 +142,7 @@ class Logger:
 
         for i, acc in enumerate(self.accs):
             wrargs['accmean_task' + str(i + 1)] = acc
-        
+
         for i, fa in enumerate(self.fullaccs):
             for j, acc in enumerate(fa):
                 wrargs['accuracy_' + str(j + 1) + '_task' + str(i + 1)] = acc
@@ -152,7 +152,7 @@ class Logger:
         wrargs['forgetting'] = self.forgetting
 
         target_folder = base_path() + "results/"
-        
+
         create_if_not_exists(target_folder + self.setting)
         create_if_not_exists(target_folder + self.setting +
                              "/" + self.dataset)
@@ -171,7 +171,7 @@ class Logger:
 
             for i, acc in enumerate(self.accs_mask_classes):
                 wrargs['accmean_task' + str(i + 1)] = acc
-            
+
             for i, fa in enumerate(self.fullaccs_mask_classes):
                 for j, acc in enumerate(fa):
                     wrargs['accuracy_' + str(j + 1) + '_task' + str(i + 1)] = acc

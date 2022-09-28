@@ -3,14 +3,16 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import numpy as np
+import torch
 from datasets import get_dataset
 from torch.nn import functional as F
-from utils.args import *
-import torch
+
 from models.utils.continual_model import ContinualModel
-from utils.buffer import Buffer
+from utils.args import *
 from utils.batch_norm import bn_track_stats
-import numpy as np
+from utils.buffer import Buffer
+
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual learning via'
@@ -20,12 +22,12 @@ def get_parser() -> ArgumentParser:
     add_rehearsal_args(parser)
     parser.add_argument('--alpha', type=float, required=True, help='Penalty weight.')
     parser.add_argument('--beta', type=float, required=True, help='Penalty weight.')
-    
+
     parser.add_argument('--gamma', type=float, default=0.85)
     parser.add_argument('--eta', type=float, default=0.1)
     parser.add_argument('--m', type=float, default=0.3)
 
-  
+
     return parser
 
 
@@ -79,12 +81,12 @@ class XDerRPC(ContinualModel):
         self.cpt = get_dataset(args).N_CLASSES_PER_TASK
         self.tasks = get_dataset(args).N_TASKS
         self.task = 0
-        self.update_counter = torch.zeros(self.args.buffer_size).to(self.device)  
+        self.update_counter = torch.zeros(self.args.buffer_size).to(self.device)
         self.pernicehead = torch.from_numpy(dsimplex(self.cpt * self.tasks)).float().to(self.device)
 
         if not hasattr(self.args, 'start_from'):
             self.args.start_from=0
-    
+
     def forward(self, x):
         x = self.net(x)[:, :-1]
         if x.dtype != self.pernicehead.dtype:
@@ -112,7 +114,7 @@ class XDerRPC(ContinualModel):
                         logits=log[:first],
                         task_labels=tasklab[:first]
                     )
-            
+
             # Add new task data
             examples_last_task = self.buffer.buffer_size - self.buffer.num_seen_examples
             examples_per_class = examples_last_task // self.cpt
@@ -147,32 +149,32 @@ class XDerRPC(ContinualModel):
                                                             (self.task))[flags])
 
                     # Update future past logits
-                    buf_idx, buf_inputs, buf_labels, buf_logits, _ = self.buffer.get_data(self.buffer.buffer_size, 
+                    buf_idx, buf_inputs, buf_labels, buf_logits, _ = self.buffer.get_data(self.buffer.buffer_size,
                         transform=self.transform, return_index=True)
-                    
-                    
+
+
                     buf_outputs = []
                     while len(buf_inputs):
                         buf_outputs.append(self(buf_inputs[:self.args.batch_size]))
                         buf_inputs = buf_inputs[self.args.batch_size:]
                     buf_outputs = torch.cat(buf_outputs)
 
-                    chosen = (buf_labels // self.cpt) < self.task 
-                    
+                    chosen = (buf_labels // self.cpt) < self.task
+
                     if chosen.any():
                         to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.task, self.tasks - self.task)
                         self.buffer.logits[buf_idx[chosen],:] = to_transplant.to(self.buffer.device)
                         self.buffer.task_labels[buf_idx[chosen]] = self.task
-                    
+
         self.task += 1
         self.update_counter = torch.zeros(self.args.buffer_size).to(self.device)
 
         self.train(tng)
 
     def update_logits(self, old, new, gt, task_start, n_tasks=1):
-        
+
         transplant = new[:, task_start*self.cpt:(task_start+n_tasks)*self.cpt]
-        
+
         gt_values = old[torch.arange(len(gt)), gt]
         max_values = transplant.max(1).values
         coeff = self.args.gamma * gt_values / max_values
@@ -180,12 +182,12 @@ class XDerRPC(ContinualModel):
         mask = (max_values > gt_values).unsqueeze(1).repeat(1,self.cpt * n_tasks)
         transplant[mask] *= coeff[mask]
         old[:, task_start*self.cpt:(task_start+n_tasks)*self.cpt] = transplant
-        
+
         return old
 
     def observe(self, inputs, labels, not_aug_inputs):
 
-        
+
         self.opt.zero_grad()
 
         outputs = self(inputs).float()
@@ -208,7 +210,7 @@ class XDerRPC(ContinualModel):
             buf_idx2, buf_inputs2, buf_labels2, buf_logits2, buf_tl2 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True)
             buf_outputs2 = self(buf_inputs2).float()
-            
+
             buf_ce = self.loss(buf_outputs2[:, :(self.task)*self.cpt], buf_labels2)
             loss_derpp = self.args.beta * buf_ce
 
@@ -231,7 +233,7 @@ class XDerRPC(ContinualModel):
 
             # Update Future Past Logits
             with torch.no_grad():
-                chosen = (buf_labels // self.cpt) < self.task     
+                chosen = (buf_labels // self.cpt) < self.task
                 self.update_counter[buf_idx[chosen]] += 1
                 c = chosen.clone()
                 chosen[c] = torch.rand_like(chosen[c].float()) * self.update_counter[buf_idx[c]] < 1
@@ -242,19 +244,19 @@ class XDerRPC(ContinualModel):
                     self.buffer.logits[buf_idx[chosen],:] = to_transplant.to(self.buffer.device)
                     self.buffer.task_labels[buf_idx[chosen]] = self.task
 
-        
+
         # Past Logits Constraint
         loss_constr_past = torch.tensor(0.).type(loss_stream.dtype)
-        if self.task > 0: 
+        if self.task > 0:
             chead = F.softmax(outputs[:, :(self.task+1)*self.cpt], 1)
-        
+
             good_head = chead[:,self.task*self.cpt:(self.task+1)*self.cpt]
             bad_head  = chead[:,:self.cpt*self.task]
-            
+
             loss_constr = bad_head.max(1)[0].detach() + self.args.m - good_head.max(1)[0]
-            
+
             mask = loss_constr > 0
-                
+
             if (mask).any():
                 loss_constr_past = self.args.eta * loss_constr[mask].mean()
 
@@ -271,13 +273,13 @@ class XDerRPC(ContinualModel):
                 good_head  = torch.cat([good_head, torch.stack(buf_outputs.split(self.cpt, 1), 1)[torch.arange(len(buf_tlgt)), buf_tlgt]])
 
             loss_constr = bad_head.max(1)[0] + self.args.m - good_head.max(1)[0]
-            
+
             mask = loss_constr > 0
             if (mask).any():
                 loss_constr_futu = self.args.eta * loss_constr[mask].mean()
-            
+
         loss = loss_stream + loss_der + loss_derpp + loss_constr_futu + loss_constr_past
-        
+
         loss.backward()
         self.opt.step()
 

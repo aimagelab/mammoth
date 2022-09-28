@@ -3,15 +3,15 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from typing import List
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.functional import relu, avg_pool2d
-from backbone.utils.modules import ListModule, AlphaModule
-from backbone.ResNet18 import conv3x3
-from backbone.ResNet18 import BasicBlock
-from backbone.ResNet18 import ResNet
-from typing import List
+from torch.nn.functional import avg_pool2d, relu
+
+from backbone.ResNet18 import BasicBlock, ResNet, conv3x3
+from backbone.utils.modules import AlphaModule, ListModule
 
 
 class BasicBlockPnn(BasicBlock):
@@ -144,7 +144,7 @@ class ResNetPNN(ResNet):
             y = y.view(out.size(0), -1)
             y = self.lateral_classifier(y)
             out = self.linear(out) + y
-        
+
         if returnt == 'out':
             return out
 

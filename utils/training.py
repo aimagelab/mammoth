@@ -4,15 +4,18 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-import torch
-from utils.loggers import *
-from argparse import Namespace
-from models.utils.continual_model import ContinualModel
-from datasets.utils.continual_dataset import ContinualDataset
-from typing import Tuple
-from datasets import get_dataset
 import sys
+from argparse import Namespace
+from typing import Tuple
+
+import torch
+from datasets import get_dataset
+from datasets.utils.continual_dataset import ContinualDataset
+from models.utils.continual_model import ContinualModel
+
+from utils.loggers import *
 from utils.status import ProgressBar
+
 try:
     import wandb
 except ImportError:
@@ -84,6 +87,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     print(args)
 
     if not args.nowand:
+        assert wandb is not None, "Wandb not installed, please install it or run without wandb"
         wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args))
         args.wandb_url = wandb.run.get_url()
 
@@ -92,7 +96,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
     if not args.disable_log:
         logger = Logger(dataset.SETTING, dataset.NAME, model.NAME)
-    
+
     progress_bar = ProgressBar(verbose=not args.non_verbose)
 
     if not args.ignore_other_metrics:
@@ -137,7 +141,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     loss = model.meta_observe(inputs, labels, not_aug_inputs)
                 assert not math.isnan(loss)
                 progress_bar.prog(i, len(train_loader), epoch, t, loss)
-            
+
             if scheduler is not None:
                 scheduler.step()
 
@@ -159,10 +163,10 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             d2={'RESULT_class_mean_accs': mean_acc[0], 'RESULT_task_mean_accs': mean_acc[1],
                 **{f'RESULT_class_acc_{i}': a for i, a in enumerate(accs[0])},
                 **{f'RESULT_task_acc_{i}': a for i, a in enumerate(accs[1])}}
-                
+
             wandb.log(d2)
 
-        
+
 
     if not args.disable_log and not args.ignore_other_metrics:
         logger.add_bwt(results, results_mask_classes)

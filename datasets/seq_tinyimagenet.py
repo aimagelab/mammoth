@@ -38,7 +38,6 @@ class TinyImagenet(Dataset):
 
                 print('Downloading dataset')
                 ln = "https://unimore365-my.sharepoint.com/:u:/g/personal/263133_unimore_it/EVKugslStrtNpyLGbgrhjaABqRHcE3PB_r2OEaV7Jy94oQ?e=9K29aD"
-                print('Downloading dataset')
                 download(ln, filename=os.path.join(root, 'tiny-imagenet-processed.zip'), unzip=True, unzip_path=root, clean=True)
 
         self.data = []

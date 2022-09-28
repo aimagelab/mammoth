@@ -3,13 +3,17 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import torch.nn as nn
-from torch.optim import SGD
-from utils.magic import persistent_locals
-import torch
-import torchvision
+from abc import abstractmethod
 from argparse import Namespace
+
+import torch
+import torch.nn as nn
+import torchvision
+from torch.optim import SGD
+
 from utils.conf import get_device
+from utils.magic import persistent_locals
+
 try:
     import wandb
 except ImportError:
@@ -51,6 +55,7 @@ class ContinualModel(nn.Module):
             ret = self.observe(*args, **kwargs)
         return ret
 
+    @abstractmethod
     def observe(self, inputs: torch.Tensor, labels: torch.Tensor,
                 not_aug_inputs: torch.Tensor) -> float:
         """

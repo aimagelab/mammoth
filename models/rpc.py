@@ -4,10 +4,12 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-from utils.buffer import Buffer
-from utils.args import *
-from models.utils.continual_model import ContinualModel
 from datasets import get_dataset
+
+from models.utils.continual_model import ContinualModel
+from utils.args import *
+from utils.buffer import Buffer
+
 
 def dsimplex(num_classes=10):
     def simplex_coordinates2(m):
@@ -91,7 +93,7 @@ class RPC(ContinualModel):
                     examples=ex[:first],
                     labels = lab[:first]
                 )
-        
+
         # add new task
         examples_last_task = self.buffer.buffer_size - self.buffer.num_seen_examples
         examples_per_class = examples_last_task // self.cpt

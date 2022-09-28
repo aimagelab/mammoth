@@ -4,14 +4,13 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the gem_license file in the root of this source tree.
 
-import quadprog
-
 import numpy as np
+import quadprog
 import torch
-from models.utils.continual_model import ContinualModel
 
-from utils.buffer import Buffer
+from models.utils.continual_model import ContinualModel
 from utils.args import *
+from utils.buffer import Buffer
 
 
 def get_parser() -> ArgumentParser:
@@ -115,7 +114,7 @@ class Gem(ContinualModel):
 
         # add data to the buffer
         samples_per_task = self.args.buffer_size // dataset.N_TASKS
-        
+
         loader = dataset.train_loader
         cur_y, cur_x = next(iter(loader))[1:]
         self.buffer.add_data(

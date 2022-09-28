@@ -3,16 +3,17 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from torch.optim import SGD
-
-from utils.args import *
-from models.utils.continual_model import ContinualModel
-from datasets.utils.validation import ValidationDataset
-from utils.status import progress_bar
-import torch
-import numpy as np
 import math
+
+import numpy as np
+import torch
+from datasets.utils.validation import ValidationDataset
+from torch.optim import SGD
 from torchvision import transforms
+
+from models.utils.continual_model import ContinualModel
+from utils.args import *
+from utils.status import progress_bar
 
 
 def get_parser() -> ArgumentParser:
@@ -77,7 +78,7 @@ class Joint(ContinualModel):
             self.old_data.append(dataset.train_loader)
             # train
             if len(dataset.test_loaders) != dataset.N_TASKS: return
-            
+
             all_inputs = []
             all_labels = []
             for source in self.old_data:
@@ -101,7 +102,7 @@ class Joint(ContinualModel):
                     loss.backward()
                     self.opt.step()
                     progress_bar(i, int(math.ceil(len(all_inputs) / bs)), e, 'J', loss.item())
-                
+
                 if scheduler is not None:
                     scheduler.step()
 

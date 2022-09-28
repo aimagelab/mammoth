@@ -6,8 +6,9 @@
 import torch
 from datasets import get_dataset
 from torch.optim import SGD
-from utils.args import *
+
 from models.utils.continual_model import ContinualModel
+from utils.args import *
 
 
 def get_parser() -> ArgumentParser:

@@ -3,7 +3,6 @@ Author: Yonglong Tian (yonglong@mit.edu)
 Date: May 07, 2020
 Source: https://github.com/HobbitLong/SupContrast/blob/master/losses.py
 """
-from __future__ import print_function
 
 import torch
 import torch.nn as nn

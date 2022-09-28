@@ -3,16 +3,26 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from torchvision.datasets import CIFAR10
+from typing import Tuple
+
+import torch.nn.functional as F
 import torchvision.transforms as transforms
 from backbone.ResNet18 import resnet18
-import torch.nn.functional as F
-from datasets.seq_tinyimagenet import base_path
 from PIL import Image
-from datasets.utils.validation import get_train_val
-from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
-from typing import Tuple
+from torchvision.datasets import CIFAR10
+
+from datasets.seq_tinyimagenet import base_path
 from datasets.transforms.denormalization import DeNormalize
+from datasets.utils.continual_dataset import (ContinualDataset,
+                                              store_masked_loaders)
+from datasets.utils.validation import get_train_val
+
+class TCIFAR10(CIFAR10):
+    """Workaround to avoid printing the already downloaded messages."""
+    def __init__(self, root, train=True, transform=None,
+                 target_transform=None, download=False) -> None:
+        self.root = root
+        super(TCIFAR10, self).__init__(root, train, transform, target_transform, download=not self._check_integrity())
 
 class MyCIFAR10(CIFAR10):
     """
@@ -21,9 +31,10 @@ class MyCIFAR10(CIFAR10):
     def __init__(self, root, train=True, transform=None,
                  target_transform=None, download=False) -> None:
         self.not_aug_transform = transforms.Compose([transforms.ToTensor()])
-        super(MyCIFAR10, self).__init__(root, train, transform, target_transform, download)
+        self.root = root
+        super(MyCIFAR10, self).__init__(root, train, transform, target_transform, download=not self._check_integrity())
 
-    def __getitem__(self, index: int) -> Tuple[type(Image), int, type(Image)]:
+    def __getitem__(self, index: int) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
         :param index: index of the element to be returned
@@ -74,7 +85,7 @@ class SequentialCIFAR10(ContinualDataset):
             train_dataset, test_dataset = get_train_val(train_dataset,
                                                     test_transform, self.NAME)
         else:
-            test_dataset = CIFAR10(base_path() + 'CIFAR10',train=False,
+            test_dataset = TCIFAR10(base_path() + 'CIFAR10',train=False,
                                    download=True, transform=test_transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)

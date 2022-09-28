@@ -27,7 +27,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     parser.add_argument('--optim_mom', type=float, default=0.,
                         help='optimizer momentum.')
     parser.add_argument('--optim_nesterov', type=int, default=0,
-                        help='optimizer nesterov momentum.')    
+                        help='optimizer nesterov momentum.')
 
     parser.add_argument('--n_epochs', type=int,
                         help='Batch size.')
@@ -42,7 +42,7 @@ def add_management_args(parser: ArgumentParser) -> None:
 
     parser.add_argument('--non_verbose', default=0, choices=[0, 1], type=int, help='Make progress bars non verbose')
     parser.add_argument('--disable_log', default=0, choices=[0, 1], type=int, help='Enable csv logging')
-    
+
     parser.add_argument('--validation', default=0, choices=[0, 1], type=int,
                         help='Test on the validation set')
     parser.add_argument('--ignore_other_metrics', default=0, choices=[0, 1], type=int,
