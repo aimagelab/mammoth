@@ -8,7 +8,6 @@ import torch
 from datasets import get_dataset
 from models import get_model
 from utils.status import progress_bar
-from utils.status import create_fake_stash
 from models.utils.continual_model import ContinualModel
 from argparse import Namespace
 from utils.loggers import *
