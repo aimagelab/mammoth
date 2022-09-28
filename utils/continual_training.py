@@ -4,14 +4,20 @@
 # LICENSE file in the root directory of this source tree.
 
 
+from argparse import Namespace
+
 import torch
 from datasets import get_dataset
 from models import get_model
-from utils.status import progress_bar
-from utils.tb_logger import *
-from utils.status import create_fake_stash
 from models.utils.continual_model import ContinualModel
-from argparse import Namespace
+
+from utils.loggers import *
+from utils.status import progress_bar
+
+try:
+    import wandb
+except ImportError:
+    wandb = None
 
 
 def evaluate(model: ContinualModel, dataset) -> float:
@@ -42,8 +48,7 @@ def train(args: Namespace):
     :param dataset: the continual dataset at hand
     :param args: the arguments of the current execution
     """
-    if args.csv_log:
-        from utils.loggers import CsvLogger
+
 
     dataset = get_dataset(args)
     backbone = dataset.get_backbone()
@@ -51,12 +56,13 @@ def train(args: Namespace):
     model = get_model(args, backbone, loss, dataset.get_transform())
     model.net.to(model.device)
 
-    model_stash = create_fake_stash(model, args)
+    if not args.disable_log:
+        logger = Logger(dataset.SETTING, dataset.NAME, model.NAME)
 
-    if args.csv_log:
-        csv_logger = CsvLogger(dataset.SETTING, dataset.NAME, model.NAME)
-    if args.tensorboard:
-        tb_logger = TensorboardLogger(args, dataset.SETTING, model_stash)
+    if not args.nowand:
+        assert wandb is not None, "Wandb not installed, please install it or run without wandb"
+        wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args))
+        args.wandb_url = wandb.run.get_url()
 
     model.net.train()
     epoch, i = 0, 0
@@ -66,8 +72,6 @@ def train(args: Namespace):
         not_aug_inputs = not_aug_inputs.to(model.device)
         loss = model.observe(inputs, labels, not_aug_inputs)
         progress_bar(i, dataset.LENGTH // args.batch_size, epoch, 'C', loss)
-        if args.tensorboard:
-            tb_logger.log_loss_gcl(loss, i)
         i += 1
 
     if model.NAME == 'joint_gcl':
@@ -76,6 +80,11 @@ def train(args: Namespace):
     acc = evaluate(model, dataset)
     print('Accuracy:', acc)
 
-    if args.csv_log:
-        csv_logger.log(acc)
-        csv_logger.write(vars(args))
+    if not args.disable_log:
+        logger.log(acc)
+        logger.write(vars(args))
+
+    if not args.nowand:
+        wandb.log({'Accuracy': acc})
+        wandb.finish()
+

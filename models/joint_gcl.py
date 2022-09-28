@@ -3,17 +3,14 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import math
+
+import torch
 from torch.optim import SGD
 
-from utils.args import *
 from models.utils.continual_model import ContinualModel
-from datasets.utils.validation import ValidationDataset
+from utils.args import *
 from utils.status import progress_bar
-import torch
-import numpy as np
-import math
-from tqdm import tqdm
-from torchvision import transforms
 
 
 def get_parser() -> ArgumentParser:

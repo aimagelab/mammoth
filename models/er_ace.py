@@ -4,11 +4,12 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-import torch.nn.functional as F
-from utils.buffer import Buffer
-from utils.args import *
-from models.utils.continual_model import ContinualModel
 from datasets import get_dataset
+
+from models.utils.continual_model import ContinualModel
+from utils.args import *
+from utils.buffer import Buffer
+
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual learning via'
@@ -32,7 +33,7 @@ class ErACE(ContinualModel):
 
     def end_task(self, dataset):
         self.task += 1
-        
+
     def observe(self, inputs, labels, not_aug_inputs):
 
         present = labels.unique()

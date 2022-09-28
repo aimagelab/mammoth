@@ -5,7 +5,8 @@
 
 import torch
 import torch.nn as nn
-from backbone import MammothBackbone, xavier, num_flat_features
+
+from backbone import MammothBackbone, num_flat_features, xavier
 
 
 class MNISTMLP(MammothBackbone):
@@ -37,7 +38,7 @@ class MNISTMLP(MammothBackbone):
         self.classifier = nn.Linear(100, self.output_size)
         self.net = nn.Sequential(self._features, self.classifier)
         self.reset_parameters()
-        
+
     def reset_parameters(self) -> None:
         """
         Calls the Xavier parameter initialization function.
@@ -53,7 +54,7 @@ class MNISTMLP(MammothBackbone):
         x = x.view(-1, num_flat_features(x))
 
         feats = self._features(x)
-        
+
         if returnt == 'features':
             return feats
 
@@ -63,5 +64,5 @@ class MNISTMLP(MammothBackbone):
             return out
         elif returnt == 'all':
             return (out, feats)
-        
+
         raise NotImplementedError("Unknown return type")

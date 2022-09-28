@@ -3,17 +3,18 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from torchvision.datasets import MNIST
-import torchvision.transforms as transforms
-from torch.utils.data import DataLoader
-from backbone.MNISTMLP import MNISTMLP
-import torch.nn.functional as F
-from utils.conf import base_path
-from PIL import Image
-import numpy as np
-from datasets.utils.validation import get_train_val
-from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
 from typing import Tuple
+
+import torch.nn.functional as F
+import torchvision.transforms as transforms
+from backbone.MNISTMLP import MNISTMLP
+from PIL import Image
+from torchvision.datasets import MNIST
+
+from datasets.utils.continual_dataset import (ContinualDataset,
+                                              store_masked_loaders)
+from datasets.utils.validation import get_train_val
+from utils.conf import base_path_dataset as base_path
 
 
 class MyMNIST(MNIST):
@@ -26,7 +27,7 @@ class MyMNIST(MNIST):
         super(MyMNIST, self).__init__(root, train,
                                       transform, target_transform, download)
 
-    def __getitem__(self, index: int) -> Tuple[type(Image), int, type(Image)]:
+    def __getitem__(self, index: int) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
         :param index: index of the element to be returned

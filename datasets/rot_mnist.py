@@ -3,12 +3,12 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import torchvision.transforms as transforms
-from datasets.transforms.rotation import Rotation
-from torch.utils.data import DataLoader
-from backbone.MNISTMLP import MNISTMLP
 import torch.nn.functional as F
+import torchvision.transforms as transforms
+from backbone.MNISTMLP import MNISTMLP
+
 from datasets.perm_mnist import store_mnist_loaders
+from datasets.transforms.rotation import Rotation
 from datasets.utils.continual_dataset import ContinualDataset
 
 

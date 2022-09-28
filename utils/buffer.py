@@ -3,11 +3,13 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import torch
-import numpy as np
-from typing import Tuple
-from torchvision import transforms
 from copy import deepcopy
+from typing import Tuple
+
+import numpy as np
+import torch
+from torchvision import transforms
+
 
 def icarl_replay(self, dataset, val_set_split=0):
     """
@@ -18,7 +20,7 @@ def icarl_replay(self, dataset, val_set_split=0):
     :param dataset: the dataset
     :param val_set_split: the fraction of the replay buffer to be used as validation set
     """
-        
+
     if self.task > 0:
         buff_val_mask = torch.rand(len(self.buffer)) < val_set_split
         val_train_mask = torch.zeros(len(dataset.train_loader.dataset.data)).bool()
@@ -26,12 +28,12 @@ def icarl_replay(self, dataset, val_set_split=0):
 
         if val_set_split > 0:
             self.val_loader = deepcopy(dataset.train_loader)
-        
+
         data_concatenate = torch.cat if type(dataset.train_loader.dataset.data) == torch.Tensor else np.concatenate
         need_aug = hasattr(dataset.train_loader.dataset, 'not_aug_transform')
         if not need_aug:
             refold_transform = lambda x: x.cpu()
-        else:    
+        else:
             data_shape = len(dataset.train_loader.dataset.data[0].shape)
             if data_shape == 3:
                 refold_transform = lambda x: (x.cpu()*255).permute([0, 2, 3, 1]).numpy().astype(np.uint8)
@@ -166,7 +168,7 @@ class Buffer:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str)
                 ret_tuple += (attr[choice],)
-        
+
         if not return_index:
             return ret_tuple
         else:

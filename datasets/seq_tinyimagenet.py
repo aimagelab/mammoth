@@ -8,7 +8,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 from backbone.ResNet18 import resnet18
 import torch.nn.functional as F
-from utils.conf import base_path
+from utils.conf import base_path_dataset as base_path
 from PIL import Image
 import os
 from datasets.utils.validation import get_train_val
@@ -34,15 +34,11 @@ class TinyImagenet(Dataset):
             if os.path.isdir(root) and len(os.listdir(root)) > 0:
                 print('Download not needed, files already on disk.')
             else:
-                from google_drive_downloader import GoogleDriveDownloader as gdd
+                from onedrivedownloader import download
 
-                # https://drive.google.com/file/d/1Sy3ScMBr0F4se8VZ6TAwDYF-nNGAAdxj/view
                 print('Downloading dataset')
-                gdd.download_file_from_google_drive(
-                    file_id='1Sy3ScMBr0F4se8VZ6TAwDYF-nNGAAdxj',
-
-                    dest_path=os.path.join(root, 'tiny-imagenet-processed.zip'),
-                    unzip=True)
+                ln = "https://unimore365-my.sharepoint.com/:u:/g/personal/263133_unimore_it/EVKugslStrtNpyLGbgrhjaABqRHcE3PB_r2OEaV7Jy94oQ?e=9K29aD"
+                download(ln, filename=os.path.join(root, 'tiny-imagenet-processed.zip'), unzip=True, unzip_path=root, clean=True)
 
         self.data = []
         for num in range(20):

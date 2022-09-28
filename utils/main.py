@@ -32,7 +32,7 @@ import datetime
 
 def lecun_fix():
     # Yann moved his website to CloudFlare. You need this now
-    from six.moves import urllib
+    from six.moves import urllib # pyright: ignore
     opener = urllib.request.build_opener()
     opener.addheaders = [('User-agent', 'Mozilla/5.0')]
     urllib.request.install_opener(opener)
@@ -71,7 +71,7 @@ def parse_args():
         to_parse.remove('--load_best_args')
         args = parser.parse_args(to_parse)
         if args.model == 'joint' and args.dataset == 'mnist-360':
-            args.model = 'joint_gcl'        
+            args.model = 'joint_gcl'
     else:
         get_parser = getattr(mod, 'get_parser')
         parser = get_parser()
@@ -85,8 +85,11 @@ def parse_args():
 def main(args=None):
     lecun_fix()
     if args is None:
-        args = parse_args()    
-    
+        args = parse_args()
+
+    os.putenv("MKL_SERVICE_FORCE_INTEL", "1")
+    os.putenv("NPY_MKL_FORCE_INTEL", "1")
+
     # Add uuid, timestamp and hostname for logging
     args.conf_jobnum = str(uuid.uuid4())
     args.conf_timestamp = str(datetime.datetime.now())
@@ -103,9 +106,13 @@ def main(args=None):
     backbone = dataset.get_backbone()
     loss = dataset.get_loss()
     model = get_model(args, backbone, loss, dataset.get_transform())
-    
+
+    if args.debug_mode:
+        args.nowand = 1
+
+
     # set job name
-    setproctitle.setproctitle('{}_{}_{}'.format(args.model, args.buffer_size if 'buffer_size' in args else 0, args.dataset))     
+    setproctitle.setproctitle('{}_{}_{}'.format(args.model, args.buffer_size if 'buffer_size' in args else 0, args.dataset))
 
     if isinstance(dataset, ContinualDataset):
         train(model, dataset, args)

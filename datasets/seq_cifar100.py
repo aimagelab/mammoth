@@ -3,19 +3,24 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from torchvision.datasets import CIFAR100
+from typing import Tuple
+
+import torch.nn.functional as F
+import torch.optim
 import torchvision.transforms as transforms
 from backbone.ResNet18 import resnet18
-import torch.nn.functional as F
-from utils.conf import base_path
 from PIL import Image
-from datasets.utils.validation import get_train_val
-from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
-from typing import Tuple
+from torchvision.datasets import CIFAR100
+
 from datasets.transforms.denormalization import DeNormalize
-import torch.optim
+from datasets.utils.continual_dataset import (ContinualDataset,
+                                              store_masked_loaders)
+from datasets.utils.validation import get_train_val
+from utils.conf import base_path_dataset as base_path
+
 
 class TCIFAR100(CIFAR100):
+    """Workaround to avoid printing the already downloaded messages."""
     def __init__(self, root, train=True, transform=None,
                  target_transform=None, download=False) -> None:
         self.root = root
@@ -31,7 +36,7 @@ class MyCIFAR100(CIFAR100):
         self.root = root
         super(MyCIFAR100, self).__init__(root, train, transform, target_transform, not self._check_integrity())
 
-    def __getitem__(self, index: int) -> Tuple[type(Image), int, type(Image)]:
+    def __getitem__(self, index: int) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
         :param index: index of the element to be returned
@@ -91,7 +96,7 @@ class SequentialCIFAR100(ContinualDataset):
                                    download=True, transform=test_transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
-        
+
         return train, test
 
     @staticmethod

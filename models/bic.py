@@ -3,17 +3,18 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import sys
+from copy import deepcopy
+
 import torch
 import torch.nn.functional as F
-from utils.buffer import Buffer, icarl_replay
-from utils.args import *
-from models.utils.continual_model import ContinualModel
-from torch.optim import SGD, Adam
 from datasets import get_dataset
-import sys
-from tqdm import tqdm
-from copy import deepcopy
+from torch.optim import  Adam
+
+from models.utils.continual_model import ContinualModel
+from utils.args import *
 from utils.batch_norm import bn_track_stats
+from utils.buffer import Buffer, icarl_replay
 
 # based on https://github.com/sairin1202/BIC
 
@@ -34,7 +35,7 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--wd_reg', type=float, default=None,
                         help='bias injector.')
     parser.add_argument('--distill_after_bic', type=int, default=1)
-    
+
     return parser
 
 
@@ -44,27 +45,27 @@ class BiC(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform):
         super().__init__(backbone, loss, args, transform)
-        
+
         dd = get_dataset(args)
         self.n_tasks = dd.N_TASKS
         self.cpt = dd.N_CLASSES_PER_TASK
         self.transform = transform
         self.buffer = Buffer(self.args.buffer_size, self.device)
-        
+
         self.task = 0
         self.lamda = 0
 
     def begin_task(self, dataset):
         if self.task > 0:
-            
+
             self.old_net = deepcopy(self.net.eval())
             if hasattr(self, 'corr_factors'):
                 self.old_corr = deepcopy(self.corr_factors)
             self.net.train()
             self.lamda = 1 / (self.task+1)
-            
+
             icarl_replay(self, dataset, val_set_split=self.args.valset_split)
-        
+
         if hasattr(self, 'corr_factors'):
             del self.corr_factors
 
@@ -79,7 +80,7 @@ class BiC(ContinualModel):
 
                     resp += self.forward(inputs, anticipate=fprefx == 'post')[:, :(self.task+1) * self.cpt].sum(0)
         resp /= len(self.val_loader.dataset)
-        
+
         if fprefx == 'pre':
             self.oldresp = resp.cpu()
 
@@ -96,7 +97,7 @@ class BiC(ContinualModel):
             self.biasopt = Adam([corr_factors], lr=0.001)
 
 
-            for l in (range(self.args.bic_epochs) if self.args.non_verbose else tqdm(range(self.args.bic_epochs))):
+            for l in range(self.args.bic_epochs) :
                 for data in self.val_loader:
 
                     inputs, labels, _ = data
@@ -105,7 +106,7 @@ class BiC(ContinualModel):
                     self.biasopt.zero_grad()
                     with torch.no_grad():
                         out = self.forward(inputs)
-                    
+
                     start_last_task = (self.task) * self.cpt
                     end_last_task = (self.task+1) * self.cpt
                     tout = out + 0
@@ -115,15 +116,15 @@ class BiC(ContinualModel):
                     loss_bic = self.loss(tout[:, :end_last_task], labels)
                     loss_bic.backward()
                     self.biasopt.step()
-            
+
             self.corr_factors = corr_factors
             print(self.corr_factors, file=sys.stderr)
-            
+
             self.evaluate_bias('post')
-            
+
             self.net.train()
 
-        self.task += 1        
+        self.task += 1
         self.build_buffer(dataset)
 
     def forward(self, x, anticipate=False):
@@ -143,7 +144,7 @@ class BiC(ContinualModel):
         dist_loss = torch.tensor(0.)
         if self.task > 0:
             with torch.no_grad():
-                
+
                 old_outputs = self.old_net(inputs)
                 if self.args.distill_after_bic:
                     if hasattr(self, 'old_corr'):
@@ -152,7 +153,7 @@ class BiC(ContinualModel):
                         old_outputs[:, start_last_task:end_last_task] *= self.old_corr[1].repeat_interleave(end_last_task - start_last_task)
                         old_outputs[:, start_last_task:end_last_task] += self.old_corr[0].repeat_interleave(end_last_task - start_last_task)
 
-            
+
             pi_hat = F.log_softmax(outputs[:,:self.task*self.cpt] / self.args.temp, dim=1)
             pi = F.softmax(old_outputs[:,:self.task*self.cpt] / self.args.temp, dim=1)
 
@@ -160,7 +161,7 @@ class BiC(ContinualModel):
 
         class_loss = self.loss(outputs[:,:(self.task+1)*self.cpt], labels, reduction='none')
         loss = (1-self.lamda) * class_loss.mean() + self.lamda * dist_loss.mean() * self.args.temp * self.args.temp
-        
+
         if self.args.wd_reg:
             loss += self.args.wd_reg * torch.sum(self.net.module.get_params() ** 2)
 

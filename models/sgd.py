@@ -3,8 +3,8 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from utils.args import *
 from models.utils.continual_model import ContinualModel
+from utils.args import *
 
 
 def get_parser() -> ArgumentParser:

@@ -3,17 +3,23 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import torch
-from utils.status import progress_bar, create_stash
-from utils.tb_logger import *
-from utils.loggers import *
-from utils.loggers import CsvLogger
-from argparse import Namespace
-from models.utils.continual_model import ContinualModel
-from datasets.utils.continual_dataset import ContinualDataset
-from typing import Tuple
-from datasets import get_dataset
+import math
 import sys
+from argparse import Namespace
+from typing import Tuple
+
+import torch
+from datasets import get_dataset
+from datasets.utils.continual_dataset import ContinualDataset
+from models.utils.continual_model import ContinualModel
+
+from utils.loggers import *
+from utils.status import ProgressBar
+
+try:
+    import wandb
+except ImportError:
+    wandb = None
 
 def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> None:
     """
@@ -78,20 +84,28 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     :param dataset: the continual dataset at hand
     :param args: the arguments of the current execution
     """
+    print(args)
+
+    if not args.nowand:
+        assert wandb is not None, "Wandb not installed, please install it or run without wandb"
+        wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args))
+        args.wandb_url = wandb.run.get_url()
+
     model.net.to(model.device)
     results, results_mask_classes = [], []
 
-    if args.csv_log:
-        csv_logger = CsvLogger(dataset.SETTING, dataset.NAME, model.NAME)
-    if args.tensorboard:
-        tb_logger = TensorboardLogger(args, dataset.SETTING)
+    if not args.disable_log:
+        logger = Logger(dataset.SETTING, dataset.NAME, model.NAME)
 
-    dataset_copy = get_dataset(args)
-    for t in range(dataset.N_TASKS):
-        model.net.train()
-        _, _ = dataset_copy.get_data_loaders()
-    if model.NAME != 'icarl' and model.NAME != 'pnn':
-        random_results_class, random_results_task = evaluate(model, dataset_copy)
+    progress_bar = ProgressBar(verbose=not args.non_verbose)
+
+    if not args.ignore_other_metrics:
+        dataset_copy = get_dataset(args)
+        for t in range(dataset.N_TASKS):
+            model.net.train()
+            _, _ = dataset_copy.get_data_loaders()
+        if model.NAME != 'icarl' and model.NAME != 'pnn':
+            random_results_class, random_results_task = evaluate(model, dataset_copy)
 
     print(file=sys.stderr)
     for t in range(dataset.N_TASKS):
@@ -99,7 +113,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         train_loader, test_loader = dataset.get_data_loaders()
         if hasattr(model, 'begin_task'):
             model.begin_task(dataset)
-        if t:
+        if t and not args.ignore_other_metrics:
             accs = evaluate(model, dataset, last=True)
             results[t-1] = results[t-1] + accs[0]
             if dataset.SETTING == 'class-il':
@@ -107,26 +121,27 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
         scheduler = dataset.get_scheduler(model, args)
         for epoch in range(model.args.n_epochs):
+            if args.model == 'joint':
+                continue
             for i, data in enumerate(train_loader):
+                if args.debug_mode and i > 3:
+                    break
                 if hasattr(dataset.train_loader.dataset, 'logits'):
                     inputs, labels, not_aug_inputs, logits = data
                     inputs = inputs.to(model.device)
                     labels = labels.to(model.device)
                     not_aug_inputs = not_aug_inputs.to(model.device)
                     logits = logits.to(model.device)
-                    loss = model.observe(inputs, labels, not_aug_inputs, logits)
+                    loss = model.meta_observe(inputs, labels, not_aug_inputs, logits)
                 else:
                     inputs, labels, not_aug_inputs = data
                     inputs, labels = inputs.to(model.device), labels.to(
                         model.device)
                     not_aug_inputs = not_aug_inputs.to(model.device)
-                    loss = model.observe(inputs, labels, not_aug_inputs)
+                    loss = model.meta_observe(inputs, labels, not_aug_inputs)
+                assert not math.isnan(loss)
+                progress_bar.prog(i, len(train_loader), epoch, t, loss)
 
-                progress_bar(i, len(train_loader), epoch, t, loss)
-
-                if args.tensorboard:
-                    tb_logger.log_loss(loss, args, epoch, t, i)
-            
             if scheduler is not None:
                 scheduler.step()
 
@@ -140,19 +155,32 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         mean_acc = np.mean(accs, axis=1)
         print_mean_accuracy(mean_acc, t + 1, dataset.SETTING)
 
-        if args.csv_log:
-            csv_logger.log(mean_acc)
-        if args.tensorboard:
-            tb_logger.log_accuracy(np.array(accs), mean_acc, args, t)
+        if not args.disable_log:
+            logger.log(mean_acc)
+            logger.log_fullacc(accs)
 
-    if args.csv_log:
-        csv_logger.add_bwt(results, results_mask_classes)
-        csv_logger.add_forgetting(results, results_mask_classes)
+        if not args.nowand:
+            d2={'RESULT_class_mean_accs': mean_acc[0], 'RESULT_task_mean_accs': mean_acc[1],
+                **{f'RESULT_class_acc_{i}': a for i, a in enumerate(accs[0])},
+                **{f'RESULT_task_acc_{i}': a for i, a in enumerate(accs[1])}}
+
+            wandb.log(d2)
+
+
+
+    if not args.disable_log and not args.ignore_other_metrics:
+        logger.add_bwt(results, results_mask_classes)
+        logger.add_forgetting(results, results_mask_classes)
         if model.NAME != 'icarl' and model.NAME != 'pnn':
-            csv_logger.add_fwt(results, random_results_class,
-                               results_mask_classes, random_results_task)
+            logger.add_fwt(results, random_results_class,
+                    results_mask_classes, random_results_task)
 
-    if args.tensorboard:
-        tb_logger.close()
-    if args.csv_log:
-        csv_logger.write(vars(args))
+    if not args.disable_log:
+        logger.write(vars(args))
+        if not args.nowand:
+            d = logger.dump()
+            d['wandb_url'] = wandb.run.get_url()
+            wandb.log(d)
+
+    if not args.nowand:
+        wandb.finish()

@@ -4,14 +4,16 @@
 # LICENSE file in the root directory of this source tree.
 
 from copy import deepcopy
+
 import torch
 import torch.nn.functional as F
 from datasets import get_dataset
-from utils.buffer import Buffer, icarl_replay
-from utils.args import *
+
 from models.utils.continual_model import ContinualModel
-import numpy as np
+from utils.args import *
 from utils.batch_norm import bn_track_stats
+from utils.buffer import Buffer, icarl_replay
+
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual Learning via iCaRL.')
@@ -20,7 +22,7 @@ def get_parser() -> ArgumentParser:
     add_experiment_args(parser)
     add_rehearsal_args(parser)
 
-    
+
     return parser
 
 def fill_buffer(self, mem_buffer: Buffer, dataset, t_idx: int) -> None:

@@ -3,13 +3,14 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import torch.optim as optim
-from torch.optim import SGD
 import torch
 import torch.nn as nn
-from utils.conf import get_device
-from utils.args import *
+import torch.optim as optim
 from datasets import get_dataset
+from torch.optim import SGD
+
+from utils.args import *
+from utils.conf import get_device
 
 
 def get_parser() -> ArgumentParser:

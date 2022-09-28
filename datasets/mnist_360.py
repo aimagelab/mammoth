@@ -3,21 +3,23 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from torchvision.datasets import MNIST
-import torchvision.transforms as transforms
-from torch.utils.data import DataLoader
-from backbone.MNISTMLP import MNISTMLP
-from datasets.transforms.rotation import IncrementalRotation
-import torch.nn.functional as F
-from datasets.utils.gcl_dataset import GCLDataset
-from utils.conf import base_path
 from argparse import Namespace
-import numpy as np
 from copy import deepcopy
-import torch
-from datasets.utils.validation import get_train_val
-from datasets.perm_mnist import MyMNIST
 from typing import Tuple
+
+import numpy as np
+import torch
+import torch.nn.functional as F
+import torchvision.transforms as transforms
+from backbone.MNISTMLP import MNISTMLP
+from torch.utils.data import DataLoader
+from torchvision.datasets import MNIST
+
+from datasets.perm_mnist import MyMNIST
+from datasets.transforms.rotation import IncrementalRotation
+from datasets.utils.gcl_dataset import GCLDataset
+from datasets.utils.validation import get_train_val
+from utils.conf import base_path_dataset as base_path
 
 
 class MNIST360(GCLDataset):
@@ -188,11 +190,11 @@ class MNIST360(GCLDataset):
         return x_test, y_test
 
     @staticmethod
-    def get_backbone():
+    def get_backbone() -> torch.nn.Module:
         return MNISTMLP(28 * 28, 10)
 
     @staticmethod
-    def get_loss():
+    def get_loss() -> F.cross_entropy:
         return F.cross_entropy
 
     @staticmethod
@@ -202,3 +204,11 @@ class MNIST360(GCLDataset):
     @staticmethod
     def get_denormalization_transform():
         return None
+
+    @staticmethod
+    def get_batch_size() -> int:
+        return 16
+
+    @staticmethod
+    def get_minibatch_size() -> int:
+        return 16

@@ -89,4 +89,4 @@ dmypy.json
 .pyre/
 .pytype/
 cython_debug/
-illustrations/loss_landscape/computed_matrices2/
+wandb

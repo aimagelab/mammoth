@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
+
 import torch
 import torch.nn as nn
 
@@ -47,11 +48,17 @@ class MammothBackbone(nn.Module):
         super(MammothBackbone, self).__init__()
 
     def forward(self, x: torch.Tensor, returnt='out') -> torch.Tensor:
+        """
+        Compute a forward pass.
+        :param x: input tensor (batch_size, *input_shape)
+        :param returnt: return type (a string among 'out', 'features', 'all')
+        :return: output tensor (output_classes)
+        """
         raise NotImplementedError
 
     def features(self, x: torch.Tensor) -> torch.Tensor:
         return self.forward(x, returnt='features')
-    
+
     def get_params(self) -> torch.Tensor:
         """
         Returns all the parameters concatenated in a single tensor.
@@ -81,7 +88,7 @@ class MammothBackbone(nn.Module):
         :return: gradients tensor (??)
         """
         return torch.cat(self.get_grads_list())
-    
+
     def get_grads_list(self):
         """
         Returns a list containing the gradients (a tensor for each layer).

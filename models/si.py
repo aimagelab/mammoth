@@ -5,8 +5,10 @@
 
 import torch
 import torch.nn as nn
-from utils.args import *
+
 from models.utils.continual_model import ContinualModel
+from utils.args import *
+
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual Learning Through'
