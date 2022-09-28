@@ -10,7 +10,7 @@ from backbone.MNISTMLP import MNISTMLP
 from datasets.transforms.rotation import IncrementalRotation
 import torch.nn.functional as F
 from datasets.utils.gcl_dataset import GCLDataset
-from utils.conf import base_path
+from utils.conf import base_path_dataset as base_path
 from argparse import Namespace
 import numpy as np
 from copy import deepcopy

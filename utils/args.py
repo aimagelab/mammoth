@@ -40,14 +40,17 @@ def add_management_args(parser: ArgumentParser) -> None:
     parser.add_argument('--notes', type=str, default=None,
                         help='Notes for this run.')
 
-    parser.add_argument('--non_verbose', action='store_true')
-    parser.add_argument('--csv_log', action='store_true',
-                        help='Enable csv logging')
-    parser.add_argument('--tensorboard', action='store_true',
-                        help='Enable tensorboard logging')
-    parser.add_argument('--validation', action='store_true',
+    parser.add_argument('--non_verbose', default=0, choices=[0, 1], type=int, help='Make progress bars non verbose')
+    parser.add_argument('--disable_log', default=0, choices=[0, 1], type=int, help='Enable csv logging')
+    
+    parser.add_argument('--validation', default=0, choices=[0, 1], type=int,
                         help='Test on the validation set')
-
+    parser.add_argument('--ignore_other_metrics', default=0, choices=[0, 1], type=int,
+                        help='disable additional metrics')
+    parser.add_argument('--debug_mode', type=int, default=0, help='Run only a few forward steps per epoch')
+    parser.add_argument('--nowand', default=0, choices=[0, 1], type=int, help='Inhibit wandb logging')
+    parser.add_argument('--wandb_entity', type=str, default='regaz', help='Wandb entity')
+    parser.add_argument('--wandb_project', type=str, default='mammoth', help='Wandb project name')
 
 def add_rehearsal_args(parser: ArgumentParser) -> None:
     """

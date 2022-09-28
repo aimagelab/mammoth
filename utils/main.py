@@ -87,6 +87,9 @@ def main(args=None):
     if args is None:
         args = parse_args()    
     
+    os.putenv("MKL_SERVICE_FORCE_INTEL", "1")
+    os.putenv("NPY_MKL_FORCE_INTEL", "1")
+
     # Add uuid, timestamp and hostname for logging
     args.conf_jobnum = str(uuid.uuid4())
     args.conf_timestamp = str(datetime.datetime.now())
@@ -103,6 +106,10 @@ def main(args=None):
     backbone = dataset.get_backbone()
     loss = dataset.get_loss()
     model = get_model(args, backbone, loss, dataset.get_transform())
+
+    if args.debug_mode:
+        args.nowand = 1
+
     
     # set job name
     setproctitle.setproctitle('{}_{}_{}'.format(args.model, args.buffer_size if 'buffer_size' in args else 0, args.dataset))     

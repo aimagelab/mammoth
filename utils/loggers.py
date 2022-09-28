@@ -36,12 +36,14 @@ def print_mean_accuracy(mean_acc: np.ndarray, task_number: int,
             mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
 
 
-class CsvLogger:
+class Logger:
     def __init__(self, setting_str: str, dataset_str: str,
                  model_str: str) -> None:
         self.accs = []
+        self.fullaccs = []
         if setting_str == 'class-il':
             self.accs_mask_classes = []
+            self.fullaccs_mask_classes = []
         self.setting = setting_str
         self.dataset = dataset_str
         self.model = model_str
@@ -51,6 +53,52 @@ class CsvLogger:
         self.bwt_mask_classes = None
         self.forgetting = None
         self.forgetting_mask_classes = None
+
+    def dump(self):
+        dic = {
+            'accs': self.accs,
+            'fullaccs': self.fullaccs,
+            'fwt': self.fwt,
+            'bwt': self.bwt,
+            'forgetting': self.forgetting,
+            'fwt_mask_classes': self.fwt_mask_classes,
+            'bwt_mask_classes': self.bwt_mask_classes,
+            'forgetting_mask_classes': self.forgetting_mask_classes,
+        }
+        if self.setting == 'class-il':
+            dic['accs_mask_classes'] = self.accs_mask_classes
+            dic['fullaccs_mask_classes'] = self.fullaccs_mask_classes
+
+        return dic
+
+    def load(self, dic):
+        self.accs = dic['accs']
+        self.fullaccs = dic['fullaccs']
+        self.fwt = dic['fwt']
+        self.bwt = dic['bwt']
+        self.forgetting = dic['forgetting']
+        self.fwt_mask_classes = dic['fwt_mask_classes']
+        self.bwt_mask_classes = dic['bwt_mask_classes']
+        self.forgetting_mask_classes = dic['forgetting_mask_classes']
+        if self.setting == 'class-il':
+            self.accs_mask_classes = dic['accs_mask_classes']
+            self.fullaccs_mask_classes = dic['fullaccs_mask_classes']
+
+    def rewind(self, num):
+        self.accs = self.accs[:-num]
+        self.fullaccs = self.fullaccs[:-num]
+        try:
+            self.fwt = self.fwt[:-num]
+            self.bwt = self.bwt[:-num]
+            self.forgetting = self.forgetting[:-num]
+            self.fwt_mask_classes = self.fwt_mask_classes[:-num]
+            self.bwt_mask_classes = self.bwt_mask_classes[:-num]
+            self.forgetting_mask_classes = self.forgetting_mask_classes[:-num]
+        except:
+            pass
+        if self.setting == 'class-il':
+            self.accs_mask_classes = self.accs_mask_classes[:-num]
+            self.fullaccs_mask_classes = self.fullaccs_mask_classes[:-num]
 
     def add_fwt(self, results, accs, results_mask_classes, accs_mask_classes):
         self.fwt = forward_transfer(results, accs)
@@ -80,70 +128,59 @@ class CsvLogger:
             self.accs.append(mean_acc_class_il)
             self.accs_mask_classes.append(mean_acc_task_il)
 
+    def log_fullacc(self, accs):
+        acc_class_il, acc_task_il = accs
+        self.fullaccs.append(acc_class_il)
+        self.fullaccs_mask_classes.append(acc_task_il)
+
     def write(self, args: Dict[str, Any]) -> None:
         """
         writes out the logged value along with its arguments.
         :param args: the namespace of the current experiment
         """
-        for cc in useless_args:
-            if cc in args:
-                del args[cc]
+        wrargs = args.copy()
 
-        columns = list(args.keys())
-
-        new_cols = []
         for i, acc in enumerate(self.accs):
-            args['task' + str(i + 1)] = acc
-            new_cols.append('task' + str(i + 1))
+            wrargs['accmean_task' + str(i + 1)] = acc
+        
+        for i, fa in enumerate(self.fullaccs):
+            for j, acc in enumerate(fa):
+                wrargs['accuracy_' + str(j + 1) + '_task' + str(i + 1)] = acc
 
-        args['forward_transfer'] = self.fwt
-        new_cols.append('forward_transfer')
+        wrargs['forward_transfer'] = self.fwt
+        wrargs['backward_transfer'] = self.bwt
+        wrargs['forgetting'] = self.forgetting
 
-        args['backward_transfer'] = self.bwt
-        new_cols.append('backward_transfer')
-
-        args['forgetting'] = self.forgetting
-        new_cols.append('forgetting')
-
-        columns = new_cols + columns
-
-        create_if_not_exists(base_path() + "results/" + self.setting)
-        create_if_not_exists(base_path() + "results/" + self.setting +
+        target_folder = base_path() + "results/"
+        
+        create_if_not_exists(target_folder + self.setting)
+        create_if_not_exists(target_folder + self.setting +
                              "/" + self.dataset)
-        create_if_not_exists(base_path() + "results/" + self.setting +
+        create_if_not_exists(target_folder + self.setting +
                              "/" + self.dataset + "/" + self.model)
 
-        write_headers = False
-        path = base_path() + "results/" + self.setting + "/" + self.dataset\
-               + "/" + self.model + "/mean_accs.csv"
-        if not os.path.exists(path):
-            write_headers = True
-        with open(path, 'a') as tmp:
-            writer = csv.DictWriter(tmp, fieldnames=columns)
-            if write_headers:
-                writer.writeheader()
-            writer.writerow(args)
+        path = target_folder + self.setting + "/" + self.dataset\
+               + "/" + self.model + "/logs.pyd"
+        with open(path, 'a') as f:
+            f.write(str(wrargs) + '\n')
 
         if self.setting == 'class-il':
-            create_if_not_exists(base_path() + "results/task-il/"
-                                 + self.dataset)
-            create_if_not_exists(base_path() + "results/task-il/"
+            create_if_not_exists(os.path.join(*[target_folder, "task-il/", self.dataset]))
+            create_if_not_exists(target_folder + "task-il/"
                                  + self.dataset + "/" + self.model)
 
             for i, acc in enumerate(self.accs_mask_classes):
-                args['task' + str(i + 1)] = acc
+                wrargs['accmean_task' + str(i + 1)] = acc
+            
+            for i, fa in enumerate(self.fullaccs_mask_classes):
+                for j, acc in enumerate(fa):
+                    wrargs['accuracy_' + str(j + 1) + '_task' + str(i + 1)] = acc
 
-            args['forward_transfer'] = self.fwt_mask_classes
-            args['backward_transfer'] = self.bwt_mask_classes
-            args['forgetting'] = self.forgetting_mask_classes
+            wrargs['forward_transfer'] = self.fwt_mask_classes
+            wrargs['backward_transfer'] = self.bwt_mask_classes
+            wrargs['forgetting'] = self.forgetting_mask_classes
 
-            write_headers = False
-            path = base_path() + "results/task-il" + "/" + self.dataset + "/"\
-                   + self.model + "/mean_accs.csv"
-            if not os.path.exists(path):
-                write_headers = True
-            with open(path, 'a') as tmp:
-                writer = csv.DictWriter(tmp, fieldnames=columns)
-                if write_headers:
-                    writer.writeheader()
-                writer.writerow(args)
+            path = target_folder + "task-il" + "/" + self.dataset + "/"\
+                   + self.model + "/logs.pyd"
+            with open(path, 'a') as f:
+                f.write(str(wrargs) + '\n')

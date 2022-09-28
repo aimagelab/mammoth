@@ -5,11 +5,15 @@
 
 import torch.nn as nn
 from torch.optim import SGD
+from utils.magic import persistent_locals
 import torch
 import torchvision
 from argparse import Namespace
 from utils.conf import get_device
-
+try:
+    import wandb
+except ImportError:
+    wandb = None
 
 class ContinualModel(nn.Module):
     """
@@ -38,6 +42,15 @@ class ContinualModel(nn.Module):
         """
         return self.net(x)
 
+    def meta_observe(self, *args, **kwargs):
+        if wandb is not None and not self.args.nowand:
+            pl = persistent_locals(self.observe)
+            ret = pl(*args, **kwargs)
+            self.autolog_wandb(pl.locals)
+        else:
+            ret = self.observe(*args, **kwargs)
+        return ret
+
     def observe(self, inputs: torch.Tensor, labels: torch.Tensor,
                 not_aug_inputs: torch.Tensor) -> float:
         """
@@ -48,3 +61,12 @@ class ContinualModel(nn.Module):
         :return: the value of the loss function
         """
         pass
+
+    def autolog_wandb(self, locals):
+        """
+        All variables starting with "_wandb_" or "loss" in the observe function
+        are automatically logged to wandb upon return if wandb is installed.
+        """
+        if not self.args.nowand and not self.args.debug_mode:
+            wandb.log({k: (v.item() if isinstance(v, torch.Tensor) and v.dim() == 0 else v)
+                      for k, v in locals.items() if k.startswith('_wandb_') or k.startswith('loss')})

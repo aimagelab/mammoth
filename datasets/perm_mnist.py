@@ -9,7 +9,7 @@ from datasets.transforms.permutation import Permutation
 from torch.utils.data import DataLoader
 from backbone.MNISTMLP import MNISTMLP
 import torch.nn.functional as F
-from utils.conf import base_path
+from utils.conf import base_path_dataset as base_path
 from PIL import Image
 from datasets.utils.validation import get_train_val
 from typing import Tuple
