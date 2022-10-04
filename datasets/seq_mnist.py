@@ -21,6 +21,7 @@ class MyMNIST(MNIST):
     """
     Overrides the MNIST dataset to change the getitem function.
     """
+
     def __init__(self, root, train=True, transform=None,
                  target_transform=None, download=False) -> None:
         self.not_aug_transform = transforms.ToTensor()
@@ -69,7 +70,7 @@ class SequentialMNIST(ContinualDataset):
                                                         transform, self.NAME)
         else:
             test_dataset = MNIST(base_path() + 'MNIST',
-                                train=False, download=True, transform=transform)
+                                 train=False, download=True, transform=transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
@@ -98,3 +99,11 @@ class SequentialMNIST(ContinualDataset):
     @staticmethod
     def get_scheduler(model, args):
         return None
+
+    @staticmethod
+    def get_batch_size():
+        return 64
+
+    @staticmethod
+    def get_minibatch_size():
+        return SequentialMNIST.get_batch_size()

@@ -42,6 +42,7 @@ class MyMNIST(MNIST):
     """
     Overrides the MNIST dataset to change the getitem function.
     """
+
     def __init__(self, root, train=True, transform=None,
                  target_transform=None, download=False) -> None:
         super(MyMNIST, self).__init__(root, train, transform,
@@ -103,3 +104,11 @@ class PermutedMNIST(ContinualDataset):
     @staticmethod
     def get_scheduler(model, args):
         return None
+
+    @staticmethod
+    def get_batch_size() -> int:
+        return 128
+
+    @staticmethod
+    def get_minibatch_size() -> int:
+        return PermutedMNIST.get_batch_size()

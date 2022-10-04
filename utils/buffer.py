@@ -87,7 +87,7 @@ class Buffer:
     The memory buffer of rehearsal method.
     """
     def __init__(self, buffer_size, device, n_tasks=None, mode='reservoir'):
-        assert mode in ['ring', 'reservoir']
+        assert mode in ('ring', 'reservoir')
         self.buffer_size = buffer_size
         self.device = device
         self.num_seen_examples = 0

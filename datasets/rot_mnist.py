@@ -46,3 +46,11 @@ class RotatedMNIST(ContinualDataset):
     @staticmethod
     def get_scheduler(model, args):
         return None
+
+    @staticmethod
+    def get_batch_size() -> int:
+        return 128
+
+    @staticmethod
+    def get_minibatch_size() -> int:
+        return RotatedMNIST.get_batch_size()
