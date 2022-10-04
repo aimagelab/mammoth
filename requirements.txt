@@ -1,7 +1,6 @@
 torch==1.12.1
 numpy==1.23.3
 torchvision==0.13.1
-quadprog==0.1.11
 setproctitle==1.3.2
 six==1.16.0
 wandb

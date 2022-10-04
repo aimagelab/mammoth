@@ -5,8 +5,11 @@
 # LICENSE file in the gem_license file in the root of this source tree.
 
 import numpy as np
-import quadprog
 import torch
+try:
+    import quadprog
+except:
+    print('Warning: GEM and A-GEM cannot be used on Windows (quadprog required)')
 
 from models.utils.continual_model import ContinualModel
 from utils.args import *
