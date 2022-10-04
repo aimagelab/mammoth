@@ -18,6 +18,7 @@ class BasicBlockPnn(BasicBlock):
     """
     The basic block of ResNet. Modified for PNN.
     """
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Compute a forward pass.
@@ -36,8 +37,8 @@ class ResNetPNN(ResNet):
     """
 
     def __init__(self, block: BasicBlock, num_blocks: List[int],
-                 num_classes: int, nf: int, old_cols: List[nn.Module]=None,
-                 x_shape: torch.Size=None):
+                 num_classes: int, nf: int, old_cols: List[nn.Module] = None,
+                 x_shape: torch.Size = None):
         """
         Instantiates the layers of the network.
         :param block: the basic ResNet block
@@ -67,18 +68,18 @@ class ResNetPNN(ResNet):
             setattr(self, 'old_layer' + str(i) + 's', ListModule())
 
         for i in range(1, 4):
-            factor = 2 ** (i-1)
+            factor = 2 ** (i - 1)
             setattr(self, 'lateral_layer' + str(i + 1),
-                self._make_layer(block, nf * (2 ** i), num_blocks[i], stride=2)
-            )
+                    self._make_layer(block, nf * (2 ** i), num_blocks[i], stride=2)
+                    )
             setattr(self, 'adaptor' + str(i),
-                nn.Sequential(
+                    nn.Sequential(
                     AlphaModule((nf * len(old_cols) * factor,
-                        self.x_shape[2] // factor, self.x_shape[3] // factor)),
+                                 self.x_shape[2] // factor, self.x_shape[3] // factor)),
                     nn.Conv2d(nf * len(old_cols) * factor, nf * factor, 1),
                     nn.ReLU(),
-                    getattr(self, 'lateral_layer' + str(i+1))
-            ))
+                    getattr(self, 'lateral_layer' + str(i + 1))
+                    ))
         for old_col in old_cols:
             self.in_planes = self.nf
             self.old_layer0s.append(conv3x3(3, nf * 1))
@@ -87,7 +88,7 @@ class ResNetPNN(ResNet):
                 factor = (2 ** (i - 1))
                 layer = getattr(self, 'old_layer' + str(i) + 's')
                 layer.append(self._make_layer(block, nf * factor,
-                             num_blocks[i-1], stride=(1 if i == 1 else 2)))
+                             num_blocks[i - 1], stride=(1 if i == 1 else 2)))
                 old_layer = getattr(old_col, 'layer' + str(i))
                 layer[-1].load_state_dict(old_layer.state_dict())
 
@@ -151,8 +152,8 @@ class ResNetPNN(ResNet):
         raise NotImplementedError("Unknown return type")
 
 
-def resnet18_pnn(nclasses: int, nf: int=64,
-                 old_cols: List[nn.Module]=None, x_shape: torch.Size=None):
+def resnet18_pnn(nclasses: int, nf: int = 64,
+                 old_cols: List[nn.Module] = None, x_shape: torch.Size = None):
     """
     Instantiates a ResNet18 network.
     :param nclasses: number of output classes

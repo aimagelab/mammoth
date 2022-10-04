@@ -25,6 +25,7 @@ url_map = {
     'efficientnet-b7': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b7-dcc49843.pth',
 }
 
+
 def load_pretrained_weights(model, model_name, weights_path=None, load_fc=True, verbose=True):
     """Loads pretrained weights from weights path or download using url.
     Args:
@@ -50,7 +51,7 @@ def load_pretrained_weights(model, model_name, weights_path=None, load_fc=True, 
     else:
         state_dict.pop('_fc.weight')
         state_dict.pop('_fc.bias')
-        ret = model.load_state_dict(state_dict, strict=False) # TODO fix _fc is now classifier
+        ret = model.load_state_dict(state_dict, strict=False)  # TODO fix _fc is now classifier
         assert set(ret.missing_keys) == set(
             ['_fc.weight', '_fc.bias']), 'Missing keys when loading pretrained weights: {}'.format(ret.missing_keys)
     assert not ret.unexpected_keys, 'Missing keys when loading pretrained weights: {}'.format(ret.unexpected_keys)
@@ -58,12 +59,14 @@ def load_pretrained_weights(model, model_name, weights_path=None, load_fc=True, 
     if verbose:
         print('Loaded pretrained weights for {}'.format(model_name))
 
+
 _DEFAULT_BLOCKS_ARGS = [
     'r1_k3_s11_e1_i32_o16_se0.25', 'r2_k3_s22_e6_i16_o24_se0.25',
     'r2_k5_s22_e6_i24_o40_se0.25', 'r3_k3_s22_e6_i40_o80_se0.25',
     'r3_k5_s11_e6_i80_o112_se0.25', 'r4_k5_s22_e6_i112_o192_se0.25',
     'r1_k3_s11_e6_i192_o320_se0.25',
 ]
+
 
 def get_width_and_height_from_size(x):
     """Obtain height and width from x.
@@ -74,10 +77,11 @@ def get_width_and_height_from_size(x):
     """
     if isinstance(x, int):
         return x, x
-    if isinstance(x, list) or isinstance(x, tuple):
+    if isinstance(x, (list, tuple)):
         return x
     else:
         raise TypeError()
+
 
 def calculate_output_image_size(input_image_size, stride):
     """Calculates the output image size when using Conv2dSamePadding with a stride.
@@ -95,6 +99,7 @@ def calculate_output_image_size(input_image_size, stride):
     image_height = int(math.ceil(image_height / stride))
     image_width = int(math.ceil(image_width / stride))
     return [image_height, image_width]
+
 
 def drop_connect(inputs, p, training):
     """Drop connect.
@@ -120,6 +125,7 @@ def drop_connect(inputs, p, training):
 
     output = inputs / keep_prob * binary_tensor
     return output
+
 
 def round_repeats(repeats, global_params):
     """Calculate module's repeat number of a block based on depth multiplier.
@@ -161,6 +167,7 @@ def round_filters(filters, global_params):
     if new_filters < 0.9 * filters:  # prevent rounding by more than 10%
         new_filters += divisor
     return int(new_filters)
+
 
 class Conv2dDynamicSamePadding(nn.Conv2d):
     """2D Convolutions like TensorFlow, for a dynamic image size.
@@ -245,6 +252,7 @@ def get_same_padding_conv2d(image_size=None):
 #     'num_classes', 'batch_norm_momentum', 'batch_norm_epsilon',
 #     'drop_connect_rate', 'depth_divisor', 'min_depth', 'include_top'])
 
+
 GlobalParams = collections.namedtuple('GlobalParams', [
     'batch_norm_momentum', 'batch_norm_epsilon', 'dropout_rate', 'data_format',
     'num_classes', 'width_coefficient', 'depth_coefficient', 'depth_divisor',
@@ -265,7 +273,7 @@ BlockArgs = collections.namedtuple('BlockArgs', [
 ])
 
 # Set GlobalParams and BlockArgs's defaults
-GlobalParams.__new__.__defaults__ = (None,) * (len(GlobalParams._fields) - 1) + (True,) # include top
+GlobalParams.__new__.__defaults__ = (None,) * (len(GlobalParams._fields) - 1) + (True,)  # include top
 BlockArgs.__new__.__defaults__ = (None,) * len(BlockArgs._fields)
 
 # Swish activation function
@@ -278,6 +286,8 @@ else:
             return x * torch.sigmoid(x)
 
 # A memory-efficient implementation of Swish function
+
+
 class SwishImplementation(torch.autograd.Function):
     @staticmethod
     def forward(ctx, i):
@@ -291,9 +301,11 @@ class SwishImplementation(torch.autograd.Function):
         sigmoid_i = torch.sigmoid(i)
         return grad_output * (sigmoid_i * (1 + i * (1 - sigmoid_i)))
 
+
 class MemoryEfficientSwish(nn.Module):
     def forward(self, x):
         return SwishImplementation.apply(x)
+
 
 class BlockDecoder(object):
     """Block Decoder for readability,
@@ -390,6 +402,7 @@ class BlockDecoder(object):
             block_strings.append(BlockDecoder._encode_block_string(block))
         return block_strings
 
+
 def efficientnet_params(model_name):
     """Map EfficientNet model name to parameter coefficients.
 
@@ -413,6 +426,7 @@ def efficientnet_params(model_name):
         'efficientnet-l2': (4.3, 5.3, 800, 0.5),
     }
     return params_dict[model_name]
+
 
 def efficientnet(width_coefficient=None, depth_coefficient=None, image_size=None,
                  dropout_rate=0.2, drop_connect_rate=0.2, num_classes=1000, include_top=True):
@@ -462,47 +476,50 @@ def efficientnet(width_coefficient=None, depth_coefficient=None, image_size=None
 
     return blocks_args, global_params
 
+
 def efficientnet_tf(width_coefficient=None,
-                 depth_coefficient=None,
-                 dropout_rate=0.2,
-                 survival_prob=0.8):
-  """Creates a efficientnet model."""
-  global_params = GlobalParams(
-      blocks_args=_DEFAULT_BLOCKS_ARGS,
-      batch_norm_momentum=0.99,
-      batch_norm_epsilon=1e-3,
-      dropout_rate=dropout_rate,
-      survival_prob=survival_prob,
-      data_format='channels_last',
-      num_classes=1000,
-      width_coefficient=width_coefficient,
-      depth_coefficient=depth_coefficient,
-      depth_divisor=8,
-      min_depth=None,
-      use_se=True,
-      clip_projection_output=False)
-  return global_params
+                    depth_coefficient=None,
+                    dropout_rate=0.2,
+                    survival_prob=0.8):
+    """Creates a efficientnet model."""
+    global_params = GlobalParams(
+        blocks_args=_DEFAULT_BLOCKS_ARGS,
+        batch_norm_momentum=0.99,
+        batch_norm_epsilon=1e-3,
+        dropout_rate=dropout_rate,
+        survival_prob=survival_prob,
+        data_format='channels_last',
+        num_classes=1000,
+        width_coefficient=width_coefficient,
+        depth_coefficient=depth_coefficient,
+        depth_divisor=8,
+        min_depth=None,
+        use_se=True,
+        clip_projection_output=False)
+    return global_params
+
 
 def get_model_params_tf(model_name, override_params):
-  """Get the block args and global params for a given model."""
-  if model_name.startswith('efficientnet'):
-    width_coefficient, depth_coefficient, _, dropout_rate = (
-        efficientnet_params(model_name))
-    global_params = efficientnet(
-        width_coefficient, depth_coefficient, dropout_rate)
-  else:
-    raise NotImplementedError('model name is not pre-defined: %s' % model_name)
+    """Get the block args and global params for a given model."""
+    if model_name.startswith('efficientnet'):
+        width_coefficient, depth_coefficient, _, dropout_rate = (
+            efficientnet_params(model_name))
+        global_params = efficientnet(
+            width_coefficient, depth_coefficient, dropout_rate)
+    else:
+        raise NotImplementedError('model name is not pre-defined: %s' % model_name)
 
-  if override_params:
-    # ValueError will be raised here if override_params has fields not included
-    # in global_params.
-    global_params = global_params._replace(**override_params)
+    if override_params:
+        # ValueError will be raised here if override_params has fields not included
+        # in global_params.
+        global_params = global_params._replace(**override_params)
 
-  decoder = BlockDecoder()
-  blocks_args = decoder.decode(global_params.blocks_args)
+    decoder = BlockDecoder()
+    blocks_args = decoder.decode(global_params.blocks_args)
 
-  print('EFFNET LOGGING: global_params= %s', global_params)
-  return blocks_args, global_params
+    print('EFFNET LOGGING: global_params= %s', global_params)
+    return blocks_args, global_params
+
 
 def get_model_params(model_name, override_params):
     """Get the block args and global params for a given model name.
@@ -526,28 +543,31 @@ def get_model_params(model_name, override_params):
         global_params = global_params._replace(**override_params)
     return blocks_args, global_params
 
+
 def efficientnet_params(model_name):
-  """Get efficientnet params based on model name."""
-  params_dict = {
-      # (width_coefficient, depth_coefficient, resolution, dropout_rate)
-      'efficientnet-b0': (1.0, 1.0, 224, 0.2),
-      'efficientnet-b1': (1.0, 1.1, 240, 0.2),
-      'efficientnet-b2': (1.1, 1.2, 260, 0.3),
-      'efficientnet-b3': (1.2, 1.4, 300, 0.3),
-      'efficientnet-b4': (1.4, 1.8, 380, 0.4),
-      'efficientnet-b5': (1.6, 2.2, 456, 0.4),
-      'efficientnet-b6': (1.8, 2.6, 528, 0.5),
-      'efficientnet-b7': (2.0, 3.1, 600, 0.5),
-      'efficientnet-b8': (2.2, 3.6, 672, 0.5),
-      'efficientnet-l2': (4.3, 5.3, 800, 0.5),
-  }
-  return params_dict[model_name]
+    """Get efficientnet params based on model name."""
+    params_dict = {
+        # (width_coefficient, depth_coefficient, resolution, dropout_rate)
+        'efficientnet-b0': (1.0, 1.0, 224, 0.2),
+        'efficientnet-b1': (1.0, 1.1, 240, 0.2),
+        'efficientnet-b2': (1.1, 1.2, 260, 0.3),
+        'efficientnet-b3': (1.2, 1.4, 300, 0.3),
+        'efficientnet-b4': (1.4, 1.8, 380, 0.4),
+        'efficientnet-b5': (1.6, 2.2, 456, 0.4),
+        'efficientnet-b6': (1.8, 2.6, 528, 0.5),
+        'efficientnet-b7': (2.0, 3.1, 600, 0.5),
+        'efficientnet-b8': (2.2, 3.6, 672, 0.5),
+        'efficientnet-l2': (4.3, 5.3, 800, 0.5),
+    }
+    return params_dict[model_name]
+
 
 VALID_MODELS = (
     'efficientnet-b0', 'efficientnet-b1', 'efficientnet-b2', 'efficientnet-b3',
     'efficientnet-b4', 'efficientnet-b5', 'efficientnet-b6', 'efficientnet-b7',
     'efficientnet-b8',
 )
+
 
 class MBConvBlock(nn.Module):
     """Mobile Inverted Residual Bottleneck Block.
@@ -655,6 +675,7 @@ class MBConvBlock(nn.Module):
         """
         self._swish = MemoryEfficientSwish() if memory_efficient else Swish()
 
+
 class EfficientNet(MammothBackbone):
     """EfficientNet model.
        Most easily loaded with the .from_name or .from_pretrained methods.
@@ -680,7 +701,7 @@ class EfficientNet(MammothBackbone):
         assert isinstance(blocks_args, list), 'blocks_args should be a list'
         assert len(blocks_args) > 0, 'block args must be greater than 0'
         self._global_params = global_params
-        self.hookme=hookme
+        self.hookme = hookme
         self._blocks_args = blocks_args
 
         # Batch norm parameters
@@ -767,7 +788,7 @@ class EfficientNet(MammothBackbone):
                 >>> print(endpoints['reduction_5'].shape)  # torch.Size([1, 320, 7, 7])
                 >>> print(endpoints['reduction_6'].shape)  # torch.Size([1, 1280, 7, 7])
         """
-        endpoints = dict()
+        endpoints = {}
 
         # Stem
         x = self._swish(self._bn0(self._conv_stem(inputs)))
@@ -977,6 +998,7 @@ class EfficientNet(MammothBackbone):
     #     for pp in list(self.parameters() if not discard_classifier else self._features.parameters()):
     #         grads.append(pp.grad.view(-1))
     #     return torch.cat(grads)
+
 
 def mammoth_efficientnet(nclasses: int, model_name: str, pretrained=False):
     """

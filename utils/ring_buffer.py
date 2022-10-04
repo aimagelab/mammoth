@@ -18,6 +18,7 @@ class RingBuffer:
     """
     The memory buffer of rehearsal method.
     """
+
     def __init__(self, buffer_size, device, n_tasks):
         self.buffer_size = buffer_size
         self.buffer_portion_size = buffer_size // n_tasks
@@ -68,7 +69,7 @@ class RingBuffer:
                 if task_labels is not None:
                     self.task_labels[index] = task_labels[i].to(self.device)
 
-    def get_data(self, size: int, transform: transforms=None) -> Tuple:
+    def get_data(self, size: int, transform: transforms = None) -> Tuple:
         """
         Random samples a batch of size items.
         :param size: the number of requested items
@@ -80,11 +81,11 @@ class RingBuffer:
         if size > populated_portion_length:
             size = populated_portion_length
 
-
         choice = np.random.choice(populated_portion_length, size=size, replace=False)
-        if transform is None: transform = lambda x: x
+        if transform is None:
+            def transform(x): return x
         ret_tuple = (torch.stack([transform(ee.cpu())
-                            for ee in self.examples[choice]]).to(self.device),)
+                                  for ee in self.examples[choice]]).to(self.device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str)
@@ -96,20 +97,21 @@ class RingBuffer:
         """
         Returns true if the buffer is empty, false otherwise.
         """
-        if self.num_seen_examples == 0 and self.task_number == 0:
+        if self.num_seen_examples == self.task_number == 0:
             return True
         else:
             return False
 
-    def get_all_data(self, transform: transforms=None) -> Tuple:
+    def get_all_data(self, transform: transforms = None) -> Tuple:
         """
         Return all the items in the memory buffer.
         :param transform: the transformation to be applied (data augmentation)
         :return: a tuple with all the items in the memory buffer
         """
-        if transform is None: transform = lambda x: x
+        if transform is None:
+            def transform(x): return x
         ret_tuple = (torch.stack([transform(ee.cpu())
-                            for ee in self.examples]).to(self.device),)
+                                  for ee in self.examples]).to(self.device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str)

@@ -3,7 +3,6 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from abc import abstractmethod
 from argparse import Namespace
 from torch import nn as nn
 from torchvision.transforms import transforms
@@ -12,6 +11,7 @@ from typing import Tuple
 from torchvision import datasets
 import numpy as np
 import torch.optim
+
 
 class ContinualDataset:
     """
@@ -33,82 +33,71 @@ class ContinualDataset:
         self.i = 0
         self.args = args
 
-    @abstractmethod
     def get_data_loaders(self) -> Tuple[DataLoader, DataLoader]:
         """
         Creates and returns the training and test loaders for the current task.
         The current training loader and all test loaders are stored in self.
         :return: the current training and test loaders
         """
-        pass
+        raise NotImplementedError
 
     @staticmethod
-    @abstractmethod
     def get_backbone() -> nn.Module:
         """
         Returns the backbone to be used for to the current dataset.
         """
-        pass
+        raise NotImplementedError
 
     @staticmethod
-    @abstractmethod
     def get_transform() -> transforms:
         """
         Returns the transform to be used for to the current dataset.
         """
-        pass
+        raise NotImplementedError
 
     @staticmethod
-    @abstractmethod
     def get_loss() -> nn.functional:
         """
         Returns the loss to be used for to the current dataset.
         """
-        pass
+        raise NotImplementedError
 
     @staticmethod
-    @abstractmethod
     def get_normalization_transform() -> transforms:
         """
         Returns the transform used for normalizing the current dataset.
         """
-        pass
+        raise NotImplementedError
 
     @staticmethod
-    @abstractmethod
     def get_denormalization_transform() -> transforms:
         """
         Returns the transform used for denormalizing the current dataset.
         """
-        pass
+        raise NotImplementedError
 
     @staticmethod
-    @abstractmethod
     def get_scheduler(model, args: Namespace) -> torch.optim.lr_scheduler:
         """
         Returns the scheduler to be used for to the current dataset.
         """
-        pass
+        raise NotImplementedError
 
     @staticmethod
-    @abstractmethod
     def get_epochs():
-        pass
+        raise NotImplementedError
 
     @staticmethod
-    @abstractmethod
     def get_batch_size():
-        pass
+        raise NotImplementedError
 
     @staticmethod
-    @abstractmethod
     def get_minibatch_size():
-        pass
-
+        raise NotImplementedError
 
 
 def store_masked_loaders(train_dataset: datasets, test_dataset: datasets,
-                    setting: ContinualDataset) -> Tuple[DataLoader, DataLoader]:
+                         setting: ContinualDataset) -> Tuple[DataLoader, DataLoader]:
     """
     Divides the dataset into tasks.
     :param train_dataset: train dataset
@@ -117,9 +106,9 @@ def store_masked_loaders(train_dataset: datasets, test_dataset: datasets,
     :return: train and test loaders
     """
     train_mask = np.logical_and(np.array(train_dataset.targets) >= setting.i,
-        np.array(train_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
+                                np.array(train_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
     test_mask = np.logical_and(np.array(test_dataset.targets) >= setting.i,
-        np.array(test_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
+                               np.array(test_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
 
     train_dataset.data = train_dataset.data[train_mask]
     test_dataset.data = test_dataset.data[test_mask]
@@ -148,8 +137,8 @@ def get_previous_train_loader(train_dataset: datasets, batch_size: int,
     :return: a dataloader
     """
     train_mask = np.logical_and(np.array(train_dataset.targets) >=
-        setting.i - setting.N_CLASSES_PER_TASK, np.array(train_dataset.targets)
-        < setting.i - setting.N_CLASSES_PER_TASK + setting.N_CLASSES_PER_TASK)
+                                setting.i - setting.N_CLASSES_PER_TASK, np.array(train_dataset.targets)
+                                < setting.i - setting.N_CLASSES_PER_TASK + setting.N_CLASSES_PER_TASK)
 
     train_dataset.data = train_dataset.data[train_mask]
     train_dataset.targets = np.array(train_dataset.targets)[train_mask]

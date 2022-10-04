@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from contextlib import suppress
 import os
 import sys
 from typing import Any, Dict
@@ -33,7 +34,7 @@ def print_mean_accuracy(mean_acc: np.ndarray, task_number: int,
         mean_acc_class_il, mean_acc_task_il = mean_acc
         print('\nAccuracy for {} task(s): \t [Class-IL]: {} %'
               ' \t [Task-IL]: {} %\n'.format(task_number, round(
-            mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
+                  mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
 
 
 class Logger:
@@ -87,15 +88,14 @@ class Logger:
     def rewind(self, num):
         self.accs = self.accs[:-num]
         self.fullaccs = self.fullaccs[:-num]
-        try:
+        with suppress(BaseException):
             self.fwt = self.fwt[:-num]
             self.bwt = self.bwt[:-num]
             self.forgetting = self.forgetting[:-num]
             self.fwt_mask_classes = self.fwt_mask_classes[:-num]
             self.bwt_mask_classes = self.bwt_mask_classes[:-num]
             self.forgetting_mask_classes = self.forgetting_mask_classes[:-num]
-        except:
-            pass
+
         if self.setting == 'class-il':
             self.accs_mask_classes = self.accs_mask_classes[:-num]
             self.fullaccs_mask_classes = self.fullaccs_mask_classes[:-num]
@@ -129,9 +129,10 @@ class Logger:
             self.accs_mask_classes.append(mean_acc_task_il)
 
     def log_fullacc(self, accs):
-        acc_class_il, acc_task_il = accs
-        self.fullaccs.append(acc_class_il)
-        self.fullaccs_mask_classes.append(acc_task_il)
+        if self.setting == 'class-il':
+            acc_class_il, acc_task_il = accs
+            self.fullaccs.append(acc_class_il)
+            self.fullaccs_mask_classes.append(acc_task_il)
 
     def write(self, args: Dict[str, Any]) -> None:
         """
@@ -160,7 +161,7 @@ class Logger:
                              "/" + self.dataset + "/" + self.model)
 
         path = target_folder + self.setting + "/" + self.dataset\
-               + "/" + self.model + "/logs.pyd"
+            + "/" + self.model + "/logs.pyd"
         with open(path, 'a') as f:
             f.write(str(wrargs) + '\n')
 
@@ -181,6 +182,6 @@ class Logger:
             wrargs['forgetting'] = self.forgetting_mask_classes
 
             path = target_folder + "task-il" + "/" + self.dataset + "/"\
-                   + self.model + "/logs.pyd"
+                + self.model + "/logs.pyd"
             with open(path, 'a') as f:
                 f.write(str(wrargs) + '\n')
