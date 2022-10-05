@@ -13,7 +13,6 @@ from PIL import Image
 import os
 from datasets.utils.validation import get_train_val
 from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
-from datasets.utils.continual_dataset import get_previous_train_loader
 from datasets.transforms.denormalization import DeNormalize
 
 
@@ -21,8 +20,9 @@ class TinyImagenet(Dataset):
     """
     Defines Tiny Imagenet as for the others pytorch datasets.
     """
-    def __init__(self, root: str, train: bool=True, transform: transforms=None,
-                target_transform: transforms=None, download: bool=False) -> None:
+
+    def __init__(self, root: str, train: bool = True, transform: transforms = None,
+                 target_transform: transforms = None, download: bool = False) -> None:
         self.not_aug_transform = transforms.Compose([transforms.ToTensor()])
         self.root = root
         self.train = train
@@ -44,14 +44,14 @@ class TinyImagenet(Dataset):
         for num in range(20):
             self.data.append(np.load(os.path.join(
                 root, 'processed/x_%s_%02d.npy' %
-                      ('train' if self.train else 'val', num+1))))
+                      ('train' if self.train else 'val', num + 1))))
         self.data = np.concatenate(np.array(self.data))
 
         self.targets = []
         for num in range(20):
             self.targets.append(np.load(os.path.join(
                 root, 'processed/y_%s_%02d.npy' %
-                      ('train' if self.train else 'val', num+1))))
+                      ('train' if self.train else 'val', num + 1))))
         self.targets = np.concatenate(np.array(self.targets))
 
     def __len__(self):
@@ -81,8 +81,9 @@ class MyTinyImagenet(TinyImagenet):
     """
     Defines Tiny Imagenet as for the others pytorch datasets.
     """
-    def __init__(self, root: str, train: bool=True, transform: transforms=None,
-                target_transform: transforms=None, download: bool=False) -> None:
+
+    def __init__(self, root: str, train: bool = True, transform: transforms = None,
+                 target_transform: transforms = None, download: bool = False) -> None:
         super(MyTinyImagenet, self).__init__(
             root, train, transform, target_transform, download)
 
@@ -103,9 +104,9 @@ class MyTinyImagenet(TinyImagenet):
             target = self.target_transform(target)
 
         if hasattr(self, 'logits'):
-          return img, target, not_aug_img, self.logits[index]
+            return img, target, not_aug_img, self.logits[index]
 
-        return img, target,  not_aug_img
+        return img, target, not_aug_img
 
 
 class SequentialTinyImagenet(ContinualDataset):
@@ -115,11 +116,11 @@ class SequentialTinyImagenet(ContinualDataset):
     N_CLASSES_PER_TASK = 20
     N_TASKS = 10
     TRANSFORM = transforms.Compose(
-            [transforms.RandomCrop(64, padding=4),
-             transforms.RandomHorizontalFlip(),
-             transforms.ToTensor(),
-             transforms.Normalize((0.4802, 0.4480, 0.3975),
-                                  (0.2770, 0.2691, 0.2821))])
+        [transforms.RandomCrop(64, padding=4),
+         transforms.RandomHorizontalFlip(),
+         transforms.ToTensor(),
+         transforms.Normalize((0.4802, 0.4480, 0.3975),
+                              (0.2770, 0.2691, 0.2821))])
 
     def get_data_loaders(self):
         transform = self.TRANSFORM
@@ -128,13 +129,13 @@ class SequentialTinyImagenet(ContinualDataset):
             [transforms.ToTensor(), self.get_normalization_transform()])
 
         train_dataset = MyTinyImagenet(base_path() + 'TINYIMG',
-                                 train=True, download=True, transform=transform)
+                                       train=True, download=True, transform=transform)
         if self.args.validation:
             train_dataset, test_dataset = get_train_val(train_dataset,
-                                                    test_transform, self.NAME)
+                                                        test_transform, self.NAME)
         else:
             test_dataset = TinyImagenet(base_path() + 'TINYIMG',
-                        train=False, download=True, transform=test_transform)
+                                        train=False, download=True, transform=test_transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
@@ -162,7 +163,7 @@ class SequentialTinyImagenet(ContinualDataset):
     @staticmethod
     def get_denormalization_transform():
         transform = DeNormalize((0.4802, 0.4480, 0.3975),
-                                         (0.2770, 0.2691, 0.2821))
+                                (0.2770, 0.2691, 0.2821))
         return transform
 
     @staticmethod
