@@ -3,39 +3,44 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import numpy # needed (don't change it)
+import numpy  # needed (don't change it)
 import importlib
 import os
-import sys
 import socket
+import sys
+
+
 mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(mammoth_path)
 sys.path.append(mammoth_path + '/datasets')
 sys.path.append(mammoth_path + '/backbone')
 sys.path.append(mammoth_path + '/models')
 
-from datasets import NAMES as DATASET_NAMES
-from models import get_all_models
+import datetime
+import uuid
 from argparse import ArgumentParser
-from utils.args import add_management_args
-from datasets import ContinualDataset
-from utils.continual_training import train as ctrain
-from datasets import get_dataset
-from models import get_model
-from utils.training import train
-from utils.best_args import best_args
-from utils.conf import set_random_seed
+
 import setproctitle
 import torch
-import uuid
-import datetime
+from datasets import NAMES as DATASET_NAMES
+from datasets import ContinualDataset, get_dataset
+from models import get_all_models, get_model
+
+from utils.args import add_management_args
+from utils.best_args import best_args
+from utils.conf import set_random_seed
+from utils.continual_training import train as ctrain
+from utils.distributed import make_dp
+from utils.training import train
+
 
 def lecun_fix():
     # Yann moved his website to CloudFlare. You need this now
-    from six.moves import urllib # pyright: ignore
+    from six.moves import urllib  # pyright: ignore
     opener = urllib.request.build_opener()
     opener.addheaders = [('User-agent', 'Mozilla/5.0')]
     urllib.request.install_opener(opener)
+
 
 def parse_args():
     parser = ArgumentParser(description='mammoth', allow_abbrev=False)
@@ -82,6 +87,7 @@ def parse_args():
 
     return args
 
+
 def main(args=None):
     lecun_fix()
     if args is None:
@@ -107,9 +113,16 @@ def main(args=None):
     loss = dataset.get_loss()
     model = get_model(args, backbone, loss, dataset.get_transform())
 
+    if args.distributed == 'dp':
+        model.net = make_dp(model.net)
+        model.to('cuda:0')
+        args.conf_ngpus = torch.cuda.device_count()
+    elif args.distributed == 'ddp':
+        # DDP breaks the buffer, it has to be synchronized.
+        raise NotImplementedError('Distributed Data Parallel not supported yet.')
+
     if args.debug_mode:
         args.nowand = 1
-
 
     # set job name
     setproctitle.setproctitle('{}_{}_{}'.format(args.model, args.buffer_size if 'buffer_size' in args else 0, args.dataset))
