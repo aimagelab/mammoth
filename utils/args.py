@@ -34,6 +34,9 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     parser.add_argument('--batch_size', type=int,
                         help='Batch size.')
 
+    parser.add_argument('--distributed', type=str, default='no', choices=['no', 'dp', 'ddp'])
+
+
 def add_management_args(parser: ArgumentParser) -> None:
     parser.add_argument('--seed', type=int, default=None,
                         help='The random seed.')
@@ -51,6 +54,7 @@ def add_management_args(parser: ArgumentParser) -> None:
     parser.add_argument('--nowand', default=0, choices=[0, 1], type=int, help='Inhibit wandb logging')
     parser.add_argument('--wandb_entity', type=str, default='regaz', help='Wandb entity')
     parser.add_argument('--wandb_project', type=str, default='mammoth', help='Wandb project name')
+
 
 def add_rehearsal_args(parser: ArgumentParser) -> None:
     """
