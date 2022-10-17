@@ -26,15 +26,12 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 ## Models
 
 + eXtended-DER (X-DER)
-
 + Dark Experience Replay (DER)
 + Dark Experience Replay++ (DER++)
-
 + Learning a Unified Classifier Incrementally via Rebalancing (LUCIR)
 + Greedy Sampler and Dumb Learner (GDumb)
 + Bias Correction (BiC)
 + Regular Polytope Classifier (RPC)
-
 + Gradient Episodic Memory (GEM)
 + A-GEM
 + A-GEM with Reservoir (A-GEM-R)
