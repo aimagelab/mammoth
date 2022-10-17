@@ -4,12 +4,6 @@
 
 # Mammoth - An Extendible (General) Continual Learning Framework for Pytorch
 
-## NEWS
-
-**STAY TUNED:** The additional code for the MiniImagenet and NTU-60 experiments will be uploaded soon due to complications in the distribution of datasets.
-
------------------------------
-
 
 Official repository of [Class-Incremental Continual Learning into the eXtended DER-verse](https://arxiv.org/abs/2201.00766) and [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html)
 
@@ -51,27 +45,19 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 + Hindsight Anchor Learning (HAL)
 + Incremental Classifier and Representation Learning (iCaRL)
 + online Elastic Weight Consolidation (oEWC)
-+ Synaptic Intelligence
-+ Learning without Forgetting
-+ Progressive Neural Networks
++ Synaptic Intelligence (SI)
++ Learning without Forgetting (LwF)
++ Progressive Neural Networks (PNN)
 
 ## Datasets
 
-**Class-Il / Task-IL settings**
-
-+ Sequential MNIST
-+ Sequential CIFAR-10
-+ Sequential Tiny ImageNet
-+ Sequential CIFAR-100
-
-**Domain-IL settings**
-
-+ Permuted MNIST
-+ Rotated MNIST
-
-**General Continual Learning setting**
-
-+ MNIST-360
++ Sequential MNIST (*Class-Il / Task-IL*)
++ Sequential CIFAR-10 (*Class-Il / Task-IL*)
++ Sequential Tiny ImageNet (*Class-Il / Task-IL*)
++ Sequential CIFAR-100 (*Class-Il / Task-IL*)
++ Permuted MNIST (*Domain-IL*)
++ Rotated MNIST (*Domain-IL*)
++ MNIST-360 (*General Continual Learning*)
 
 ## Citing these works
 
@@ -95,6 +81,39 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
  year = {2020}
 }
 ```
+
+## Awesome Papers using Mammoth
+
+### Our Papers
+
++ Dark Experience for General Continual Learning: a Strong, Simple Baseline (**NeurIPS 2020**) [[paper](https://arxiv.org/abs/2004.07211)]
++ Rethinking Experience Replay: a Bag of Tricks for Continual Learning (**ICPR 2020**) [[paper](https://arxiv.org/abs/2010.05595)] [[code](https://github.com/hastings24/rethinking_er)]
++ Class-Incremental Continual Learning into the eXtended DER-verse (**TPAMI 2022**) [[paper](https://arxiv.org/abs/2201.00766)]
++ Effects of Auxiliary Knowledge on Continual Learning (**ICPR 2022**) [[paper](https://arxiv.org/abs/2206.02577)]
++ Transfer without Forgetting  (**ECCV 2022**) [[paper](https://arxiv.org/abs/2206.00388)][[code](https://github.com/mbosc/twf)]
++ Continual semi-supervised learning through contrastive interpolation consistency (**PRL 2022**) [[paper](https://arxiv.org/abs/2108.06552)][[code](https://github.com/aimagelab/CSSL)]
++ On the Effectiveness of Lipschitz-Driven Rehearsal in Continual Learning (**NeurIPS 2022**) [[paper](https://arxiv.org/abs/2210.06443)] [[code](https://github.com/aimagelab/lider)]
+
+### Other Awesome CL works using Mammoth
+
++ New Insights on Reducing Abrupt Representation Change in Online Continual Learning (**ICLR2022**) [[paper](https://openreview.net/pdf?id=N8MaByOzUfb)]
++ Learning fast, learning slow: A general continual learning method based on complementary learning system (**ICLR2022**) [[paper](https://openreview.net/pdf?id=uxxFrDwrE7Y)]
++ Self-supervised models are continual learners (**CVPR2022**) [[paper](https://arxiv.org/abs/2112.04215)] [[code](https://github.com/DonkeyShot21/cassle)]
++ Representational continuity for unsupervised continual learning (**ICLR2022**) [[paper](https://openreview.net/pdf?id=9Hrka5PA7LW)]
++ Continual Learning by Modeling Intra-Class Variation (**Tech Report**) [[paper](https://arxiv.org/abs/2210.05398)]
+
+## Update Roadmap
+
+In the near future, we plan to incorporate the following improvements into this master repository:
+
++ ER+Tricks (*Rethinking Experience Replay: a Bag of Tricks for Continual Learning*)
++ TwF & Pretraining Baselines (*Transfer without Forgetting*)
++ CCIC & CSSL Baselines (*Continual semi-supervised learning through contrastive interpolation consistency*)
++ LiDER (*On the Effectiveness of Lipschitz-Driven Rehearsal in Continual Learning*)
++ Additional X-DER datasets (*Class-Incremental Continual Learning into the eXtended DER-verse*)
+
+Pull requests welcome! [Get in touch](mailto:matteo.boschini@unimore.it)
+
 
 ## Previous versions
 
