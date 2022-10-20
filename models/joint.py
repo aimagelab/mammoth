@@ -12,7 +12,7 @@ from torch.optim import SGD
 from torchvision import transforms
 
 from models.utils.continual_model import ContinualModel
-from utils.args import *
+from utils.args import add_management_args, add_experiment_args, ArgumentParser
 from utils.status import progress_bar
 
 

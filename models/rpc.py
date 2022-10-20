@@ -7,7 +7,7 @@ import torch
 from datasets import get_dataset
 
 from models.utils.continual_model import ContinualModel
-from utils.args import *
+from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
 from utils.buffer import Buffer
 
 
@@ -53,6 +53,7 @@ def dsimplex(num_classes=10):
     ds = simplex_coordinates2(feat_dim)
     return ds
 
+
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual learning via'
                                         ' Experience Replay.')
@@ -71,7 +72,7 @@ class RPC(ContinualModel):
         self.buffer = Buffer(self.args.buffer_size, self.device)
         self.cpt = get_dataset(args).N_CLASSES_PER_TASK
         self.tasks = get_dataset(args).N_TASKS
-        self.task=0
+        self.task = 0
         self.rpchead = torch.from_numpy(dsimplex(self.cpt * self.tasks)).float().to(self.device)
 
     def forward(self, x):
@@ -87,11 +88,11 @@ class RPC(ContinualModel):
             self.buffer.empty()
             for tl in buf_lab.unique():
                 idx = tl == buf_lab
-                ex, lab  = buf_x[idx], buf_lab[idx]
+                ex, lab = buf_x[idx], buf_lab[idx]
                 first = min(ex.shape[0], examples_per_class)
                 self.buffer.add_data(
                     examples=ex[:first],
-                    labels = lab[:first]
+                    labels=lab[:first]
                 )
 
         # add new task
@@ -114,7 +115,7 @@ class RPC(ContinualModel):
                         ce[labels[j] % self.cpt] -= 1
 
                 self.buffer.add_data(examples=not_aug_inputs[flags],
-                                    labels=labels[flags])
+                                     labels=labels[flags])
         self.task += 1
 
     def observe(self, inputs, labels, not_aug_inputs):
@@ -131,6 +132,5 @@ class RPC(ContinualModel):
 
         loss.backward()
         self.opt.step()
-
 
         return loss.item()

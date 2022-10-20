@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from models.utils.continual_model import ContinualModel
-from utils.args import *
+from utils.args import add_management_args, add_experiment_args, ArgumentParser
 
 
 def get_parser() -> ArgumentParser:

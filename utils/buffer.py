@@ -162,7 +162,7 @@ class Buffer:
 
         choice = np.random.choice(min(self.num_seen_examples, self.examples.shape[0]),
                                   size=size, replace=False)
-        if transform is None or self.examples.dim() == 5:
+        if transform is None:
             def transform(x): return x
         ret_tuple = (torch.stack([transform(ee.cpu()) for ee in self.examples[choice]]).to(self.device),)
         for attr_str in self.attributes[1:]:

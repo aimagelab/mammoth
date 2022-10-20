@@ -8,11 +8,11 @@ import numpy as np
 import torch
 try:
     import quadprog
-except:
+except BaseException:
     print('Warning: GEM and A-GEM cannot be used on Windows (quadprog required)')
 
 from models.utils.continual_model import ContinualModel
-from utils.args import *
+from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
 from utils.buffer import Buffer
 
 
@@ -124,9 +124,8 @@ class Gem(ContinualModel):
             examples=cur_x.to(self.device),
             labels=cur_y.to(self.device),
             task_labels=torch.ones(samples_per_task,
-                dtype=torch.long).to(self.device) * (self.current_task - 1)
+                                   dtype=torch.long).to(self.device) * (self.current_task - 1)
         )
-
 
     def observe(self, inputs, labels, not_aug_inputs):
 
@@ -156,7 +155,7 @@ class Gem(ContinualModel):
             store_grad(self.parameters, self.grads_da, self.grad_dims)
 
             dot_prod = torch.mm(self.grads_da.unsqueeze(0),
-                            torch.stack(self.grads_cs).T)
+                                torch.stack(self.grads_cs).T)
             if (dot_prod < 0).sum() != 0:
                 project2cone2(self.grads_da.unsqueeze(1),
                               torch.stack(self.grads_cs).T, margin=self.args.gamma)

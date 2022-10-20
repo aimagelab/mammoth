@@ -1,14 +1,17 @@
-import sys
-
 # persistent_locals has been co-authored with Andrea Maffezzoli
-class persistent_locals(object):
-    def __init__(self, func):
+
+import sys
+from typing import Callable
+
+
+class persistent_locals:
+    def __init__(self, func: Callable):
         self._locals = {}
         self.func = func
 
     def __call__(self, *args, **kwargs):
         def tracer(frame, event, arg):
-            if event=='return':
+            if event == 'return':
                 self._locals = frame.f_locals.copy()
 
         # tracer is activated on next call, return or exception

@@ -9,14 +9,15 @@ from copy import deepcopy
 import torch
 import torch.nn.functional as F
 from datasets import get_dataset
-from torch.optim import  Adam
+from torch.optim import Adam
 
 from models.utils.continual_model import ContinualModel
-from utils.args import *
+from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer, icarl_replay
 
 # based on https://github.com/sairin1202/BIC
+
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='A bag of tricks for '
@@ -62,7 +63,7 @@ class BiC(ContinualModel):
             if hasattr(self, 'corr_factors'):
                 self.old_corr = deepcopy(self.corr_factors)
             self.net.train()
-            self.lamda = 1 / (self.task+1)
+            self.lamda = 1 / (self.task + 1)
 
             icarl_replay(self, dataset, val_set_split=self.args.valset_split)
 
@@ -70,7 +71,7 @@ class BiC(ContinualModel):
             del self.corr_factors
 
     def evaluate_bias(self, fprefx):
-        resp = torch.zeros((self.task+1) * self.cpt).to(self.device)
+        resp = torch.zeros((self.task + 1) * self.cpt).to(self.device)
         with torch.no_grad():
             with bn_track_stats(self, False):
                 for data in self.val_loader:
@@ -78,7 +79,7 @@ class BiC(ContinualModel):
                     inputs, labels, _ = data
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
 
-                    resp += self.forward(inputs, anticipate=fprefx == 'post')[:, :(self.task+1) * self.cpt].sum(0)
+                    resp += self.forward(inputs, anticipate=fprefx == 'post')[:, :(self.task + 1) * self.cpt].sum(0)
         resp /= len(self.val_loader.dataset)
 
         if fprefx == 'pre':
@@ -96,8 +97,7 @@ class BiC(ContinualModel):
             corr_factors = torch.tensor([0., 1.], device=self.device, requires_grad=True)
             self.biasopt = Adam([corr_factors], lr=0.001)
 
-
-            for l in range(self.args.bic_epochs) :
+            for l in range(self.args.bic_epochs):
                 for data in self.val_loader:
 
                     inputs, labels, _ = data
@@ -108,7 +108,7 @@ class BiC(ContinualModel):
                         out = self.forward(inputs)
 
                     start_last_task = (self.task) * self.cpt
-                    end_last_task = (self.task+1) * self.cpt
+                    end_last_task = (self.task + 1) * self.cpt
                     tout = out + 0
                     tout[:, start_last_task:end_last_task] *= corr_factors[1].repeat_interleave(end_last_task - start_last_task)
                     tout[:, start_last_task:end_last_task] += corr_factors[0].repeat_interleave(end_last_task - start_last_task)
@@ -153,14 +153,13 @@ class BiC(ContinualModel):
                         old_outputs[:, start_last_task:end_last_task] *= self.old_corr[1].repeat_interleave(end_last_task - start_last_task)
                         old_outputs[:, start_last_task:end_last_task] += self.old_corr[0].repeat_interleave(end_last_task - start_last_task)
 
-
-            pi_hat = F.log_softmax(outputs[:,:self.task*self.cpt] / self.args.temp, dim=1)
-            pi = F.softmax(old_outputs[:,:self.task*self.cpt] / self.args.temp, dim=1)
+            pi_hat = F.log_softmax(outputs[:, :self.task * self.cpt] / self.args.temp, dim=1)
+            pi = F.softmax(old_outputs[:, :self.task * self.cpt] / self.args.temp, dim=1)
 
             dist_loss = -(pi_hat * pi).sum(1).mean()
 
-        class_loss = self.loss(outputs[:,:(self.task+1)*self.cpt], labels, reduction='none')
-        loss = (1-self.lamda) * class_loss.mean() + self.lamda * dist_loss.mean() * self.args.temp * self.args.temp
+        class_loss = self.loss(outputs[:, :(self.task + 1) * self.cpt], labels, reduction='none')
+        loss = (1 - self.lamda) * class_loss.mean() + self.lamda * dist_loss.mean() * self.args.temp * self.args.temp
 
         if self.args.wd_reg:
             loss += self.args.wd_reg * torch.sum(self.net.module.get_params() ** 2)
@@ -197,7 +196,7 @@ class BiC(ContinualModel):
                 not_aug_inputs = not_aug_inputs.to(self.device)
                 if examples_per_task - counter > 0:
                     self.buffer.add_data(examples=not_aug_inputs[:(examples_per_task - counter)],
-                                     labels=labels[:(examples_per_task - counter)],
-                                     task_labels=(torch.ones(self.args.batch_size) *
-                                                  (self.task - 1))[:(examples_per_task - counter)])
+                                         labels=labels[:(examples_per_task - counter)],
+                                         task_labels=(torch.ones(self.args.batch_size) *
+                                                      (self.task - 1))[:(examples_per_task - counter)])
                     counter += len(not_aug_inputs)

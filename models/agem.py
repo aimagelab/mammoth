@@ -8,7 +8,7 @@ import torch
 
 from models.gem import overwrite_grad, store_grad
 from models.utils.continual_model import ContinualModel
-from utils.args import *
+from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
 from utils.buffer import Buffer
 
 
@@ -18,6 +18,7 @@ def get_parser() -> ArgumentParser:
     add_experiment_args(parser)
     add_rehearsal_args(parser)
     return parser
+
 
 def project(gxy: torch.Tensor, ger: torch.Tensor) -> torch.Tensor:
     corr = torch.dot(gxy, ger) / torch.dot(ger, ger)

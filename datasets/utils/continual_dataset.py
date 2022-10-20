@@ -4,24 +4,27 @@
 # LICENSE file in the root directory of this source tree.
 
 from argparse import Namespace
-from torch import nn as nn
-from torchvision.transforms import transforms
-from torch.utils.data import DataLoader
+from dataclasses import dataclass
 from typing import Tuple
-from torchvision import datasets
+
 import numpy as np
 import torch.optim
+import torch.nn as nn
+from torch.utils.data import DataLoader
+from torchvision import datasets
+from torchvision.transforms import transforms
 
 
+@dataclass
 class ContinualDataset:
     """
     Continual learning evaluation setting.
     """
-    NAME = None
-    SETTING = None
-    N_CLASSES_PER_TASK = None
-    N_TASKS = None
-    TRANSFORM = None
+    NAME: str
+    SETTING: str
+    N_CLASSES_PER_TASK: int
+    N_TASKS: int
+    TRANSFORM: nn.Module
 
     def __init__(self, args: Namespace) -> None:
         """
