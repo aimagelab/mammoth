@@ -6,7 +6,6 @@
 import sys
 from argparse import Namespace
 from contextlib import suppress
-from dataclasses import dataclass
 from typing import List
 
 import torch
@@ -20,7 +19,6 @@ with suppress(ImportError):
     import wandb
 
 
-@dataclass
 class ContinualModel(nn.Module):
     """
     Continual learning model.
@@ -38,6 +36,9 @@ class ContinualModel(nn.Module):
         self.transform = transform
         self.opt = SGD(self.net.parameters(), lr=self.args.lr)
         self.device = get_device()
+
+        if not self.NAME or not self.COMPATIBILITY:
+            raise NotImplementedError('Please specify the name and the compatibility of the model.')
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """

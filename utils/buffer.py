@@ -8,7 +8,7 @@ from typing import Tuple
 
 import numpy as np
 import torch
-from torchvision import transforms
+import torch.nn as nn
 
 
 def icarl_replay(self, dataset, val_set_split=0):
@@ -150,7 +150,7 @@ class Buffer:
                 if task_labels is not None:
                     self.task_labels[index] = task_labels[i].to(self.device)
 
-    def get_data(self, size: int, transform: transforms = None, return_index=False) -> Tuple:
+    def get_data(self, size: int, transform: nn.Module = None, return_index=False) -> Tuple:
         """
         Random samples a batch of size items.
         :param size: the number of requested items
@@ -175,9 +175,7 @@ class Buffer:
         else:
             return (torch.tensor(choice).to(self.device), ) + ret_tuple
 
-        return ret_tuple
-
-    def get_data_by_index(self, indexes, transform: transforms = None) -> Tuple:
+    def get_data_by_index(self, indexes, transform: nn.Module = None) -> Tuple:
         """
         Returns the data by the given index.
         :param index: the index of the item
@@ -203,7 +201,7 @@ class Buffer:
         else:
             return False
 
-    def get_all_data(self, transform: transforms = None) -> Tuple:
+    def get_all_data(self, transform: nn.Module = None) -> Tuple:
         """
         Return all the items in the memory buffer.
         :param transform: the transformation to be applied (data augmentation)

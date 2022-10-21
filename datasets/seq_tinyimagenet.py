@@ -3,17 +3,22 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import numpy as np
-import torchvision.transforms as transforms
-from torch.utils.data import Dataset
-from backbone.ResNet18 import resnet18
-import torch.nn.functional as F
-from utils.conf import base_path_dataset as base_path
-from PIL import Image
 import os
-from datasets.utils.validation import get_train_val
-from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
+from typing import Optional
+
+import numpy as np
+import torch.nn as nn
+import torch.nn.functional as F
+import torchvision.transforms as transforms
+from backbone.ResNet18 import resnet18
+from PIL import Image
+from torch.utils.data import Dataset
+
 from datasets.transforms.denormalization import DeNormalize
+from datasets.utils.continual_dataset import (ContinualDataset,
+                                              store_masked_loaders)
+from datasets.utils.validation import get_train_val
+from utils.conf import base_path_dataset as base_path
 
 
 class TinyImagenet(Dataset):
@@ -21,8 +26,8 @@ class TinyImagenet(Dataset):
     Defines Tiny Imagenet as for the others pytorch datasets.
     """
 
-    def __init__(self, root: str, train: bool = True, transform: transforms = None,
-                 target_transform: transforms = None, download: bool = False) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[nn.Module] = None,
+                 target_transform: Optional[nn.Module] = None, download: bool = False) -> None:
         self.not_aug_transform = transforms.Compose([transforms.ToTensor()])
         self.root = root
         self.train = train
@@ -82,8 +87,8 @@ class MyTinyImagenet(TinyImagenet):
     Defines Tiny Imagenet as for the others pytorch datasets.
     """
 
-    def __init__(self, root: str, train: bool = True, transform: transforms = None,
-                 target_transform: transforms = None, download: bool = False) -> None:
+    def __init__(self, root: str, train: bool = True, transform: Optional[nn.Module] = None,
+                 target_transform: Optional[nn.Module] = None, download: bool = False) -> None:
         super(MyTinyImagenet, self).__init__(
             root, train, transform, target_transform, download)
 
