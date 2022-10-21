@@ -3,31 +3,31 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from abc import abstractmethod
+import sys
 from argparse import Namespace
+from contextlib import suppress
+from typing import List
 
 import torch
 import torch.nn as nn
-import torchvision
 from torch.optim import SGD
 
 from utils.conf import get_device
 from utils.magic import persistent_locals
 
-try:
+with suppress(ImportError):
     import wandb
-except ImportError:
-    wandb = None
+
 
 class ContinualModel(nn.Module):
     """
     Continual learning model.
     """
-    NAME = None
-    COMPATIBILITY = []
+    NAME: str
+    COMPATIBILITY: List[str]
 
     def __init__(self, backbone: nn.Module, loss: nn.Module,
-                args: Namespace, transform: torchvision.transforms) -> None:
+                 args: Namespace, transform: nn.Module) -> None:
         super(ContinualModel, self).__init__()
 
         self.net = backbone
@@ -36,6 +36,9 @@ class ContinualModel(nn.Module):
         self.transform = transform
         self.opt = SGD(self.net.parameters(), lr=self.args.lr)
         self.device = get_device()
+
+        if not self.NAME or not self.COMPATIBILITY:
+            raise NotImplementedError('Please specify the name and the compatibility of the model.')
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -47,7 +50,7 @@ class ContinualModel(nn.Module):
         return self.net(x)
 
     def meta_observe(self, *args, **kwargs):
-        if wandb is not None and not self.args.nowand:
+        if 'wandb' not in sys.modules and not self.args.nowand:
             pl = persistent_locals(self.observe)
             ret = pl(*args, **kwargs)
             self.autolog_wandb(pl.locals)
@@ -55,7 +58,6 @@ class ContinualModel(nn.Module):
             ret = self.observe(*args, **kwargs)
         return ret
 
-    @abstractmethod
     def observe(self, inputs: torch.Tensor, labels: torch.Tensor,
                 not_aug_inputs: torch.Tensor) -> float:
         """
@@ -65,7 +67,7 @@ class ContinualModel(nn.Module):
         :param kwargs: some methods could require additional parameters
         :return: the value of the loss function
         """
-        pass
+        raise NotImplementedError
 
     def autolog_wandb(self, locals):
         """

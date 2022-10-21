@@ -8,7 +8,7 @@ from typing import Tuple
 
 import numpy as np
 import torch
-from torchvision import transforms
+import torch.nn as nn
 
 
 def icarl_replay(self, dataset, val_set_split=0):
@@ -29,37 +29,38 @@ def icarl_replay(self, dataset, val_set_split=0):
         if val_set_split > 0:
             self.val_loader = deepcopy(dataset.train_loader)
 
-        data_concatenate = torch.cat if type(dataset.train_loader.dataset.data) == torch.Tensor else np.concatenate
+        data_concatenate = torch.cat if isinstance(dataset.train_loader.dataset.data, torch.Tensor) else np.concatenate
         need_aug = hasattr(dataset.train_loader.dataset, 'not_aug_transform')
         if not need_aug:
-            refold_transform = lambda x: x.cpu()
+            def refold_transform(x): return x.cpu()
         else:
             data_shape = len(dataset.train_loader.dataset.data[0].shape)
             if data_shape == 3:
-                refold_transform = lambda x: (x.cpu()*255).permute([0, 2, 3, 1]).numpy().astype(np.uint8)
+                def refold_transform(x): return (x.cpu() * 255).permute([0, 2, 3, 1]).numpy().astype(np.uint8)
             elif data_shape == 2:
-                refold_transform = lambda x: (x.cpu()*255).squeeze(1).type(torch.uint8)
+                def refold_transform(x): return (x.cpu() * 255).squeeze(1).type(torch.uint8)
 
         # REDUCE AND MERGE TRAINING SET
         dataset.train_loader.dataset.targets = np.concatenate([
             dataset.train_loader.dataset.targets[~val_train_mask],
             self.buffer.labels.cpu().numpy()[:len(self.buffer)][~buff_val_mask]
-            ])
+        ])
         dataset.train_loader.dataset.data = data_concatenate([
             dataset.train_loader.dataset.data[~val_train_mask],
             refold_transform((self.buffer.examples)[:len(self.buffer)][~buff_val_mask])
-            ])
+        ])
 
         if val_set_split > 0:
             # REDUCE AND MERGE VALIDATION SET
             self.val_loader.dataset.targets = np.concatenate([
                 self.val_loader.dataset.targets[val_train_mask],
                 self.buffer.labels.cpu().numpy()[:len(self.buffer)][buff_val_mask]
-                ])
+            ])
             self.val_loader.dataset.data = data_concatenate([
                 self.val_loader.dataset.data[val_train_mask],
                 refold_transform((self.buffer.examples)[:len(self.buffer)][buff_val_mask])
-                ])
+            ])
+
 
 def reservoir(num_seen_examples: int, buffer_size: int) -> int:
     """
@@ -86,6 +87,7 @@ class Buffer:
     """
     The memory buffer of rehearsal method.
     """
+
     def __init__(self, buffer_size, device, n_tasks=None, mode='reservoir'):
         assert mode in ('ring', 'reservoir')
         self.buffer_size = buffer_size
@@ -107,7 +109,6 @@ class Buffer:
 
     def __len__(self):
         return min(self.num_seen_examples, self.buffer_size)
-
 
     def init_tensors(self, examples: torch.Tensor, labels: torch.Tensor,
                      logits: torch.Tensor, task_labels: torch.Tensor) -> None:
@@ -149,7 +150,7 @@ class Buffer:
                 if task_labels is not None:
                     self.task_labels[index] = task_labels[i].to(self.device)
 
-    def get_data(self, size: int, transform: transforms=None, return_index=False) -> Tuple:
+    def get_data(self, size: int, transform: nn.Module = None, return_index=False) -> Tuple:
         """
         Random samples a batch of size items.
         :param size: the number of requested items
@@ -161,9 +162,9 @@ class Buffer:
 
         choice = np.random.choice(min(self.num_seen_examples, self.examples.shape[0]),
                                   size=size, replace=False)
-        if transform is None: transform = lambda x: x
-        ret_tuple = (torch.stack([transform(ee.cpu())
-                            for ee in self.examples[choice]]).to(self.device),)
+        if transform is None:
+            def transform(x): return x
+        ret_tuple = (torch.stack([transform(ee.cpu()) for ee in self.examples[choice]]).to(self.device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str)
@@ -174,24 +175,22 @@ class Buffer:
         else:
             return (torch.tensor(choice).to(self.device), ) + ret_tuple
 
-        return ret_tuple
-
-    def get_data_by_index(self, indexes, transform: transforms=None) -> Tuple:
+    def get_data_by_index(self, indexes, transform: nn.Module = None) -> Tuple:
         """
         Returns the data by the given index.
         :param index: the index of the item
         :param transform: the transformation to be applied (data augmentation)
         :return:
         """
-        if transform is None: transform = lambda x: x
+        if transform is None:
+            def transform(x): return x
         ret_tuple = (torch.stack([transform(ee.cpu())
-                            for ee in self.examples[indexes]]).to(self.device),)
+                                  for ee in self.examples[indexes]]).to(self.device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str).to(self.device)
                 ret_tuple += (attr[indexes],)
         return ret_tuple
-
 
     def is_empty(self) -> bool:
         """
@@ -202,15 +201,16 @@ class Buffer:
         else:
             return False
 
-    def get_all_data(self, transform: transforms=None) -> Tuple:
+    def get_all_data(self, transform: nn.Module = None) -> Tuple:
         """
         Return all the items in the memory buffer.
         :param transform: the transformation to be applied (data augmentation)
         :return: a tuple with all the items in the memory buffer
         """
-        if transform is None: transform = lambda x: x
+        if transform is None:
+            def transform(x): return x
         ret_tuple = (torch.stack([transform(ee.cpu())
-                            for ee in self.examples]).to(self.device),)
+                                  for ee in self.examples]).to(self.device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str)

@@ -10,8 +10,8 @@ import torch
 from datasets import get_dataset
 from models import get_model
 from models.utils.continual_model import ContinualModel
+from utils.loggers import Logger
 
-from utils.loggers import *
 from utils.status import progress_bar
 
 try:
@@ -49,7 +49,6 @@ def train(args: Namespace):
     :param args: the arguments of the current execution
     """
 
-
     dataset = get_dataset(args)
     backbone = dataset.get_backbone()
     loss = dataset.get_loss()
@@ -75,7 +74,7 @@ def train(args: Namespace):
         i += 1
 
     if model.NAME == 'joint_gcl':
-      model.end_task(dataset)
+        model.end_task(dataset)
 
     acc = evaluate(model, dataset)
     print('Accuracy:', acc)
@@ -87,4 +86,3 @@ def train(args: Namespace):
     if not args.nowand:
         wandb.log({'Accuracy': acc})
         wandb.finish()
-

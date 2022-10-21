@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from datasets import get_dataset
 
 from models.utils.continual_model import ContinualModel
-from utils.args import *
+from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer, icarl_replay
 

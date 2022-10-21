@@ -12,7 +12,7 @@ import numpy as np
 
 from utils import create_if_not_exists
 from utils.conf import base_path
-from utils.metrics import *
+from utils.metrics import backward_transfer, forward_transfer, forgetting
 
 useless_args = ['dataset', 'tensorboard', 'validation', 'model',
                 'csv_log', 'notes', 'load_best_args']

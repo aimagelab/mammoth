@@ -6,7 +6,7 @@
 from torch.nn import functional as F
 
 from models.utils.continual_model import ContinualModel
-from utils.args import *
+from utils.args import ArgumentParser, add_experiment_args, add_management_args, add_rehearsal_args
 from utils.buffer import Buffer
 
 

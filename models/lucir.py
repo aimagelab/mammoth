@@ -15,7 +15,7 @@ from torch.utils.data.dataloader import DataLoader
 
 from models.icarl import fill_buffer
 from models.utils.continual_model import ContinualModel
-from utils.args import *
+from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer, icarl_replay
 
@@ -35,14 +35,15 @@ def lucir_batch_hard_triplet_loss(labels, embeddings, k, margin, num_old_classes
     if hard_num > 0:
         gt_scores = gt_scores[hard_index].view(-1, 1).repeat(1, k)
         max_novel_scores = max_novel_scores[hard_index]
-        assert(gt_scores.size() == max_novel_scores.size())
-        assert(gt_scores.size(0) == hard_num)
+        assert (gt_scores.size() == max_novel_scores.size())
+        assert (gt_scores.size(0) == hard_num)
         loss = nn.MarginRankingLoss(margin=margin)(gt_scores.view(-1, 1),
-                                                   max_novel_scores.view(-1, 1), torch.ones(hard_num*k).to(embeddings.device))
+                                                   max_novel_scores.view(-1, 1), torch.ones(hard_num * k).to(embeddings.device))
     else:
         loss = torch.zeros(1).to(embeddings.device)
 
     return loss
+
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual Learning via Lucir.')
@@ -66,6 +67,7 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--imprint_weights', type=int, choices=[0, 1], required=False, default=1,
                         help='Apply weight imprinting?')
     return parser
+
 
 class CustomClassifier(nn.Module):
     def __init__(self, in_features, cpt, n_tasks):
@@ -93,13 +95,13 @@ class CustomClassifier(nn.Module):
         self.sigma.data.fill_(1)
 
     def forward(self, x):
-        return self.noscale_forward(x)*self.sigma
+        return self.noscale_forward(x) * self.sigma
 
     def reset_weight(self, i):
         stdv = 1. / math.sqrt(self.weights[i].size(1))
         self.weights[i].data.uniform_(-stdv, stdv)
         self.weights[i].requires_grad = True
-        self.weights[i-1].requires_grad = False
+        self.weights[i - 1].requires_grad = False
 
     def noscale_forward(self, x):
         out = None
@@ -192,8 +194,7 @@ class Lucir(ContinualModel):
         cos_output = self.net.classifier.noscale_forward(outputs)
         outputs = outputs.reshape(outputs.size(0), -1)
 
-
-        loss = F.cross_entropy(cos_output*self.net.classifier.sigma, labels)
+        loss = F.cross_entropy(cos_output * self.net.classifier.sigma, labels)
 
         if task_idx > 0:
             with torch.no_grad():
@@ -201,13 +202,13 @@ class Lucir(ContinualModel):
                 logits = logits.reshape(logits.size(0), -1)
 
             loss2 = F.cosine_embedding_loss(
-                outputs, logits.detach(), torch.ones(outputs.shape[0]).to(outputs.device))*self.lamda_cos_sim
+                outputs, logits.detach(), torch.ones(outputs.shape[0]).to(outputs.device)) * self.lamda_cos_sim
 
             # Remove rescale by sigma before this loss
             loss3 = lucir_batch_hard_triplet_loss(
                 labels, cos_output, self.args.k_mr, self.args.mr_margin, pc) * self.args.lamda_mr
 
-            loss = loss+loss2+loss3
+            loss = loss + loss2 + loss3
 
         return loss
 
@@ -229,11 +230,11 @@ class Lucir(ContinualModel):
                 fix_weights = list(
                     self.net.classifier.weights[:self.task])
 
-                if self.task < self.dataset.N_TASKS-1:
+                if self.task < self.dataset.N_TASKS - 1:
                     fix_weights += list(
-                        self.net.classifier.weights[self.task+1:])
+                        self.net.classifier.weights[self.task + 1:])
 
-                self.opt = torch.optim.SGD([{'params': upd_weights, 'lr': self.args.lr,  'weight_decay': self.args.optim_wd}, {
+                self.opt = torch.optim.SGD([{'params': upd_weights, 'lr': self.args.lr, 'weight_decay': self.args.optim_wd}, {
                     'params': fix_weights, 'lr': 0, 'weight_decay': 0}], lr=self.args.lr, momentum=self.args.optim_mom, weight_decay=self.args.optim_wd)
 
     def end_task(self, dataset) -> None:
@@ -250,8 +251,7 @@ class Lucir(ContinualModel):
 
         # Adapt lambda
         self.lamda_cos_sim = math.sqrt(
-            self.task)*float(self.args.lamda_base)
-
+            self.task) * float(self.args.lamda_base)
 
     def imprint_weights(self, dataset):
         self.net.eval()
@@ -266,7 +266,7 @@ class Lucir(ContinualModel):
 
         cur_dataset = deepcopy(loader.dataset)
 
-        for cls_idx in range(self.task*self.dataset.N_CLASSES_PER_TASK, (self.task+1)*self.dataset.N_CLASSES_PER_TASK):
+        for cls_idx in range(self.task * self.dataset.N_CLASSES_PER_TASK, (self.task + 1) * self.dataset.N_CLASSES_PER_TASK):
 
             cls_indices = np.asarray(
                 loader.dataset.targets) == cls_idx
@@ -281,13 +281,13 @@ class Lucir(ContinualModel):
                 tt = self.net(d[0].to(self.device), returnt='features').cpu()
                 if 'ntu' in self.args.dataset:
                     tt = F.adaptive_avg_pool3d(tt, 1)
-                cls_features[j*self.args.batch_size:(
-                    j+1)*self.args.batch_size] = tt.reshape(len(tt), -1)
+                cls_features[j * self.args.batch_size:(
+                    j + 1) * self.args.batch_size] = tt.reshape(len(tt), -1)
 
             norm_features = F.normalize(cls_features, p=2, dim=1)
             cls_embedding = torch.mean(norm_features, dim=0)
 
-            novel_embedding[cls_idx-self.task*self.dataset.N_CLASSES_PER_TASK] = F.normalize(
+            novel_embedding[cls_idx - self.task * self.dataset.N_CLASSES_PER_TASK] = F.normalize(
                 cls_embedding, p=2, dim=0) * average_old_embedding_norm
 
         self.net.classifier.weights[self.task].data = novel_embedding.to(

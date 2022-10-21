@@ -12,7 +12,7 @@ from torch.optim import SGD
 from torchvision import transforms
 
 from models.utils.continual_model import ContinualModel
-from utils.args import *
+from utils.args import add_management_args, add_experiment_args, ArgumentParser
 from utils.status import progress_bar
 
 
@@ -40,7 +40,8 @@ class Joint(ContinualModel):
             self.current_task += 1
 
             # # for non-incremental joint training
-            if len(dataset.test_loaders) != dataset.N_TASKS: return
+            if len(dataset.test_loaders) != dataset.N_TASKS:
+                return
 
             # reinit network
             self.net = dataset.get_backbone()
@@ -77,7 +78,8 @@ class Joint(ContinualModel):
         else:
             self.old_data.append(dataset.train_loader)
             # train
-            if len(dataset.test_loaders) != dataset.N_TASKS: return
+            if len(dataset.test_loaders) != dataset.N_TASKS:
+                return
 
             all_inputs = []
             all_labels = []
@@ -93,8 +95,8 @@ class Joint(ContinualModel):
             for e in range(self.args.n_epochs):
                 order = torch.randperm(len(all_inputs))
                 for i in range(int(math.ceil(len(all_inputs) / bs))):
-                    inputs = all_inputs[order][i * bs: (i+1) * bs]
-                    labels = all_labels[order][i * bs: (i+1) * bs]
+                    inputs = all_inputs[order][i * bs: (i + 1) * bs]
+                    labels = all_labels[order][i * bs: (i + 1) * bs]
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
                     self.opt.zero_grad()
                     outputs = self.net(inputs)

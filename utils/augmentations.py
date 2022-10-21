@@ -26,8 +26,9 @@ def rand_bbox(size, lam):
 
     return bbx1, bby1, bbx2, bby2
 
+
 def cutmix_data(x, y, alpha=1.0, cutmix_prob=0.5):
-    assert(alpha > 0)
+    assert (alpha > 0)
     # generate mixed sample
     lam = np.random.beta(alpha, alpha)
 
@@ -45,10 +46,12 @@ def cutmix_data(x, y, alpha=1.0, cutmix_prob=0.5):
     lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (x.size()[-1] * x.size()[-2]))
     return x, y_a, y_b, lam
 
+
 def normalize(x, mean, std):
     assert len(x.shape) == 4
     return (x - torch.tensor(mean).unsqueeze(0).unsqueeze(2).unsqueeze(3).to(x.device)) \
-           / torch.tensor(std).unsqueeze(0).unsqueeze(2).unsqueeze(3).to(x.device)
+        / torch.tensor(std).unsqueeze(0).unsqueeze(2).unsqueeze(3).to(x.device)
+
 
 def random_flip(x):
     assert len(x.shape) == 4
@@ -56,11 +59,13 @@ def random_flip(x):
     x[mask] = x[mask].flip(3)
     return x
 
+
 def random_grayscale(x, prob=0.2):
     assert len(x.shape) == 4
     mask = torch.rand(x.shape[0]) < prob
-    x[mask] = (x[mask] * torch.tensor([[0.299,0.587,0.114]]).unsqueeze(2).unsqueeze(2).to(x.device)).sum(1, keepdim=True).repeat_interleave(3, 1)
+    x[mask] = (x[mask] * torch.tensor([[0.299, 0.587, 0.114]]).unsqueeze(2).unsqueeze(2).to(x.device)).sum(1, keepdim=True).repeat_interleave(3, 1)
     return x
+
 
 def random_crop(x, padding):
     assert len(x.shape) == 4
@@ -72,10 +77,11 @@ def random_crop(x, padding):
 
     oboe = F.pad(x, (padding, padding, padding, padding))
     mask_x = torch.arange(x.shape[-1] + padding * 2).repeat(x.shape[0], x.shape[-1] + padding * 2, 1)
-    mask_y = mask_x.transpose(1,2)
+    mask_y = mask_x.transpose(1, 2)
     mask_x = ((mask_x >= crop_x_start.unsqueeze(1).unsqueeze(2)) & (mask_x < crop_x_end.unsqueeze(1).unsqueeze(2)))
     mask_y = ((mask_y >= crop_y_start.unsqueeze(1).unsqueeze(2)) & (mask_y < crop_y_end.unsqueeze(1).unsqueeze(2)))
-    return oboe[mask_x.unsqueeze(1).repeat(1,x.shape[1],1,1) * mask_y.unsqueeze(1).repeat(1,x.shape[1],1,1)].reshape(x.shape[0], 3, x.shape[2], x.shape[3])
+    return oboe[mask_x.unsqueeze(1).repeat(1, x.shape[1], 1, 1) * mask_y.unsqueeze(1).repeat(1, x.shape[1], 1, 1)].reshape(x.shape[0], 3, x.shape[2], x.shape[3])
+
 
 class soft_aug():
 
@@ -88,7 +94,9 @@ class soft_aug():
             random_flip(
                 random_crop(x, 4)
             ),
-        self.mean, self.std)
+            self.mean, self.std)
+
+
 class strong_aug():
 
     def __init__(self, size, mean, std):

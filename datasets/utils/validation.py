@@ -3,18 +3,22 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import torch
-from PIL import Image
-import numpy as np
 import os
+from typing import Optional
+
+import numpy as np
+import torch
+import torch.nn as nn
+from PIL import Image
+from torch.utils.data import Dataset
+
 from utils import create_if_not_exists
-import torchvision.transforms.transforms as transforms
-from torchvision import datasets
 
 
-class ValidationDataset(torch.utils.data.Dataset):
+class ValidationDataset(Dataset):
     def __init__(self, data: torch.Tensor, targets: np.ndarray,
-        transform: transforms=None, target_transform: transforms=None) -> None:
+                 transform: Optional[nn.Module] = None,
+                  target_transform: Optional[nn.Module] = None) -> None:
         self.data = data
         self.targets = targets
         self.transform = transform
@@ -44,8 +48,9 @@ class ValidationDataset(torch.utils.data.Dataset):
 
         return img, target
 
-def get_train_val(train: datasets, test_transform: transforms,
-                  dataset: str, val_perc: float=0.1):
+
+def get_train_val(train: Dataset, test_transform: nn.Module,
+                  dataset: str, val_perc: float = 0.1):
     """
     Extract val_perc% of the training set as the validation set.
     :param train: training dataset
@@ -66,8 +71,8 @@ def get_train_val(train: datasets, test_transform: transforms,
     train.data = train.data[perm]
     train.targets = np.array(train.targets)[perm]
     test_dataset = ValidationDataset(train.data[:int(val_perc * dataset_length)],
-                                train.targets[:int(val_perc * dataset_length)],
-                                transform=test_transform)
+                                     train.targets[:int(val_perc * dataset_length)],
+                                     transform=test_transform)
     train.data = train.data[int(val_perc * dataset_length):]
     train.targets = train.targets[int(val_perc * dataset_length):]
 
