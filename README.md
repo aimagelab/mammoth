@@ -98,6 +98,7 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 + Self-supervised models are continual learners (**CVPR2022**) [[paper](https://arxiv.org/abs/2112.04215)] [[code](https://github.com/DonkeyShot21/cassle)]
 + Representational continuity for unsupervised continual learning (**ICLR2022**) [[paper](https://openreview.net/pdf?id=9Hrka5PA7LW)]
 + Continual Learning by Modeling Intra-Class Variation (**Tech Report**) [[paper](https://arxiv.org/abs/2210.05398)]
++ Consistency is the key to further Mitigating Catastrophic Forgetting in Continual Learning (**CoLLAs2022**) [[paper](https://arxiv.org/pdf/2207.04998.pdf)] [[code](https://github.com/NeurAI-Lab/ConsistencyCL)]
 
 ## Update Roadmap
 
