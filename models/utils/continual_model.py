@@ -50,7 +50,7 @@ class ContinualModel(nn.Module):
         return self.net(x)
 
     def meta_observe(self, *args, **kwargs):
-        if 'wandb' not in sys.modules and not self.args.nowand:
+        if 'wandb' in sys.modules and not self.args.nowand:
             pl = persistent_locals(self.observe)
             ret = pl(*args, **kwargs)
             self.autolog_wandb(pl.locals)
