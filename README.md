@@ -100,8 +100,8 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 + Continual Learning by Modeling Intra-Class Variation (**Tech Report**) [[paper](https://arxiv.org/abs/2210.05398)]
 + Consistency is the key to further Mitigating Catastrophic Forgetting in Continual Learning (**CoLLAs2022**) [[paper](https://arxiv.org/pdf/2207.04998.pdf)] [[code](https://github.com/NeurAI-Lab/ConsistencyCL)]
 + Continual Normalization: Rethinking Batch Normalization for Online Continual Learning (**ICLR2022**) [[paper](https://arxiv.org/abs/2203.16102)] [[code](https://github.com/phquang/Continual-Normalization)]
-+ NISPA: Neuro-Inspired Stability-Plasticity Adaptation for Continual Learning in Sparse Networks [[paper](https://arxiv.org/abs/2206.09117)]
-+ Learning from Students: Online Contrastive Distillation Network for General Continual Learning [[paper](https://www.ijcai.org/proceedings/2022/0446.pdf)] [[code](https://github.com/lijincm/OCD-Net)]
++ NISPA: Neuro-Inspired Stability-Plasticity Adaptation for Continual Learning in Sparse Networks (**ICML2022**) [[paper](https://arxiv.org/abs/2206.09117)]
++ Learning from Students: Online Contrastive Distillation Network for General Continual Learning (**IJCAI2022**) [[paper](https://www.ijcai.org/proceedings/2022/0446.pdf)] [[code](https://github.com/lijincm/OCD-Net)]
 
 ## Update Roadmap
 
