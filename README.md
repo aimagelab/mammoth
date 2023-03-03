@@ -97,7 +97,7 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 + Learning fast, learning slow: A general continual learning method based on complementary learning system (**ICLR2022**) [[paper](https://openreview.net/pdf?id=uxxFrDwrE7Y)] [[code](https://github.com/NeurAI-Lab/CLS-ER)]
 + Self-supervised models are continual learners (**CVPR2022**) [[paper](https://arxiv.org/abs/2112.04215)] [[code](https://github.com/DonkeyShot21/cassle)]
 + Representational continuity for unsupervised continual learning (**ICLR2022**) [[paper](https://openreview.net/pdf?id=9Hrka5PA7LW)] [[code](https://github.com/divyam3897/UCL)]
-+ Continual Learning by Modeling Intra-Class Variation (**Tech Report**) [[paper](https://arxiv.org/abs/2210.05398)]
++ Continual Learning by Modeling Intra-Class Variation (**TMLR 2023**) [[paper](https://arxiv.org/abs/2210.05398)] [[code](https://github.com/yulonghui/MOCA)]
 + Consistency is the key to further Mitigating Catastrophic Forgetting in Continual Learning (**CoLLAs2022**) [[paper](https://arxiv.org/pdf/2207.04998.pdf)] [[code](https://github.com/NeurAI-Lab/ConsistencyCL)]
 + Continual Normalization: Rethinking Batch Normalization for Online Continual Learning (**ICLR2022**) [[paper](https://arxiv.org/abs/2203.16102)] [[code](https://github.com/phquang/Continual-Normalization)]
 + NISPA: Neuro-Inspired Stability-Plasticity Adaptation for Continual Learning in Sparse Networks (**ICML2022**) [[paper](https://arxiv.org/abs/2206.09117)]
