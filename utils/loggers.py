@@ -6,7 +6,7 @@
 from contextlib import suppress
 import os
 import sys
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 import numpy as np
 
@@ -18,7 +18,7 @@ useless_args = ['dataset', 'tensorboard', 'validation', 'model',
                 'csv_log', 'notes', 'load_best_args']
 
 
-def print_mean_accuracy(mean_acc: np.ndarray, task_number: int,
+def print_mean_accuracy(mean_acc: Union[np.ndarray, float], task_number: int,
                         setting: str) -> None:
     """
     Prints the mean accuracy on stderr.
@@ -26,7 +26,7 @@ def print_mean_accuracy(mean_acc: np.ndarray, task_number: int,
     :param task_number: task index
     :param setting: the setting of the benchmark
     """
-    if setting == 'domain-il':
+    if setting == 'domain-il' or setting == 'multi-label':
         mean_acc, _ = mean_acc
         print('\nAccuracy for {} task(s): {} %'.format(
             task_number, round(mean_acc, 2)), file=sys.stderr)

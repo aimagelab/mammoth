@@ -16,10 +16,9 @@ from models.utils.continual_model import ContinualModel
 from utils.loggers import *
 from utils.status import ProgressBar
 
-try:
-    import wandb
-except ImportError:
-    wandb = None
+from utils.wandbsc import WandbLogger
+from utils import metrics
+
 
 def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> None:
     """
@@ -35,7 +34,7 @@ def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> No
                dataset.N_TASKS * dataset.N_CLASSES_PER_TASK] = -float('inf')
 
 
-def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tuple[list, list]:
+def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
     """
     Evaluates the accuracy of the model for each past task.
     :param model: the model to be evaluated
@@ -43,9 +42,12 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
     :return: a tuple of lists, containing the class-il
              and task-il accuracy for each task
     """
-    status = model.net.training
-    model.net.eval()
+    status = model.training
+    model.eval()
     accs, accs_mask_classes = [], []
+    valid_metrics = {'jaccard_sim': 0., 'modified_jaccard': 0., 'strict_acc': 0., 'recall': 0.}
+    data_len = 0
+
     for k, test_loader in enumerate(dataset.test_loaders):
         if last and k < len(dataset.test_loaders) - 1:
             continue
@@ -59,21 +61,38 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
                 else:
                     outputs = model(inputs)
 
-                _, pred = torch.max(outputs.data, 1)
-                correct += torch.sum(pred == labels).item()
-                total += labels.shape[0]
-
-                if dataset.SETTING == 'class-il':
-                    mask_classes(outputs, dataset, k)
+                if dataset.SETTING == 'multi-label':
+                    valid_metrics['jaccard_sim'] += metrics.jaccard_sim(outputs, labels) * inputs.shape[0]
+                    valid_metrics['modified_jaccard'] += metrics.modified_jaccard_sim(outputs, labels) * inputs.shape[0]
+                    valid_metrics['strict_acc'] += metrics.strict_accuracy(outputs, labels) * inputs.shape[0]
+                    valid_metrics['recall'] += metrics.recall(outputs, labels) * inputs.shape[0]
+                    data_len += inputs.shape[0]
+                else:
                     _, pred = torch.max(outputs.data, 1)
-                    correct_mask_classes += torch.sum(pred == labels).item()
+                    correct += torch.sum(pred == labels).item()
+                    total += labels.shape[0]
+                    if dataset.SETTING == 'class-il':
+                        mask_classes(outputs, dataset, k)
+                        _, pred = torch.max(outputs.data, 1)
+                        correct_mask_classes += torch.sum(pred == labels).item()
 
-        accs.append(correct / total * 100
-                    if 'class-il' in model.COMPATIBILITY else 0)
-        accs_mask_classes.append(correct_mask_classes / total * 100)
+        if dataset.SETTING == 'multi-label':
+            break
+        else:
+            accs.append(correct / total * 100
+                        if 'class-il' in model.COMPATIBILITY else 0)
+            accs_mask_classes.append(correct_mask_classes / total * 100)
 
-    model.net.train(status)
-    return accs, accs_mask_classes
+    model.train(status)
+
+    if dataset.SETTING == 'multi-label':
+        valid_metrics['jaccard_sim'] /= data_len
+        valid_metrics['modified_jaccard'] /= data_len
+        valid_metrics['strict_acc'] /= data_len
+        valid_metrics['recall'] /= data_len
+        return valid_metrics
+    else:
+        return accs, accs_mask_classes
 
 
 def train(model: ContinualModel, dataset: ContinualDataset,
@@ -86,12 +105,12 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     """
     print(args)
 
-    if not args.nowand:
-        assert wandb is not None, "Wandb not installed, please install it or run without wandb"
-        wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args))
-        args.wandb_url = wandb.run.get_url()
+    run_name = args.wandb_name
+    if hasattr(model, 'get_name') and run_name is None:
+        run_name = model.get_name()
+    wandb_logger = WandbLogger(args, prj=args.wandb_project, entity=args.wandb_entity, name=run_name)
 
-    model.net.to(model.device)
+    model.to(model.device)
     results, results_mask_classes = [], []
 
     if not args.disable_log:
@@ -101,15 +120,15 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
     if not args.ignore_other_metrics:
         dataset_copy = get_dataset(args)
+        model.train()
         for t in range(dataset.N_TASKS):
-            model.net.train()
             _, _ = dataset_copy.get_data_loaders()
         if model.NAME != 'icarl' and model.NAME != 'pnn':
             random_results_class, random_results_task = evaluate(model, dataset_copy)
 
     print(file=sys.stderr)
     for t in range(dataset.N_TASKS):
-        model.net.train()
+        model.train()
         train_loader, test_loader = dataset.get_data_loaders()
         if hasattr(model, 'begin_task'):
             model.begin_task(dataset)
@@ -128,15 +147,13 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     break
                 if hasattr(dataset.train_loader.dataset, 'logits'):
                     inputs, labels, not_aug_inputs, logits = data
-                    inputs = inputs.to(model.device)
-                    labels = labels.to(model.device)
+                    inputs, labels = inputs.to(model.device), labels.to(model.device)
                     not_aug_inputs = not_aug_inputs.to(model.device)
                     logits = logits.to(model.device)
                     loss = model.meta_observe(inputs, labels, not_aug_inputs, logits)
                 else:
                     inputs, labels, not_aug_inputs = data
-                    inputs, labels = inputs.to(model.device), labels.to(
-                        model.device)
+                    inputs, labels = inputs.to(model.device), labels.to(model.device)
                     not_aug_inputs = not_aug_inputs.to(model.device)
                     loss = model.meta_observe(inputs, labels, not_aug_inputs)
                 assert not math.isnan(loss)
@@ -149,24 +166,36 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             model.end_task(dataset)
 
         accs = evaluate(model, dataset)
-        results.append(accs[0])
-        results_mask_classes.append(accs[1])
+        if dataset.SETTING == 'multi-label':
+            results.append(accs)
+            print_mean_accuracy(accs['strict_acc'], t + 1, dataset.SETTING)
+            if not args.disable_log:
+                # TODO
+                pass
+            if not args.nowand:
+                d2={
+                    **{f'RESULT/{k}': v for k, v in accs.items()},
+                    'RESULT/task': t,
+                }
+                wandb_logger(d2)
 
-        mean_acc = np.mean(accs, axis=1)
-        print_mean_accuracy(mean_acc, t + 1, dataset.SETTING)
-
-        if not args.disable_log:
-            logger.log(mean_acc)
-            logger.log_fullacc(accs)
-
-        if not args.nowand:
-            d2={'RESULT_class_mean_accs': mean_acc[0], 'RESULT_task_mean_accs': mean_acc[1],
-                **{f'RESULT_class_acc_{i}': a for i, a in enumerate(accs[0])},
-                **{f'RESULT_task_acc_{i}': a for i, a in enumerate(accs[1])}}
-
-            wandb.log(d2)
-
-
+        else:
+            results.append(accs[0])
+            results_mask_classes.append(accs[1])
+            mean_acc = np.mean(accs, axis=1)
+            print_mean_accuracy(mean_acc, t + 1, dataset.SETTING)
+            if not args.disable_log:
+                logger.log(mean_acc)
+                logger.log_fullacc(accs)
+            if not args.nowand:
+                d2={
+                    'RESULT/class_mean_accs': mean_acc[0],
+                    'RESULT/task_mean_accs': mean_acc[1],
+                    **{f'RESULT/class_acc_{i}': a for i, a in enumerate(accs[0])},
+                    **{f'RESULT/task_acc_{i}': a for i, a in enumerate(accs[1])},
+                    'RESULT/task': t,
+                }
+                wandb_logger(d2)
 
     if not args.disable_log and not args.ignore_other_metrics:
         logger.add_bwt(results, results_mask_classes)
@@ -179,8 +208,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         logger.write(vars(args))
         if not args.nowand:
             d = logger.dump()
-            d['wandb_url'] = wandb.run.get_url()
-            wandb.log(d)
+            d['wandb_url'] = wandb_logger.wandb_url
+            wandb_logger(d)
 
-    if not args.nowand:
-        wandb.finish()
+    wandb_logger.finish()

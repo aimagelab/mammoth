@@ -4,6 +4,8 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
+import string
+import random
 
 
 def create_if_not_exists(path: str) -> None:
@@ -13,3 +15,6 @@ def create_if_not_exists(path: str) -> None:
     """
     if not os.path.exists(path):
         os.makedirs(path)
+
+def random_id(length=8, alphabet=string.ascii_letters+string.digits ):
+    return ''.join(random.choices(alphabet, k=length))
