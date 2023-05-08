@@ -35,6 +35,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                         help='Batch size.')
 
     parser.add_argument('--distributed', type=str, default='no', choices=['no', 'dp', 'ddp'])
+    parser.add_argument('--save_checkpoints', type=int, choices=[0, 1], default=0, help='Save checkpoints?')
 
 
 def add_management_args(parser: ArgumentParser) -> None:

@@ -41,12 +41,12 @@ class WebVision(Dataset):
         self.transform = transform
         self.train = train
 
-        self.not_aug_transform = transforms.Compose([
-            transforms.Resize(224),
-            transforms.ToTensor(),
-            transforms.Normalize((0.4569, 0.4354, 0.3904),
-                                 (0.2737, 0.2664, 0.2791)),
-        ])
+        # self.not_aug_transform = transforms.Compose([
+        #     transforms.Resize(224),
+        #     transforms.ToTensor(),
+        #     transforms.Normalize((0.4569, 0.4354, 0.3904),
+        #                          (0.2737, 0.2664, 0.2791)),
+        # ])
 
         filename = 'train_split.json' if train else 'test_split.json'
         self.images_info_list = json.load(open(os.path.join(root, filename)))
@@ -79,14 +79,14 @@ class WebVision(Dataset):
 
         original_img = img.copy()
 
-        not_aug_img = self.not_aug_transform(original_img)
+        #not_aug_img = self.not_aug_transform(original_img)
 
         if self.transform is not None:
             img = self.transform(img)
 
         if not self.train:
             return img, label_vector
-        return img, label_vector, not_aug_img
+        return img, label_vector, original_img
 
 
 def tags_analisys(tags: dict, plot_hist: bool = False):
@@ -129,6 +129,11 @@ def data_tags_analisys(data: list, tag_analisys=True, plot_hist: bool = False):
         tags = get_tags_from_data(data)
         tags_analisys(tags, plot_hist)
 
+def webvision_collate_fn(batch):
+        data = list(zip(*batch))
+        inp = torch.stack(data[0], 0)
+        tgt = torch.stack(data[1], 0)
+        return (inp, tgt, data[2])
 
 def store_webvision_loaders(train_dataset: Dataset, test_dataset: Dataset,
                          setting: ContinualDataset) -> Tuple[DataLoader, DataLoader]:
@@ -150,7 +155,7 @@ def store_webvision_loaders(train_dataset: Dataset, test_dataset: Dataset,
     data_tags_analisys(train_dataset.images_info_list)
 
     train_loader = DataLoader(train_dataset,
-                              batch_size=setting.args.batch_size, shuffle=True, num_workers=4)
+                              batch_size=setting.args.batch_size, shuffle=True, num_workers=4, collate_fn=webvision_collate_fn)
     test_loader = DataLoader(test_dataset,
                              batch_size=setting.args.batch_size, shuffle=False, num_workers=4)
     setting.test_loaders = [test_loader]
@@ -166,6 +171,7 @@ class SequentialWebVision(ContinualDataset):
     SETTING = 'multi-label'
     N_CLASSES_PER_TASK = 750
     N_TASKS = 10
+    N_CLASSES = 750
     TRANSFORM = transforms.Compose([
         transforms.Resize(256),
         transforms.RandomCrop((224, 224)),

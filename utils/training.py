@@ -18,6 +18,7 @@ from utils.status import ProgressBar
 
 from utils.wandbsc import WandbLogger
 from utils import metrics
+from tqdm import tqdm
 
 
 def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> None:
@@ -62,10 +63,12 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
                     outputs = model(inputs)
 
                 if dataset.SETTING == 'multi-label':
-                    valid_metrics['jaccard_sim'] += metrics.jaccard_sim(outputs, labels) * inputs.shape[0]
-                    valid_metrics['modified_jaccard'] += metrics.modified_jaccard_sim(outputs, labels) * inputs.shape[0]
-                    valid_metrics['strict_acc'] += metrics.strict_accuracy(outputs, labels) * inputs.shape[0]
-                    valid_metrics['recall'] += metrics.recall(outputs, labels) * inputs.shape[0]
+                    predictions = outputs > 0.0
+                    labels = labels.bool()
+                    valid_metrics['jaccard_sim'] += metrics.jaccard_sim(predictions, labels) * inputs.shape[0]
+                    valid_metrics['modified_jaccard'] += metrics.modified_jaccard_sim(predictions, labels) * inputs.shape[0]
+                    valid_metrics['strict_acc'] += metrics.strict_accuracy(predictions, labels) * inputs.shape[0]
+                    valid_metrics['recall'] += metrics.recall(predictions, labels) * inputs.shape[0]
                     data_len += inputs.shape[0]
                 else:
                     _, pred = torch.max(outputs.data, 1)
@@ -154,7 +157,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 else:
                     inputs, labels, not_aug_inputs = data
                     inputs, labels = inputs.to(model.device), labels.to(model.device)
-                    not_aug_inputs = not_aug_inputs.to(model.device)
+                    if isinstance(not_aug_inputs, torch.Tensor):
+                        not_aug_inputs = not_aug_inputs.to(model.device)
                     loss = model.meta_observe(inputs, labels, not_aug_inputs)
                 assert not math.isnan(loss)
                 progress_bar.prog(i, len(train_loader), epoch, t, loss)
