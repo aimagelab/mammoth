@@ -6,6 +6,7 @@
 from argparse import ArgumentParser
 from datasets import NAMES as DATASET_NAMES
 from models import get_all_models
+from utils import none_or_float
 
 
 def add_experiment_args(parser: ArgumentParser) -> None:
@@ -21,6 +22,8 @@ def add_experiment_args(parser: ArgumentParser) -> None:
 
     parser.add_argument('--lr', type=float, required=True,
                         help='Learning rate.')
+    
+    parser.add_argument('--clip_grad', type=none_or_float, default=None, metavar='NORM',  help='Clip gradient norm (default: None, no clipping)')
 
     parser.add_argument('--optimizer', type=str, default='sgd', choices=['sgd', 'adam', 'adamw'])
     parser.add_argument('--optim_wd', type=float, default=0.,

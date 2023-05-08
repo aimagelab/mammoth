@@ -18,3 +18,8 @@ def create_if_not_exists(path: str) -> None:
 
 def random_id(length=8, alphabet=string.ascii_letters+string.digits ):
     return ''.join(random.choices(alphabet, k=length))
+
+def none_or_float(value):
+    if value == 'None':
+        return None
+    return float(value)

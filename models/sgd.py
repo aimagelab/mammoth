@@ -12,7 +12,6 @@ def get_parser() -> ArgumentParser:
     # add_aux_dataset_args(parser)
     parser.add_argument('--network', type=str, default='vit_base_patch16_224', help='Network to use')
     parser.add_argument('--pretrained', type=int, choices=[0, 1], default=1, help='Should use pretrained weights?')
-    parser.add_argument('--clip_grad', type=float, default=None, metavar='NORM',  help='Clip gradient norm (default: None, no clipping)')
     return parser
 
 
