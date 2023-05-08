@@ -10,7 +10,7 @@ from typing import List
 
 import torch
 import torch.nn as nn
-from torch.optim import SGD
+from torch.optim import SGD, Adam
 
 from utils.conf import get_device
 from utils.magic import persistent_locals
@@ -34,11 +34,21 @@ class ContinualModel(nn.Module):
         self.loss = loss
         self.args = args
         self.transform = transform
-        self.opt = SGD(self.net.parameters(), lr=self.args.lr)
+        self.opt = self.get_optimizer()
         self.device = get_device()
 
         if not self.NAME or not self.COMPATIBILITY:
             raise NotImplementedError('Please specify the name and the compatibility of the model.')
+    
+    def get_optimizer(self):
+        if self.args.optimizer == 'sgd':
+            opt = SGD(self.net.parameters(), lr=self.args.lr,
+                                    weight_decay=self.args.optim_wd, momentum=self.args.optim_mom)
+        elif self.args.optimizer == 'adam':
+            opt = Adam(self.net.parameters(), lr=self.args.lr, weight_decay=self.args.optim_wd)
+        else:
+            raise ValueError('Unknown optimizer: {}'.format(self.args.optimizer))
+        return opt
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
