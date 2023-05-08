@@ -168,7 +168,7 @@ class SequentialWebVision(ContinualDataset):
     N_TASKS = 10
     TRANSFORM = transforms.Compose([
         transforms.Resize(256),
-        transforms.RandomCrop(224),
+        transforms.RandomCrop((224, 224)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize((0.4569, 0.4354, 0.3904),
@@ -184,7 +184,7 @@ class SequentialWebVision(ContinualDataset):
 
         test_transform = transforms.Compose([
             transforms.Resize(256),
-            transforms.CenterCrop(224),
+            transforms.CenterCrop((224, 224)),
             transforms.ToTensor(),
             self.get_normalization_transform(),
         ])
