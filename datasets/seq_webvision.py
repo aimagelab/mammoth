@@ -1,4 +1,5 @@
 
+from tqdm import tqdm
 import torch
 import numpy as np
 
@@ -6,6 +7,12 @@ import torch.nn.functional as F
 import torch.optim
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Dataset
+
+if __name__ == "__main__":
+    import sys, os
+    mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    sys.path = [mammoth_path] + sys.path
+
 from backbone.ResNet18 import resnet18
 from PIL import Image
 
@@ -15,6 +22,7 @@ from datasets.utils.validation import get_train_val
 from utils.conf import base_path_dataset as base_path
 import os
 import json
+import pickle
 from typing import Tuple
 
 
@@ -36,7 +44,7 @@ class WebVision(Dataset):
     Median frequency: 1776.00 - 1625.00 - 150.50
     '''
 
-    def __init__(self, root, train=True, transform=None):
+    def __init__(self, root, train=True, transform=None, task=0):
         self.root = root
         self.transform = transform
         self.train = train
@@ -48,8 +56,12 @@ class WebVision(Dataset):
         #                          (0.2737, 0.2664, 0.2791)),
         # ])
 
-        filename = 'train_split.json' if train else 'test_split.json'
+        # We must load both bc/ we do our own split with train/test_indices.pkl
+        filename = 'train_split.json'
         self.images_info_list = json.load(open(os.path.join(root, filename)))
+        filename = 'test_split.json'
+        self.images_info_list += json.load(open(os.path.join(root, filename)))
+
         self.tags_list = json.load(open(os.path.join(root, 'tags_list_1.json')))
         self.tags_list = np.array(self.tags_list)
 
@@ -58,6 +70,30 @@ class WebVision(Dataset):
 
         self.img_path = lambda id: os.path.join(root, 'images', f'{id}.jpg')
         self.get_tags = lambda one_hot: self.tags_list[one_hot.bool()].tolist()
+
+        if os.path.exists(os.path.join(root, 'train_offsets.pkl')) and os.path.exists(os.path.join(root, 'test_offsets.pkl')):
+            self.offsets = pickle.load(open(os.path.join(root, f'{"train" if train else "test"}_offsets.pkl'), 'rb'))[task]
+            self.tags = set(pickle.load(open(os.path.join(root, 'tags.pkl'), 'rb'))[task])
+            filtered_image_info_list = []
+            # faster option
+            for of in tqdm(self.offsets, desc='Filtering WebVision tags'):
+                i = self.images_info_list[of]
+                tags = list(set(i['tags']).intersection(self.tags))
+                i['tags'] = tags
+                filtered_image_info_list.append(i)
+            self.images_info_list = filtered_image_info_list
+        else:
+            self.indices = pickle.load(open(os.path.join(root, f'{"train" if train else "test"}_indices.pkl'), 'rb'))[task]
+            self.tags = set(pickle.load(open(os.path.join(root, 'tags.pkl'), 'rb'))[task])
+            filtered_image_info_list = []
+            # Very slow could be improved by caching addresses directly
+            for i in tqdm(self.images_info_list, desc='Filtering WebVision images'):
+                if i['id'] in self.indices:
+                    tags = list(set(i['tags']).intersection(self.tags))
+                    i['tags'] = tags
+                    filtered_image_info_list.append(i)
+            self.images_info_list = filtered_image_info_list
+        
 
     def transform_tags_names_to_vector(self, tags_names) -> torch.Tensor:
         label_vector = torch.zeros(self.num_tags).long()
@@ -144,12 +180,12 @@ def store_webvision_loaders(train_dataset: Dataset, test_dataset: Dataset,
     :param setting: continual learning setting
     :return: train and test loaders
     """
-    datalen = len(train_dataset)
-    datastep = datalen // setting.N_TASKS
-    train_mask = np.logical_and(np.arange(datalen) >= (setting.i * datastep),
-                                np.arange(datalen) < ((setting.i + 1) * datastep))
+    # datalen = len(train_dataset)
+    # datastep = datalen // setting.N_TASKS
+    # train_mask = np.logical_and(np.arange(datalen) >= (setting.i * datastep),
+    #                             np.arange(datalen) < ((setting.i + 1) * datastep))
 
-    train_dataset.images_info_list = (np.array(train_dataset.images_info_list)[train_mask]).tolist()
+    # train_dataset.images_info_list = (np.array(train_dataset.images_info_list)[train_mask]).tolist()
 
     print(f'\nTask {setting.i} analisys:')
     data_tags_analisys(train_dataset.images_info_list)
@@ -158,7 +194,7 @@ def store_webvision_loaders(train_dataset: Dataset, test_dataset: Dataset,
                               batch_size=setting.args.batch_size, shuffle=True, num_workers=4, collate_fn=webvision_collate_fn)
     test_loader = DataLoader(test_dataset,
                              batch_size=setting.args.batch_size, shuffle=False, num_workers=4)
-    setting.test_loaders = [test_loader]
+    setting.test_loaders.append(test_loader)
     setting.train_loader = train_loader
 
     setting.i += 1
@@ -169,8 +205,8 @@ class SequentialWebVision(ContinualDataset):
 
     NAME = 'seq-webvision'
     SETTING = 'multi-label'
-    N_CLASSES_PER_TASK = 750
-    N_TASKS = 10
+    N_CLASSES_PER_TASK = -1 # this should not be used
+    N_TASKS = 15
     N_CLASSES = 750
     TRANSFORM = transforms.Compose([
         transforms.Resize(256),
@@ -195,9 +231,9 @@ class SequentialWebVision(ContinualDataset):
             self.get_normalization_transform(),
         ])
 
-        train_dataset = WebVision(base_path() + 'WebVision', train=True, transform=transform)
+        train_dataset = WebVision(base_path() + 'WebVision', train=True, transform=transform, task=self.i)
 
-        test_dataset = WebVision(base_path() + 'WebVision', train=False, transform=test_transform)
+        test_dataset = WebVision(base_path() + 'WebVision', train=False, transform=test_transform, task=self.i)
 
         train, test = store_webvision_loaders(train_dataset, test_dataset, self)
 
@@ -248,3 +284,10 @@ class SequentialWebVision(ContinualDataset):
         scheduler = torch.optim.lr_scheduler.MultiStepLR(model.opt, [35, 45], gamma=0.1, verbose=False)
         return scheduler
 
+
+if __name__ == '__main__':
+    # for testing
+    args = lambda x: x
+    args.batch_size = 32
+    dataset = SequentialWebVision(args)
+    [dataset.get_data_loaders() for _ in range(dataset.N_TASKS)]
