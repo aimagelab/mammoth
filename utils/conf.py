@@ -11,7 +11,14 @@ def get_device() -> torch.device:
     """
     Returns the GPU device if available else CPU.
     """
-    return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        return torch.device("cuda:0")
+    try:
+        if torch.backends.mps.is_available() and torch.backends.mps.is_built():
+            return torch.device("mps")
+    except:
+        pass
+    return torch.device("cpu")
 
 
 def base_path() -> str:
@@ -35,4 +42,8 @@ def set_random_seed(seed: int) -> None:
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    try:
+        torch.cuda.manual_seed_all(seed)
+    except:
+        print('Could not set cuda seed.')
+        pass
