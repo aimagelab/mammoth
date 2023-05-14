@@ -71,34 +71,24 @@ class WebVision(Dataset):
         self.img_path = lambda id: os.path.join(root, 'images', f'{id}.jpg')
         self.get_tags = lambda one_hot: self.tags_list[one_hot.bool()].tolist()
 
-        if os.path.exists(os.path.join(root, 'train_offsets.pkl')) and os.path.exists(os.path.join(root, 'test_offsets.pkl')):
-            self.offsets = pickle.load(open(os.path.join(root, f'{"train" if train else "test"}_offsets.pkl'), 'rb'))[task]
-            self.tags = set(pickle.load(open(os.path.join(root, 'tags.pkl'), 'rb'))[task])
-            filtered_image_info_list = []
-            # faster option
-            for of in tqdm(self.offsets, desc='Filtering WebVision tags'):
-                i = self.images_info_list[of]
-                tags = list(set(i['tags']).intersection(self.tags))
-                i['tags'] = tags
-                filtered_image_info_list.append(i)
-            self.images_info_list = filtered_image_info_list
-        else:
-            self.indices = pickle.load(open(os.path.join(root, f'{"train" if train else "test"}_indices.pkl'), 'rb'))[task]
-            self.tags = set(pickle.load(open(os.path.join(root, 'tags.pkl'), 'rb'))[task])
-            filtered_image_info_list = []
-            # Very slow could be improved by caching addresses directly
-            for i in tqdm(self.images_info_list, desc='Filtering WebVision images'):
-                if i['id'] in self.indices:
-                    tags = list(set(i['tags']).intersection(self.tags))
-                    i['tags'] = tags
-                    filtered_image_info_list.append(i)
-            self.images_info_list = filtered_image_info_list
+        self.tag_mappings = pickle.load(open(os.path.join(root, 'tag_mapping.pkl'), 'rb'))
+        self.offsets = pickle.load(open(os.path.join(root, f'{"train" if train else "test"}_offsets.pkl'), 'rb'))[task]
+        self.tags = set(pickle.load(open(os.path.join(root, 'tags.pkl'), 'rb'))[task])
+        filtered_image_info_list = []
+        # faster option
+        for of in tqdm(self.offsets, desc='Filtering WebVision tags'):
+            i = self.images_info_list[of]
+            tags = list(set(i['tags']).intersection(self.tags))
+            i['tags'] = tags
+            filtered_image_info_list.append(i)
+        self.images_info_list = filtered_image_info_list
+        
         
 
     def transform_tags_names_to_vector(self, tags_names) -> torch.Tensor:
         label_vector = torch.zeros(self.num_tags).long()
         for tag_name in tags_names:
-            label_vector[self.tag_names_to_idx[tag_name]] = 1
+            label_vector[self.tag_mappings[tag_name]] = 1
 
         return label_vector
 
@@ -290,4 +280,6 @@ if __name__ == '__main__':
     args = lambda x: x
     args.batch_size = 32
     dataset = SequentialWebVision(args)
-    [dataset.get_data_loaders() for _ in range(dataset.N_TASKS)]
+    dataset.get_data_loaders()
+    dataset.train_loader.dataset[100]
+    # [dataset.get_data_loaders() for _ in range(dataset.N_TASKS)]
