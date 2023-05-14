@@ -121,8 +121,8 @@ def main(args=None):
         # DDP breaks the buffer, it has to be synchronized.
         raise NotImplementedError('Distributed Data Parallel not supported yet.')
 
-    if args.debug_mode:
-        args.nowand = 1
+    # if args.debug_mode:
+    #     args.nowand = 1
 
     # set job name
     setproctitle.setproctitle('{}_{}_{}'.format(args.model, args.buffer_size if 'buffer_size' in args else 0, args.dataset))

@@ -17,6 +17,10 @@ from utils.metrics import backward_transfer, forward_transfer, forgetting
 useless_args = ['dataset', 'tensorboard', 'validation', 'model',
                 'csv_log', 'notes', 'load_best_args']
 
+def print_multi_label_results(results, task_number):
+    for k,v in results.items():
+        print('\n{} for {} task(s): {}'.format(k,
+            task_number, round(v, 4)), file=sys.stderr)
 
 def print_mean_accuracy(mean_acc: Union[np.ndarray, float], task_number: int,
                         setting: str) -> None:
@@ -27,8 +31,7 @@ def print_mean_accuracy(mean_acc: Union[np.ndarray, float], task_number: int,
     :param setting: the setting of the benchmark
     """
     if setting == 'domain-il' or setting == 'multi-label':
-        mean_acc, _ = mean_acc
-        print('\nAccuracy for {} task(s): {} %'.format(
+        print('\nJaccard sim for {} task(s): {} %'.format(
             task_number, round(mean_acc, 2)), file=sys.stderr)
     else:
         mean_acc_class_il, mean_acc_task_il = mean_acc

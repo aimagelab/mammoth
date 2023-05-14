@@ -14,6 +14,7 @@ from torch.optim import SGD, Adam
 
 from utils.conf import get_device
 from utils.magic import persistent_locals
+from datasets import get_dataset
 
 with suppress(ImportError):
     import wandb
@@ -49,6 +50,13 @@ class ContinualModel(nn.Module):
         else:
             raise ValueError('Unknown optimizer: {}'.format(self.args.optimizer))
         return opt
+
+    def _compute_offsets(self, task):
+        seq_dataset = get_dataset(self.args)
+        cpt = seq_dataset.N_CLASSES // seq_dataset.N_TASKS
+        offset1 = task * cpt
+        offset2 = (task + 1) * cpt
+        return offset1, offset2
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """

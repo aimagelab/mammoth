@@ -238,7 +238,7 @@ class SequentialWebVision(ContinualDataset):
     @staticmethod
     def get_backbone():
         # TODO
-        return resnet18(SequentialWebVision.N_CLASSES_PER_TASK)
+        return resnet18(SequentialWebVision.N_CLASSES)
 
     @staticmethod
     def get_loss():
