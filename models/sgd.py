@@ -45,6 +45,9 @@ class Sgd(ContinualModel):
         labels = labels.long()
         self.opt.zero_grad()
         outputs = self.net(inputs)
+        offset_1, offset_2 = self._compute_offsets(self.current_task)
+        outputs = outputs[:, :offset_2]
+        labels = labels[:, :offset_2]
         loss = self.loss(outputs, labels.float())
         loss.backward()
         if self.args.clip_grad is not None:
