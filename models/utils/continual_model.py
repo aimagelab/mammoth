@@ -19,6 +19,10 @@ from datasets import get_dataset
 with suppress(ImportError):
     import wandb
 
+import os
+import sys
+import pickle
+
 
 class ContinualModel(nn.Module):
     """
@@ -50,6 +54,18 @@ class ContinualModel(nn.Module):
         else:
             raise ValueError('Unknown optimizer: {}'.format(self.args.optimizer))
         return opt
+    
+    def save_checkpoints(self):
+        if not os.path.exists('checkpoints'):
+            os.mkdir('checkpoints')
+        t = self.current_task if hasattr(self, 'current_task') else self.task
+        j = self.args.conf_jobnum
+        print("Saving checkpoint into", f'checkpoints/{self.args.model}_{t}_{j}.pt', file=sys.stderr)
+        torch.save(self.net.state_dict(), f'checkpoints/{self.args.model}_{t}_{j}.pt')
+        with open(f'checkpoints/{self.args.model}_args_{j}.pkl', 'wb') as f:
+            pickle.dump(self.args, f)
+        with open(f'checkpoints/{self.args.model}_args_{j}.txt', 'wt') as f:
+            print(self.args, file=f)
 
     def _compute_offsets(self, task):
         seq_dataset = get_dataset(self.args)

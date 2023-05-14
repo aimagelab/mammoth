@@ -166,13 +166,13 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     inputs, labels = inputs.to(model.device), labels.to(model.device)
                     not_aug_inputs = not_aug_inputs.to(model.device)
                     logits = logits.to(model.device)
-                    loss = model.meta_observe(inputs, labels, not_aug_inputs, logits)
+                    loss = model.meta_observe(inputs, labels, not_aug_inputs, logits, epoch=epoch)
                 else:
                     inputs, labels, not_aug_inputs = data
                     inputs, labels = inputs.to(model.device), labels.to(model.device)
                     if isinstance(not_aug_inputs, torch.Tensor):
                         not_aug_inputs = not_aug_inputs.to(model.device)
-                    loss = model.meta_observe(inputs, labels, not_aug_inputs)
+                    loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch)
                 assert not math.isnan(loss)
                 progress_bar.prog(i, len(train_loader), epoch, t, loss)
 
