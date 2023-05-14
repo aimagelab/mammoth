@@ -92,3 +92,4 @@ cython_debug/
 wandb
 ./data
 tmp
+checkpoints

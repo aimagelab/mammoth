@@ -49,7 +49,7 @@ class ErACE(ContinualModel):
     
     def end_task(self, dataset):
         if self.args.save_checkpoints:
-            self.savecheck_martin()
+            self.save_checkpoints()
         self.current_task += 1
         
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
