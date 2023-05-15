@@ -72,17 +72,32 @@ class WebVision(Dataset):
         self.get_tags = lambda one_hot: self.tags_list[one_hot.bool()].tolist()
 
         self.tag_mappings = pickle.load(open(os.path.join(root, 'tag_mapping.pkl'), 'rb'))
-        self.offsets = pickle.load(open(os.path.join(root, f'{"train" if train else "test"}_offsets.pkl'), 'rb'))[task]
-        self.tags = set(pickle.load(open(os.path.join(root, 'tags.pkl'), 'rb'))[task])
-        filtered_image_info_list = []
-        # faster option
-        for of in tqdm(self.offsets, desc='Filtering WebVision tags'):
-            i = self.images_info_list[of]
-            tags = list(set(i['tags']).intersection(self.tags))
-            i['tags'] = tags
-            filtered_image_info_list.append(i)
-        self.images_info_list = filtered_image_info_list
-        
+
+        if task >= 0:
+            self.offsets = pickle.load(open(os.path.join(root, f'{"train" if train else "test"}_offsets.pkl'), 'rb'))[task]
+            self.tags = set(pickle.load(open(os.path.join(root, 'tags.pkl'), 'rb'))[task])
+            filtered_image_info_list = []
+            # faster option
+            for of in tqdm(self.offsets, desc='Filtering WebVision tags'):
+                i = self.images_info_list[of]
+                tags = list(set(i['tags']).intersection(self.tags))
+                i['tags'] = tags
+                filtered_image_info_list.append(i)
+            self.images_info_list = filtered_image_info_list
+        else:
+            print("WEBVISION DATASET: JOINT MODE")
+            filtered_image_info_list = []
+            all_offsets = pickle.load(open(os.path.join(root, f'{"train" if train else "test"}_offsets.pkl'), 'rb'))
+            all_tags = pickle.load(open(os.path.join(root, 'tags.pkl'), 'rb'))
+            for task, (offsets, tags) in enumerate(zip(all_offsets, all_tags)):
+                task_tags = set(tags)
+                for of in offsets:
+                    i = self.images_info_list[of]
+                    tags = list(set(i['tags']).intersection(task_tags))
+                    i['tags'] = tags
+                    filtered_image_info_list.append(i)
+            self.images_info_list = filtered_image_info_list
+
         
 
     def transform_tags_names_to_vector(self, tags_names) -> torch.Tensor:
@@ -277,9 +292,11 @@ class SequentialWebVision(ContinualDataset):
 
 if __name__ == '__main__':
     # for testing
-    args = lambda x: x
-    args.batch_size = 32
-    dataset = SequentialWebVision(args)
-    dataset.get_data_loaders()
-    dataset.train_loader.dataset[100]
+    # args = lambda x: x
+    # args.batch_size = 32
+    # dataset = SequentialWebVision(args)
+    # dataset.get_data_loaders()
+    # dataset.train_loader.dataset[100]
     # [dataset.get_data_loaders() for _ in range(dataset.N_TASKS)]
+    j = WebVision('data/WebVision', train=False, task = -1)
+    we
