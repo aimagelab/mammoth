@@ -189,8 +189,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             mean_results = {k: np.mean(v) for k, v in accs.items()}
             print_multi_label_results(mean_results, t + 1)
             if not args.disable_log:
-                # TODO
-                pass
+                logger.log_multilabel(mean_results)
+                logger.log_full_multilabel(accs)
             if not args.nowand:
                 d2={
                     **{f'RESULT_mean_{k}': v for k, v in mean_results.items()},
@@ -228,6 +228,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     if not args.disable_log:
         logger.write(vars(args))
         if not args.nowand:
+            # if dataset.SETTING == 'multi-label':
+            #     d = logger.dump_multilabel()
+            # else:
             d = logger.dump()
             d['wandb_url'] = wandb_logger.wandb_url
             wandb_logger(d)

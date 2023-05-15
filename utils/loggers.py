@@ -45,6 +45,18 @@ class Logger:
                  model_str: str) -> None:
         self.accs = []
         self.fullaccs = []
+        self.multi_label_results = {
+            'jaccard_sim': [],
+            'modified_jaccard': [],
+            'strict_acc': [],
+            'recall': []
+        }
+        self.full_multi_label_results = {
+            'jaccard_sim': [],
+            'modified_jaccard': [],
+            'strict_acc': [],
+            'recall': []
+        }
         if setting_str == 'class-il':
             self.accs_mask_classes = []
             self.fullaccs_mask_classes = []
@@ -73,6 +85,13 @@ class Logger:
             dic['accs_mask_classes'] = self.accs_mask_classes
             dic['fullaccs_mask_classes'] = self.fullaccs_mask_classes
 
+        return dic
+    
+    def dump_multilabel(self):
+        dic = {
+            'results': self.multi_label_results,
+            'full_results': self.full_multi_label_results,
+        }
         return dic
 
     def load(self, dic):
@@ -130,12 +149,20 @@ class Logger:
             mean_acc_class_il, mean_acc_task_il = mean_acc
             self.accs.append(mean_acc_class_il)
             self.accs_mask_classes.append(mean_acc_task_il)
+    
+    def log_multilabel(self, mean_results: np.ndarray) -> None:
+        for k, v in mean_results.items():
+            self.multi_label_results[k].append(v)
 
     def log_fullacc(self, accs):
         if self.setting == 'class-il':
             acc_class_il, acc_task_il = accs
             self.fullaccs.append(acc_class_il)
             self.fullaccs_mask_classes.append(acc_task_il)
+        
+    def log_full_multilabel(self, results: np.ndarray) -> None:
+        for k, v in results.items():
+            self.full_multi_label_results[k].append(v)
 
     def write(self, args: Dict[str, Any]) -> None:
         """
