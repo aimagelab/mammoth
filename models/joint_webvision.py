@@ -21,6 +21,8 @@ from datasets import get_dataset
 import os
 import sys
 import wandb
+from datasets.seq_webvision import SequentialWebVision, WebVision, webvision_collate_fn
+from utils.conf import base_path_dataset as base_path
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Joint training: a strong, simple baseline.')
@@ -31,15 +33,14 @@ def get_parser() -> ArgumentParser:
     return parser
 
 
-class JOINT(ContinualModel):
-    NAME = 'joint'
+class JOINTWebVision(ContinualModel):
+    NAME = 'joint_webvision'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
     def __init__(self, backbone, loss, args, transform):
 
         self.dataset = get_dataset(args)
-        self.n_classes = self.dataset.N_CLASSES_PER_TASK * self.dataset.N_TASKS
-        self.cpt = self.dataset.N_CLASSES_PER_TASK
+        self.n_classes = self.dataset.N_CLASSES if hasattr(self.dataset, 'N_CLASSES') else self.dataset.N_CLASSES_PER_TASK * self.dataset.N_TASKS
         self.pretrained = args.pretrained == 1
         backbone = self.get_backbone(args)
         super().__init__(backbone, loss, args, transform)
@@ -53,7 +54,6 @@ class JOINT(ContinualModel):
 
     def end_task(self, dataset):
         if dataset.SETTING != 'domain-il':
-            self.old_data.append(dataset.train_loader.dataset.images_info_list)
             self.current_task += 1
 
             # # for non-incremental joint training
@@ -72,28 +72,19 @@ class JOINT(ContinualModel):
                 raise ValueError(f'Unsupported optimizer: {self.args.optimizer}')
 
             # prepare dataloader
-            all_data, all_labels = None, None
-            for i in range(len(self.old_data)):
-                if all_data is None:
-                    all_data = self.old_data[i]
-                    all_labels = self.old_labels[i]
-                else:
-                    all_data = np.concatenate([all_data, self.old_data[i]])
-                    all_labels = np.concatenate([all_labels, self.old_labels[i]])
-
-            transform = dataset.TRANSFORM if dataset.TRANSFORM is not None else transforms.ToTensor()
-            temp_dataset = ValidationDataset(all_data, all_labels, transform=transform)
-            loader = torch.utils.data.DataLoader(temp_dataset, batch_size=self.args.batch_size, shuffle=True)
+            train_transform = SequentialWebVision.TRANSFORM
+            train_dataset = WebVision(base_path() + 'WebVision', train=True, transform=train_transform, task=-1)
+            loader = torch.utils.data.DataLoader(train_dataset, batch_size=self.args.batch_size, shuffle=True, num_workers=4, collate_fn=webvision_collate_fn)
 
             # train
             for e in range(self.args.n_epochs):
                 for i, batch in enumerate(loader):
-                    inputs, labels = batch
+                    inputs, labels, _ = batch
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
 
                     self.opt.zero_grad()
                     outputs = self.net(inputs)
-                    loss = self.loss(outputs, labels.long())
+                    loss = self.loss(outputs, labels.float())
                     loss.backward()
                     if self.args.clip_grad is not None:
                         torch.nn.utils.clip_grad_norm_(self.net.parameters(), self.args.clip_grad)
@@ -149,4 +140,4 @@ class JOINT(ContinualModel):
     
     def forward(self, x):
         offset_1, offset_2 = self._compute_offsets(self.current_task-1)
-        return self.net(x)[:, :self.current_task*self.cpt]
+        return self.net(x)[:, :offset_2]
