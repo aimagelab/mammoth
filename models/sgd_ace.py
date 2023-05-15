@@ -15,8 +15,8 @@ def get_parser() -> ArgumentParser:
     return parser
 
 
-class Sgd(ContinualModel):
-    NAME = 'sgd'
+class SgdAce(ContinualModel):
+    NAME = 'sgd_ace'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     def get_backbone(self, args):
@@ -24,15 +24,12 @@ class Sgd(ContinualModel):
         backbone = timm.create_model(args.network, pretrained=pretrained, num_classes=self.n_classes)
         return backbone
 
-        #return timm.create_model(args.network, pretrained=pretrained, num_classes=self.n_classes)
-
     def __init__(self, backbone, loss, args, transform):
         self.dataset = get_dataset(args)
         self.n_classes = self.dataset.N_CLASSES if hasattr(self.dataset, 'N_CLASSES') else self.dataset.N_CLASSES_PER_TASK * self.dataset.N_TASKS
-        self.cpt = self.dataset.N_CLASSES_PER_TASK
         self.pretrained = args.pretrained == 1
         backbone = self.get_backbone(args)
-        super(Sgd, self).__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform)
         self.current_task = 0
 
     def end_task(self, dataset):
@@ -46,9 +43,10 @@ class Sgd(ContinualModel):
         self.opt.zero_grad()
         outputs = self.net(inputs)
         offset_1, offset_2 = self._compute_offsets(self.current_task)
-        outputs = outputs[:, :offset_2]
-        labels = labels[:, :offset_2]
-        loss = self.loss(outputs, labels.float())
+        idx = labels.sum(0).nonzero().squeeze(1)
+        filtered_outputs = outputs[:, idx]
+        filtered_labels = labels[:, idx]
+        loss = self.loss(filtered_outputs, filtered_labels.float())
         loss.backward()
         if self.args.clip_grad is not None:
             torch.nn.utils.clip_grad_norm_(self.net.parameters(), self.args.clip_grad)

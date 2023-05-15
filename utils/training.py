@@ -46,14 +46,19 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
     status = model.training
     model.eval()
     accs, accs_mask_classes = [], []
+    valid_metrics_list = {'jaccard_sim': [], 'modified_jaccard': [], 'strict_acc': [], 'recall': []}
     valid_metrics = {'jaccard_sim': 0., 'modified_jaccard': 0., 'strict_acc': 0., 'recall': 0.}
     data_len = 0
+    cpt = dataset.N_CLASSES // dataset.N_TASKS
+    num_seen_classes = len(dataset.test_loaders) * cpt
 
-    for k, test_loader in enumerate(dataset.test_loaders):
+    for k, test_loader in enumerate(tqdm(dataset.test_loaders)):
         if last and k < len(dataset.test_loaders) - 1:
             continue
         correct, correct_mask_classes, total = 0.0, 0.0, 0.0
-        for data in test_loader:
+        for i, data in enumerate(test_loader):
+            if model.args.debug_mode == 1 and i > 3:
+                break
             with torch.no_grad():
                 inputs, labels = data
                 inputs, labels = inputs.to(model.device), labels.to(model.device)
@@ -64,6 +69,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
 
                 if dataset.SETTING == 'multi-label':
                     predictions = outputs > 0.0
+                    labels = labels[:, :num_seen_classes]
                     labels = labels.bool()
                     valid_metrics['jaccard_sim'] += metrics.jaccard_sim(predictions, labels) * inputs.shape[0]
                     valid_metrics['modified_jaccard'] += metrics.modified_jaccard_sim(predictions, labels) * inputs.shape[0]
@@ -80,7 +86,12 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
                         correct_mask_classes += torch.sum(pred == labels).item()
 
         if dataset.SETTING == 'multi-label':
-            break
+            valid_metrics['jaccard_sim'] /= data_len
+            valid_metrics['modified_jaccard'] /= data_len
+            valid_metrics['strict_acc'] /= data_len
+            valid_metrics['recall'] /= data_len
+            for k,v in valid_metrics.items():
+                valid_metrics_list[k].append(v)
         else:
             accs.append(correct / total * 100
                         if 'class-il' in model.COMPATIBILITY else 0)
@@ -89,11 +100,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
     model.train(status)
 
     if dataset.SETTING == 'multi-label':
-        valid_metrics['jaccard_sim'] /= data_len
-        valid_metrics['modified_jaccard'] /= data_len
-        valid_metrics['strict_acc'] /= data_len
-        valid_metrics['recall'] /= data_len
-        return valid_metrics
+        return valid_metrics_list
     else:
         return accs, accs_mask_classes
 
@@ -115,6 +122,12 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
     model.to(model.device)
     results, results_mask_classes = [], []
+    multi_label_results = {
+        'jaccard_sim': [],
+        'modified_jaccard': [],
+        'strict_acc': [],
+        'recall': []
+    }
 
     if not args.disable_log:
         logger = Logger(dataset.SETTING, dataset.NAME, model.NAME)
@@ -153,13 +166,13 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     inputs, labels = inputs.to(model.device), labels.to(model.device)
                     not_aug_inputs = not_aug_inputs.to(model.device)
                     logits = logits.to(model.device)
-                    loss = model.meta_observe(inputs, labels, not_aug_inputs, logits)
+                    loss = model.meta_observe(inputs, labels, not_aug_inputs, logits, epoch=epoch)
                 else:
                     inputs, labels, not_aug_inputs = data
                     inputs, labels = inputs.to(model.device), labels.to(model.device)
                     if isinstance(not_aug_inputs, torch.Tensor):
                         not_aug_inputs = not_aug_inputs.to(model.device)
-                    loss = model.meta_observe(inputs, labels, not_aug_inputs)
+                    loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch)
                 assert not math.isnan(loss)
                 progress_bar.prog(i, len(train_loader), epoch, t, loss)
 
@@ -171,16 +184,20 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
         accs = evaluate(model, dataset)
         if dataset.SETTING == 'multi-label':
-            results.append(accs)
-            print_mean_accuracy(accs['strict_acc'], t + 1, dataset.SETTING)
+            for k, v in accs.items():
+                multi_label_results[k].append(v)
+            mean_results = {k: np.mean(v) for k, v in accs.items()}
+            print_multi_label_results(mean_results, t + 1)
             if not args.disable_log:
-                # TODO
-                pass
+                logger.log_multilabel(mean_results)
+                logger.log_full_multilabel(accs)
             if not args.nowand:
                 d2={
-                    **{f'RESULT/{k}': v for k, v in accs.items()},
-                    'RESULT/task': t,
+                    **{f'RESULT_mean_{k}': v for k, v in mean_results.items()},
                 }
+                for k,v in accs.items():
+                    for i, v2 in enumerate(v):
+                        d2[f'RESULT_{k}_{i}'] = v2
                 wandb_logger(d2)
 
         else:
@@ -211,6 +228,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     if not args.disable_log:
         logger.write(vars(args))
         if not args.nowand:
+            # if dataset.SETTING == 'multi-label':
+            #     d = logger.dump_multilabel()
+            # else:
             d = logger.dump()
             d['wandb_url'] = wandb_logger.wandb_url
             wandb_logger(d)

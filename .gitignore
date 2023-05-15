@@ -91,3 +91,5 @@ dmypy.json
 cython_debug/
 wandb
 ./data
+tmp
+checkpoints
