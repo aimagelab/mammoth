@@ -206,6 +206,13 @@ class SequentialWebVision(ContinualDataset):
         transforms.Normalize((0.4569, 0.4354, 0.3904),
                              (0.2737, 0.2664, 0.2791)),
     ])
+    TEST_TRANSFORM = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4569, 0.4354, 0.3904),
+                             (0.2737, 0.2664, 0.2791)),
+    ])
 
     def get_examples_number(self):
         train_dataset = WebVision(base_path() + 'WebVision', train=True)
