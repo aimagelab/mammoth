@@ -37,8 +37,11 @@ from timm.models.layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_n
 # from timm.models.registry import register_model
 from timm.models._builder import build_model_with_cfg
 from timm.models._manipulate import named_apply, checkpoint_seq, adapt_input_conv
-from timm.models._pretrained import generate_default_cfgs
-from timm.models._registry import register_model
+try:
+    from timm.models._pretrained import generate_default_cfgs
+    from timm.models._registry import register_model
+except:
+    from timm.models._registry import register_model, generate_default_cfgs
 
 _logger = logging.getLogger(__name__)
 
