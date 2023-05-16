@@ -114,6 +114,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     :param args: the arguments of the current execution
     """
     print(args)
+    print(args, file=sys.stderr)
 
     run_name = args.wandb_name
     if hasattr(model, 'get_name') and run_name is None:

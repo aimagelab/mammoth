@@ -23,6 +23,7 @@ import sys
 import wandb
 from datasets.seq_webvision import SequentialWebVision, WebVision, webvision_collate_fn
 from utils.conf import base_path_dataset as base_path
+import wandb
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Joint training: a strong, simple baseline.')
@@ -85,6 +86,8 @@ class JOINTWebVision(ContinualModel):
                     self.opt.zero_grad()
                     outputs = self.net(inputs)
                     loss = self.loss(outputs, labels.float())
+                    if not self.args.nowand:
+                        wandb.log({'loss': loss.item()})
                     loss.backward()
                     if self.args.clip_grad is not None:
                         torch.nn.utils.clip_grad_norm_(self.net.parameters(), self.args.clip_grad)
