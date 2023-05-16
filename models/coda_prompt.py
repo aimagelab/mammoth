@@ -72,8 +72,8 @@ class CodaPrompt(ContinualModel):
         logits, loss_prompt = self.net(inputs, train=True)
         loss_prompt = loss_prompt.sum()
         offset_1, offset_2 = self._compute_offsets(self.current_task)
-        logits = logits[:, offset_1:offset_2]
-        labels = labels[:, offset_1:offset_2]
+        logits = logits[:, :offset_2]
+        labels = labels[:, :offset_2]
         loss_bce = self.loss(logits, labels.float())
         loss = loss_bce + self.args.mu * loss_prompt
         loss.backward()

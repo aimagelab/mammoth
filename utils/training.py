@@ -156,7 +156,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
         scheduler = dataset.get_scheduler(model, args)
         for epoch in range(model.args.n_epochs):
-            if args.model == 'joint':
+            if 'joint' in args.model:
                 continue
             for i, data in enumerate(train_loader):
                 if args.debug_mode and i > 3:
@@ -182,41 +182,43 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         if hasattr(model, 'end_task'):
             model.end_task(dataset)
 
-        accs = evaluate(model, dataset)
-        if dataset.SETTING == 'multi-label':
-            for k, v in accs.items():
-                multi_label_results[k].append(v)
-            mean_results = {k: np.mean(v) for k, v in accs.items()}
-            print_multi_label_results(mean_results, t + 1)
-            if not args.disable_log:
-                logger.log_multilabel(mean_results)
-                logger.log_full_multilabel(accs)
-            if not args.nowand:
-                d2={
-                    **{f'RESULT_mean_{k}': v for k, v in mean_results.items()},
-                }
-                for k,v in accs.items():
-                    for i, v2 in enumerate(v):
-                        d2[f'RESULT_{k}_{i}'] = v2
-                wandb_logger(d2)
+        if ((args.model != 'joint' and args.model != 'joint_webvision') or t == dataset.N_TASKS - 1):
 
-        else:
-            results.append(accs[0])
-            results_mask_classes.append(accs[1])
-            mean_acc = np.mean(accs, axis=1)
-            print_mean_accuracy(mean_acc, t + 1, dataset.SETTING)
-            if not args.disable_log:
-                logger.log(mean_acc)
-                logger.log_fullacc(accs)
-            if not args.nowand:
-                d2={
-                    'RESULT/class_mean_accs': mean_acc[0],
-                    'RESULT/task_mean_accs': mean_acc[1],
-                    **{f'RESULT/class_acc_{i}': a for i, a in enumerate(accs[0])},
-                    **{f'RESULT/task_acc_{i}': a for i, a in enumerate(accs[1])},
-                    'RESULT/task': t,
-                }
-                wandb_logger(d2)
+            accs = evaluate(model, dataset)
+            if dataset.SETTING == 'multi-label':
+                for k, v in accs.items():
+                    multi_label_results[k].append(v)
+                mean_results = {k: np.mean(v) for k, v in accs.items()}
+                print_multi_label_results(mean_results, t + 1)
+                if not args.disable_log:
+                    logger.log_multilabel(mean_results)
+                    logger.log_full_multilabel(accs)
+                if not args.nowand:
+                    d2={
+                        **{f'RESULT_mean_{k}': v for k, v in mean_results.items()},
+                    }
+                    for k,v in accs.items():
+                        for i, v2 in enumerate(v):
+                            d2[f'RESULT_{k}_{i}'] = v2
+                    wandb_logger(d2)
+
+            else:
+                results.append(accs[0])
+                results_mask_classes.append(accs[1])
+                mean_acc = np.mean(accs, axis=1)
+                print_mean_accuracy(mean_acc, t + 1, dataset.SETTING)
+                if not args.disable_log:
+                    logger.log(mean_acc)
+                    logger.log_fullacc(accs)
+                if not args.nowand:
+                    d2={
+                        'RESULT/class_mean_accs': mean_acc[0],
+                        'RESULT/task_mean_accs': mean_acc[1],
+                        **{f'RESULT/class_acc_{i}': a for i, a in enumerate(accs[0])},
+                        **{f'RESULT/task_acc_{i}': a for i, a in enumerate(accs[1])},
+                        'RESULT/task': t,
+                    }
+                    wandb_logger(d2)
 
     if not args.disable_log and not args.ignore_other_metrics:
         logger.add_bwt(results, results_mask_classes)
