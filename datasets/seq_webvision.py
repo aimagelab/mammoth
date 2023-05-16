@@ -89,8 +89,8 @@ class WebVision(Dataset):
             filtered_image_info_list = []
             all_offsets = pickle.load(open(os.path.join(root, f'{"train" if train else "test"}_offsets.pkl'), 'rb'))
             all_tags = pickle.load(open(os.path.join(root, 'tags.pkl'), 'rb'))
-            for task, (offsets, tags) in enumerate(zip(all_offsets, all_tags)):
-                task_tags = set(tags)
+            for task, (offsets, glotags) in enumerate(zip(all_offsets, all_tags)):
+                task_tags = set(glotags)
                 for of in offsets:
                     i = self.images_info_list[of]
                     tags = list(set(i['tags']).intersection(task_tags))
@@ -305,5 +305,5 @@ if __name__ == '__main__':
     # dataset.get_data_loaders()
     # dataset.train_loader.dataset[100]
     # [dataset.get_data_loaders() for _ in range(dataset.N_TASKS)]
-    j = WebVision('data/WebVision', train=False, task = -1)
+    thej = WebVision('data/WebVision', train=True, task = -1)
     we
