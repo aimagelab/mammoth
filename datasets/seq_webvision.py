@@ -25,6 +25,7 @@ import json
 import pickle
 from typing import Tuple
 
+JOINT_LIMIT_TASKS = 15
 
 class WebVision(Dataset):
     '''
@@ -87,8 +88,8 @@ class WebVision(Dataset):
         else:
             print("WEBVISION DATASET: JOINT MODE")
             filtered_image_info_list = []
-            all_offsets = pickle.load(open(os.path.join(root, f'{"train" if train else "test"}_offsets.pkl'), 'rb'))
-            all_tags = pickle.load(open(os.path.join(root, 'tags.pkl'), 'rb'))
+            all_offsets = pickle.load(open(os.path.join(root, f'{"train" if train else "test"}_offsets.pkl'), 'rb'))[:JOINT_LIMIT_TASKS]
+            all_tags = pickle.load(open(os.path.join(root, 'tags.pkl'), 'rb'))[:JOINT_LIMIT_TASKS]
             for task, (offsets, glotags) in enumerate(zip(all_offsets, all_tags)):
                 task_tags = set(glotags)
                 for of in offsets:
