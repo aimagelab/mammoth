@@ -58,7 +58,7 @@ class JOINTWebVision(ContinualModel):
             self.current_task += 1
 
             # # for non-incremental joint training
-            if len(dataset.test_loaders) != dataset.N_TASKS:
+            if len(dataset.test_loaders) != dataset.N_TASKS and (len(dataset.test_loaders) != self.args.stop_after if self.args.stop_after is not None else True):
                 return
 
             # reinit network
@@ -80,6 +80,8 @@ class JOINTWebVision(ContinualModel):
             # train
             for e in range(self.args.n_epochs):
                 for i, batch in enumerate(loader):
+                    if self.args.debug_mode and i > 3:
+                        break
                     inputs, labels, _ = batch
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
 

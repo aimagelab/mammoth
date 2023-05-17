@@ -25,7 +25,7 @@ import json
 import pickle
 from typing import Tuple
 
-JOINT_LIMIT_TASKS = 15
+JOINT_LIMIT_TASKS = 6
 
 class WebVision(Dataset):
     '''

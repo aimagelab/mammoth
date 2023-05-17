@@ -62,6 +62,7 @@ def add_management_args(parser: ArgumentParser) -> None:
     parser.add_argument('--wandb_project', type=str, default='multi-mammoth', help='Wandb project name')
     parser.add_argument('--wandb_unbug', type=int, default=0,
                         help='If you discover a bug, you can just change this and filter by this field in wandb')
+    parser.add_argument('--stop_after', type=int, default=None, help="Task limit")
 
 
 def add_rehearsal_args(parser: ArgumentParser) -> None:

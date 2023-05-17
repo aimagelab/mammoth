@@ -144,7 +144,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             random_results_class, random_results_task = evaluate(model, dataset_copy)
 
     print(file=sys.stderr)
-    for t in range(dataset.N_TASKS):
+    for t in range(dataset.N_TASKS if args.stop_after is None else args.stop_after):
         model.train()
         train_loader, test_loader = dataset.get_data_loaders()
         if hasattr(model, 'begin_task'):
@@ -183,7 +183,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         if hasattr(model, 'end_task'):
             model.end_task(dataset)
 
-        if ((args.model != 'joint' and args.model != 'joint_webvision') or t == dataset.N_TASKS - 1):
+        tmp = args.stop_after if args.stop_after is not None else dataset.N_TASKS
+        if ((args.model != 'joint' and args.model != 'joint_webvision') or t == tmp - 1):
 
             accs = evaluate(model, dataset)
             if dataset.SETTING == 'multi-label':
