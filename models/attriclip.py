@@ -26,7 +26,7 @@ class AttriClip(ContinualModel):
         self.dataset = get_dataset(args)
         self.n_classes = self.dataset.N_CLASSES if hasattr(self.dataset, 'N_CLASSES') else self.dataset.N_CLASSES_PER_TASK * self.dataset.N_TASKS
         self.cpt = self.dataset.N_CLASSES_PER_TASK
-        backbone = CoOp(False, False, args, False)
+        backbone = CoOp(False, False, args)
         super().__init__(backbone, loss, args, transform)
         self.current_task = 0
     
