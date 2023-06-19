@@ -13,8 +13,6 @@ def get_parser() -> ArgumentParser:
     add_management_args(parser)
     add_experiment_args(parser)
     # add_aux_dataset_args(parser)
-    parser.add_argument('--network', type=str, default='vit_base_patch16_224', help='Network to use')
-    parser.add_argument('--pretrained', type=int, choices=[0, 1], default=1, help='Should use pretrained weights?')
     parser.add_argument("--num_prompt", type=int, default=10, help='num_prompt')
     parser.add_argument("--text_prompt", type=int, default=3, help='text_prompt')
     return parser
@@ -28,7 +26,6 @@ class AttriClip(ContinualModel):
         self.dataset = get_dataset(args)
         self.n_classes = self.dataset.N_CLASSES if hasattr(self.dataset, 'N_CLASSES') else self.dataset.N_CLASSES_PER_TASK * self.dataset.N_TASKS
         self.cpt = self.dataset.N_CLASSES_PER_TASK
-        self.pretrained = args.pretrained == 1
         backbone = CoOp(False, False, args, False)
         super().__init__(backbone, loss, args, transform)
         self.current_task = 0
