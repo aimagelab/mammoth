@@ -49,7 +49,7 @@ def add_management_args(parser: ArgumentParser) -> None:
                         help='Notes for this run.')
 
     parser.add_argument('--non_verbose', default=0, choices=[0, 1], type=int, help='Make progress bars non verbose')
-    parser.add_argument('--disable_log', default=1, choices=[0, 1], type=int, help='Disable csv logging')
+    parser.add_argument('--disable_log', default=0, choices=[0, 1], type=int, help='Disable csv logging')
 
     parser.add_argument('--validation', default=0, choices=[0, 1], type=int,
                         help='Test on the validation set')
