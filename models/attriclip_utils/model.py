@@ -147,8 +147,8 @@ class CLIP(nn.Module):
 
         # text enoder
         self.text_encoder = TextEncoder(clip_model)
-        if torch.cuda.device_count() > 1:
-            self.text_encoder = nn.DataParallel(self.text_encoder)
+        # if torch.cuda.device_count() > 1:
+        #     self.text_encoder = nn.DataParallel(self.text_encoder)
 
         self.prompt_learner = PromptLearner(self.args, class_names, clip_model, text_prompt, n_ctx=n_ctx)
         self.text_key = text_key
