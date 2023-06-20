@@ -161,27 +161,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         for epoch in range(model.args.n_epochs):
             if 'joint' in args.model:
                 continue
-            for i, data in enumerate(train_loader):
-                if args.debug_mode and i > 3:
-                    break
-                if hasattr(dataset.train_loader.dataset, 'logits'):
-                    inputs, labels, not_aug_inputs, logits = data
-                    inputs, labels = inputs.to(model.device), labels.to(model.device)
-                    not_aug_inputs = not_aug_inputs.to(model.device)
-                    logits = logits.to(model.device)
-                    loss = model.meta_observe(inputs, labels, not_aug_inputs, logits, epoch=epoch)
-                else:
-                    inputs, labels, not_aug_inputs = data
-                    inputs, labels = inputs.to(model.device), labels.to(model.device)
-                    if isinstance(not_aug_inputs, torch.Tensor):
-                        not_aug_inputs = not_aug_inputs.to(model.device)
-                    loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch)
-                assert not math.isnan(loss)
-                progress_bar.prog(i, len(train_loader), epoch, t, loss)
 
-            if scheduler is not None:
-                scheduler.step()
-                
             if "attriclip" in args.model:
                 if model.net.model.prompt_learner.text_prompt.shape[1] != 0:
                     pca= PCA(n_components=2)
@@ -200,10 +180,33 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     tb=wandb.plot.scatter(table1, "ax1", "ax2")
                     wandb.log({"keys":tb})
 
-                    counters=model.net.model.counters.view(-1,1).tolist()
-                    table1= wandb.Table(data=np.concatenate((prompts_label,counters),axis=1),columns=["prompt","frequency"])
-                    wandb.log({"histogram":wandb.plot.histogram(table1,"frequency",title="frequency")})
-                    #wandb.sklearn.plot_clusterer(est, X, cluster_labels = est.fit_predict(X), labels=config.labels, model_name='KMeans')
+            for i, data in enumerate(train_loader):
+                if args.debug_mode and i > 3:
+                    break
+
+                if hasattr(dataset.train_loader.dataset, 'logits'):
+                    inputs, labels, not_aug_inputs, logits = data
+                    inputs, labels = inputs.to(model.device), labels.to(model.device)
+                    not_aug_inputs = not_aug_inputs.to(model.device)
+                    logits = logits.to(model.device)
+                    loss = model.meta_observe(inputs, labels, not_aug_inputs, logits, epoch=epoch)
+                else:
+                    inputs, labels, not_aug_inputs = data
+                    inputs, labels = inputs.to(model.device), labels.to(model.device)
+                    if isinstance(not_aug_inputs, torch.Tensor):
+                        not_aug_inputs = not_aug_inputs.to(model.device)
+                    loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch)
+                assert not math.isnan(loss)
+                progress_bar.prog(i, len(train_loader), epoch, t, loss)
+
+            if scheduler is not None:
+                scheduler.step()
+
+            if "attriclip" in args.model:
+                counters=model.net.model.counters.view(-1,1).tolist()
+                table1= wandb.Table(data=np.concatenate((prompts_label,counters),axis=1),columns=["prompt","frequency"])
+                wandb.log({"histogram":wandb.plot.histogram(table1,"frequency",title="frequency")})
+                #wandb.sklearn.plot_clusterer(est, X, cluster_labels = est.fit_predict(X), labels=config.labels, model_name='KMeans')
 
         if hasattr(model, 'end_task'):
             model.end_task(dataset)
