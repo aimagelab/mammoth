@@ -1,7 +1,7 @@
 import numpy as np
 import torchvision
 
-cifar_100_classes = torchvision.datasets.CIFAR100(root='./data', train=True, download=True).classes
+cifar100_classes = torchvision.datasets.CIFAR100(root='./data', train=True, download=True).classes
 
 def cosine_schedule_warmup(total_step, value, final_value=0, warmup_step=0, warmup_value=0):
     if warmup_step > 0:
