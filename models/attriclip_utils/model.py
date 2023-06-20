@@ -167,7 +167,6 @@ class CLIP(nn.Module):
             n_test = len(test_class)
             probability = image_features @ self.text_key.t()
             _, indices = probability.topk(k=min(self.args.text_prompt,probability.shape[1]), dim=1, largest=True)
-            self.counters[indices.cpu()]=self.counters[indices.cpu()]+1
             ind,counts=indices.cpu().detach().unique(return_counts=True)
             self.counters[ind]=self.counters[ind]+counts
             text_prompt, tokenized_prompts = self.prompt_learner(indices,test_class,test)
@@ -184,6 +183,8 @@ class CLIP(nn.Module):
             n_class = self.n_class
             probability = image_features @ self.text_key.t()
             _, indices = probability.topk(k=min(self.args.text_prompt, probability.shape[1]), dim=1, largest=True)
+            ind,counts=indices.cpu().detach().unique(return_counts=True)
+            self.counters[ind]=self.counters[ind]+counts
             key_choose = self.text_key[indices]
             text_prompt, tokenized_prompts, nc_prompts, nc_tokenized_prompts = self.prompt_learner(indices)
             text_features = self.text_encoder(text_prompt,tokenized_prompts)
