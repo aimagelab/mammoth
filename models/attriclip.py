@@ -63,7 +63,6 @@ class AttriClip(ContinualModel):
         self.log_distances()
         if self.current_task == self.num_tasks - 1:
             wandb.log({'distance_table': self.distance_table})
-            wandb.log({'distance_table': wandb.plot.line(self.distance_table, 'distance', 'task', title='Distance Table')}
 
         self.current_task += 1
 
