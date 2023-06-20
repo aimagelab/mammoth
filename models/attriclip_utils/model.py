@@ -24,29 +24,29 @@ class PromptLearner(nn.Module):
         self.dtype = dtype
 
         prompt_prefix =' '.join(['x'] * n_ctx * self.args.text_prompt)
-        prompts = [prompt_prefix + ' ' + name + '.' for name in class_names]
+        prompts = [prompt_prefix + ' ' + name + '.' for name in class_names]# xxxxxx classe
         classnames = [name.replace('_', ' ') for name in class_names]
         self.name_lens = [len(_tokenizer.encode(name)) for name in class_names]
         self.prompt_pos = prompt_pos
 
         self.text_prompt = text_prompt
-        tokenized_prompts = torch.cat([tokenize(p) for p in prompts])
-        self.tokenized_prompts = tokenized_prompts
+        tokenized_prompts = torch.cat([tokenize(p) for p in prompts])# conversione frase testuale in numeri
+        self.tokenized_prompts = tokenized_prompts # token
         with torch.no_grad():
-            embedding = clip_model.token_embedding(tokenized_prompts.cuda()).type(self.dtype)
-        self.register_buffer( 'token_prefix', embedding[:, :1, :])
-        self.register_buffer( 'token_suffix', embedding[:, 1+(n_ctx*self.args.text_prompt):,:])
+            embedding = clip_model.token_embedding(tokenized_prompts.cuda()).type(self.dtype)#
+        self.register_buffer( 'token_prefix', embedding[:, :1, :])# prende token del SOS (start of sequence)
+        self.register_buffer( 'token_suffix', embedding[:, 1+(n_ctx*self.args.text_prompt):,:]) # prende token CLS, EOS
 
-        nc_prompts = [prompt_prefix+'.' ]
-        nc_tokenized_prompts = torch.cat([tokenize(p) for p in nc_prompts])
+        nc_prompts = [prompt_prefix+'.' ]#xxxxxxxxxxxxxxxxxxxxx.
+        nc_tokenized_prompts = torch.cat([tokenize(p) for p in nc_prompts])# conversione della frase senza la classe
         self.nc_tokenized_prompts = nc_tokenized_prompts
         with torch.no_grad():
             embedding = clip_model.token_embedding(nc_tokenized_prompts.cuda()).type(self.dtype)
         self.register_buffer('nc_token_prefix', embedding[:, :1,:])
         self.register_buffer('nc_token_suffix', embedding[:, 1+n_ctx:,:])
 
-        self.n_cls = n_cls 
-        self.n_ctx = n_ctx 
+        self.n_cls = n_cls
+        self.n_ctx = n_ctx
         self.ctx_dim = ctx_dim
 
     def forward(self, indices, test_class=False, infer=False):
@@ -167,7 +167,7 @@ class CLIP(nn.Module):
             probability = image_features @ self.text_key.t()
             _, indices = probability.topk(k=min(self.args.text_prompt,probability.shape[1]), dim=1, largest=True)
 
-            
+
             text_prompt, tokenized_prompts = self.prompt_learner(indices,test_class,test)
             text_features = self.text_encoder(text_prompt,tokenized_prompts)
             text_features = text_features / text_features.norm(dim=-1, keepdim=True)
@@ -190,7 +190,7 @@ class CLIP(nn.Module):
             image_features = image_features.unsqueeze(1)
             logit_scale = self.logit_scale.exp()
             logits = logit_scale * (image_features * text_features).sum(-1)
-           
+
             nc_text_features = self.text_encoder(nc_prompts, nc_tokenized_prompts)
             nc_text_features = nc_text_features / nc_text_features.norm(dim=-1, keepdim=True)
             dis = nc_text_features @ nc_text_features.permute(1, 0)
@@ -234,7 +234,7 @@ class CoOp(nn.Module):
         else:
             self.text_key = nn.Parameter(text_key)
             self.text_prompt = nn.Parameter(text_prompt)
-    
+
     def init_model(self, class_names, text_key, text_prompt):
 
         self.n_class = len(class_names)
@@ -243,13 +243,13 @@ class CoOp(nn.Module):
         self.model = CLIP(self.args, class_names, clip_model, text_key, text_prompt, self.n_ctx)
         if self.use_grad_checkpoint:
             try:
-                self.model.text_encoder.transformer.use_gradient_checkpoint = True 
+                self.model.text_encoder.transformer.use_gradient_checkpoint = True
             except:
                 self.model.text_encoder.module.transformer.use_gradient_checkpoint = True
-        
+
     def get_optimizer(self, per_epoch_steps):
         Other_params = [param for name, param in self.model.named_parameters() if 'text_key' in name]
-        param_dict = [{'params': [p for p in self.model.prompt_learner.parameters() if p.requires_grad]}, 
+        param_dict = [{'params': [p for p in self.model.prompt_learner.parameters() if p.requires_grad]},
                         {'params': Other_params}]
 
         optimizer = torch.optim.SGD(param_dict, lr=self.lr, weight_decay=self.wd)
@@ -257,5 +257,5 @@ class CoOp(nn.Module):
             optimizer,
             lr=self.lr,
             total_step=self.epochs*per_epoch_steps)
-        
+
         return optimizer, scheduler
