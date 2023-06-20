@@ -143,6 +143,7 @@ class CLIP(nn.Module):
         super().__init__()
         self.n_class = len(class_names)
         self.args = args
+        self.counters=torch.zeros(size=[text_key.shape[0]])
 
         # text enoder
         self.text_encoder = TextEncoder(clip_model)
@@ -166,8 +167,9 @@ class CLIP(nn.Module):
             n_test = len(test_class)
             probability = image_features @ self.text_key.t()
             _, indices = probability.topk(k=min(self.args.text_prompt,probability.shape[1]), dim=1, largest=True)
-
-
+            self.counters[indices.cpu()]=self.counters[indices.cpu()]+1
+            ind,counts=indices.cpu().detach().unique(return_counts=True)
+            self.counters[ind]=self.counters[ind]+counts
             text_prompt, tokenized_prompts = self.prompt_learner(indices,test_class,test)
             text_features = self.text_encoder(text_prompt,tokenized_prompts)
             text_features = text_features / text_features.norm(dim=-1, keepdim=True)
