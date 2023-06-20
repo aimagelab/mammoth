@@ -32,7 +32,7 @@ class AttriClip(ContinualModel):
     
     def begin_task(self, dataset):
         if 'cifar100' in dataset.NAME:
-            class_names = cifar100_classes[self.current_task*self.cpt:(self.current_task+1)*self.cpt]
+            class_names = cifar_100_classes[self.current_task*self.cpt:(self.current_task+1)*self.cpt]
         else:
             raise NotImplementedError(f'Dataset "{dataset.NAME}" not supported.')
 
