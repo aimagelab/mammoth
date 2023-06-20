@@ -6,6 +6,7 @@ from datasets import get_dataset
 from models.attriclip_utils.model import CoOp
 from models.attriclip_utils.utils import *
 import torch.nn.functional as F
+import wandb
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual Learning via'
@@ -24,6 +25,7 @@ class AttriClip(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform):
         self.dataset = get_dataset(args)
+        self.num_tasks = self.dataset.N_TASKS
         self.n_classes = self.dataset.N_CLASSES if hasattr(self.dataset, 'N_CLASSES') else self.dataset.N_CLASSES_PER_TASK * self.dataset.N_TASKS
         self.cpt = self.dataset.N_CLASSES_PER_TASK
         backbone = CoOp(False, False, args)
@@ -44,9 +46,25 @@ class AttriClip(ContinualModel):
         self.old_epoch = 0
         self.idx = 0
 
+        if self.current_task == 0:
+            self.original_prompts = self.net.model.prompt_learner.text_prompt.cpu().detach()
+            self.distance_table = wandb.Table(columns=['task', 'prompt', 'distance'])
+
+    def log_distances(self):
+        prompts = self.net.model.prompt_learner.text_prompt.cpu().detach().view(self.args.num_prompt, -1)
+        original_dists = torch.sum((prompts - self.original_prompts.view(self.args.num_prompt, -1))**2, dim=-1)
+        for i, dist in enumerate(original_dists):
+            self.distance_table.add_data(self.current_task, i, dist.item())
+
     def end_task(self, dataset):
         if self.args.save_checkpoints:
             self.save_checkpoints()
+
+        self.log_distances()
+        if self.current_task == self.num_tasks - 1:
+            wandb.log({'distance_table': self.distance_table})
+            wandb.log({'distance_table': wandb.plot.line(self.distance_table, 'distance', 'task', title='Distance Table')}
+
         self.current_task += 1
 
 
