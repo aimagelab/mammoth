@@ -181,7 +181,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             if scheduler is not None:
                 scheduler.step()
-                
+
             if "attriclip" in args.model:
                 if model.net.model.prompt_learner.text_prompt.shape[1] != 0:
                     pca= PCA(n_components=2)
@@ -200,7 +200,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     tb=wandb.plot.scatter(table1, "ax1", "ax2")
                     wandb.log({"keys":tb})
 
-                    counters=model.net.model.counters.view(-1,1).tolist()
+                    counters=model.net.model.counters.view(-1,1).int().numpy()
                     table1= wandb.Table(data=np.concatenate((prompts_label,counters),axis=1),columns=["prompt","frequency"])
                     wandb.log({"histogram":wandb.plot.histogram(table1,"frequency",title="frequency")})
                     #wandb.sklearn.plot_clusterer(est, X, cluster_labels = est.fit_predict(X), labels=config.labels, model_name='KMeans')
