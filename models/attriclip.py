@@ -80,5 +80,5 @@ class AttriClip(ContinualModel):
     def forward(self, x):
         test_class = cifar100_classes[:max(self.current_task, 1)*self.cpt]
         logits = self.net.model(x, test_class, test=True)
-        scores = logits.float().softmax(dim=-1)
-        return scores[:, :max(self.current_task, 1)*self.cpt]
+        #scores = logits.float().softmax(dim=-1)
+        return logits[:, :max(self.current_task, 1)*self.cpt]
