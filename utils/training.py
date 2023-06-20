@@ -7,7 +7,7 @@ import math
 import sys
 from argparse import Namespace
 from typing import Tuple
-
+import sklearn
 import torch
 from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
@@ -19,6 +19,8 @@ from utils.status import ProgressBar
 from utils.wandbsc import WandbLogger
 from utils import metrics
 from tqdm import tqdm
+from sklearn.decomposition import PCA
+import wandb
 
 
 def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> None:
@@ -157,6 +159,28 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
         scheduler = dataset.get_scheduler(model, args)
         for epoch in range(model.args.n_epochs):
+            if "attriclip" in args.model:
+                if model.net.model.prompt_learner.text_prompt.shape[1] != 0:
+                    pca= PCA(n_components=2)
+
+                    prompts=model.net.model.prompt_learner.text_prompt
+                    prompts=prompts.sum(dim=1)
+                    prompts=pca.fit_transform(prompts.cpu().detach())
+                    table1=wandb.Table(data=np.concatenate((np.array([i for i in range(prompts.shape[0])])[:,None],prompts),axis=1),columns=["prompt","ax1","ax2"])
+                    tb=wandb.plot.scatter(table1, "ax1", "ax2")
+                    wandb.log({"prompts":tb})
+
+                    keys=model.net.text_key
+                    keys=pca.fit_transform(keys.cpu().detach())
+                    table1=wandb.Table(data=np.concatenate((np.array([i for i in range(keys.shape[0])])[:,None],keys),axis=1),columns=["prompt","ax1","ax2"])
+                    tb=wandb.plot.scatter(table1, "ax1", "ax2")
+                    wandb.log({"keys":tb})
+
+                    #wandb.sklearn.plot_clusterer(est, X, cluster_labels = est.fit_predict(X), labels=config.labels, model_name='KMeans')
+
+
+
+
             if 'joint' in args.model:
                 continue
             for i, data in enumerate(train_loader):
