@@ -27,7 +27,7 @@ class FinalModel(torch.nn.Module):
     
     def get_classes(self):
         if 'cifar100' in self.args.dataset:
-            return torchvision.datasets.CIFAR100(root='./data', train=True, download=True).classes
+            return [x.replace('_', ' ') for x in torchvision.datasets.CIFAR100(root='./data', train=True, download=True).classes]
         else:
             raise NotImplementedError
     
