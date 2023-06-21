@@ -207,8 +207,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 counters=model.net.model.counters.view(-1,1).int().numpy()
                 prompts_label=np.array([i for i in range(prompts.shape[0])])[:,None]
                 table1= wandb.Table(data=np.concatenate((prompts_label,counters),axis=1),columns=["prompt","frequency"])
-                wandb.log({"histogram":wandb.plot.histogram(table1,"frequency",title="frequency")})
-                #wandb.sklearn.plot_clusterer(est, X, cluster_labels = est.fit_predict(X), labels=config.labels, model_name='KMeans')
+                if not args.nowand:
+                    wandb.log({"histogram":wandb.plot.histogram(table1,"frequency",title="frequency")})
+                    #wandb.sklearn.plot_clusterer(est, X, cluster_labels = est.fit_predict(X), labels=config.labels, model_name='KMeans')
 
         if hasattr(model, 'end_task'):
             model.end_task(dataset)

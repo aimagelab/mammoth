@@ -85,7 +85,7 @@ class AttriClip(ContinualModel):
         
         loss_main = F.cross_entropy(output, labels.cuda())
         loss_k = cosine_loss(ima_feat,key_choose)
-        loss = loss_main + 0.5*loss_k #+ self.args.lambda_loss_m*loss_m
+        loss = loss_main + 0.5*loss_k + self.args.lambda_loss_m*loss_m
 
         self.opt.zero_grad()
         loss.backward()
