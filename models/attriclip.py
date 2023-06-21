@@ -49,13 +49,21 @@ class AttriClip(ContinualModel):
 
         if self.current_task == 0:
             self.original_prompts = self.net.model.prompt_learner.text_prompt.cpu().detach()
-            self.distance_table = wandb.Table(columns=['task', 'prompt', 'distance'])
+            self.prompt_distance_table = wandb.Table(columns=['task', 'prompt', 'distance'])
+            
+            self.original_keys = self.net.model.text_key.cpu().detach()
+            self.key_distance_table = wandb.Table(columns=['task', 'key', 'distance'])
 
     def log_distances(self):
         prompts = self.net.model.prompt_learner.text_prompt.cpu().detach().view(self.args.num_prompt, -1)
         original_dists = torch.sum((prompts - self.original_prompts.view(self.args.num_prompt, -1))**2, dim=-1)
         for i, dist in enumerate(original_dists):
-            self.distance_table.add_data(self.current_task, i, dist.item())
+            self.prompt_distance_table.add_data(self.current_task, i, dist.item())
+
+        keys = self.net.model.text_key.cpu().detach()
+        dists = torch.sum((keys - self.original_keys)**2, dim=-1)
+        for i, dist in enumerate(dists):
+            self.key_distance_table.add_data(self.current_task, i, dist.item())
 
     def end_task(self, dataset):
         if self.args.save_checkpoints:
@@ -63,7 +71,8 @@ class AttriClip(ContinualModel):
 
         self.log_distances()
         if self.current_task == self.num_tasks - 1:
-            wandb.log({'distance_table': self.distance_table})
+            wandb.log({'prompt_distance_table': self.prompt_distance_table})
+            wandb.log({'key_distance_table': self.key_distance_table})
 
         self.current_task += 1
 
