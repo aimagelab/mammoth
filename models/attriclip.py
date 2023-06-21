@@ -16,6 +16,7 @@ def get_parser() -> ArgumentParser:
     # add_aux_dataset_args(parser)
     parser.add_argument("--num_prompt", type=int, default=10, help='num_prompt')
     parser.add_argument("--text_prompt", type=int, default=3, help='text_prompt')
+    parser.add_argument("--lambda_loss_m", type=float, default=0.1, help='coefficient for the orthogonality loss')
     return parser
 
 
@@ -84,7 +85,7 @@ class AttriClip(ContinualModel):
         
         loss_main = F.cross_entropy(output, labels.cuda())
         loss_k = cosine_loss(ima_feat,key_choose)
-        loss = loss_main + 0.5*loss_k + 0.1*loss_m
+        loss = loss_main + 0.5*loss_k # + self.args.lambda_loss_m*loss_m
 
         self.opt.zero_grad()
         loss.backward()
