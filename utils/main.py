@@ -6,6 +6,7 @@
 import numpy  # needed (don't change it)
 import importlib
 import os
+os.environ["WANDB__SERVICE_WAIT"] = "300"
 import socket
 import sys
 
