@@ -30,7 +30,7 @@ from pathlib import Path
 class Coco2014(Dataset):
     def __init__(self, root, train=True, transform=None, task=0):
         assert task in range(4)
-        self.root = root if not os.getenv("COCO_METAFILES") else os.getenv("COCO_METAFILES")
+        self.root = root if not os.getenv("COCO_METAFILES") else os.getenv("COCO_METAFILES") # /nas/softechict-nas-2/mboschini/cocometa
         self.transform = transform
         self.train = train
 
@@ -45,7 +45,7 @@ class Coco2014(Dataset):
         return len(self.imgs)
 
     def __getitem__(self, index):
-        img = self.imgs[index]
+        img = self.imgs[index].numpy()
         label_vector = self.multihot_labels[index]        
         original_img = img.copy()
 
