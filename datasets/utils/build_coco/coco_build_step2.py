@@ -6,6 +6,7 @@ from tqdm import tqdm
 # Imgs consists of all files of NUSWIDE or MSCOCO.
 # Cats consists of all label of NUSWIDE or MSCOCO.
 
+@torch.no_grad()
 def divide_tasks(Cats: torch.LongTensor):
     multilabel_idx = (Cats.sum(dim=1) > 1).nonzero().view(-1)
     multilabel = Cats[multilabel_idx] # Get the samples with more than one label
