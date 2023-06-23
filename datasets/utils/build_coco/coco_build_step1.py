@@ -7,7 +7,6 @@ import os
 import json
 import h5py
 import tqdm
-import skimage.io
 import numpy as np
 from PIL import Image
 from collections import defaultdict
@@ -126,7 +125,7 @@ id_fnames = [fname for fname in tqdm(os.listdir(os.path.join(data_source, 'ids')
 id_fnames.sort()
 
 print("Loading robis...", file=sys.stderr)
-for id_fname in tqdm.tqdm(id_fnames, desc='Total'):
+for id_fname in tqdm(id_fnames, desc='Total'):
 
     with open(os.path.join(data_source, 'ids', id_fname), 'r') as f:
         ids = json.load(f)
