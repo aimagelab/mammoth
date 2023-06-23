@@ -71,13 +71,13 @@
 
 import termplotlib as tpl
 import numpy as np, json, os
-for f in (os.listdir("cocodata")):
+for f in (os.listdir("cocodata_60")):
     if f.endswith("categories_coco.json"):
         ar = np.array(json.load(open("cocodata/"+f, "r")))
         agg = ar.sum(1)
         count = [agg[agg==i].shape[0] for i in range(1, agg.max()+1)]
         fig = tpl.figure()
-        fig.barh(count, np.arange(len(count)))
+        fig.barh(count, np.arange(len(count)) + 1)
         fig.show()
         print()
         
