@@ -69,9 +69,13 @@
 # torch.save(test_task, "cocodata/test_task.pt")
 # torch.save(select_classes, "cocodata/select_classes.pt")
 
+import termplotlib as tpl
 import numpy as np, json, os
 for f in (os.listdir("cocodata")):
     if f.endswith("categories_coco.json"):
         ar = np.array(json.load(open("cocodata/"+f, "r")))
         agg = ar.sum(1)
-        print(f, ar.shape, agg.min(), agg.max(), agg.mean(), agg.std())
+        fig = tpl.figure()
+        fig.barh(agg / agg.sum(), np.arange(len(agg)))
+        fig.show()
+        
