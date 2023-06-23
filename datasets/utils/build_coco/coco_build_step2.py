@@ -75,7 +75,9 @@ for f in (os.listdir("cocodata")):
     if f.endswith("categories_coco.json"):
         ar = np.array(json.load(open("cocodata/"+f, "r")))
         agg = ar.sum(1)
+        count = [agg[agg==i].shape[0] for i in range(1, agg.max()+1)]
         fig = tpl.figure()
-        fig.barh(agg / agg.sum(), np.arange(len(agg)))
+        fig.barh(count, np.arange(len(count)))
         fig.show()
+        print()
         
