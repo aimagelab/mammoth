@@ -105,6 +105,10 @@ class COCOseqMaker(BaseMaker):
 
 cocoroot = "/nas/softechict-nas-2/datasets/coco"
 dest = "cocodata"
+
+import sys
+print("Loading COCO maker...", file=sys.stderr)
+
 maker = COCOseqMaker(cocoroot)
 
 if not os.path.exists(dest):
@@ -114,10 +118,14 @@ phase_token = ''
 
 data_source = "."
 
-id_fnames = [fname for fname in os.listdir(os.path.join(data_source, 'ids')) \
+print("Loading ids...", file=sys.stderr)
+from tqdm import tqdm
+
+id_fnames = [fname for fname in tqdm(os.listdir(os.path.join(data_source, 'ids'))) \
                 if phase_token in fname]
 id_fnames.sort()
 
+print("Loading robis...", file=sys.stderr)
 for id_fname in tqdm.tqdm(id_fnames, desc='Total'):
 
     with open(os.path.join(data_source, 'ids', id_fname), 'r') as f:
@@ -125,6 +133,8 @@ for id_fname in tqdm.tqdm(id_fnames, desc='Total'):
 
     data_fname = id_fname.replace('_id_', '_{data}_').replace('.json', '.{ext}')
     maker.make(ids, os.path.join(dest, data_fname))
+
+print("Saving dict...", file=sys.stderr)
 
 maker.save_multihotdict(os.path.join(dest, 'multi_hot_dict_{dataset_name}.json'))
 
