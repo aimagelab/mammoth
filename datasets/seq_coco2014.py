@@ -34,8 +34,8 @@ class Coco2014(Dataset):
         self.transform = transform
         self.train = train
 
-        img_file = Path(self.root) / f'{"test" if not train else "train"}_taskf{task}_imgs_coco.hdf5'
-        multihot_file = Path(self.root) / f'{"test" if not train else "train"}_taskf{task}_multi_hot_categories_coco.json'
+        img_file = Path(self.root) / f'{"test" if not train else "train"}_task{task}_imgs_coco.hdf5'
+        multihot_file = Path(self.root) / f'{"test" if not train else "train"}_task{task}_multi_hot_categories_coco.json'
 
         self.imgs = torch.from_numpy(np.asarray(h5py.File(img_file, 'r')['images']))
         self.multihot_labels = torch.from_numpy(np.asarray(json.load(open(multihot_file, 'r'))))
