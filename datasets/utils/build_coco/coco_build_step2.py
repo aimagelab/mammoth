@@ -23,7 +23,7 @@ def divide_tasks(Cats: torch.LongTensor):
     train_task_idx, test_task_idx = [], []
     for i in tqdm(range(len(sequence))):
         classes = torch.LongTensor(sequence[i])
-        remain_classes = torch.LongTensor([j for j in range(81) if j not in classes])
+        remain_classes = torch.LongTensor([j for j in range(80) if j not in classes])
         multi_select_idx = (multilabel[:, remain_classes].sum(dim=1) == 0).nonzero().view(-1)
         single_select_idx = (singlelabel[:, remain_classes].sum(dim=1) == 0).nonzero().view(-1)
         
