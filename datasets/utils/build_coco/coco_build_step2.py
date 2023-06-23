@@ -1,7 +1,7 @@
 # %%
 import torch
 import numpy as np
-
+from tqdm import tqdm
 
 # Imgs consists of all files of NUSWIDE or MSCOCO.
 # Cats consists of all label of NUSWIDE or MSCOCO.
@@ -21,7 +21,7 @@ def divide_tasks(Cats: torch.LongTensor):
     
     select_all_classes = []
     train_task_idx, test_task_idx = [], []
-    for i in range(len(sequence)):
+    for i in tqdm(range(len(sequence))):
         classes = torch.LongTensor(sequence[i])
         remain_classes = torch.LongTensor([j for j in range(81) if j not in classes])
         multi_select_idx = (multilabel[:, remain_classes].sum(dim=1) == 0).nonzero().view(-1)
@@ -55,9 +55,10 @@ def divide_tasks(Cats: torch.LongTensor):
     return train_task_idx, test_task_idx, select_all_classes
 # %%
 mh = []
+
 import os
 import torch, json
-for f in os.listdir("cocodata"):
+for f in tqdm(os.listdir("cocodata")):
     if f.endswith("categories_coco.json"):
         mh.append(torch.tensor(json.load(open("cocodata/"+f, "r"))))
 mh = torch.cat(mh).long()
