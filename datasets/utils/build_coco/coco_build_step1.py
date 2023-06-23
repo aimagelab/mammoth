@@ -72,7 +72,7 @@ class COCOseqMaker(BaseMaker):
         multihot_labels = []
 
         desc = '_'.join(dst.split(os.sep)[-1].split('_')[:2])
-        for id in tqdm.tqdm(ids, desc=desc, leave=False):
+        for id in tqdm(ids, desc=desc, leave=False):
             info = self.cocodata[id]  # keys: img_path, cats
             # get img
             img = open_image(os.path.join(self.source_path, info['img_pth']))
