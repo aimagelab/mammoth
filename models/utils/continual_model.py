@@ -42,6 +42,11 @@ class ContinualModel(nn.Module):
         self.opt = self.get_optimizer()
         self.device = get_device()
 
+        seq_dataset = get_dataset(self.args)
+        self.N_CLASSES = seq_dataset.N_CLASSES
+        self.N_TASKS = seq_dataset.N_TASKS
+        self.SETTING = seq_dataset.SETTING
+
         if not self.NAME or not self.COMPATIBILITY:
             raise NotImplementedError('Please specify the name and the compatibility of the model.')
     
@@ -68,8 +73,7 @@ class ContinualModel(nn.Module):
             print(self.args, file=f)
 
     def _compute_offsets(self, task):
-        seq_dataset = get_dataset(self.args)
-        cpt = seq_dataset.N_CLASSES // seq_dataset.N_TASKS
+        cpt = self.N_CLASSES // self.N_TASKS
         offset1 = task * cpt
         offset2 = (task + 1) * cpt
         return offset1, offset2

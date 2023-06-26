@@ -106,9 +106,11 @@ class L2P(ContinualModel):
         
         offset_1, offset_2 = self._compute_offsets(self.current_task)
         logits = logits[:, offset_1:offset_2]
-        labels = labels[:, offset_1:offset_2]
+        if self.SETTING == 'multi-label':
+            labels = labels[:, offset_1:offset_2]
+            labels = labels.float()
 
-        loss = self.loss(logits, labels.float())
+        loss = self.loss(logits, labels)
         if self.args.pull_constraint and 'reduce_sim' in outputs:
             loss = loss - self.args.pull_constraint_coeff * outputs['reduce_sim']
         
