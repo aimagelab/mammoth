@@ -8,10 +8,10 @@ import torch.optim
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Dataset
 
-if __name__ == "__main__":
-    import sys, os
-    mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    sys.path = [mammoth_path] + sys.path
+# if __name__ == "__main__":
+#     import sys, os
+#     mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+#     sys.path = [mammoth_path] + sys.path
 
 from backbone.ResNet18 import resnet18
 from PIL import Image
@@ -36,9 +36,13 @@ class Coco2014(Dataset):
 
         img_file = Path(self.root) / f'{"test" if not train else "train"}_task{task}_imgs_coco.hdf5'
         multihot_file = Path(self.root) / f'{"test" if not train else "train"}_task{task}_multi_hot_categories_coco.json'
+        classnames_file = Path(self.root) / f'multi_hot_dict_coco.json'
 
         self.imgs = torch.from_numpy(np.asarray(h5py.File(img_file, 'r')['images']))
         self.multihot_labels = torch.from_numpy(np.asarray(json.load(open(multihot_file, 'r'))))
+
+        self.classnames = np.array(json.load(open(classnames_file, 'r')))
+        self.task_mask = (self.multihot_labels.sum(0) > 0).bool()
 
 
     def __len__(self):
@@ -52,7 +56,7 @@ class Coco2014(Dataset):
         #not_aug_img = self.not_aug_transform(original_img)
 
         if self.transform is not None:
-            img = self.transform(img)
+            img = self.transform(img.transpose((1, 2, 0)))
 
         if not self.train:
             return img, label_vector
@@ -125,9 +129,9 @@ def store_webvision_loaders(train_dataset: Dataset, test_dataset: Dataset,
     # data_tags_analisys(train_dataset.images_info_list)
 
     train_loader = DataLoader(train_dataset,
-                              batch_size=setting.args.batch_size, shuffle=True, num_workers=4, collate_fn=webvision_collate_fn)
+                              batch_size=setting.args.batch_size, shuffle=True, collate_fn=webvision_collate_fn)
     test_loader = DataLoader(test_dataset,
-                             batch_size=setting.args.batch_size, shuffle=False, num_workers=4)
+                             batch_size=setting.args.batch_size, shuffle=False)
     setting.test_loaders.append(test_loader)
     setting.train_loader = train_loader
 
@@ -139,23 +143,25 @@ class SequentialCoco2014(ContinualDataset):
 
     NAME = 'seq-coco2014'
     SETTING = 'multi-label'
-    N_CLASSES_PER_TASK = -1 # this should not be used
+    N_CLASSES_PER_TASK = [24, 18, 14, 14]
     N_TASKS = 4
     N_CLASSES = 70
     TRANSFORM = transforms.Compose([
+        transforms.ToPILImage(),
         transforms.Resize(256),
         transforms.RandomCrop((224, 224)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize((0.4569, 0.4354, 0.3904),
-                             (0.2737, 0.2664, 0.2791)),
+        transforms.Normalize((0.48145466, 0.4578275, 0.408210730),
+                             (0.26862954, 0.26130258, 0.27577711)),
     ])
     TEST_TRANSFORM = transforms.Compose([
+            transforms.ToPILImage(),
             transforms.Resize(256),
             transforms.CenterCrop((224, 224)),
             transforms.ToTensor(),
-            transforms.Normalize((0.4569, 0.4354, 0.3904),
-                             (0.2737, 0.2664, 0.2791)),
+            transforms.Normalize((0.48145466, 0.4578275, 0.40821073),
+                             (0.26862954, 0.26130258, 0.27577711)),
     ])
 
     def get_examples_number(self):
@@ -166,6 +172,7 @@ class SequentialCoco2014(ContinualDataset):
         transform = self.TRANSFORM
 
         test_transform = transforms.Compose([
+            transforms.ToPILImage(),
             transforms.Resize(256),
             transforms.CenterCrop((224, 224)),
             transforms.ToTensor(),
@@ -192,28 +199,33 @@ class SequentialCoco2014(ContinualDataset):
         return resnet18(SequentialCoco2014.N_CLASSES)
 
     @staticmethod
+    def get_classnames():
+        classnames_file = f'{base_path()}coco2014/multi_hot_dict_coco.json'
+        return np.array(json.load(open(classnames_file, 'r')))
+
+    @staticmethod
     def get_loss():
         return torch.nn.BCEWithLogitsLoss(reduction='mean')
 
     @staticmethod
     def get_normalization_transform():
-        transform = transforms.Normalize((0.4569, 0.4354, 0.3904),
-                                         (0.2737, 0.2664, 0.2791))
+        transform = transforms.Normalize((0.48145466, 0.4578275, 0.408210730),
+                                         (0.26862954, 0.26130258, 0.27577711))
         return transform
 
     @staticmethod
     def get_denormalization_transform():
-        transform = DeNormalize((0.4569, 0.4354, 0.3904),
-                                (0.2737, 0.2664, 0.2791))
+        transform = DeNormalize((0.48145466, 0.4578275, 0.408210730),
+                                (0.26862954, 0.26130258, 0.27577711))
         return transform
 
     @staticmethod
     def get_epochs():
-        return 50
+        return 10
 
     @staticmethod
     def get_batch_size():
-        return 32
+        return 16
 
     @staticmethod
     def get_minibatch_size():
@@ -226,14 +238,14 @@ class SequentialCoco2014(ContinualDataset):
         return scheduler
 
 
-if __name__ == '__main__':
-    # for testing
-    # args = lambda x: x
-    # args.batch_size = 32
-    # dataset = SequentialWebVision(args)
-    # dataset.get_data_loaders()
-    # dataset.train_loader.dataset[100]
-    # [dataset.get_data_loaders() for _ in range(dataset.N_TASKS)]
-    thej = Coco2014('', train=True, task = 0)
-    breakpoint()
-    we
+# if __name__ == '__main__':
+#     # for testing
+#     # args = lambda x: x
+#     # args.batch_size = 32
+#     # dataset = SequentialWebVision(args)
+#     # dataset.get_data_loaders()
+#     # dataset.train_loader.dataset[100]
+#     # [dataset.get_data_loaders() for _ in range(dataset.N_TASKS)]
+#     thej = Coco2014('', train=True, task = 0)
+#     breakpoint()
+#     we
