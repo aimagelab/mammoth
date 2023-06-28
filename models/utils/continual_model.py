@@ -42,10 +42,10 @@ class ContinualModel(nn.Module):
         self.opt = self.get_optimizer()
         self.device = get_device()
 
-        seq_dataset = get_dataset(self.args)
-        self.N_CLASSES = seq_dataset.N_CLASSES
-        self.N_TASKS = seq_dataset.N_TASKS
-        self.SETTING = seq_dataset.SETTING
+        self.dataset = get_dataset(self.args)
+        self.N_CLASSES = self.dataset.N_CLASSES
+        self.N_TASKS = self.dataset.N_TASKS
+        self.SETTING = self.dataset.SETTING
 
         if not self.NAME or not self.COMPATIBILITY:
             raise NotImplementedError('Please specify the name and the compatibility of the model.')

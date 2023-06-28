@@ -37,6 +37,7 @@ class DualCoop(ContinualModel):
         logits = self.net(inputs)
 
         # TODO: train regime (change loss etc...)
+        # https://github.com/sunxm2357/DualCoOp/blob/main/train.py
         loss = self.loss(logits, labels)
 
         self.opt.zero_grad()

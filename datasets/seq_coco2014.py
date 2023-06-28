@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader, Dataset
 #     mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 #     sys.path = [mammoth_path] + sys.path
 
+from timm import create_model
 from backbone.ResNet18 import resnet18
 from PIL import Image
 
@@ -60,7 +61,7 @@ class Coco2014(Dataset):
 
         if not self.train:
             return img, label_vector
-        return img, label_vector, original_img
+        return img, label_vector.float(), original_img
 
 
 def tags_analisys(tags: dict, plot_hist: bool = False):
@@ -196,7 +197,15 @@ class SequentialCoco2014(ContinualDataset):
     @staticmethod
     def get_backbone():
         # TODO
-        return resnet18(SequentialCoco2014.N_CLASSES)
+        # return resnet18(SequentialCoco2014.N_CLASSES)
+        return create_model(
+            "vit_small_patch16_224",
+            pretrained=True,
+            num_classes=SequentialCoco2014.N_CLASSES,
+            drop_rate=0.0,
+            drop_path_rate=0.0,
+            drop_block_rate=None,
+        )
 
     @staticmethod
     def get_classnames():
@@ -221,7 +230,7 @@ class SequentialCoco2014(ContinualDataset):
 
     @staticmethod
     def get_epochs():
-        return 10
+        return 50
 
     @staticmethod
     def get_batch_size():

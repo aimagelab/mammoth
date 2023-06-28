@@ -71,12 +71,13 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
 
                 if dataset.SETTING == 'multi-label':
                     predictions = outputs > 0.0
-                    labels = labels[:, :num_seen_classes]
+                    # labels = labels[:, :num_seen_classes]
                     labels = labels.bool()
                     valid_metrics['jaccard_sim'] += metrics.jaccard_sim(predictions, labels) * inputs.shape[0]
                     valid_metrics['modified_jaccard'] += metrics.modified_jaccard_sim(predictions, labels) * inputs.shape[0]
                     valid_metrics['strict_acc'] += metrics.strict_accuracy(predictions, labels) * inputs.shape[0]
                     valid_metrics['recall'] += metrics.recall(predictions, labels) * inputs.shape[0]
+                    # TODO: add mAP
                     data_len += inputs.shape[0]
                 else:
                     _, pred = torch.max(outputs.data, 1)
