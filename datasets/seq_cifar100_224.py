@@ -70,6 +70,7 @@ class SequentialCIFAR100224(ContinualDataset):
     N_CLASSES_PER_TASK = 10
     N_TASKS = 10
     N_CLASSES = 100
+    SIZE = (224, 224)
     TRANSFORM = transforms.Compose(
             [transforms.Resize(224),
              transforms.RandomCrop(224, padding=28),

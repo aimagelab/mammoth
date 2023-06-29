@@ -6,8 +6,8 @@ from tqdm import tqdm
 from copy import deepcopy
 import numpy as np
 
-from clip import load, tokenize
-from clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
+from models.dualcoop_utils.clip import load, tokenize
+from models.dualcoop_utils.clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
 _tokenizer = _Tokenizer()
 import time
 from models.attriclip_utils.utils import build_cosine_scheduler

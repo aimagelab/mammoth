@@ -1,7 +1,6 @@
 import torch
 from torch import nn
 
-import einops
 from einops import rearrange
 
 from models.twf_utils.afd import BinaryGumbelSoftmax

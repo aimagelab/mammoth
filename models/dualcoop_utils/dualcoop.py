@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from utils.conf import get_device
+
 from .clip import clip
 from .clip.simple_tokenizer import SimpleTokenizer as _Tokenizer
 from copy import deepcopy
@@ -11,8 +13,8 @@ _tokenizer = _Tokenizer()
 __all__ = ['dualcoop', 'DualCoop']
 
 
-def load_clip_to_cpu(cfg):
-    backbone_name = cfg.MODEL.BACKBONE.NAME
+def load_clip_to_cpu(args):
+    backbone_name = args.visual_encoder_type
     url = clip._MODELS[backbone_name]
     model_path = clip._download(url)
 
@@ -23,7 +25,7 @@ def load_clip_to_cpu(cfg):
 
     except RuntimeError:
         state_dict = torch.load(model_path, map_location="cpu")
-    model = clip.build_model_conv_proj(state_dict or model.state_dict(), cfg)
+    model = clip.build_model_conv_proj(state_dict or model.state_dict(), args)
 
     return model
 
@@ -52,13 +54,13 @@ class TextEncoder(nn.Module):
 
 
 class MLCPromptLearner(nn.Module):
-    def __init__(self, cfg, classnames, clip_model):
+    def __init__(self, args, classnames, clip_model):
         super().__init__()
         n_cls = len(classnames)
-        n_ctx_pos = cfg.TRAINER.COOP_MLC.N_CTX_POS
-        n_ctx_neg = cfg.TRAINER.COOP_MLC.N_CTX_NEG
-        ctx_init_pos = cfg.TRAINER.COOP_MLC.POSITIVE_PROMPT_INIT.strip()
-        ctx_init_neg = cfg.TRAINER.COOP_MLC.NEGATIVE_PROMPT_INIT.strip()
+        n_ctx_pos = args.n_ctx_pos
+        n_ctx_neg = args.n_ctx_neg
+        ctx_init_pos = args.ctx_init_pos.strip() if args.ctx_init_pos else ""
+        ctx_init_neg = args.ctx_init_neg.strip() if args.ctx_init_neg else ""
         dtype = clip_model.dtype
         ctx_dim = clip_model.ln_final.weight.shape[0]
 
@@ -77,7 +79,7 @@ class MLCPromptLearner(nn.Module):
             ctx_vectors_neg = embedding_neg[0, 1: 1 + n_ctx_neg, :]
             prompt_prefix_pos = ctx_init_pos
             prompt_prefix_neg = ctx_init_neg
-            if cfg.TRAINER.COOP_MLC.CSC:
+            if args.use_class_specific_context:
                 ctx_vectors_pos_ = []
                 ctx_vectors_neg_ = []
                 for _ in range(n_cls):
@@ -88,7 +90,7 @@ class MLCPromptLearner(nn.Module):
 
         else:
             # Random Initialization
-            if cfg.TRAINER.COOP_MLC.CSC:
+            if args.use_class_specific_context:
                 print("Initializing class-specific contexts")
                 ctx_vectors_pos = torch.empty(n_cls, n_ctx_pos, ctx_dim, dtype=dtype)
                 ctx_vectors_neg = torch.empty(n_cls, n_ctx_neg, ctx_dim, dtype=dtype)
@@ -206,22 +208,35 @@ class MLCPromptLearner(nn.Module):
 
 
 class DualCoop(nn.Module):
-    def __init__(self, cfg, classnames, clip_model):
+    def __init__(self, args, classnames, clip_model):
         super().__init__()
-        self.visual_encoder_type = cfg.MODEL.BACKBONE.NAME
-        self.prompt_learner = MLCPromptLearner(cfg, classnames, clip_model)
+        self.visual_encoder_type = args.visual_encoder_type
+        self.prompt_learner = MLCPromptLearner(args, classnames, clip_model)
 
         self.tokenized_prompts = self.prompt_learner.tokenized_prompts
         self.image_encoder = clip_model.visual
         self.text_encoder = TextEncoder(clip_model)
-        # self.logit_scale = cfg.TRAINER.COOP_MLC.LS
-        self.dtype = clip_model.dtype
-        self.cfg = cfg
 
-    def forward(self, image, cls_id=None):
+        self.dtype = clip_model.dtype
+        self.args = args
+
+    def forward(self, image, cls_id=None, task_mask=None):
         # get image and text features
-        image_features, attn_weights = self.image_encoder(image.type(self.dtype))
+        with torch.no_grad():
+            image_features = self.image_encoder(image.type(self.dtype))
+            if isinstance(image_features, (list, tuple)):
+                image_features=image_features[0]
         prompts, tokenized_prompts = self.prompt_learner(cls_id)
+        if task_mask is not None:
+            prompts_pos, prompts_neg = prompts.chunk(2, dim=0)
+            tokenized_prompts_pos, tokenized_prompts_neg = tokenized_prompts.chunk(2, dim=0)
+
+            prompts_pos, prompts_neg = prompts_pos[task_mask], prompts_neg[task_mask]
+            tokenized_prompts_pos, tokenized_prompts_neg = tokenized_prompts_pos[task_mask], tokenized_prompts_neg[task_mask]
+
+            prompts = torch.cat([prompts_neg, prompts_pos], dim=0)
+            tokenized_prompts = torch.cat([tokenized_prompts_neg, tokenized_prompts_pos], dim=0)
+
         text_features = self.text_encoder(prompts, tokenized_prompts)
 
         # normalize features
@@ -272,37 +287,25 @@ class DualCoop(nn.Module):
         return params
 
 
-def dualcoop(cfg, classnames, **kwargs):
-    print(f"Loading CLIP (backbone: {cfg.MODEL.BACKBONE.NAME})")
-    clip_model = load_clip_to_cpu(cfg)
+def dualcoop(args, classnames, **kwargs):
+    print(f"Loading CLIP (backbone: {args.visual_encoder_type})")
+    clip_model = load_clip_to_cpu(args)
 
     clip_model.float()
 
     print("Building dualcoop")
-    model = DualCoop(cfg, classnames, clip_model)
+    model = DualCoop(args, classnames, clip_model)
 
-    if not cfg.TRAINER.FINETUNE_BACKBONE:
+    if args.finetune_backbone==0:
         print('Freeze the backbone weights')
         backbone_params = model.backbone_params()
         for param in backbone_params:
             param.requires_grad_(False)
 
-    if not cfg.TRAINER.FINETUNE_ATTN:
+    if args.finetune_attn==0:
         print('Freeze the attn weights')
         attn_params = model.attn_params()
         for param in attn_params:
             param.requires_grad_(False)
 
-    if torch.cuda.is_available() and cfg.USE_CUDA:
-        device = torch.device("cuda")
-    else:
-        device = torch.device("cpu")
-    model.to(device)
-
-    # Note that multi-gpu training could be slow because CLIP's size is
-    # big, which slows down the copy operation in DataParallel
-    device_count = torch.cuda.device_count()
-    if device_count > 1:
-        print(f"Multiple GPUs detected (n_gpus={device_count}), use all of them!")
-        model = nn.DataParallel(model)
     return model

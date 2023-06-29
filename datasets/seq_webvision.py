@@ -214,6 +214,7 @@ class SequentialWebVision(ContinualDataset):
     N_CLASSES_PER_TASK = -1 # this should not be used
     N_TASKS = 15
     N_CLASSES = 750
+    SIZE = (224, 224)
     TRANSFORM = transforms.Compose([
         transforms.Resize(256),
         transforms.RandomCrop((224, 224)),

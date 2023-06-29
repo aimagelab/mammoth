@@ -1,11 +1,12 @@
 import torch
+from models.dualcoop_utils.asymmetric_loss import AsymmetricLoss, AsymmetricLoss2, AsymmetricLoss3
 
 from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
 from models.utils import ContinualModel
 from datasets import get_dataset
 
 from models.dualcoop_utils import build_model
-
+from torch.nn import functional as F
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual learning via'
@@ -14,14 +15,33 @@ def get_parser() -> ArgumentParser:
     add_experiment_args(parser)
     # add_rehearsal_args(parser)
 
-    return parser
+    parser.add_argument('--gamma_neg', type=float, default=2.0)
+    parser.add_argument('--gamma_pos', type=float, default=1.0)
+    parser.add_argument('--loss_w', type=float, default=1)
 
+    parser.add_argument('--n_ctx_pos', type=int, default=64)
+    parser.add_argument('--n_ctx_neg', type=int, default=64)
+
+    parser.add_argument('--visual_encoder_type', type=str, default='RN50', choices=['RN50', 'RN101', 'RN50x4', 'RN50x16', 'ViT-B/32', 'ViT-B/16'])
+    parser.add_argument('--ctx_init_pos', type=str, default='')
+    parser.add_argument('--ctx_init_neg', type=str, default='')
+
+    parser.add_argument('--use_class_specific_context', type=int, default=0, choices=[0, 1])
+    parser.add_argument('--finetune_backbone', type=int, default=0, choices=[0, 1])
+    parser.add_argument('--finetune_attn', type=int, default=0, choices=[0, 1])
+
+    parser.add_argument('--single_prompt', type=str, default='pos', choices=['pos', 'neg'])
+
+    parser.add_argument('--use_ce', type=int, default=0, choices=[0, 1])
+
+    return parser
 
 class DualCoop(ContinualModel):
     NAME = 'dualcoop'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     def __init__(self, backbone, loss, args, transform):
+        assert 'vit' not in args.visual_encoder_type.lower(), "ViT not supported yet"
         self.dataset = get_dataset(args)
         self.classnames = self.dataset.get_classnames()
 
@@ -31,14 +51,42 @@ class DualCoop(ContinualModel):
         super().__init__(backbone, loss, args, transform)
         self.current_task = 0
 
+        self.criterion = AsymmetricLoss(args.gamma_neg, args.gamma_pos)
+        self.criterion2 = AsymmetricLoss2(args.gamma_neg, args.gamma_pos)
+        self.criterion3 = AsymmetricLoss3(args.gamma_neg, args.gamma_pos)
+
+        self.ce = torch.nn.CrossEntropyLoss()
+
+        self.cpts = self.dataset.N_CLASSES_PER_TASK
+        self.old_cpts = 0
+
+    def begin_task(self, dataset):
+        # masking current task 
+        self.task_mask = torch.zeros(len(self.classnames), dtype=torch.bool)
+        self.task_mask[self.old_cpts:self.old_cpts + self.cpts[self.current_task]] = True
+
+        self.inference_task_mask = torch.zeros(len(self.classnames), dtype=torch.bool)
+        self.inference_task_mask[:self.old_cpts + self.cpts[self.current_task]] = True
+
+    def forward(self, inputs):
+        return self.net(inputs, task_mask=self.inference_task_mask)
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
-        real_batch_size = inputs.shape[0]
-        logits = self.net(inputs)
+        logits = self.net(inputs, task_mask=self.task_mask)
+        labels = labels[:, self.old_cpts:self.old_cpts + self.cpts[self.current_task]]
 
-        # TODO: train regime (change loss etc...)
-        # https://github.com/sunxm2357/DualCoOp/blob/main/train.py
-        loss = self.loss(logits, labels)
+        # # https://github.com/sunxm2357/DualCoOp/blob/main/train.py
+        # loss = self.loss(logits, labels)
+        if self.args.use_ce:
+            loss = self.args.loss_w * self.ce(logits.permute(0,2,1), F.one_hot(labels.long()).float())
+        elif logits.dim() == 3:
+            loss = self.args.loss_w * self.criterion(logits, labels)
+        elif self.args.single_prompt == 'pos':
+            loss = self.args.loss_w * self.criterion2(logits, labels)
+        elif self.largs.single_prompt == 'neg':
+            loss = self.args.loss_w * self.criterion3(logits, labels)
+        else:
+            raise ValueError
 
         self.opt.zero_grad()
         loss.backward()
@@ -51,8 +99,5 @@ class DualCoop(ContinualModel):
     def end_task(self, dataset):
         if self.args.save_checkpoints:
             self.savecheck_martin()
+        self.old_cpts += self.cpts[self.current_task]
         self.current_task += 1
-
-    def forward(self, x):
-        offset_1, offset_2 = self._compute_offsets(self.current_task - 1)
-        return self.net(x)[:, :offset_2]

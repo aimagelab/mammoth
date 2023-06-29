@@ -6,6 +6,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+from datasets import get_dataset
+
 
 class Bottleneck(nn.Module):
     expansion = 4
@@ -696,15 +698,15 @@ def build_model(state_dict: dict):
     return model.eval()
 
 
-def build_model_conv_proj(state_dict: dict, cfg):
+def build_model_conv_proj(state_dict: dict, args):
     vit = "visual.proj" in state_dict
 
     if vit:
         vision_width = state_dict["visual.conv1.weight"].shape[0]
         vision_layers = len([k for k in state_dict.keys() if k.startswith("visual.") and k.endswith(".attn.in_proj_weight")])
         vision_patch_size = state_dict["visual.conv1.weight"].shape[-1]
-        grid_size = round((state_dict["visual.positional_embedding"].shape[0] - 1) ** 0.5)
-        image_resolution = vision_patch_size * grid_size
+        # grid_size = round((state_dict["visual.positional_embedding"].shape[0] - 1) ** 0.5)
+        # image_resolution = vision_patch_size * grid_size
     else:
         counts: list = [len(set(k.split(".")[2] for k in state_dict if k.startswith(f"visual.layer{b}"))) for b in [1, 2, 3, 4]]
         vision_layers = tuple(counts)
@@ -721,9 +723,11 @@ def build_model_conv_proj(state_dict: dict, cfg):
     transformer_heads = transformer_width // 64
     transformer_layers = len(set(k.split(".")[2] for k in state_dict if k.startswith(f"transformer.resblocks")))
 
+    img_size = get_dataset(args).SIZE
+
     model = CLIP_conv_proj(
         embed_dim,
-        cfg.INPUT.SIZE[0], vision_layers, vision_width, vision_patch_size,
+        img_size[0], vision_layers, vision_width, vision_patch_size,
         context_length, vocab_size, transformer_width, transformer_heads, transformer_layers
     )
 

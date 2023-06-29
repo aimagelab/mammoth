@@ -36,7 +36,7 @@ _MODELS = {
 }
 
 
-def _download(url: str, root: str = "/nas/softechict-nas-2/efrascaroli/checkpoints/clip"):
+def _download(url: str, root: str = "/nas/softechict-nas-2/lbonicelli/checkpoints/clip"):
     os.makedirs(root, exist_ok=True)
     filename = os.path.basename(url)
 

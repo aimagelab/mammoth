@@ -60,6 +60,7 @@ class SequentialMNIST(ContinualDataset):
     N_CLASSES_PER_TASK = 2
     N_TASKS = 5
     TRANSFORM = None
+    SIZE = (28, 28)
 
     def get_data_loaders(self):
         transform = transforms.ToTensor()

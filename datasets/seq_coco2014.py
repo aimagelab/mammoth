@@ -139,6 +139,12 @@ def store_webvision_loaders(train_dataset: Dataset, test_dataset: Dataset,
     setting.i += 1
     return train_loader, test_loader
 
+def coco_basepath():
+    if os.path.exists('/nas/softechict-nas-2/efrascaroli/datasets/coco2014'):
+        return '/nas/softechict-nas-2/efrascaroli/datasets/'
+    else:
+        return base_path()
+
 
 class SequentialCoco2014(ContinualDataset):
 
@@ -147,26 +153,26 @@ class SequentialCoco2014(ContinualDataset):
     N_CLASSES_PER_TASK = [24, 18, 14, 14]
     N_TASKS = 4
     N_CLASSES = 70
+    SIZE = (224, 224)
+    MEAN, STD = (0.48145466, 0.4578275, 0.408210730), (0.26862954, 0.26130258, 0.27577711)
     TRANSFORM = transforms.Compose([
         transforms.ToPILImage(),
         transforms.Resize(256),
         transforms.RandomCrop((224, 224)),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        transforms.Normalize((0.48145466, 0.4578275, 0.408210730),
-                             (0.26862954, 0.26130258, 0.27577711)),
+        transforms.Normalize(MEAN, STD),
     ])
     TEST_TRANSFORM = transforms.Compose([
             transforms.ToPILImage(),
             transforms.Resize(256),
             transforms.CenterCrop((224, 224)),
             transforms.ToTensor(),
-            transforms.Normalize((0.48145466, 0.4578275, 0.40821073),
-                             (0.26862954, 0.26130258, 0.27577711)),
+            transforms.Normalize(MEAN, STD),
     ])
 
     def get_examples_number(self):
-        train_dataset = Coco2014(base_path() + 'coco2014', train=True)
+        train_dataset = Coco2014(coco_basepath() + 'coco2014', train=True)
         return len(train_dataset)
 
     def get_data_loaders(self):
@@ -180,9 +186,9 @@ class SequentialCoco2014(ContinualDataset):
             self.get_normalization_transform(),
         ])
 
-        train_dataset = Coco2014(base_path() + 'coco2014', train=True, transform=transform, task=self.i)
+        train_dataset = Coco2014(coco_basepath() + 'coco2014', train=True, transform=transform, task=self.i)
 
-        test_dataset = Coco2014(base_path() + 'coco2014', train=False, transform=test_transform, task=self.i)
+        test_dataset = Coco2014(coco_basepath() + 'coco2014', train=False, transform=test_transform, task=self.i)
 
         train, test = store_webvision_loaders(train_dataset, test_dataset, self)
 
@@ -209,7 +215,7 @@ class SequentialCoco2014(ContinualDataset):
 
     @staticmethod
     def get_classnames():
-        classnames_file = f'{base_path()}coco2014/multi_hot_dict_coco.json'
+        classnames_file = f'{coco_basepath()}coco2014/multi_hot_dict_coco.json'
         return np.array(json.load(open(classnames_file, 'r')))
 
     @staticmethod
@@ -218,14 +224,12 @@ class SequentialCoco2014(ContinualDataset):
 
     @staticmethod
     def get_normalization_transform():
-        transform = transforms.Normalize((0.48145466, 0.4578275, 0.408210730),
-                                         (0.26862954, 0.26130258, 0.27577711))
+        transform = transforms.Normalize(SequentialCoco2014.MEAN, SequentialCoco2014.STD)
         return transform
 
     @staticmethod
     def get_denormalization_transform():
-        transform = DeNormalize((0.48145466, 0.4578275, 0.408210730),
-                                (0.26862954, 0.26130258, 0.27577711))
+        transform = DeNormalize(SequentialCoco2014.MEAN, SequentialCoco2014.STD)
         return transform
 
     @staticmethod

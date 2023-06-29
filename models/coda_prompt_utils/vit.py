@@ -18,8 +18,6 @@ from timm.models._registry import register_model
 from timm.models.layers import trunc_normal_, DropPath
 from timm.models._manipulate import named_apply, adapt_input_conv
 
-from fairscale.nn.checkpoint.checkpoint_activations import checkpoint_wrapper
-
 class Mlp(nn.Module):
     """ MLP as used in Vision Transformer, MLP-Mixer and related networks
     """
@@ -108,6 +106,7 @@ class Block(nn.Module):
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop)
 
         if use_grad_checkpointing:
+            from fairscale.nn.checkpoint.checkpoint_activations import checkpoint_wrapper
             self.attn = checkpoint_wrapper(self.attn)
             self.mlp = checkpoint_wrapper(self.mlp)
 

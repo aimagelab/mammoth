@@ -71,6 +71,10 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
 
                 if dataset.SETTING == 'multi-label':
                     predictions = outputs > 0.0
+                    if len(predictions.shape) == 3:
+                        predictions = predictions[:, 0, :]
+                    if labels.shape[1]>predictions.shape[1]:
+                        labels = labels[:, :predictions.shape[1]]
                     # labels = labels[:, :num_seen_classes]
                     labels = labels.bool()
                     valid_metrics['jaccard_sim'] += metrics.jaccard_sim(predictions, labels) * inputs.shape[0]
