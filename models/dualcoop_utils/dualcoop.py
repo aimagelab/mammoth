@@ -230,8 +230,8 @@ class DualCoop(nn.Module):
                 image_features=image_features[0]
         prompts, tokenized_prompts = self.prompt_learner(cls_id)
         if task_mask is not None:
-            prompts_pos, prompts_neg = prompts.chunk(2, dim=0)
-            tokenized_prompts_pos, tokenized_prompts_neg = tokenized_prompts.chunk(2, dim=0)
+            prompts_neg, prompts_pos = prompts.chunk(2, dim=0)
+            tokenized_prompts_neg, tokenized_prompts_pos = tokenized_prompts.chunk(2, dim=0)
 
             prompts_pos, prompts_neg = prompts_pos[task_mask], prompts_neg[task_mask]
             tokenized_prompts_pos, tokenized_prompts_neg = tokenized_prompts_pos[task_mask], tokenized_prompts_neg[task_mask]
