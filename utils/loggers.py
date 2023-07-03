@@ -49,13 +49,15 @@ class Logger:
             'jaccard_sim': [],
             'modified_jaccard': [],
             'strict_acc': [],
-            'recall': []
+            'recall': [],
+            'mAP': []
         }
         self.full_multi_label_results = {
             'jaccard_sim': [],
             'modified_jaccard': [],
             'strict_acc': [],
-            'recall': []
+            'recall': [],
+            'mAP': []
         }
         if setting_str == 'class-il':
             self.accs_mask_classes = []

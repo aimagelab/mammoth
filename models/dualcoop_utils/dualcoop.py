@@ -217,6 +217,8 @@ class DualCoop(nn.Module):
         self.image_encoder = clip_model.visual
         self.text_encoder = TextEncoder(clip_model)
 
+        self.text_encoder.requires_grad_(False)
+
         self.dtype = clip_model.dtype
         self.args = args
 

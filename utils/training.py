@@ -48,8 +48,8 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
     status = model.training
     model.eval()
     accs, accs_mask_classes = [], []
-    valid_metrics_list = {'jaccard_sim': [], 'modified_jaccard': [], 'strict_acc': [], 'recall': []}
-    valid_metrics = {'jaccard_sim': 0., 'modified_jaccard': 0., 'strict_acc': 0., 'recall': 0.}
+    valid_metrics_list = {'jaccard_sim': [], 'modified_jaccard': [], 'strict_acc': [], 'recall': [], 'mAP': []}
+    valid_metrics = {'jaccard_sim': 0., 'modified_jaccard': 0., 'strict_acc': 0., 'recall': 0., 'mAP': 0.}
     data_len = 0
     cpt = dataset.N_CLASSES // dataset.N_TASKS
     num_seen_classes = len(dataset.test_loaders) * cpt
@@ -70,9 +70,12 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
                     outputs = model(inputs)
 
                 if dataset.SETTING == 'multi-label':
-                    predictions = outputs > 0.0
-                    if len(predictions.shape) == 3:
-                        predictions = predictions[:, 0, :]
+                    if len(outputs.shape) == 3:
+                        outputs = torch.softmax(outputs,1)[:, 1]
+                        predictions = outputs > 0.5
+                    else:
+                        predictions = outputs > 0.0
+                        outputs = torch.sigmoid(outputs)
                     if labels.shape[1]>predictions.shape[1]:
                         labels = labels[:, :predictions.shape[1]]
                     # labels = labels[:, :num_seen_classes]
@@ -81,6 +84,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
                     valid_metrics['modified_jaccard'] += metrics.modified_jaccard_sim(predictions, labels) * inputs.shape[0]
                     valid_metrics['strict_acc'] += metrics.strict_accuracy(predictions, labels) * inputs.shape[0]
                     valid_metrics['recall'] += metrics.recall(predictions, labels) * inputs.shape[0]
+                    valid_metrics['mAP'] += metrics.mAP(outputs.cpu().numpy(), labels.cpu().numpy()) * inputs.shape[0]
                     # TODO: add mAP
                     data_len += inputs.shape[0]
                 else:
@@ -97,6 +101,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
             valid_metrics['modified_jaccard'] /= data_len
             valid_metrics['strict_acc'] /= data_len
             valid_metrics['recall'] /= data_len
+            valid_metrics['mAP'] /= data_len    
             for k,v in valid_metrics.items():
                 valid_metrics_list[k].append(v)
         else:
@@ -134,7 +139,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         'jaccard_sim': [],
         'modified_jaccard': [],
         'strict_acc': [],
-        'recall': []
+        'recall': [],
+        'mAP': [],
     }
 
     if not args.disable_log:
@@ -220,7 +226,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             model.end_task(dataset)
 
         tmp = args.stop_after if args.stop_after is not None else dataset.N_TASKS
-        if ((args.model != 'joint' and args.model != 'joint_webvision') or t == tmp - 1):
+        if ('joint' not in args.model or t == tmp - 1):
 
             accs = evaluate(model, dataset)
             if dataset.SETTING == 'multi-label':
@@ -233,6 +239,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     logger.log_full_multilabel(accs)
                 if not args.nowand:
                     d2={
+                        'lr': model.opt.param_groups[0]['lr'],
                         **{f'RESULT_mean_{k}': v for k, v in mean_results.items()},
                     }
                     for k,v in accs.items():
@@ -250,6 +257,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     logger.log_fullacc(accs)
                 if not args.nowand:
                     d2={
+                        'lr': model.opt.param_groups[0]['lr'],
                         'RESULT/class_mean_accs': mean_acc[0],
                         'RESULT/task_mean_accs': mean_acc[1],
                         **{f'RESULT/class_acc_{i}': a for i, a in enumerate(accs[0])},

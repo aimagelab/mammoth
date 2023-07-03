@@ -107,11 +107,13 @@ class ContinualModel(nn.Module):
         """
         raise NotImplementedError
 
-    def autolog_wandb(self, locals):
+    def autolog_wandb(self, locals, extra=None):
         """
         All variables starting with "_wandb_" or "loss" in the observe function
         are automatically logged to wandb upon return if wandb is installed.
         """
         if not self.args.nowand and not self.args.debug_mode:
-            wandb.log({k: (v.item() if isinstance(v, torch.Tensor) and v.dim() == 0 else v)
-                      for k, v in locals.items() if k.startswith('_wandb_') or k.startswith('loss')})
+            tmp = {k: (v.item() if isinstance(v, torch.Tensor) and v.dim() == 0 else v) \
+                   for k, v in locals.items() if k.startswith('_wandb_') or k.startswith('loss')}
+            tmp.update(extra or {})
+            wandb.log(tmp)

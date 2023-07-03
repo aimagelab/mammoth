@@ -15,7 +15,8 @@ from torch.utils.data import DataLoader, Dataset
 
 from timm import create_model
 from backbone.ResNet18 import resnet18
-from PIL import Image
+from PIL import Image, ImageDraw
+import random
 
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import ContinualDataset
@@ -27,6 +28,7 @@ import pickle
 from typing import Tuple
 import h5py
 from pathlib import Path
+from utils.randaugment import RandAugment
 
 class Coco2014(Dataset):
     def __init__(self, root, train=True, transform=None, task=0):
@@ -145,6 +147,27 @@ def coco_basepath():
     else:
         return base_path()
 
+class CutoutPIL(object):
+    def __init__(self, cutout_factor=0.5):
+        self.cutout_factor = cutout_factor
+
+    def __call__(self, x):
+        img_draw = ImageDraw.Draw(x)
+        h, w = x.size[0], x.size[1]  # HWC
+        h_cutout = int(self.cutout_factor * h + 0.5)
+        w_cutout = int(self.cutout_factor * w + 0.5)
+        y_c = np.random.randint(h)
+        x_c = np.random.randint(w)
+
+        y1 = np.clip(y_c - h_cutout // 2, 0, h)
+        y2 = np.clip(y_c + h_cutout // 2, 0, h)
+        x1 = np.clip(x_c - w_cutout // 2, 0, w)
+        x2 = np.clip(x_c + w_cutout // 2, 0, w)
+        fill_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        img_draw.rectangle([x1, y1, x2, y2], fill=fill_color)
+
+        return x
+
 
 class SequentialCoco2014(ContinualDataset):
 
@@ -157,16 +180,20 @@ class SequentialCoco2014(ContinualDataset):
     MEAN, STD = (0.48145466, 0.4578275, 0.408210730), (0.26862954, 0.26130258, 0.27577711)
     TRANSFORM = transforms.Compose([
         transforms.ToPILImage(),
-        transforms.Resize(256),
-        transforms.RandomCrop((224, 224)),
-        transforms.RandomHorizontalFlip(),
+        # transforms.RandomResizedCrop(224, interpolation=Image.BICUBIC),
+        transforms.Resize(224),
+        CutoutPIL(cutout_factor=0.5),
+        RandAugment(),
+        # transforms.RandomCrop((224, 224)),
+        # transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(MEAN, STD),
     ])
     TEST_TRANSFORM = transforms.Compose([
             transforms.ToPILImage(),
-            transforms.Resize(256),
-            transforms.CenterCrop((224, 224)),
+            # transforms.Resize(256),
+            # transforms.CenterCrop((224, 224)),
+            transforms.Resize(224),
             transforms.ToTensor(),
             transforms.Normalize(MEAN, STD),
     ])
@@ -246,11 +273,60 @@ class SequentialCoco2014(ContinualDataset):
 
     @staticmethod
     def get_scheduler(model, args) -> torch.optim.lr_scheduler:
-        model.opt = torch.optim.SGD(model.net.parameters(), lr=args.lr, weight_decay=args.optim_wd, momentum=args.optim_mom)
-        scheduler = torch.optim.lr_scheduler.MultiStepLR(model.opt, [35, 45], gamma=0.1, verbose=False)
+        model.opt = torch.optim.SGD([p for p in model.net.parameters() if p.requires_grad], lr=args.lr, weight_decay=args.optim_wd, momentum=args.optim_mom)
+        # scheduler = torch.optim.lr_scheduler.MultiStepLR(model.opt, [35, 45], gamma=0.1, verbose=False)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(model.opt, T_max=args.n_epochs)
+        scheduler.last_epoch = 1
+        scheduler = ConstantWarmupScheduler(model.opt, scheduler, 1, 1e-5)
+        # scheduler = None
         return scheduler
 
 
+class _BaseWarmupScheduler(torch.optim.lr_scheduler._LRScheduler):
+
+    def __init__(
+        self,
+        optimizer,
+        successor,
+        warmup_epoch,
+        last_epoch=-1,
+        verbose=False
+    ):
+        self.successor = successor
+        self.warmup_epoch = warmup_epoch
+        super().__init__(optimizer, last_epoch, verbose)
+
+    def get_lr(self):
+        raise NotImplementedError
+
+    def step(self, epoch=None):
+        if self.last_epoch >= self.warmup_epoch:
+            self.successor.step(epoch)
+            self._last_lr = self.successor.get_last_lr()
+        else:
+            super().step(epoch)
+
+class ConstantWarmupScheduler(_BaseWarmupScheduler):
+
+    def __init__(
+        self,
+        optimizer,
+        successor,
+        warmup_epoch,
+        cons_lr,
+        last_epoch=-1,
+        verbose=False
+    ):
+        self.cons_lr = cons_lr
+        super().__init__(
+            optimizer, successor, warmup_epoch, last_epoch, verbose
+        )
+
+    def get_lr(self):
+        if self.last_epoch >= self.warmup_epoch:
+            return self.successor.get_last_lr()
+        return [self.cons_lr for _ in self.base_lrs]
+    
 # if __name__ == '__main__':
 #     # for testing
 #     # args = lambda x: x

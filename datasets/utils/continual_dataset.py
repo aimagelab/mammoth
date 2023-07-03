@@ -10,7 +10,7 @@ import numpy as np
 import torch.nn as nn
 import torch.optim
 from torch.utils.data import DataLoader, Dataset
-
+import os
 
 class ContinualDataset:
     """
@@ -116,6 +116,12 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
 
     train_dataset.targets = np.array(train_dataset.targets)[train_mask]
     test_dataset.targets = np.array(test_dataset.targets)[test_mask]
+
+    num_workers = 4
+    if not hasattr(setting.args, 'num_workers') or setting.args.num_workers is None:
+        num_workers = num_workers if not hasattr(os, 'sched_getaffinity') else len(os.sched_getaffinity(0))
+    else:
+        num_workers = setting.args.num_workers
 
     train_loader = DataLoader(train_dataset,
                               batch_size=setting.args.batch_size, shuffle=True, num_workers=4)

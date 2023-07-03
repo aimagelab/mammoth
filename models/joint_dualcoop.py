@@ -1,4 +1,6 @@
 import torch
+from tqdm import tqdm
+from datasets.utils.validation import ValidationDataset
 from models.dualcoop_utils.asymmetric_loss import AsymmetricLoss, AsymmetricLoss2, AsymmetricLoss3
 
 from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
@@ -8,6 +10,7 @@ from datasets import get_dataset
 from models.dualcoop_utils import build_model
 from torch.nn import functional as F
 from utils.metrics import mAP
+from torchvision import transforms
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual learning via'
@@ -37,8 +40,8 @@ def get_parser() -> ArgumentParser:
 
     return parser
 
-class DualCoop(ContinualModel):
-    NAME = 'dualcoop'
+class JointDualcoop(ContinualModel):
+    NAME = 'joint_dualcoop'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     def __init__(self, backbone, loss, args, transform):
@@ -51,7 +54,7 @@ class DualCoop(ContinualModel):
 
         super().__init__(backbone, loss, args, transform)
         self.current_task = 0
-
+        
         self.criterion = AsymmetricLoss(args.gamma_neg, args.gamma_pos)
         self.criterion2 = AsymmetricLoss2(args.gamma_neg, args.gamma_pos)
         self.criterion3 = AsymmetricLoss3(args.gamma_neg, args.gamma_pos)
@@ -62,6 +65,8 @@ class DualCoop(ContinualModel):
         self.old_cpts = 0
 
         self.inference_task_mask = None
+        self.old_data = []
+        self.old_labels = []
 
     def begin_task(self, dataset):
         # masking current task 
@@ -76,9 +81,8 @@ class DualCoop(ContinualModel):
     def forward(self, inputs):
         return self.net(inputs, task_mask=self.inference_task_mask)
 
-    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
-        logits = self.net(inputs, task_mask=self.task_mask)
-        labels = labels[:, self.task_mask]
+    def _observe(self, inputs, labels, not_aug_inputs, epoch=None):
+        logits = self.net(inputs)
 
         # # https://github.com/sunxm2357/DualCoOp/blob/main/train.py
         # loss = self.loss(logits, labels)
@@ -107,9 +111,46 @@ class DualCoop(ContinualModel):
         self.autolog_wandb(locals(), {'train_mAP': mAP_value, 'lr': self.opt.param_groups[0]['lr']})
 
         return loss.item()
+    
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
+        return 0
 
     def end_task(self, dataset):
+        self.old_data.append(dataset.train_loader.dataset.imgs)
+        self.old_labels.append(torch.tensor(dataset.train_loader.dataset.multihot_labels))
+
         if self.args.save_checkpoints:
             self.savecheck_martin()
         self.old_cpts += self.cpts[self.current_task]
         self.current_task += 1
+
+        if self.current_task < self.dataset.N_TASKS:
+            return
+
+        all_data, all_labels = None, None
+        for i in range(len(self.old_data)):
+            if all_data is None:
+                all_data = self.old_data[i]
+                all_labels = self.old_labels[i]
+            else:
+                all_data = torch.cat([all_data, self.old_data[i]])
+                all_labels = torch.cat([all_labels, self.old_labels[i]])
+                
+        train_dataset = ValidationDataset(all_data.permute(0,2,3,1), all_labels, transform=transforms.Compose(self.dataset.TRANSFORM.transforms[1:]))
+        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=self.args.batch_size, shuffle=True, 
+                                                   num_workers=dataset.train_loader.num_workers, pin_memory=True)
+
+        self.eval()
+        for epoch in range(self.args.n_epochs):
+            with tqdm(train_loader, desc=f'Epoch {epoch}/{self.args.n_epochs}') as pbar:
+                for i, batch in enumerate(pbar):
+                    inputs, labels = batch
+                    inputs, labels = inputs.to(self.device), labels.to(self.device)
+
+                    loss = self._observe(inputs, labels, None, epoch=epoch)
+                    pbar.set_postfix({'loss': loss})
+
+        
+                
+            
+
