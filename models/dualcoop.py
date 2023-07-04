@@ -87,6 +87,7 @@ class DualCoop(ContinualModel):
                                    F.one_hot(labels.long(), 2).cpu().float().reshape(-1,2), reduction='none').reshape(logits.shape[0],-1).mean()
             loss *= self.args.loss_w 
         elif logits.dim() == 3:
+            labels[labels == 0] = -1
             loss = self.args.loss_w * self.criterion(logits, labels)
         elif self.args.single_prompt == 'pos':
             loss = self.args.loss_w * self.criterion2(logits, labels)
