@@ -110,6 +110,6 @@ class DualCoop(ContinualModel):
 
     def end_task(self, dataset):
         if self.args.save_checkpoints:
-            self.savecheck_martin()
+            self.save_checkpoints()
         self.old_cpts += self.cpts[self.current_task]
         self.current_task += 1
