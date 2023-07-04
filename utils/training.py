@@ -36,6 +36,10 @@ def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> No
     outputs[:, (k + 1) * dataset.N_CLASSES_PER_TASK:
                dataset.N_TASKS * dataset.N_CLASSES_PER_TASK] = -float('inf')
 
+def mask_classes_multi_label(outputs: torch.Tensor, labels, dataset: ContinualDataset, k: int) -> None:
+    mask = dataset.test_loaders[k].dataset.task_mask
+    return outputs[:, mask], labels[:, mask]
+
 
 def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
     """
@@ -49,14 +53,16 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
     model.eval()
     accs, accs_mask_classes = [], []
     valid_metrics_list = {'jaccard_sim': [], 'modified_jaccard': [], 'strict_acc': [], 'recall': [], 'mAP': []}
-    valid_metrics = {'jaccard_sim': 0., 'modified_jaccard': 0., 'strict_acc': 0., 'recall': 0., 'mAP': 0.}
-    data_len = 0
+    valid_metrics_mask_classes_list = {'jaccard_sim': [], 'modified_jaccard': [], 'strict_acc': [], 'recall': [], 'mAP': []}
     cpt = dataset.N_CLASSES // dataset.N_TASKS
     num_seen_classes = len(dataset.test_loaders) * cpt
 
     for k, test_loader in enumerate(tqdm(dataset.test_loaders)):
         if last and k < len(dataset.test_loaders) - 1:
             continue
+        valid_metrics = {'jaccard_sim': 0., 'modified_jaccard': 0., 'strict_acc': 0., 'recall': 0., 'mAP': 0.}
+        valid_metrics_mask_classes = {'jaccard_sim': 0., 'modified_jaccard': 0., 'strict_acc': 0., 'recall': 0., 'mAP': 0.}
+        data_len = 0
         correct, correct_mask_classes, total = 0.0, 0.0, 0.0
         for i, data in enumerate(test_loader):
             if model.args.debug_mode == 1 and i > 3:
@@ -64,10 +70,13 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
             with torch.no_grad():
                 inputs, labels = data
                 inputs, labels = inputs.to(model.device), labels.to(model.device)
+                original_labels = labels.clone()
                 if 'class-il' not in model.COMPATIBILITY:
                     outputs = model(inputs, k)
                 else:
                     outputs = model(inputs)
+                
+                original_outputs = outputs.clone()
 
                 if dataset.SETTING == 'multi-label':
                     if len(outputs.shape) == 3:
@@ -76,11 +85,12 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
                     else:
                         predictions = outputs > 0.0
                         outputs = torch.sigmoid(outputs)
-                    if labels.shape[1]>predictions.shape[1]:
-                        if hasattr(model, 'inference_task_mask'):
-                            labels = labels[:, model.inference_task_mask]
-                        else:
-                            labels = labels[:, :predictions.shape[1]]
+                    if hasattr(model, 'inference_task_mask'):
+                        labels = labels[:, model.inference_task_mask]
+                        outputs = outputs[:, model.inference_task_mask]
+                        predictions = predictions[:, model.inference_task_mask]
+                    elif labels.shape[1]>predictions.shape[1]:
+                        labels = labels[:, :predictions.shape[1]]
                     # labels = labels[:, :num_seen_classes]
                     labels = labels.bool()
                     valid_metrics['jaccard_sim'] += metrics.jaccard_sim(predictions, labels) * inputs.shape[0]
@@ -90,6 +100,19 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
                     valid_metrics['mAP'] += metrics.mAP(outputs.cpu().numpy(), labels.cpu().numpy()) * inputs.shape[0]
                     # TODO: add mAP
                     data_len += inputs.shape[0]
+
+                    outputs, labels = mask_classes_multi_label(torch.softmax(original_outputs,1)[:, 1], original_labels, dataset, k)
+                    if len(original_outputs.shape) == 3:
+                        predictions = outputs > 0.5
+                    else:
+                        predictions = outputs > 0.0
+                        outputs = torch.sigmoid(outputs)
+
+                    valid_metrics_mask_classes['jaccard_sim'] += metrics.jaccard_sim(predictions, labels) * inputs.shape[0]
+                    valid_metrics_mask_classes['modified_jaccard'] += metrics.modified_jaccard_sim(predictions, labels) * inputs.shape[0]
+                    valid_metrics_mask_classes['strict_acc'] += metrics.strict_accuracy(predictions, labels) * inputs.shape[0]
+                    valid_metrics_mask_classes['recall'] += metrics.recall(predictions, labels) * inputs.shape[0]
+                    valid_metrics_mask_classes['mAP'] += metrics.mAP(outputs.cpu().numpy(), labels.cpu().numpy()) * inputs.shape[0]
                 else:
                     _, pred = torch.max(outputs.data, 1)
                     correct += torch.sum(pred == labels).item()
@@ -107,6 +130,13 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
             valid_metrics['mAP'] /= data_len    
             for k,v in valid_metrics.items():
                 valid_metrics_list[k].append(v)
+            valid_metrics_mask_classes['jaccard_sim'] /= data_len
+            valid_metrics_mask_classes['modified_jaccard'] /= data_len
+            valid_metrics_mask_classes['strict_acc'] /= data_len
+            valid_metrics_mask_classes['recall'] /= data_len
+            valid_metrics_mask_classes['mAP'] /= data_len
+            for k,v in valid_metrics_mask_classes.items():
+                valid_metrics_mask_classes_list[k].append(v)
         else:
             accs.append(correct / total * 100
                         if 'class-il' in model.COMPATIBILITY else 0)
@@ -115,7 +145,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
     model.train(status)
 
     if dataset.SETTING == 'multi-label':
-        return valid_metrics_list
+        return valid_metrics_list, valid_metrics_mask_classes_list
     else:
         return accs, accs_mask_classes
 
@@ -139,6 +169,13 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     model.to(model.device)
     results, results_mask_classes = [], []
     multi_label_results = {
+        'jaccard_sim': [],
+        'modified_jaccard': [],
+        'strict_acc': [],
+        'recall': [],
+        'mAP': [],
+    }
+    multi_label_results_mask_classes = {
         'jaccard_sim': [],
         'modified_jaccard': [],
         'strict_acc': [],
@@ -233,21 +270,31 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             accs = evaluate(model, dataset)
             if dataset.SETTING == 'multi-label':
-                for k, v in accs.items():
+                valid_metrics_list = accs[0]
+                valid_metrics_mask_classes_list = accs[1]
+                for k, v in valid_metrics_list.items():
                     multi_label_results[k].append(v)
-                mean_results = {k: np.mean(v) for k, v in accs.items()}
-                print_multi_label_results(mean_results, t + 1)
+                for k, v in valid_metrics_mask_classes_list.items():
+                    multi_label_results_mask_classes[k].append(v)
+                mean_results = {k: np.mean(v) for k, v in valid_metrics_list.items()}
+                mean_results_mask_classes = {k: np.mean(v) for k, v in valid_metrics_mask_classes_list.items()}
+                print_multi_label_results(mean_results, mean_results_mask_classes, t + 1)
                 if not args.disable_log:
-                    logger.log_multilabel(mean_results)
-                    logger.log_full_multilabel(accs)
+                    logger.log_multilabel(mean_results, mean_results_mask_classes)
+                    logger.log_full_multilabel(valid_metrics_list, valid_metrics_mask_classes_list)
                 if not args.nowand:
                     d2={
                         'lr': model.opt.param_groups[0]['lr'],
-                        **{f'RESULT_mean_{k}': v for k, v in mean_results.items()},
+                        **{f'RESULT/class_il_mean_{k}': v for k, v in mean_results.items()},
+                        **{f'RESULT/task_il_mean_{k}': v for k, v in mean_results_mask_classes.items()},
                     }
-                    for k,v in accs.items():
+                    for k,v in valid_metrics_list.items():
                         for i, v2 in enumerate(v):
-                            d2[f'RESULT_{k}_{i}'] = v2
+                            d2[f'RESULT/class_il_{k}_{i}'] = v2
+                    for k,v in valid_metrics_mask_classes_list.items():
+                        for i, v2 in enumerate(v):
+                            d2[f'RESULT/task_il_{k}_{i}'] = v2
+                    d2['RESULT/task'] = t
                     wandb_logger(d2)
 
             else:
@@ -279,10 +326,10 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     if not args.disable_log:
         logger.write(vars(args))
         if not args.nowand:
-            # if dataset.SETTING == 'multi-label':
-            #     d = logger.dump_multilabel()
-            # else:
-            d = logger.dump()
+            if dataset.SETTING == 'multi-label':
+                d = logger.dump_multilabel()
+            else:
+                d = logger.dump()
             d['wandb_url'] = wandb_logger.wandb_url
             wandb_logger(d)
 

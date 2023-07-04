@@ -13,14 +13,15 @@ import numpy as np
 from utils import create_if_not_exists
 from utils.conf import base_path
 from utils.metrics import backward_transfer, forward_transfer, forgetting
+from copy import deepcopy
 
 useless_args = ['dataset', 'tensorboard', 'validation', 'model',
                 'csv_log', 'notes', 'load_best_args']
 
-def print_multi_label_results(results, task_number):
-    for k,v in results.items():
-        print('\n{} for {} task(s): {}'.format(k,
-            task_number, round(v, 4)), file=sys.stderr)
+def print_multi_label_results(results, results_mask_classes, task_number):
+    for k in results.keys():
+        print('\n{} for {} task(s): \t [Class-IL]: {} \t [Task-IL]: {}'.format(k,
+            task_number, round(results[k], 4), round(results_mask_classes[k], 4)), file=sys.stderr)
 
 def print_mean_accuracy(mean_acc: Union[np.ndarray, float], task_number: int,
                         setting: str) -> None:
@@ -45,20 +46,17 @@ class Logger:
                  model_str: str) -> None:
         self.accs = []
         self.fullaccs = []
-        self.multi_label_results = {
+        d_template = {
             'jaccard_sim': [],
             'modified_jaccard': [],
             'strict_acc': [],
             'recall': [],
             'mAP': []
         }
-        self.full_multi_label_results = {
-            'jaccard_sim': [],
-            'modified_jaccard': [],
-            'strict_acc': [],
-            'recall': [],
-            'mAP': []
-        }
+        self.multi_label_results_class_il = deepcopy(d_template)
+        self.full_multi_label_results_class_il = deepcopy(d_template)
+        self.multi_label_results_task_il = deepcopy(d_template)
+        self.full_multi_label_results_task_il = deepcopy(d_template)
         if setting_str == 'class-il':
             self.accs_mask_classes = []
             self.fullaccs_mask_classes = []
@@ -91,8 +89,10 @@ class Logger:
     
     def dump_multilabel(self):
         dic = {
-            'results': self.multi_label_results,
-            'full_results': self.full_multi_label_results,
+            'results_class_il': self.multi_label_results_class_il,
+            'full_results_class_il': self.full_multi_label_results_class_il,
+            'results_task_il': self.multi_label_results_task_il,
+            'full_results_task_il': self.full_multi_label_results_task_il,
         }
         return dic
 
@@ -152,9 +152,11 @@ class Logger:
             self.accs.append(mean_acc_class_il)
             self.accs_mask_classes.append(mean_acc_task_il)
     
-    def log_multilabel(self, mean_results: np.ndarray) -> None:
-        for k, v in mean_results.items():
-            self.multi_label_results[k].append(v)
+    def log_multilabel(self, mean_results_class_il, mean_results_task_il) -> None:
+        for k, v in mean_results_class_il.items():
+            self.multi_label_results_class_il[k].append(v)
+        for k, v in mean_results_task_il.items():
+            self.multi_label_results_task_il[k].append(v)
 
     def log_fullacc(self, accs):
         if self.setting == 'class-il':
@@ -162,9 +164,11 @@ class Logger:
             self.fullaccs.append(acc_class_il)
             self.fullaccs_mask_classes.append(acc_task_il)
         
-    def log_full_multilabel(self, results: np.ndarray) -> None:
-        for k, v in results.items():
-            self.full_multi_label_results[k].append(v)
+    def log_full_multilabel(self, results_class_il, results_task_il) -> None:
+        for k, v in results_class_il.items():
+            self.full_multi_label_results_class_il[k].append(v)
+        for k, v in results_task_il.items():
+            self.full_multi_label_results_task_il[k].append(v)
 
     def write(self, args: Dict[str, Any]) -> None:
         """

@@ -74,7 +74,9 @@ class DualCoop(ContinualModel):
         self.eval()
 
     def forward(self, inputs):
-        return self.net(inputs, task_mask=self.inference_task_mask)
+        outputs = self.net(inputs)
+        return outputs
+        #return self.net(inputs, task_mask=self.inference_task_mask)
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         logits = self.net(inputs, task_mask=self.task_mask)
