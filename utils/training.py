@@ -77,7 +77,10 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
                         predictions = outputs > 0.0
                         outputs = torch.sigmoid(outputs)
                     if labels.shape[1]>predictions.shape[1]:
-                        labels = labels[:, :predictions.shape[1]]
+                        if hasattr(model, 'inference_task_mask'):
+                            labels = labels[:, model.inference_task_mask]
+                        else:
+                            labels = labels[:, :predictions.shape[1]]
                     # labels = labels[:, :num_seen_classes]
                     labels = labels.bool()
                     valid_metrics['jaccard_sim'] += metrics.jaccard_sim(predictions, labels) * inputs.shape[0]
