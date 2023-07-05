@@ -108,6 +108,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
                         predictions = outputs > 0.0
                         outputs = torch.sigmoid(outputs)
 
+                    labels = labels.bool()
                     valid_metrics_mask_classes['jaccard_sim'] += metrics.jaccard_sim(predictions, labels) * inputs.shape[0]
                     valid_metrics_mask_classes['modified_jaccard'] += metrics.modified_jaccard_sim(predictions, labels) * inputs.shape[0]
                     valid_metrics_mask_classes['strict_acc'] += metrics.strict_accuracy(predictions, labels) * inputs.shape[0]

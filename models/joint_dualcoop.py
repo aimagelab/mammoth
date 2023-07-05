@@ -11,6 +11,7 @@ from models.dualcoop_utils import build_model
 from torch.nn import functional as F
 from utils.metrics import mAP
 from torchvision import transforms
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual learning via'
@@ -120,7 +121,7 @@ class JointDualcoop(ContinualModel):
         self.old_labels.append(torch.tensor(dataset.train_loader.dataset.multihot_labels))
 
         if self.args.save_checkpoints:
-            self.savecheck_martin()
+            self.save_checkpoints()
         self.old_cpts += self.cpts[self.current_task]
         self.current_task += 1
 
@@ -140,15 +141,20 @@ class JointDualcoop(ContinualModel):
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=self.args.batch_size, shuffle=True, 
                                                    num_workers=dataset.train_loader.num_workers, pin_memory=True)
 
+        self.opt = self.get_optimizer()
+        sched = torch.optim.lr_scheduler.CosineAnnealingLR(self.opt, T_max=self.args.n_epochs, eta_min=1e-5)
         self.eval()
         for epoch in range(self.args.n_epochs):
             with tqdm(train_loader, desc=f'Epoch {epoch}/{self.args.n_epochs}') as pbar:
                 for i, batch in enumerate(pbar):
+                    if self.args.debug_mode and i > 10:
+                        break
                     inputs, labels = batch
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
 
                     loss = self._observe(inputs, labels, None, epoch=epoch)
                     pbar.set_postfix({'loss': loss})
+            sched.step()
 
         
                 
