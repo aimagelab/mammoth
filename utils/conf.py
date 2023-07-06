@@ -6,13 +6,18 @@
 import random
 import torch
 import numpy as np
+import os
 
 def get_device() -> torch.device:
     """
     Returns the GPU device if available else CPU.
     """
-    return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
+    if torch.cuda.is_available():
+        gpu_stats = os.popen('nvidia-smi --query-gpu=memory.used --format=csv,nounits,noheader').read()
+        gpu_stats = [int(x) for x in gpu_stats.split('\n') if x]
+        return torch.device('cuda:' + str(np.argmin(gpu_stats)))
+    else:
+        return torch.device('cpu')
 
 def base_path() -> str:
     """
