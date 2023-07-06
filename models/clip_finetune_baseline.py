@@ -52,9 +52,16 @@ class ClipFinetuneBaseline(ContinualModel):
 
         self.cpts = self.dataset.N_CLASSES_PER_TASK
         self.old_cpts = 0
+        self.inference_task_mask = None
 
     def begin_task(self, dataset):
+        # masking current task 
         self.task_mask = dataset.train_loader.dataset.task_mask
+        if self.inference_task_mask is None:
+            self.inference_task_mask = self.task_mask.clone()
+        else:
+            self.inference_task_mask += self.task_mask
+
         self.eval()
 
     def forward(self, inputs):
