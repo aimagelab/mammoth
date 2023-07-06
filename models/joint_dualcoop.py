@@ -142,7 +142,7 @@ class JointDualcoop(ContinualModel):
                                                    num_workers=dataset.train_loader.num_workers, pin_memory=True)
 
         self.opt = self.get_optimizer()
-        sched = torch.optim.lr_scheduler.CosineAnnealingLR(self.opt, T_max=self.args.n_epochs, eta_min=1e-5)
+        sched = self.dataset.get_scheduler(self, self.args)
         self.eval()
         for epoch in range(self.args.n_epochs):
             with tqdm(train_loader, desc=f'Epoch {epoch}/{self.args.n_epochs}') as pbar:
