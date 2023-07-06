@@ -57,6 +57,9 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
     cpt = dataset.N_CLASSES // dataset.N_TASKS
     num_seen_classes = len(dataset.test_loaders) * cpt
 
+    all_outputs = []
+    all_labels = []
+
     for k, test_loader in enumerate(tqdm(dataset.test_loaders)):
         if last and k < len(dataset.test_loaders) - 1:
             continue
@@ -64,9 +67,13 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
         valid_metrics_mask_classes = {'jaccard_sim': 0., 'modified_jaccard': 0., 'strict_acc': 0., 'recall': 0., 'mAP': 0.}
         data_len = 0
         correct, correct_mask_classes, total = 0.0, 0.0, 0.0
+        all_class_il_outputs = []
+        all_class_il_labels = []
+        all_task_il_outputs = []
+        all_task_il_labels = []
         for i, data in enumerate(test_loader):
-            if model.args.debug_mode == 1 and i > 3:
-                break
+            # if model.args.debug_mode == 1 and i > 3:
+            #     break
             with torch.no_grad():
                 inputs, labels = data
                 inputs, labels = inputs.to(model.device), labels.to(model.device)
@@ -93,11 +100,15 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
                         labels = labels[:, :predictions.shape[1]]
                     # labels = labels[:, :num_seen_classes]
                     labels = labels.bool()
+                    all_outputs.append(outputs.cpu().numpy())
+                    all_labels.append(labels.cpu().numpy())
+                    all_class_il_outputs.append(outputs.cpu().numpy())
+                    all_class_il_labels.append(labels.cpu().numpy())
                     valid_metrics['jaccard_sim'] += metrics.jaccard_sim(predictions, labels) * inputs.shape[0]
                     valid_metrics['modified_jaccard'] += metrics.modified_jaccard_sim(predictions, labels) * inputs.shape[0]
                     valid_metrics['strict_acc'] += metrics.strict_accuracy(predictions, labels) * inputs.shape[0]
                     valid_metrics['recall'] += metrics.recall(predictions, labels) * inputs.shape[0]
-                    valid_metrics['mAP'] += metrics.mAP(outputs.cpu().numpy(), labels.cpu().numpy()) * inputs.shape[0]
+                    # valid_metrics['mAP'] += metrics.mAP(outputs.cpu().numpy(), labels.cpu().numpy()) * inputs.shape[0]
                     # TODO: add mAP
                     data_len += inputs.shape[0]
 
@@ -109,11 +120,13 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
                         outputs = torch.sigmoid(outputs)
 
                     labels = labels.bool()
+                    all_task_il_outputs.append(outputs.cpu().numpy())
+                    all_task_il_labels.append(labels.cpu().numpy())
                     valid_metrics_mask_classes['jaccard_sim'] += metrics.jaccard_sim(predictions, labels) * inputs.shape[0]
                     valid_metrics_mask_classes['modified_jaccard'] += metrics.modified_jaccard_sim(predictions, labels) * inputs.shape[0]
                     valid_metrics_mask_classes['strict_acc'] += metrics.strict_accuracy(predictions, labels) * inputs.shape[0]
                     valid_metrics_mask_classes['recall'] += metrics.recall(predictions, labels) * inputs.shape[0]
-                    valid_metrics_mask_classes['mAP'] += metrics.mAP(outputs.cpu().numpy(), labels.cpu().numpy()) * inputs.shape[0]
+                    # valid_metrics_mask_classes['mAP'] += metrics.mAP(outputs.cpu().numpy(), labels.cpu().numpy()) * inputs.shape[0]
                 else:
                     _, pred = torch.max(outputs.data, 1)
                     correct += torch.sum(pred == labels).item()
@@ -128,14 +141,16 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
             valid_metrics['modified_jaccard'] /= data_len
             valid_metrics['strict_acc'] /= data_len
             valid_metrics['recall'] /= data_len
-            valid_metrics['mAP'] /= data_len    
+            valid_metrics['mAP'] = metrics.mAP(np.concatenate(all_class_il_outputs), np.concatenate(all_class_il_labels))
+            # valid_metrics['mAP'] /= data_len    
             for k,v in valid_metrics.items():
                 valid_metrics_list[k].append(v)
             valid_metrics_mask_classes['jaccard_sim'] /= data_len
             valid_metrics_mask_classes['modified_jaccard'] /= data_len
             valid_metrics_mask_classes['strict_acc'] /= data_len
             valid_metrics_mask_classes['recall'] /= data_len
-            valid_metrics_mask_classes['mAP'] /= data_len
+            valid_metrics_mask_classes['mAP'] = metrics.mAP(np.concatenate(all_task_il_outputs), np.concatenate(all_task_il_labels))
+            # valid_metrics_mask_classes['mAP'] /= data_len
             for k,v in valid_metrics_mask_classes.items():
                 valid_metrics_mask_classes_list[k].append(v)
         else:
@@ -146,6 +161,10 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False):
     model.train(status)
 
     if dataset.SETTING == 'multi-label':
+        all_outputs = np.concatenate(all_outputs, axis=0)
+        all_labels = np.concatenate(all_labels, axis=0)
+        my_map = metrics.mAP(all_outputs, all_labels)
+        print('mAP "joint": ', my_map, file=sys.stderr)
         return valid_metrics_list, valid_metrics_mask_classes_list
     else:
         return accs, accs_mask_classes

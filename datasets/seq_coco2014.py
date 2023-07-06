@@ -205,13 +205,15 @@ class SequentialCoco2014(ContinualDataset):
     def get_data_loaders(self):
         transform = self.TRANSFORM
 
-        test_transform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Resize(256),
-            transforms.CenterCrop((224, 224)),
-            transforms.ToTensor(),
-            self.get_normalization_transform(),
-        ])
+        test_transform = self.TEST_TRANSFORM
+
+        # test_transform = transforms.Compose([
+        #     transforms.ToPILImage(),
+        #     transforms.Resize(256),
+        #     transforms.CenterCrop((224, 224)),
+        #     transforms.ToTensor(),
+        #     self.get_normalization_transform(),
+        # ])
 
         train_dataset = Coco2014(coco_basepath() + 'coco2014', train=True, transform=transform, task=self.i)
 
