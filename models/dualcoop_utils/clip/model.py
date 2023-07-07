@@ -748,7 +748,8 @@ def build_model_conv_proj(state_dict: dict, args):
                 # pass
                 old_state_dict[k] = state_dict[k]
             elif 'visual' in k and ('positional_embedding' in k):
-                w_spacial = state_dict[k][1:].permute(1, 0).reshape(1, -1, 7, 7)
+                old_size = int((state_dict[k].shape[0] - 1) ** 0.5)
+                w_spacial = state_dict[k][1:].permute(1, 0).reshape(1, -1, old_size, old_size)
                 new_size = int((old_state_dict[k].shape[0] - 1) ** 0.5)
                 w_spacial = F.interpolate(w_spacial, size=(new_size, new_size), mode='bicubic')
                 w_special = w_spacial.reshape(-1, new_size ** 2).permute(1, 0)

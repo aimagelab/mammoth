@@ -9,7 +9,7 @@ from datasets import get_dataset
 from torch.nn import functional as F
 from utils.metrics import mAP
 import types
-from torch.cuda.amp import autocast
+import timm
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual learning via'
@@ -18,32 +18,26 @@ def get_parser() -> ArgumentParser:
     add_experiment_args(parser)
     # add_rehearsal_args(parser)
 
-    parser.add_argument('--visual_encoder_type', type=str, default='RN50', choices=['RN50', 'RN101', 'RN50x4', 'RN50x16', 'ViT-B/32', 'ViT-B/16'])
+    parser.add_argument('--network', type=str, default='vit_base_patch16_224', help='Network to use')
 
     return parser
 
-def custom_forward(self, x):
-    with autocast():
-        x = self.visual(x)
-    if isinstance(x, (list, tuple)):
-        x = x[0]
-    if len(x.shape)==3:
-        x = x.float().mean(-1) # avg pool
-    else:
-        x = x.float()
-    x = self.classifier(x)
-    return x
+def load_vit_with_ckpt(args, dset):
+    backbone = timm.create_model(args.network, pretrained=True, num_classes=sum(dset.N_CLASSES_PER_TASK))
+    backbone.requires_grad_(False)
+    backbone.head.requires_grad_(True)
+    if hasattr(backbone, 'fc_head'):
+        backbone.fc_head.requires_grad_(True)
 
-class ClipFinetuneBaseline(ContinualModel):
-    NAME = 'clip_finetune_baseline'
+    return backbone
+
+class VitFinetuneBaseline(ContinualModel):
+    NAME = 'vit_finetune_baseline'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     def __init__(self, backbone, loss, args, transform):
-        backbone = load_clip_to_cpu(args)
         dset = get_dataset(args)
-        backbone.requires_grad_(False)
-        backbone.classifier = torch.nn.Linear(backbone.text_projection.data.shape[0], sum(dset.N_CLASSES_PER_TASK))
-        backbone.forward = types.MethodType(custom_forward, backbone)
+        backbone = load_vit_with_ckpt(args, dset)
 
         super().__init__(backbone, loss, args, transform)
 

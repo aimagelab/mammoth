@@ -2,7 +2,6 @@ import types
 import torch
 from tqdm import tqdm
 from datasets.utils.validation import ValidationDataset
-from models.clip_finetune_baseline import custom_forward
 from models.dualcoop_utils.dualcoop import load_clip_to_cpu
 
 from utils.args import add_management_args, add_experiment_args, ArgumentParser
@@ -11,7 +10,7 @@ from datasets import get_dataset
 
 from utils.metrics import mAP
 from torchvision import transforms
-from torch.cuda.amp import autocast
+import timm
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual learning via'
@@ -19,24 +18,29 @@ def get_parser() -> ArgumentParser:
     add_management_args(parser)
     add_experiment_args(parser)
 
-    parser.add_argument('--visual_encoder_type', type=str, default='RN50', choices=['RN50', 'RN101', 'RN50x4', 'RN50x16', 'ViT-B/32', 'ViT-B/16'])
+    parser.add_argument('--network', type=str, default='vit_base_patch16_224', help='Network to use')
 
     return parser
 
-class ClipFinetuneJoint(ContinualModel):
-    NAME = 'clip_finetune_joint'
+def load_vit_with_ckpt(args, dset):
+    backbone = timm.create_model(args.network, pretrained=True, num_classes=sum(dset.N_CLASSES_PER_TASK))
+    backbone.requires_grad_(False)
+    backbone.head.requires_grad_(True)
+    if hasattr(backbone, 'fc_head'):
+        backbone.fc_head.requires_grad_(True)
+
+    return backbone
+
+class VitFinetuneJoint(ContinualModel):
+    NAME = 'vit_finetune_joint'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     def __init__(self, backbone, loss, args, transform):
-        assert 'vit' not in args.visual_encoder_type.lower(), "ViT not supported yet"
-        self.dataset = get_dataset(args)
-        backbone = load_clip_to_cpu(args)
         dset = get_dataset(args)
-        backbone.requires_grad_(False)
-        backbone.classifier = torch.nn.Linear(backbone.text_projection.data.shape[0], sum(dset.N_CLASSES_PER_TASK))
-        backbone.forward = types.MethodType(custom_forward, backbone)
+        backbone = load_vit_with_ckpt(args, dset)
 
         super().__init__(backbone, loss, args, transform)
+        self.dataset = dset
         self.current_task = 0
         
         self.dataset = dset
@@ -65,7 +69,7 @@ class ClipFinetuneJoint(ContinualModel):
         return self.net(inputs)
 
     def _observe(self, inputs, labels, not_aug_inputs, epoch=None):
-        logits = self.net(inputs).float()
+        logits = self.net(inputs)
         logits = logits[:, self.task_mask]
         labels = labels[:, self.task_mask]
 
