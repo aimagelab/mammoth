@@ -114,7 +114,7 @@ class ICarl(ContinualModel):
         self.dataset = get_dataset(args)
 
         # Instantiate buffers
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
         self.eye = torch.eye(self.dataset.N_CLASSES_PER_TASK *
                              self.dataset.N_TASKS).to(self.device)
 

@@ -56,7 +56,7 @@ class JointGCL(ContinualModel):
                 self.opt.step()
                 progress_bar(i, math.ceil(len(all_data) / self.args.batch_size), e, 'J', loss.item())
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.old_data.append(inputs.data)
         self.old_labels.append(labels.data)
         return 0

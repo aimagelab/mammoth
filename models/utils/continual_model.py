@@ -10,7 +10,7 @@ from typing import List
 
 import torch
 import torch.nn as nn
-from torch.optim import SGD
+import torch.optim as optim 
 
 from utils.conf import get_device
 from utils.magic import persistent_locals
@@ -34,11 +34,30 @@ class ContinualModel(nn.Module):
         self.loss = loss
         self.args = args
         self.transform = transform
-        self.opt = SGD(self.net.parameters(), lr=self.args.lr)
+        self.N_CLASSES = self.dataset.N_CLASSES
+        self.N_TASKS = self.dataset.N_TASKS
+        self.SETTING = self.dataset.SETTING
+        self.opt = self.get_optimizer()
         self.device = get_device()
 
         if not self.NAME or not self.COMPATIBILITY:
             raise NotImplementedError('Please specify the name and the compatibility of the model.')
+
+    def get_optimizer(self):
+        # check if optimizer is in torch.optim
+        supported_optims = {optim_name.lower():optim_name for optim_name in dir(optim)}
+        if self.args.optimizer.lower() in supported_optims:
+            opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.net.parameters(), lr=self.args.lr,
+                                    weight_decay=self.args.optim_wd, momentum=self.args.optim_mom)
+        else:
+            raise ValueError('Unknown optimizer: {}'.format(self.args.optimizer))
+        return opt
+
+    def _compute_offsets(self, task):
+        cpt = self.N_CLASSES // self.N_TASKS
+        offset1 = task * cpt
+        offset2 = (task + 1) * cpt
+        return offset1, offset2
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -69,11 +88,13 @@ class ContinualModel(nn.Module):
         """
         raise NotImplementedError
 
-    def autolog_wandb(self, locals):
+    def autolog_wandb(self, locals, extra=None):
         """
         All variables starting with "_wandb_" or "loss" in the observe function
         are automatically logged to wandb upon return if wandb is installed.
         """
         if not self.args.nowand and not self.args.debug_mode:
-            wandb.log({k: (v.item() if isinstance(v, torch.Tensor) and v.dim() == 0 else v)
-                      for k, v in locals.items() if k.startswith('_wandb_') or k.startswith('loss')})
+            tmp = {k: (v.item() if isinstance(v, torch.Tensor) and v.dim() == 0 else v) \
+                   for k, v in locals.items() if k.startswith('_wandb_') or k.startswith('loss')}
+            tmp.update(extra or {})
+            wandb.log(tmp)

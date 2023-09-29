@@ -100,7 +100,7 @@ class Gem(ContinualModel):
     def __init__(self, backbone, loss, args, transform):
         super(Gem, self).__init__(backbone, loss, args, transform)
         self.current_task = 0
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
 
         # Allocate temporary synaptic memory
         self.grad_dims = []
@@ -127,7 +127,7 @@ class Gem(ContinualModel):
                                    dtype=torch.long).to(self.device) * (self.current_task - 1)
         )
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         if not self.buffer.is_empty():
             buf_inputs, buf_labels, buf_task_labels = self.buffer.get_data(

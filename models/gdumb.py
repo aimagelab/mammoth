@@ -13,8 +13,7 @@ from utils.status import progress_bar
 
 
 def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via'
-                                        ' Progressive Neural Networks.')
+    parser = ArgumentParser(description='Greedy sampler and Dumb Learner.')
     add_management_args(parser)
     add_rehearsal_args(parser)
     parser.add_argument('--maxlr', type=float, default=5e-2,
@@ -73,10 +72,10 @@ class GDumb(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform):
         super(GDumb, self).__init__(backbone, loss, args, transform)
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
         self.task = 0
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.buffer.add_data(examples=not_aug_inputs,
                              labels=labels)
         return 0

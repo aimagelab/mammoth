@@ -48,7 +48,7 @@ class Gss(ContinualModel):
             grads = grads.unsqueeze(0)
         return grads
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         real_batch_size = inputs.shape[0]
         self.buffer.drop_cache()

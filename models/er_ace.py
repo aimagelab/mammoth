@@ -13,7 +13,7 @@ from utils.buffer import Buffer
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual learning via'
-                                        ' Experience Replay.')
+                                        ' Experience Replay with asymmetric cross-entropy.')
     add_management_args(parser)
     add_experiment_args(parser)
     add_rehearsal_args(parser)
@@ -26,7 +26,7 @@ class ErACE(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform):
         super(ErACE, self).__init__(backbone, loss, args, transform)
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
         self.seen_so_far = torch.tensor([]).long().to(self.device)
         self.num_classes = get_dataset(args).N_TASKS * get_dataset(args).N_CLASSES_PER_TASK
         self.task = 0
@@ -34,7 +34,7 @@ class ErACE(ContinualModel):
     def end_task(self, dataset):
         self.task += 1
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         present = labels.unique()
         self.seen_so_far = torch.cat([self.seen_so_far, present]).unique()

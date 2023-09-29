@@ -55,8 +55,7 @@ def dsimplex(num_classes=10):
 
 
 def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Experience Replay.')
+    parser = ArgumentParser(description='Regular Polytope Classifier.')
     add_management_args(parser)
     add_experiment_args(parser)
     add_rehearsal_args(parser)
@@ -69,7 +68,7 @@ class RPC(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform):
         super(RPC, self).__init__(backbone, loss, args, transform)
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
         self.cpt = get_dataset(args).N_CLASSES_PER_TASK
         self.tasks = get_dataset(args).N_TASKS
         self.task = 0
@@ -118,7 +117,7 @@ class RPC(ContinualModel):
                                      labels=labels[flags])
         self.task += 1
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.opt.zero_grad()
         if not self.buffer.is_empty():
             buf_inputs, buf_labels = self.buffer.get_data(

@@ -29,7 +29,7 @@ class AGemr(ContinualModel):
     def __init__(self, backbone, loss, args, transform):
         super(AGemr, self).__init__(backbone, loss, args, transform)
 
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
         self.grad_dims = []
         for param in self.parameters():
             self.grad_dims.append(param.data.numel())
@@ -37,7 +37,7 @@ class AGemr(ContinualModel):
         self.grad_er = torch.Tensor(np.sum(self.grad_dims)).to(self.device)
         self.current_task = 0
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.zero_grad()
         p = self.net.forward(inputs)
         loss = self.loss(p, labels)

@@ -88,7 +88,7 @@ class Buffer:
     The memory buffer of rehearsal method.
     """
 
-    def __init__(self, buffer_size, device, n_tasks=None, mode='reservoir'):
+    def __init__(self, buffer_size, device="cpu", n_tasks=None, mode='reservoir'):
         assert mode in ('ring', 'reservoir')
         self.buffer_size = buffer_size
         self.device = device
@@ -150,13 +150,15 @@ class Buffer:
                 if task_labels is not None:
                     self.task_labels[index] = task_labels[i].to(self.device)
 
-    def get_data(self, size: int, transform: nn.Module = None, return_index=False) -> Tuple:
+    def get_data(self, size: int, transform: nn.Module = None, return_index=False, device=None) -> Tuple:
         """
         Random samples a batch of size items.
         :param size: the number of requested items
         :param transform: the transformation to be applied (data augmentation)
         :return:
         """
+        target_device = self.device if device is None else device
+
         if size > min(self.num_seen_examples, self.examples.shape[0]):
             size = min(self.num_seen_examples, self.examples.shape[0])
 
@@ -164,10 +166,10 @@ class Buffer:
                                   size=size, replace=False)
         if transform is None:
             def transform(x): return x
-        ret_tuple = (torch.stack([transform(ee.cpu()) for ee in self.examples[choice]]).to(self.device),)
+        ret_tuple = (torch.stack([transform(ee) for ee in self.examples[choice].cpu()]).to(target_device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
-                attr = getattr(self, attr_str)
+                attr = getattr(self, attr_str).to(target_device)
                 ret_tuple += (attr[choice],)
 
         if not return_index:
@@ -175,20 +177,22 @@ class Buffer:
         else:
             return (torch.tensor(choice).to(self.device), ) + ret_tuple
 
-    def get_data_by_index(self, indexes, transform: nn.Module = None) -> Tuple:
+    def get_data_by_index(self, indexes, transform: nn.Module = None, device=None) -> Tuple:
         """
         Returns the data by the given index.
         :param index: the index of the item
         :param transform: the transformation to be applied (data augmentation)
         :return:
         """
+        target_device = self.device if device is None else device
+
         if transform is None:
             def transform(x): return x
-        ret_tuple = (torch.stack([transform(ee.cpu())
-                                  for ee in self.examples[indexes]]).to(self.device),)
+        ret_tuple = (torch.stack([transform(ee)
+                                  for ee in self.examples[indexes].cpu()]).to(target_device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
-                attr = getattr(self, attr_str).to(self.device)
+                attr = getattr(self, attr_str).to(target_device)
                 ret_tuple += (attr[indexes],)
         return ret_tuple
 
@@ -201,19 +205,20 @@ class Buffer:
         else:
             return False
 
-    def get_all_data(self, transform: nn.Module = None) -> Tuple:
+    def get_all_data(self, transform: nn.Module = None, device=None) -> Tuple:
         """
         Return all the items in the memory buffer.
         :param transform: the transformation to be applied (data augmentation)
         :return: a tuple with all the items in the memory buffer
         """
+        target_device = self.device if device is None else device
         if transform is None:
             def transform(x): return x
         ret_tuple = (torch.stack([transform(ee.cpu())
-                                  for ee in self.examples]).to(self.device),)
+                                  for ee in self.examples]).to(target_device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
-                attr = getattr(self, attr_str)
+                attr = getattr(self, attr_str).to(target_device)
                 ret_tuple += (attr,)
         return ret_tuple
 

@@ -72,7 +72,7 @@ class Pnn(ContinualModel):
         self.net = self.nets[-1]
         self.opt = optim.SGD(self.net.parameters(), lr=self.args.lr)
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         if self.x_shape is None:
             self.x_shape = inputs.shape
 

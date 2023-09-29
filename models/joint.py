@@ -108,5 +108,5 @@ class Joint(ContinualModel):
                 if scheduler is not None:
                     scheduler.step()
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         return 0

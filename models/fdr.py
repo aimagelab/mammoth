@@ -12,7 +12,7 @@ from utils.buffer import Buffer
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual learning via'
-                                        ' Dark Experience Replay.')
+                                        ' Function Distance Regularization.')
     add_management_args(parser)
     add_experiment_args(parser)
     add_rehearsal_args(parser)
@@ -27,7 +27,7 @@ class Fdr(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform):
         super(Fdr, self).__init__(backbone, loss, args, transform)
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
         self.current_task = 0
         self.i = 0
         self.soft = torch.nn.Softmax(dim=1)
@@ -65,7 +65,7 @@ class Fdr(ContinualModel):
                                                   (self.current_task - 1))[:(examples_per_task - counter)])
                 counter += self.args.batch_size
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.i += 1
 
         self.opt.zero_grad()

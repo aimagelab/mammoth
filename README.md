@@ -32,7 +32,7 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 + Greedy Sampler and Dumb Learner (GDumb)
 + Bias Correction (BiC)
 + Regular Polytope Classifier (RPC)
-+ Gradient Episodic Memory (GEM)
++ Gradient Episodic Memory (GEM) - *Unavailable on windows* 
 + A-GEM
 + A-GEM with Reservoir (A-GEM-R)
 + Experience Replay (ER)
@@ -45,6 +45,7 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 + Synaptic Intelligence (SI)
 + Learning without Forgetting (LwF)
 + Progressive Neural Networks (PNN)
++ Learning to Prompt (L2P) - *Requires* `pip install timm==0.8.10.dev0`
 
 ## Datasets
 

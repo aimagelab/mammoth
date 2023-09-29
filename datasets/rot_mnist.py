@@ -17,6 +17,7 @@ class RotatedMNIST(ContinualDataset):
     SETTING = 'domain-il'
     N_CLASSES_PER_TASK = 10
     N_TASKS = 20
+    N_CLASSES = N_CLASSES_PER_TASK * N_TASKS
 
     def get_data_loaders(self):
         transform = transforms.Compose((Rotation(), transforms.ToTensor()))

@@ -16,8 +16,7 @@ from utils.buffer import Buffer
 
 
 def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Experience Replay.')
+    parser = ArgumentParser(description='Hindsight Anchor Learning.')
     add_management_args(parser)
     add_experiment_args(parser)
     add_rehearsal_args(parser)
@@ -111,7 +110,7 @@ class HAL(ContinualModel):
 
         self.spare_model.zero_grad()
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         real_batch_size = inputs.shape[0]
         if not hasattr(self, 'input_shape'):
             self.input_shape = inputs.shape[1:]

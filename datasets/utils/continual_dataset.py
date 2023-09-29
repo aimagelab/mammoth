@@ -20,6 +20,7 @@ class ContinualDataset:
     SETTING: str
     N_CLASSES_PER_TASK: int
     N_TASKS: int
+    N_CLASSES: int
 
     def __init__(self, args: Namespace) -> None:
         """

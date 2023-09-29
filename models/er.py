@@ -25,9 +25,9 @@ class Er(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform):
         super(Er, self).__init__(backbone, loss, args, transform)
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         real_batch_size = inputs.shape[0]
 

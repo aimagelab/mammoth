@@ -16,7 +16,7 @@ from utils.buffer import Buffer
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual learning via'
-                                        ' Dark Experience Replay.')
+                                        ' eXtended Dark Experience Replay with RPC.')
     add_management_args(parser)
     add_experiment_args(parser)
     add_rehearsal_args(parser)
@@ -77,7 +77,7 @@ class XDerRPC(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform):
         super(XDerRPC, self).__init__(backbone, loss, args, transform)
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
         self.cpt = get_dataset(args).N_CLASSES_PER_TASK
         self.tasks = get_dataset(args).N_TASKS
         self.task = 0
@@ -185,7 +185,7 @@ class XDerRPC(ContinualModel):
 
         return old
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         self.opt.zero_grad()
 

@@ -22,6 +22,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     parser.add_argument('--lr', type=float, required=True,
                         help='Learning rate.')
 
+    parser.add_argument('--optimizer', type=str, default='sgd')
     parser.add_argument('--optim_wd', type=float, default=0.,
                         help='optimizer weight decay.')
     parser.add_argument('--optim_mom', type=float, default=0.,
@@ -48,7 +49,7 @@ def add_management_args(parser: ArgumentParser) -> None:
 
     parser.add_argument('--validation', default=0, choices=[0, 1], type=int,
                         help='Test on the validation set')
-    parser.add_argument('--ignore_other_metrics', default=0, choices=[0, 1], type=int,
+    parser.add_argument('--ignore_other_metrics', default=1, choices=[0, 1], type=int,
                         help='disable additional metrics')
     parser.add_argument('--debug_mode', type=int, default=0, help='Run only a few forward steps per epoch')
     parser.add_argument('--wandb_entity', type=str, help='Wandb entity')

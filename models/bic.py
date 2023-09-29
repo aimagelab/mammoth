@@ -20,8 +20,7 @@ from utils.buffer import Buffer, icarl_replay
 
 
 def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='A bag of tricks for '
-                                        'Continual learning.')
+    parser = ArgumentParser(description='Bias Correction.')
     add_management_args(parser)
     add_experiment_args(parser)
     add_rehearsal_args(parser)
@@ -51,7 +50,7 @@ class BiC(ContinualModel):
         self.n_tasks = dd.N_TASKS
         self.cpt = dd.N_CLASSES_PER_TASK
         self.transform = transform
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
 
         self.task = 0
         self.lamda = 0
@@ -137,7 +136,7 @@ class BiC(ContinualModel):
                 ret[:, start_last_task:end_last_task] += self.corr_factors[0].repeat_interleave(end_last_task - start_last_task)
         return ret
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.opt.zero_grad()
         outputs = self.net(inputs)
 

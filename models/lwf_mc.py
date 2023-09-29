@@ -13,7 +13,7 @@ import numpy as np
 
 
 def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via iCaRL.')
+    parser = ArgumentParser(description='Learning without Forgetting - Multi-Class.')
 
     add_management_args(parser)
     add_experiment_args(parser)

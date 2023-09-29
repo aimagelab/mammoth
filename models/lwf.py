@@ -78,7 +78,7 @@ class Lwf(ContinualModel):
 
         self.current_task += 1
 
-    def observe(self, inputs, labels, not_aug_inputs, logits=None):
+    def observe(self, inputs, labels, not_aug_inputs, logits=None, epoch=None):
         self.opt.zero_grad()
         outputs = self.net(inputs)
 

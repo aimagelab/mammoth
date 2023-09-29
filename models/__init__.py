@@ -12,9 +12,12 @@ def get_all_models():
 
 names = {}
 for model in get_all_models():
-    mod = importlib.import_module('models.' + model)
-    class_name = {x.lower():x for x in mod.__dir__()}[model.replace('_', '')]
-    names[model] = getattr(mod, class_name)
+    try:
+        mod = importlib.import_module('models.' + model)
+        class_name = {x.lower():x for x in mod.__dir__()}[model.replace('_', '')]
+        names[model] = getattr(mod, class_name)
+    except Exception as e:
+        print("Error in model", model, ':', e)
 
 def get_model(args, backbone, loss, transform):
     return names[args.model](backbone, loss, args, transform)

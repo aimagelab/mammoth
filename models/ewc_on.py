@@ -68,7 +68,7 @@ class EwcOn(ContinualModel):
 
         self.checkpoint = self.net.get_params().data.clone()
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         self.opt.zero_grad()
         outputs = self.net(inputs)
