@@ -20,7 +20,6 @@ import datetime
 import uuid
 from argparse import ArgumentParser
 
-import setproctitle
 import torch
 from datasets import NAMES as DATASET_NAMES
 from datasets import ContinualDataset, get_dataset
@@ -122,10 +121,22 @@ def main(args=None):
         raise NotImplementedError('Distributed Data Parallel not supported yet.')
 
     if args.debug_mode:
+        print('Debug mode enabled: running only a few forward steps per epoch with W&B disabled.')
         args.nowand = 1
 
-    # set job name
-    setproctitle.setproctitle('{}_{}_{}'.format(args.model, args.buffer_size if 'buffer_size' in args else 0, args.dataset))
+    if args.wandb_entity is None or args.wandb_project is None:
+        print('Warning: wandb_entity and wandb_project not set. Disabling wandb.')
+        args.nowand = 1
+    else:
+        print('Logging to wandb: {}/{}'.format(args.wandb_entity, args.wandb_project))
+        args.nowand = 0
+
+    try:
+        import setproctitle
+        # set job name
+        setproctitle.setproctitle('{}_{}_{}'.format(args.model, args.buffer_size if 'buffer_size' in args else 0, args.dataset))
+    except Exception:
+        pass
 
     if isinstance(dataset, ContinualDataset):
         train(model, dataset, args)

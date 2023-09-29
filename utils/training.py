@@ -129,14 +129,13 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 if hasattr(dataset.train_loader.dataset, 'logits'):
                     inputs, labels, not_aug_inputs, logits = data
                     inputs = inputs.to(model.device)
-                    labels = labels.to(model.device)
+                    labels = labels.to(model.device, dtype=torch.long)
                     not_aug_inputs = not_aug_inputs.to(model.device)
                     logits = logits.to(model.device)
                     loss = model.meta_observe(inputs, labels, not_aug_inputs, logits)
                 else:
                     inputs, labels, not_aug_inputs = data
-                    inputs, labels = inputs.to(model.device), labels.to(
-                        model.device)
+                    inputs, labels = inputs.to(model.device), labels.to(model.device, dtype=torch.long)
                     not_aug_inputs = not_aug_inputs.to(model.device)
                     loss = model.meta_observe(inputs, labels, not_aug_inputs)
                 assert not math.isnan(loss)

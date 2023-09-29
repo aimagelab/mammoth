@@ -123,7 +123,7 @@ class Gem(ContinualModel):
         self.buffer.add_data(
             examples=cur_x.to(self.device),
             labels=cur_y.to(self.device),
-            task_labels=torch.ones(samples_per_task,
+            task_labels=torch.ones(cur_x.shape[0],
                                    dtype=torch.long).to(self.device) * (self.current_task - 1)
         )
 
