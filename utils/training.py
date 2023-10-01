@@ -3,7 +3,9 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from copy import deepcopy
 import math
+import pickle
 import sys
 from argparse import Namespace
 from typing import Tuple
@@ -13,6 +15,7 @@ from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
 from models.utils.continual_model import ContinualModel
 
+from utils import mammoth_load_checkpoint
 from utils.loggers import *
 from utils.status import ProgressBar
 
@@ -97,6 +100,20 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     if not args.disable_log:
         logger = Logger(dataset.SETTING, dataset.NAME, model.NAME)
 
+    if args.start_from is not None:
+        for i in range(args.start_from):
+            train_loader, test_loader = dataset.get_data_loaders()
+            if hasattr(model, 'end_task'):
+                model.end_task(dataset)
+
+    if args.loadcheck is not None:
+        model, (results, results_mask_classes, csvdump) = mammoth_load_checkpoint(args, model)
+
+        if not args.disable_log:
+            logger.load(csvdump)
+
+        print('Checkpoint Loaded!')
+
     progress_bar = ProgressBar(verbose=not args.non_verbose)
 
     if not args.ignore_other_metrics:
@@ -108,7 +125,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             random_results_class, random_results_task = evaluate(model, dataset_copy)
 
     print(file=sys.stderr)
-    for t in range(dataset.N_TASKS):
+    start_task = 0 if args.start_from is None else args.start_from
+    end_task = dataset.N_TASKS if args.stop_after is None else args.stop_after
+    for t in range(start_task, end_task):
         model.net.train()
         train_loader, test_loader = dataset.get_data_loaders()
         if hasattr(model, 'begin_task'):
@@ -165,7 +184,19 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             wandb.log(d2)
 
+        if args.savecheck:
+            save_obj = {
+                'model': model.state_dict(),
+                'args': args,
+                'results': [results, results_mask_classes, logger.dump()],
+                'optimizer': model.optimizer.state_dict() if hasattr(model, 'optimizer') else None,
+                'scheduler': scheduler.state_dict() if scheduler is not None else None,
+            }
+            if 'buffer_size' in model.args:
+                save_obj['buffer'] = deepcopy(model.buffer).to('cpu')
 
+            # Saving model checkpoint
+            torch.save(save_obj, f'checkpoints/{args.ckpt_name}_{t}.pt')
 
     if not args.disable_log and not args.ignore_other_metrics:
         logger.add_bwt(results, results_mask_classes)

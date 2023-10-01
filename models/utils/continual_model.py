@@ -10,7 +10,8 @@ from typing import List
 
 import torch
 import torch.nn as nn
-import torch.optim as optim 
+import torch.optim as optim
+from datasets import get_dataset 
 
 from utils.conf import get_device
 from utils.magic import persistent_locals
@@ -34,14 +35,27 @@ class ContinualModel(nn.Module):
         self.loss = loss
         self.args = args
         self.transform = transform
+        self.dataset = get_dataset(self.args)
         self.N_CLASSES = self.dataset.N_CLASSES
         self.N_TASKS = self.dataset.N_TASKS
         self.SETTING = self.dataset.SETTING
-        self.opt = self.get_optimizer()
+        if self.net is not None:
+            self.opt = self.get_optimizer()
+        else:
+            print("Warning: no default model for this dataset. You will have to specify the optimizer yourself.")
+            self.opt = None
         self.device = get_device()
 
         if not self.NAME or not self.COMPATIBILITY:
             raise NotImplementedError('Please specify the name and the compatibility of the model.')
+
+    def load_buffer(self, buffer):
+        """
+        Default way to handle load buffer.
+        """
+        assert buffer.examples.shape[0] == self.args.buffer_size, "Buffer size mismatch. Expected {} got {}".format(
+            self.args.buffer_size, buffer.examples.shape[0])
+        self.buffer = buffer
 
     def get_optimizer(self):
         # check if optimizer is in torch.optim

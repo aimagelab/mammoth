@@ -15,6 +15,7 @@ from datasets.transforms.denormalization import DeNormalize
 import torchvision
 import torch.nn as nn
 from datasets.seq_cifar100 import MyCIFAR100, TCIFAR100
+from timm import create_model
 
 class SequentialCIFAR100224(ContinualDataset):
 
@@ -62,7 +63,12 @@ class SequentialCIFAR100224(ContinualDataset):
 
     @staticmethod
     def get_backbone(hookme=False):
-        return None
+        model_name = 'vit_base_patch16_224' 
+        return create_model(
+            model_name,
+            pretrained=True,
+            num_classes=SequentialCIFAR100224.N_CLASSES
+        )
 
     @staticmethod
     def get_loss():

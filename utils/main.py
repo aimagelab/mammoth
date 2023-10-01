@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import time
 import numpy  # needed (don't change it)
 import importlib
 import os
@@ -16,6 +17,7 @@ sys.path.append(mammoth_path + '/datasets')
 sys.path.append(mammoth_path + '/backbone')
 sys.path.append(mammoth_path + '/models')
 
+from utils import create_if_not_exists
 import datetime
 import uuid
 from argparse import ArgumentParser
@@ -83,6 +85,16 @@ def parse_args():
 
     if args.seed is not None:
         set_random_seed(args.seed)
+
+    if args.savecheck:
+        if not os.path.isdir('checkpoints'):
+            create_if_not_exists("checkpoints")
+
+        now = time.strftime("%Y%m%d-%H%M%S")
+        extra_ckpt_name = "" if args.ckpt_name is None else f"{args.ckpt_name}_"
+        args.ckpt_name = f"{extra_ckpt_name}{args.model}_{args.dataset}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}_{args.n_epochs}_{str(now)}"
+        args.ckpt_name_replace = f"{extra_ckpt_name}{args.model}_{args.dataset}_{'{}'}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}__{args.n_epochs}_{str(now)}"
+        print("Saving checkpoint into", args.ckpt_name, file=sys.stderr)
 
     return args
 

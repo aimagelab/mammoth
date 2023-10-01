@@ -305,7 +305,7 @@ class Lucir(ContinualModel):
 
         with bn_track_stats(self, False):
             for _ in range(opt_steps):
-                examples, labels, _ = self.buffer.get_all_data(self.transform)
+                examples, labels, _ = self.buffer.get_all_data(self.transform, device=self.device)
                 dt = DataLoader([(e, l) for e, l in zip(examples, labels)],
                                 shuffle=True, batch_size=self.args.batch_size)
                 for inputs, labels in dt:

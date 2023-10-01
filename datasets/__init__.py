@@ -18,7 +18,7 @@ def get_all_datasets():
 
 NAMES = {}
 for dataset in get_all_datasets():
-    try:
+    try:       
         mod = importlib.import_module('datasets.' + dataset)
         dataset_classes_name = [x for x in mod.__dir__() if 'type' in str(type(getattr(mod, x))) and 'ContinualDataset' in str(inspect.getmro(getattr(mod, x))[1:])]
         for d in dataset_classes_name:
@@ -29,8 +29,9 @@ for dataset in get_all_datasets():
         for d in gcl_dataset_classes_name:
             c = getattr(mod, d)
             NAMES[c.NAME] = c
-    except:
+    except Exception as e:
         print(f'Error in dataset {dataset}')
+        print(e)
 
 
 def get_dataset(args: Namespace) -> ContinualDataset:

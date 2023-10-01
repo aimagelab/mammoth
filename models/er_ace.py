@@ -56,7 +56,7 @@ class ErACE(ContinualModel):
         if self.task > 0:
             # sample from buffer
             buf_inputs, buf_labels = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform)
+                self.args.minibatch_size, transform=self.transform, device=self.device)
             loss_re = self.loss(self.net(buf_inputs), buf_labels)
 
         loss += loss_re

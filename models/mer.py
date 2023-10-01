@@ -45,7 +45,8 @@ class Mer(ContinualModel):
         batches = []
         for i in range(self.args.batch_num):
             if not self.buffer.is_empty():
-                buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size, transform=self.transform)
+                buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size, 
+                                                              transform=self.transform, device=self.device)
                 inputs = torch.cat((buf_inputs, inp.unsqueeze(0)))
                 labels = torch.cat((buf_labels, torch.tensor([lab]).to(self.device)))
                 batches.append((inputs, labels))

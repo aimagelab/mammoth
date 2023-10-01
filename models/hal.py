@@ -63,7 +63,8 @@ class HAL(ContinualModel):
 
         # fine tune on memory buffer
         for _ in range(self.finetuning_epochs):
-            inputs, labels = self.buffer.get_data(self.args.batch_size, transform=self.transform)
+            inputs, labels = self.buffer.get_data(self.args.batch_size, 
+                                                  transform=self.transform, device=self.device)
             self.spare_opt.zero_grad()
             out = self.spare_model(inputs)
             loss = self.loss(out, labels)
@@ -124,7 +125,7 @@ class HAL(ContinualModel):
 
         if not self.buffer.is_empty():
             buf_inputs, buf_labels = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform)
+                self.args.minibatch_size, transform=self.transform, device=self.device)
             inputs = torch.cat((inputs, buf_inputs))
             labels = torch.cat((labels, buf_labels))
 

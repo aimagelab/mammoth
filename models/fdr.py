@@ -75,7 +75,8 @@ class Fdr(ContinualModel):
         self.opt.step()
         if not self.buffer.is_empty():
             self.opt.zero_grad()
-            buf_inputs, buf_logits, _ = self.buffer.get_data(self.args.minibatch_size, transform=self.transform)
+            buf_inputs, buf_logits, _ = self.buffer.get_data(self.args.minibatch_size, 
+                                                             transform=self.transform, device=self.device)
             buf_outputs = self.net(buf_inputs)
             loss = torch.norm(self.soft(buf_outputs) - self.soft(buf_logits), 2, 1).mean()
             assert not torch.isnan(loss)

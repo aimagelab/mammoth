@@ -61,7 +61,7 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--decay-rate', '--dr', type=float, default=0.1, metavar='RATE', help='LR decay rate (default: 0.1)')
     parser.add_argument('--unscale_lr', type=bool, default=True, help='scaling lr by batch size (default: True)')
 
-    parser.add_argument('--network', type=str, default='vit_base_patch16_224', help='Network to use')
+    # parser.add_argument('--network', type=str, default='vit_base_patch16_224', help='Network to use')
     parser.add_argument('--clip_grad', type=none_or_float, default=None, metavar='NORM',  help='Clip gradient norm (default: None, no clipping)')
     return parser
 

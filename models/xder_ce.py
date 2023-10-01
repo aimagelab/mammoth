@@ -108,7 +108,7 @@ class XDerCE(ContinualModel):
 
                     # Update future past logits
                     buf_idx, buf_inputs, buf_labels, buf_logits, _ = self.buffer.get_data(self.buffer.buffer_size,
-                                                                                          transform=self.transform, return_index=True)
+                                                                                          transform=self.transform, return_index=True, device=self.device)
 
                     buf_outputs = []
                     while len(buf_inputs):
@@ -155,7 +155,7 @@ class XDerCE(ContinualModel):
         if not self.buffer.is_empty():
             # Distillation Replay Loss (all heads)
             buf_idx1, buf_inputs1, buf_labels1, buf_logits1, buf_tl1 = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform, return_index=True)
+                self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
             buf_outputs1 = self.net(buf_inputs1).float()
 
             buf_logits1 = buf_logits1.type(buf_outputs1.dtype)
@@ -164,7 +164,7 @@ class XDerCE(ContinualModel):
 
             # Label Replay Loss (past heads)
             buf_idx2, buf_inputs2, buf_labels2, buf_logits2, buf_tl2 = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform, return_index=True)
+                self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
             buf_outputs2 = self.net(buf_inputs2).float()
 
             buf_ce = self.loss(buf_outputs2[:, :(self.task + (1 if self.task == 0 else 0)) * self.cpt], buf_labels2)

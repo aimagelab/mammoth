@@ -43,7 +43,7 @@ def fit_buffer(self, epochs):
             scheduler.step()
 
         all_inputs, all_labels = self.buffer.get_data(
-            len(self.buffer.examples), transform=self.transform)
+            len(self.buffer.examples), transform=self.transform, device=self.device)
 
         while len(all_inputs):
             optimizer.zero_grad()

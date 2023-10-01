@@ -204,7 +204,7 @@ class ICarl(ContinualModel):
         # This function caches class means
         transform = self.dataset.get_normalization_transform()
         class_means = []
-        examples, labels, _ = self.buffer.get_all_data(transform)
+        examples, labels, _ = self.buffer.get_all_data(transform, device=self.device)
         for _y in self.classes_so_far:
             x_buf = torch.stack(
                 [examples[i]

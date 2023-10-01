@@ -131,7 +131,7 @@ class Gem(ContinualModel):
 
         if not self.buffer.is_empty():
             buf_inputs, buf_labels, buf_task_labels = self.buffer.get_data(
-                self.args.buffer_size, transform=self.transform)
+                self.args.buffer_size, transform=self.transform, device=self.device)
 
             for tt in buf_task_labels.unique():
                 # compute gradient on the memory buffer

@@ -58,7 +58,7 @@ class AGem(ContinualModel):
         if not self.buffer.is_empty():
             store_grad(self.parameters, self.grad_xy, self.grad_dims)
 
-            buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size, transform=self.transform)
+            buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size, transform=self.transform, device=self.device)
             self.net.zero_grad()
             buf_outputs = self.net.forward(buf_inputs)
             penalty = self.loss(buf_outputs, buf_labels)
