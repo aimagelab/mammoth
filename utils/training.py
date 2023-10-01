@@ -15,7 +15,7 @@ from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
 from models.utils.continual_model import ContinualModel
 
-from utils import mammoth_load_checkpoint
+from utils.checkpoints import mammoth_load_checkpoint
 from utils.loggers import *
 from utils.status import ProgressBar
 
@@ -107,9 +107,10 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 model.end_task(dataset)
 
     if args.loadcheck is not None:
-        model, (results, results_mask_classes, csvdump) = mammoth_load_checkpoint(args, model)
+        model, past_res = mammoth_load_checkpoint(args, model)
 
-        if not args.disable_log:
+        if not args.disable_log and past_res is not None:
+            (results, results_mask_classes, csvdump) = past_res
             logger.load(csvdump)
 
         print('Checkpoint Loaded!')

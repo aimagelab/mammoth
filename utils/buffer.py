@@ -99,6 +99,7 @@ class Buffer:
             self.task_number = n_tasks
             self.buffer_portion_size = buffer_size // n_tasks
         self.attributes = ['examples', 'labels', 'logits', 'task_labels']
+        self.attention_maps = [None] * buffer_size
 
     def to(self, device):
         self.device = device
@@ -126,7 +127,7 @@ class Buffer:
                 setattr(self, attr_str, torch.zeros((self.buffer_size,
                         *attr.shape[1:]), dtype=typ, device=self.device))
 
-    def add_data(self, examples, labels=None, logits=None, task_labels=None):
+    def add_data(self, examples, labels=None, logits=None, task_labels=None, attention_maps=None):
         """
         Adds the data to the memory buffer according to the reservoir strategy.
         :param examples: tensor containing the images
@@ -149,7 +150,9 @@ class Buffer:
                     self.logits[index] = logits[i].to(self.device)
                 if task_labels is not None:
                     self.task_labels[index] = task_labels[i].to(self.device)
-
+                if attention_maps is not None:
+                    self.attention_maps[index] = [at[i].byte().to(self.device) for at in attention_maps]
+                    
     def get_data(self, size: int, transform: nn.Module = None, return_index=False, device=None) -> Tuple:
         """
         Random samples a batch of size items.

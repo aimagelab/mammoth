@@ -38,6 +38,7 @@ class BasicBlock(nn.Module):
         :param planes: the number of channels (to be possibly expanded)
         """
         super(BasicBlock, self).__init__()
+        self.return_prerelu = False
         self.conv1 = conv3x3(in_planes, planes, stride)
         self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = conv3x3(planes, planes)
@@ -60,6 +61,10 @@ class BasicBlock(nn.Module):
         out = relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
         out += self.shortcut(x)
+
+        if self.return_prerelu:
+            self.prerelu = out.clone()
+
         out = relu(out)
         return out
 
@@ -79,6 +84,8 @@ class ResNet(MammothBackbone):
         :param nf: the number of filters
         """
         super(ResNet, self).__init__()
+        self.return_prerelu = False
+        self.device = "cpu"
         self.in_planes = nf
         self.block = block
         self.num_classes = num_classes
@@ -89,17 +96,17 @@ class ResNet(MammothBackbone):
         self.layer2 = self._make_layer(block, nf * 2, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, nf * 4, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, nf * 8, num_blocks[3], stride=2)
-        self.linear = nn.Linear(nf * 8 * block.expansion, num_classes)
-
-        self._features = nn.Sequential(self.conv1,
-                                       self.bn1,
-                                       nn.ReLU(),
-                                       self.layer1,
-                                       self.layer2,
-                                       self.layer3,
-                                       self.layer4
-                                       )
-        self.classifier = self.linear
+        self.classifier = nn.Linear(nf * 8 * block.expansion, num_classes)
+        
+    def to(self, device, **kwargs):
+        self.device = device
+        return super().to(device, **kwargs)
+    
+    def set_return_prerelu(self, enable=True):
+        self.return_prerelu = enable
+        for c in self.modules():
+            if isinstance(c, self.block):
+                c.return_prerelu = enable
 
     def _make_layer(self, block: BasicBlock, planes: int,
                     num_blocks: int, stride: int) -> nn.Module:
@@ -122,19 +129,23 @@ class ResNet(MammothBackbone):
         """
         Compute a forward pass.
         :param x: input tensor (batch_size, *input_shape)
-        :param returnt: return type (a string among 'out', 'features', 'all')
+        :param returnt: return type (a string among 'out', 'features', 'both', and 'full')
         :return: output tensor (output_classes)
         """
-
-        out = relu(self.bn1(self.conv1(x))) # 64, 32, 32
+        out_0 = self.bn1(self.conv1(x)) # 64, 32, 32
+        if self.return_prerelu:
+            out_0_t = out_0.clone()
+        out_0 = relu(out_0)
         if hasattr(self, 'maxpool'):
-            out = self.maxpool(out)
-        out = self.layer1(out)  # -> 64, 32, 32
-        out = self.layer2(out)  # -> 128, 16, 16
-        out = self.layer3(out)  # -> 256, 8, 8
-        out = self.layer4(out)  # -> 512, 4, 4
-        out = avg_pool2d(out, out.shape[2]) # -> 512, 1, 1
-        feature = out.view(out.size(0), -1)  # 512
+            out_0 = self.maxpool(out_0)
+
+        out_1 = self.layer1(out_0)  # -> 64, 32, 32
+        out_2 = self.layer2(out_1)  # -> 128, 16, 16
+        out_3 = self.layer3(out_2)  # -> 256, 8, 8
+        out_4 = self.layer4(out_3)  # -> 512, 4, 4
+
+        feature = avg_pool2d(out_4, out_4.shape[2]) # -> 512, 1, 1
+        feature = feature.view(feature.size(0), -1)  # 512
 
         if returnt == 'features':
             return feature
@@ -143,10 +154,18 @@ class ResNet(MammothBackbone):
 
         if returnt == 'out':
             return out
-        elif returnt == 'all':
+        elif returnt == 'both':
             return (out, feature)
+        elif returnt == 'full':
+            return out, [
+                out_0 if not self.return_prerelu else out_0_t,
+                out_1 if not self.return_prerelu else self.layer1[-1].prerelu,
+                out_2 if not self.return_prerelu else self.layer2[-1].prerelu,
+                out_3 if not self.return_prerelu else self.layer3[-1].prerelu,
+                out_4 if not self.return_prerelu else self.layer4[-1].prerelu
+            ]
 
-        raise NotImplementedError("Unknown return type")
+        raise NotImplementedError("Unknown return type. Must be in ['out', 'features', 'both', 'all'] but got {}".format(returnt))
 
 
 def resnet18(nclasses: int, nf: int=64) -> ResNet:
