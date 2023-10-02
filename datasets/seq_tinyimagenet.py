@@ -173,17 +173,9 @@ class SequentialTinyImagenet(ContinualDataset):
         return transform
 
     @staticmethod
-    def get_scheduler(model, args):
-        return None
-
-    @staticmethod
     def get_epochs():
         return 50
 
     @staticmethod
     def get_batch_size():
         return 32
-
-    @staticmethod
-    def get_minibatch_size():
-        return SequentialTinyImagenet.get_batch_size()

@@ -64,6 +64,9 @@ class TwF(ContinualModel):
 
         self.task = 0
 
+        if self.args.loadcheck is None:
+            print("Warning: no checkpoint loaded!")
+
         if self.args.lambda_fp_replay == 0:
             print('Warning: lambda_fp_replay is 0, so no replay of attention masks will be used')
 

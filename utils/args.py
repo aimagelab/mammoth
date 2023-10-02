@@ -65,6 +65,8 @@ def add_management_args(parser: ArgumentParser) -> None:
 
     parser.add_argument('--eval_epochs', type=int, default=None,
                         help='Perform inference intra-task at every `eval_epochs`.')
+    parser.add_argument('--inference_only', action="store_true",
+                        help='Perform inference only for each task (no training).')
 
 
 def add_rehearsal_args(parser: ArgumentParser) -> None:

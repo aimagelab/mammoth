@@ -98,13 +98,5 @@ class SequentialMNIST(ContinualDataset):
         return None
 
     @staticmethod
-    def get_scheduler(model, args):
-        return None
-
-    @staticmethod
     def get_batch_size():
         return 64
-
-    @staticmethod
-    def get_minibatch_size():
-        return SequentialMNIST.get_batch_size()

@@ -3,7 +3,7 @@
 import torch
 from torchvision.datasets import CIFAR100
 import torchvision.transforms as transforms
-#from backbone.ResNet18 import resnet18_twf1
+# from backbone.ResNet18 import resnet18_twf1
 import torch.nn.functional as F
 import numpy as np
 from utils.conf import base_path_dataset as base_path
@@ -94,13 +94,3 @@ class SequentialCIFAR100224(ContinualDataset):
     @staticmethod
     def get_batch_size():
         return 32
-
-    @staticmethod
-    def get_minibatch_size():
-        return SequentialCIFAR100224.get_batch_size()
-
-    @staticmethod
-    def get_scheduler(model, args) -> torch.optim.lr_scheduler:
-        model.opt = torch.optim.SGD(model.net.parameters(), lr=args.lr, weight_decay=args.optim_wd, momentum=args.optim_mom)
-        scheduler = None
-        return scheduler

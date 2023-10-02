@@ -87,6 +87,7 @@ def parse_args():
         set_random_seed(args.seed)
 
     if args.savecheck:
+        assert args.inference_only == 0, "Should not save checkpoint in inference only mode"
         if not os.path.isdir('checkpoints'):
             create_if_not_exists("checkpoints")
 

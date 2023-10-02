@@ -53,10 +53,14 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 + Sequential MNIST (*Class-Il / Task-IL*)
 + Sequential CIFAR-10 (*Class-Il / Task-IL*)
 + Sequential Tiny ImageNet (*Class-Il / Task-IL*)
++ Sequential Tiny ImageNet resized 32x32 (*Class-Il / Task-IL*)
 + Sequential CIFAR-100 (*Class-Il / Task-IL*)
++ Sequential CIFAR-100 resized 224x224 (ViT version) (*Class-Il / Task-IL*)
++ Sequential CIFAR-100 resized 224x224 (ResNet50 version) (*Class-Il / Task-IL*)
 + Permuted MNIST (*Domain-IL*)
 + Rotated MNIST (*Domain-IL*)
 + MNIST-360 (*General Continual Learning*)
++ Sequential CUB-200 (*Class-Il / Task-IL*)
 
 ## Pretrained backbones
 
@@ -117,7 +121,6 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 In the near future, we plan to incorporate the following improvements into this master repository:
 
 + ER+Tricks (*Rethinking Experience Replay: a Bag of Tricks for Continual Learning*)
-+ TwF & Pretraining Baselines (*Transfer without Forgetting*)
 + CCIC & CSSL Baselines (*Continual semi-supervised learning through contrastive interpolation consistency*)
 + LiDER (*On the Effectiveness of Lipschitz-Driven Rehearsal in Continual Learning*)
 + Additional X-DER datasets (*Class-Incremental Continual Learning into the eXtended DER-verse*)

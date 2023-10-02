@@ -132,50 +132,50 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     for t in range(start_task, end_task):
         model.net.train()
         train_loader, test_loader = dataset.get_data_loaders()
-        if hasattr(model, 'begin_task'):
-            model.begin_task(dataset)
-        if t and args.enable_other_metrics:
-            accs = evaluate(model, dataset, last=True)
-            results[t - 1] = results[t - 1] + accs[0]
-            if dataset.SETTING == 'class-il':
-                results_mask_classes[t - 1] = results_mask_classes[t - 1] + accs[1]
+        model.begin_task(dataset)
 
-        scheduler = dataset.get_scheduler(model, args) if not hasattr(model, 'scheduler') else model.scheduler
-        for epoch in range(model.args.n_epochs):
-            for i, data in enumerate(train_loader):
-                if args.debug_mode and i > 3:
-                    break
-                if hasattr(dataset.train_loader.dataset, 'logits'):
-                    inputs, labels, not_aug_inputs, logits = data
-                    inputs = inputs.to(model.device)
-                    labels = labels.to(model.device, dtype=torch.long)
-                    not_aug_inputs = not_aug_inputs.to(model.device)
-                    logits = logits.to(model.device)
-                    loss = model.meta_observe(inputs, labels, not_aug_inputs, logits, epoch=epoch)
-                else:
-                    inputs, labels, not_aug_inputs = data
-                    inputs, labels = inputs.to(model.device), labels.to(model.device, dtype=torch.long)
-                    not_aug_inputs = not_aug_inputs.to(model.device)
-                    loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch)
-                assert not math.isnan(loss)
-                progress_bar.prog(i, len(train_loader), epoch, t, loss)
+        if not args.inference_only:
+            if t and args.enable_other_metrics:
+                accs = evaluate(model, dataset, last=True)
+                results[t - 1] = results[t - 1] + accs[0]
+                if dataset.SETTING == 'class-il':
+                    results_mask_classes[t - 1] = results_mask_classes[t - 1] + accs[1]
 
-            if scheduler is not None:
-                scheduler.step()
+            scheduler = dataset.get_scheduler(model, args) if not hasattr(model, 'scheduler') else model.scheduler
+            for epoch in range(model.args.n_epochs):
+                for i, data in enumerate(train_loader):
+                    if args.debug_mode and i > 3:
+                        break
+                    if hasattr(dataset.train_loader.dataset, 'logits'):
+                        inputs, labels, not_aug_inputs, logits = data
+                        inputs = inputs.to(model.device)
+                        labels = labels.to(model.device, dtype=torch.long)
+                        not_aug_inputs = not_aug_inputs.to(model.device)
+                        logits = logits.to(model.device)
+                        loss = model.meta_observe(inputs, labels, not_aug_inputs, logits, epoch=epoch)
+                    else:
+                        inputs, labels, not_aug_inputs = data
+                        inputs, labels = inputs.to(model.device), labels.to(model.device, dtype=torch.long)
+                        not_aug_inputs = not_aug_inputs.to(model.device)
+                        loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch)
+                    assert not math.isnan(loss)
+                    progress_bar.prog(i, len(train_loader), epoch, t, loss)
 
-            if args.eval_epochs is not None and epoch % args.eval_epochs == 0 and epoch < model.args.n_epochs - 1:
-                epoch_accs = evaluate(model, dataset)
+                if scheduler is not None:
+                    scheduler.step()
 
-                log_accs(args, logger, epoch_accs, t, dataset.SETTING, epoch=epoch)
+                if args.eval_epochs is not None and epoch % args.eval_epochs == 0 and epoch < model.args.n_epochs - 1:
+                    epoch_accs = evaluate(model, dataset)
 
-        if hasattr(model, 'end_task'):
-            model.end_task(dataset)
+                    log_accs(args, logger, epoch_accs, t, dataset.SETTING, epoch=epoch)
+
+        model.end_task(dataset)
 
         accs = evaluate(model, dataset)
         results.append(accs[0])
         results_mask_classes.append(accs[1])
 
-        log_accs(args, logger, epoch_accs, t, dataset.SETTING)
+        log_accs(args, logger, accs, t, dataset.SETTING)
 
         if args.savecheck:
             save_obj = {

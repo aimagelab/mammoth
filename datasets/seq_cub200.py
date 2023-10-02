@@ -144,9 +144,8 @@ class SequentialCUB200(ContinualDataset):
             test_dataset = CUB200(base_path() + 'CUB200', train=False,
                                   download=True, transform=test_transform)
 
-        class_order = None
         train, test = store_masked_loaders(
-            train_dataset, test_dataset, self, class_order)
+            train_dataset, test_dataset, self)
 
         return train, test
 
@@ -175,3 +174,11 @@ class SequentialCUB200(ContinualDataset):
     def get_denormalization_transform():
         transform = DeNormalize(SequentialCUB200.MEAN, SequentialCUB200.STD)
         return transform
+
+    @staticmethod
+    def get_batch_size():
+        return 128
+
+    @staticmethod
+    def get_epochs():
+        return 30

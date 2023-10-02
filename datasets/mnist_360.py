@@ -210,7 +210,3 @@ class MNIST360(GCLDataset):
     @staticmethod
     def get_batch_size() -> int:
         return 16
-
-    @staticmethod
-    def get_minibatch_size() -> int:
-        return 16

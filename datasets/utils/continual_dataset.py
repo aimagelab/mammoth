@@ -31,6 +31,7 @@ class ContinualDataset:
         self.test_loaders = []
         self.i = 0
         self.args = args
+        self.N_CLASSES = self.N_CLASSES_PER_TASK * self.N_TASKS if not hasattr(self, 'N_CLASSES') else self.N_CLASSES
 
         if args.joint:
             self.N_CLASSES_PER_TASK = self.N_CLASSES
@@ -87,7 +88,7 @@ class ContinualDataset:
         """
         Returns the scheduler to be used for to the current dataset.
         """
-        raise NotImplementedError
+        return None
 
     @staticmethod
     def get_epochs():
@@ -97,9 +98,9 @@ class ContinualDataset:
     def get_batch_size():
         raise NotImplementedError
 
-    @staticmethod
-    def get_minibatch_size():
-        raise NotImplementedError
+    @classmethod
+    def get_minibatch_size(cls):
+        return cls.get_batch_size()
 
 
 def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,

@@ -12,6 +12,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from datasets import get_dataset
+from datasets.utils.continual_dataset import ContinualDataset
 
 from utils.conf import get_device
 from utils.magic import persistent_locals
@@ -72,6 +73,20 @@ class ContinualModel(nn.Module):
         offset1 = task * cpt
         offset2 = (task + 1) * cpt
         return offset1, offset2
+
+    def begin_task(self, dataset: ContinualDataset) -> None:
+        """
+        Prepares the model for the current task.
+        Executed before each task.
+        """
+        pass
+
+    def end_task(self, dataset: ContinualDataset) -> None:
+        """
+        Prepares the model for the next task.
+        Executed after each task.
+        """
+        pass
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
