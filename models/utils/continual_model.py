@@ -15,6 +15,7 @@ from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
 
 from utils.conf import get_device
+from utils.kornia_utils import to_kornia_transform
 from utils.magic import persistent_locals
 
 with suppress(ImportError):
@@ -40,6 +41,15 @@ class ContinualModel(nn.Module):
         self.N_CLASSES = self.dataset.N_CLASSES
         self.N_TASKS = self.dataset.N_TASKS
         self.SETTING = self.dataset.SETTING
+
+        try:
+            self.weak_transform = to_kornia_transform(transform.transforms[-1].transforms)
+            self.normalization_transform = to_kornia_transform(self.dataset.get_normalization_transform())
+        except BaseException:
+            print("Warning: could not initialize kornia transforms.")
+            self.weak_transform = None
+            self.normalization_transform = None
+
         if self.net is not None:
             self.opt = self.get_optimizer()
         else:
