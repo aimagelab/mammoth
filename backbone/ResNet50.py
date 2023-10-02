@@ -142,7 +142,7 @@ class ResNet(nn.Module):
                                        dilate=replace_stride_with_dilation[2])
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.classifier = nn.Linear(512 * block.expansion, num_classes)
-        
+
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(
@@ -159,7 +159,7 @@ class ResNet(nn.Module):
                 if isinstance(m, Bottleneck):
                     # type: ignore[arg-type]
                     nn.init.constant_(m.bn3.weight, 0)
-    
+
     def to(self, device, **kwargs):
         self.device = device
         return super().to(device, **kwargs)
@@ -229,7 +229,7 @@ class ResNet(nn.Module):
             ]
         elif returnt == 'both':
             return (out, feature)
-        
+
         raise NotImplementedError("Unknown return type. Must be in ['out', 'features', 'both', 'all'] but got {}".format(returnt))
 
     def set_grad_filter(self, filter_s: str, enable: bool) -> None:

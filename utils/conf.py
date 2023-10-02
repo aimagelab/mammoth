@@ -7,6 +7,7 @@ import random
 import torch
 import numpy as np
 
+
 def get_device() -> torch.device:
     """
     Returns the GPU device if available else CPU.
@@ -16,7 +17,7 @@ def get_device() -> torch.device:
     try:
         if torch.backends.mps.is_available() and torch.backends.mps.is_built():
             return torch.device("mps")
-    except:
+    except BaseException:
         pass
     return torch.device("cpu")
 
@@ -26,6 +27,7 @@ def base_path() -> str:
     Returns the base bath where to log accuracies and tensorboard data.
     """
     return './data/'
+
 
 def base_path_dataset() -> str:
     """
@@ -44,6 +46,6 @@ def set_random_seed(seed: int) -> None:
     torch.manual_seed(seed)
     try:
         torch.cuda.manual_seed_all(seed)
-    except:
+    except BaseException:
         print('Could not set cuda seed.')
         pass

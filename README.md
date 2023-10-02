@@ -116,6 +116,12 @@ In the near future, we plan to incorporate the following improvements into this 
 
 Pull requests welcome! [Get in touch](mailto:matteo.boschini@unimore.it)
 
+### Contributing
+
+Please use `autopep8` with parameters:
+- `--aggressive`
+- `--max-line-length=200`
+- `--ignore=E402`
 
 ## Previous versions
 

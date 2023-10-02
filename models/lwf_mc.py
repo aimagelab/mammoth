@@ -17,7 +17,7 @@ def get_parser() -> ArgumentParser:
 
     add_management_args(parser)
     add_experiment_args(parser)
-    
+
     parser.add_argument('--wd_reg', type=float, required=True,
                         help='L2 regularization applied to the parameters.')
     return parser
@@ -85,4 +85,3 @@ class LwFMC(ContinualModel):
         self.old_net = deepcopy(self.net.eval())
         self.net.train()
         self.current_task += 1
-    

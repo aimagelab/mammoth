@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from timm import create_model
 
+
 class L2PModel(nn.Module):
     def __init__(self, args, n_classes):
         super().__init__()
@@ -40,13 +41,12 @@ class L2PModel(nn.Module):
             # all parameters are frozen for original vit model
             for p in self.original_model.parameters():
                 p.requires_grad = False
-            
+
             # freeze args.freeze[blocks, patch_embed, cls_token] parameters
             for n, p in self.model.named_parameters():
                 if n.startswith(tuple(self.args.freeze)):
                     p.requires_grad = False
 
-    
     def forward(self, x, return_outputs=False):
         with torch.no_grad():
             if self.original_model is not None:
@@ -57,7 +57,7 @@ class L2PModel(nn.Module):
 
         outputs = self.model(x, task_id=-1, cls_features=cls_features, train=self.training)
         #self.prompt_idx = outputs['prompt_idx']
-        #print(self.prompt_idx)
+        # print(self.prompt_idx)
         logits = outputs['logits']
         if return_outputs:
             return outputs

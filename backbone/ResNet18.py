@@ -13,7 +13,7 @@ from torch.nn.functional import avg_pool2d, relu
 from backbone import MammothBackbone
 
 
-def conv3x3(in_planes: int, out_planes: int, stride: int=1) -> F.conv2d:
+def conv3x3(in_planes: int, out_planes: int, stride: int = 1) -> F.conv2d:
     """
     Instantiates a 3x3 convolutional layer with no bias.
     :param in_planes: number of input channels
@@ -31,7 +31,7 @@ class BasicBlock(nn.Module):
     """
     expansion = 1
 
-    def __init__(self, in_planes: int, planes: int, stride: int=1) -> None:
+    def __init__(self, in_planes: int, planes: int, stride: int = 1) -> None:
         """
         Instantiates the basic block of the network.
         :param in_planes: the number of input channels
@@ -97,11 +97,11 @@ class ResNet(MammothBackbone):
         self.layer3 = self._make_layer(block, nf * 4, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, nf * 8, num_blocks[3], stride=2)
         self.classifier = nn.Linear(nf * 8 * block.expansion, num_classes)
-        
+
     def to(self, device, **kwargs):
         self.device = device
         return super().to(device, **kwargs)
-    
+
     def set_return_prerelu(self, enable=True):
         self.return_prerelu = enable
         for c in self.modules():
@@ -132,7 +132,7 @@ class ResNet(MammothBackbone):
         :param returnt: return type (a string among 'out', 'features', 'both', and 'full')
         :return: output tensor (output_classes)
         """
-        out_0 = self.bn1(self.conv1(x)) # 64, 32, 32
+        out_0 = self.bn1(self.conv1(x))  # 64, 32, 32
         if self.return_prerelu:
             out_0_t = out_0.clone()
         out_0 = relu(out_0)
@@ -144,7 +144,7 @@ class ResNet(MammothBackbone):
         out_3 = self.layer3(out_2)  # -> 256, 8, 8
         out_4 = self.layer4(out_3)  # -> 512, 4, 4
 
-        feature = avg_pool2d(out_4, out_4.shape[2]) # -> 512, 1, 1
+        feature = avg_pool2d(out_4, out_4.shape[2])  # -> 512, 1, 1
         feature = feature.view(feature.size(0), -1)  # 512
 
         if returnt == 'features':
@@ -168,7 +168,7 @@ class ResNet(MammothBackbone):
         raise NotImplementedError("Unknown return type. Must be in ['out', 'features', 'both', 'all'] but got {}".format(returnt))
 
 
-def resnet18(nclasses: int, nf: int=64) -> ResNet:
+def resnet18(nclasses: int, nf: int = 64) -> ResNet:
     """
     Instantiates a ResNet18 network.
     :param nclasses: number of output classes

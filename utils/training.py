@@ -24,6 +24,7 @@ try:
 except ImportError:
     wandb = None
 
+
 def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> None:
     """
     Given the output tensor, the dataset at hand and the current task,
@@ -35,7 +36,7 @@ def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> No
     """
     outputs[:, 0:k * dataset.N_CLASSES_PER_TASK] = -float('inf')
     outputs[:, (k + 1) * dataset.N_CLASSES_PER_TASK:
-               dataset.N_TASKS * dataset.N_CLASSES_PER_TASK] = -float('inf')
+            dataset.N_TASKS * dataset.N_CLASSES_PER_TASK] = -float('inf')
 
 
 def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tuple[list, list]:
@@ -135,9 +136,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             model.begin_task(dataset)
         if t and not args.ignore_other_metrics:
             accs = evaluate(model, dataset, last=True)
-            results[t-1] = results[t-1] + accs[0]
+            results[t - 1] = results[t - 1] + accs[0]
             if dataset.SETTING == 'class-il':
-                results_mask_classes[t-1] = results_mask_classes[t-1] + accs[1]
+                results_mask_classes[t - 1] = results_mask_classes[t - 1] + accs[1]
 
         scheduler = dataset.get_scheduler(model, args)
         for epoch in range(model.args.n_epochs):
@@ -179,9 +180,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             logger.log_fullacc(accs)
 
         if not args.nowand:
-            d2={'RESULT_class_mean_accs': mean_acc[0], 'RESULT_task_mean_accs': mean_acc[1],
-                **{f'RESULT_class_acc_{i}': a for i, a in enumerate(accs[0])},
-                **{f'RESULT_task_acc_{i}': a for i, a in enumerate(accs[1])}}
+            d2 = {'RESULT_class_mean_accs': mean_acc[0], 'RESULT_task_mean_accs': mean_acc[1],
+                  **{f'RESULT_class_acc_{i}': a for i, a in enumerate(accs[0])},
+                  **{f'RESULT_task_acc_{i}': a for i, a in enumerate(accs[1])}}
 
             wandb.log(d2)
 
@@ -204,7 +205,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         logger.add_forgetting(results, results_mask_classes)
         if model.NAME != 'icarl' and model.NAME != 'pnn':
             logger.add_fwt(results, random_results_class,
-                    results_mask_classes, random_results_task)
+                           results_mask_classes, random_results_task)
 
     if not args.disable_log:
         logger.write(vars(args))

@@ -5,11 +5,12 @@ import types
 
 from models.twf_utils.afd import MultiTaskAFDAlternative
 
+
 @torch.no_grad()
 def init_twf(model, dataset):
     model.teacher = deepcopy(model.net.eval())
     model.teacher.to(model.device)
-                
+
     model.net.set_return_prerelu(True)
     model.teacher.set_return_prerelu(True)
 
@@ -18,7 +19,7 @@ def init_twf(model, dataset):
         ret = []
         x = x.to(self.device)
         x = self.bn1(self.conv1(x))
-        
+
         ret.append(x.clone().detach())
         x = F.relu(x)
         if hasattr(self, 'maxpool'):
@@ -48,7 +49,7 @@ def init_twf(model, dataset):
     _, feats_t = model.net(x, returnt='full')
     teacher_input = x
     pret_feats_t = model.teacher(teacher_input)
-    
+
     # Initialize adapters
     for i, (x, pret_x) in enumerate(zip(feats_t, pret_feats_t)):
         # clear_grad=self.args.detach_skip_grad == 1
@@ -63,7 +64,7 @@ def init_twf(model, dataset):
             teacher_forcing_or=False,
             lambda_forcing_loss=model.args.lambda_fp_replay,
             use_overhaul_fd=True, use_hard_softmax=True,
-            lambda_diverse_loss=model.args.lambda_diverse_loss, 
+            lambda_diverse_loss=model.args.lambda_diverse_loss,
             attn_mode="chsp",
             min_resize_threshold=model.args.min_resize_threshold,
             resize_maps=model.args.resize_maps == 1,

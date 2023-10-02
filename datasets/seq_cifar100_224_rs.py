@@ -10,6 +10,7 @@ from datasets.utils.continual_dataset import ContinualDataset, store_masked_load
 from datasets.transforms.denormalization import DeNormalize
 from datasets.seq_cifar100 import MyCIFAR100, TCIFAR100
 
+
 class SequentialCIFAR100224RS(ContinualDataset):
 
     NAME = 'seq-cifar100-224-rs'
@@ -19,16 +20,16 @@ class SequentialCIFAR100224RS(ContinualDataset):
     N_CLASSES = 100
     SIZE = (224, 224)
     TRANSFORM = transforms.Compose(
-            [transforms.Resize(224),
-             transforms.RandomCrop(224, padding=28),
-             transforms.RandomHorizontalFlip(),
-             transforms.ToTensor(),
-             transforms.Normalize((0.5071, 0.4867, 0.4408),
-                                  (0.2675, 0.2565, 0.2761))]
-                                  )
+        [transforms.Resize(224),
+         transforms.RandomCrop(224, padding=28),
+         transforms.RandomHorizontalFlip(),
+         transforms.ToTensor(),
+         transforms.Normalize((0.5071, 0.4867, 0.4408),
+                              (0.2675, 0.2565, 0.2761))]
+    )
     TEST_TRANSFORM = transforms.Compose(
-            [transforms.Resize(224), transforms.ToTensor(), transforms.Normalize((0.5071, 0.4867, 0.4408),
-                                         (0.2675, 0.2565, 0.2761))])
+        [transforms.Resize(224), transforms.ToTensor(), transforms.Normalize((0.5071, 0.4867, 0.4408),
+                                                                             (0.2675, 0.2565, 0.2761))])
 
     def get_data_loaders(self):
         transform = self.TRANSFORM
@@ -36,16 +37,16 @@ class SequentialCIFAR100224RS(ContinualDataset):
         test_transform = self.TEST_TRANSFORM
 
         train_dataset = MyCIFAR100(base_path() + 'CIFAR100', train=True,
-                                  download=True, transform=transform)
+                                   download=True, transform=transform)
         if self.args.validation:
             train_dataset, test_dataset = get_train_val(train_dataset,
-                                                    test_transform, self.NAME)
+                                                        test_transform, self.NAME)
         else:
-            test_dataset = TCIFAR100(base_path() + 'CIFAR100',train=False,
-                                   download=True, transform=test_transform)
+            test_dataset = TCIFAR100(base_path() + 'CIFAR100', train=False,
+                                     download=True, transform=test_transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
-        
+
         return train, test
 
     @staticmethod
@@ -74,7 +75,7 @@ class SequentialCIFAR100224RS(ContinualDataset):
         transform = DeNormalize((0.5071, 0.4867, 0.4408),
                                 (0.2675, 0.2565, 0.2761))
         return transform
-    
+
     @staticmethod
     def get_epochs():
         return 50

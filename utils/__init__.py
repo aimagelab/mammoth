@@ -5,6 +5,7 @@
 
 import os
 
+
 def create_if_not_exists(path: str) -> None:
     """
     Creates the specified folder if it does not exist.
@@ -12,6 +13,7 @@ def create_if_not_exists(path: str) -> None:
     """
     if not os.path.exists(path):
         os.makedirs(path)
+
 
 def none_or_float(value):
     if value == 'None':

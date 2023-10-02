@@ -215,7 +215,7 @@ class XDer(ContinualModel):
             scl_labels = labels[:self.args.simclr_batch_size]
             scl_na_inputs = not_aug_inputs[:self.args.simclr_batch_size]
             if not self.buffer.is_empty():
-                buf_idxscl, buf_na_inputsscl, buf_labelsscl, buf_logitsscl, _ = self.buffer.get_data(self.args.simclr_batch_size, 
+                buf_idxscl, buf_na_inputsscl, buf_labelsscl, buf_logitsscl, _ = self.buffer.get_data(self.args.simclr_batch_size,
                                                                                                      transform=None, return_index=True, device=self.device)
                 scl_na_inputs = torch.cat([buf_na_inputsscl, scl_na_inputs])
                 scl_labels = torch.cat([buf_labelsscl, scl_labels])

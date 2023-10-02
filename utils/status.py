@@ -16,7 +16,7 @@ class ProgressBar:
         self.verbose = verbose
 
     def prog(self, i: int, max_iter: int, epoch: Union[int, str],
-                     task_number: int, loss: float) -> None:
+             task_number: int, loss: float) -> None:
         """
         Prints out the progress bar on the stderr file.
         :param i: the current iteration
@@ -51,6 +51,7 @@ class ProgressBar:
                 round(3600 / (self.running_sum / i * max_iter), 2),
                 round(loss, 8)
             ), file=sys.stderr, end='', flush=True)
+
 
 def progress_bar(i: int, max_iter: int, epoch: Union[int, str],
                  task_number: int, loss: float) -> None:

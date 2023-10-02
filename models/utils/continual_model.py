@@ -11,7 +11,7 @@ from typing import List
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from datasets import get_dataset 
+from datasets import get_dataset
 
 from utils.conf import get_device
 from utils.magic import persistent_locals
@@ -59,10 +59,10 @@ class ContinualModel(nn.Module):
 
     def get_optimizer(self):
         # check if optimizer is in torch.optim
-        supported_optims = {optim_name.lower():optim_name for optim_name in dir(optim)}
+        supported_optims = {optim_name.lower(): optim_name for optim_name in dir(optim)}
         if self.args.optimizer.lower() in supported_optims:
             opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.net.parameters(), lr=self.args.lr,
-                                    weight_decay=self.args.optim_wd, momentum=self.args.optim_mom)
+                                                                                weight_decay=self.args.optim_wd, momentum=self.args.optim_mom)
         else:
             raise ValueError('Unknown optimizer: {}'.format(self.args.optimizer))
         return opt
@@ -108,7 +108,7 @@ class ContinualModel(nn.Module):
         are automatically logged to wandb upon return if wandb is installed.
         """
         if not self.args.nowand and not self.args.debug_mode:
-            tmp = {k: (v.item() if isinstance(v, torch.Tensor) and v.dim() == 0 else v) \
+            tmp = {k: (v.item() if isinstance(v, torch.Tensor) and v.dim() == 0 else v)
                    for k, v in locals.items() if k.startswith('_wandb_') or k.startswith('loss')}
             tmp.update(extra or {})
             wandb.log(tmp)

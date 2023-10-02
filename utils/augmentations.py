@@ -121,6 +121,7 @@ class strong_aug():
                 [self.transform(a) for a in flip]
             )), self.mean, self.std)
 
+
 class DoubleTransform(object):
     def __init__(self, tf):
         self.transform = tf
@@ -128,6 +129,7 @@ class DoubleTransform(object):
     @torch.no_grad()
     def __call__(self, img, other_img):
         return self.transform(img), other_img
+
 
 class CustomRandomHorizontalFlip(object):
     def __init__(self, p=0.5):
@@ -155,15 +157,15 @@ class CustomRandomCrop(object):
 
         maps = []
         for idx, map in enumerate(other_img):
-            m=map.unsqueeze(0)
+            m = map.unsqueeze(0)
             orig_size = m.shape[-2:]
             if self.resize:
                 if self.min_resize_index is None or idx <= self.min_resize_index:
-                    m = TF.resize(m, (int(orig_size[0]*2), int(orig_size[1]*2)), interpolation=transforms.InterpolationMode.NEAREST)
+                    m = TF.resize(m, (int(orig_size[0] * 2), int(orig_size[1] * 2)), interpolation=transforms.InterpolationMode.NEAREST)
 
-            rate = (self.size[0]//m.shape[-1])
-            _i, _j, _h, _w = i//rate, j//rate, h//rate, w//rate
-            m = TF.pad(m, self.padding//rate)
+            rate = (self.size[0] // m.shape[-1])
+            _i, _j, _h, _w = i // rate, j // rate, h // rate, w // rate
+            m = TF.pad(m, self.padding // rate)
             m = TF.crop(m, _i, _j, _h, _w)
 
             if self.resize:
@@ -172,7 +174,8 @@ class CustomRandomCrop(object):
 
             maps.append(m.squeeze(0))
         return TF.crop(img, i, j, h, w), maps
-    
+
+
 class DoubleCompose(object):
     def __init__(self, transforms):
         self.transforms = transforms

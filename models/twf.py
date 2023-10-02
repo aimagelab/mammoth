@@ -15,6 +15,7 @@ def batch_iterate(size: int, batch_size: int):
     for i in range(n_chunks):
         yield torch.LongTensor(list(range(i * batch_size, (i + 1) * batch_size)))
 
+
 def add_aux_dataset_args(parser: ArgumentParser) -> None:
     """
     Adds the arguments used to load initial (pretrain) checkpoint
@@ -25,6 +26,7 @@ def add_aux_dataset_args(parser: ArgumentParser) -> None:
     # parser.add_argument('--pre_dataset', type=str, required=True,
     #                     choices=['cifar100', 'tinyimgR', 'imagenet'])
     # parser.add_argument('--stop_after_prep', action='store_true')
+
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(
@@ -40,13 +42,13 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--der_beta', type=float, required=True,
                         help='Distillation beta hyperparameter.')
     parser.add_argument('--lambda_fp', type=float, required=True,
-                        help='weight of feature propagation loss replay') 
+                        help='weight of feature propagation loss replay')
     parser.add_argument('--lambda_diverse_loss', type=float, required=False, default=0,
                         help='Diverse loss hyperparameter.')
     parser.add_argument('--lambda_fp_replay', type=float, required=False, default=0,
                         help='weight of feature propagation loss replay')
     parser.add_argument('--resize_maps', type=int, required=False, choices=[0, 1], default=0,
-                        help='Apply downscale and upscale to feature maps before save in buffer?') 
+                        help='Apply downscale and upscale to feature maps before save in buffer?')
     parser.add_argument('--min_resize_threshold', type=int, required=False, default=16,
                         help='Min size of feature maps to be resized?')
 
@@ -79,7 +81,7 @@ class TwF(ContinualModel):
         tfs = []
         for tf in transform:
             if isinstance(tf, transforms.RandomCrop):
-                tfs.append(CustomRandomCrop(tf.size, tf.padding, resize=self.args.resize_maps==1, min_resize_index=2))
+                tfs.append(CustomRandomCrop(tf.size, tf.padding, resize=self.args.resize_maps == 1, min_resize_index=2))
             elif isinstance(tf, transforms.RandomHorizontalFlip):
                 tfs.append(CustomRandomHorizontalFlip(tf.p))
             elif isinstance(tf, transforms.Compose):
@@ -120,7 +122,7 @@ class TwF(ContinualModel):
                     self.buffer.attention_maps[idx] = [
                         at[idx % len(at)].to(self.device) for at in attention_masks]
 
-        self.net.train() # TODO: check
+        self.net.train()  # TODO: check
         self.task += 1
 
     def begin_task(self, dataset):
@@ -170,7 +172,6 @@ class TwF(ContinualModel):
 
         return loss / (i + 1), attention_maps
 
-
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         labels = labels.long()
 
@@ -203,7 +204,7 @@ class TwF(ContinualModel):
         self.opt.zero_grad()
 
         loss = self.loss(
-            stream_logits[:, self.task*self.cpt:(self.task+1)*self.cpt], labels % self.cpt)
+            stream_logits[:, self.task * self.cpt:(self.task + 1) * self.cpt], labels % self.cpt)
 
         loss_er = torch.tensor(0.)
         loss_der = torch.tensor(0.)
@@ -218,7 +219,7 @@ class TwF(ContinualModel):
             teacher_forcing = torch.cat(
                 (torch.zeros((B)).bool().to(self.device), buffer_teacher_forcing))
             attention_maps = [
-                [torch.ones_like(map) for map in buf_attention_maps[0]]]*B + buf_attention_maps
+                [torch.ones_like(map) for map in buf_attention_maps[0]]] * B + buf_attention_maps
 
             loss_afd, all_attention_maps = self.partial_distill_loss(all_partial_features[-len(
                 all_pret_partial_features):], all_pret_partial_features, all_labels,
@@ -226,7 +227,7 @@ class TwF(ContinualModel):
 
             stream_attention_maps = [ap[:B] for ap in all_attention_maps]
 
-            loss_er = self.loss(buf_outputs[:, :(self.task+1)*self.cpt], buf_labels)
+            loss_er = self.loss(buf_outputs[:, :(self.task + 1) * self.cpt], buf_labels)
 
             loss_der = F.mse_loss(buf_outputs, buf_logits)
 
@@ -241,6 +242,5 @@ class TwF(ContinualModel):
                              labels=labels,
                              logits=stream_logits.data,
                              attention_maps=stream_attention_maps)
-        
 
         return loss.item()

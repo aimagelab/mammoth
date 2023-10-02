@@ -152,7 +152,7 @@ class Buffer:
                     self.task_labels[index] = task_labels[i].to(self.device)
                 if attention_maps is not None:
                     self.attention_maps[index] = [at[i].byte().to(self.device) for at in attention_maps]
-                    
+
     def get_data(self, size: int, transform: nn.Module = None, return_index=False, device=None) -> Tuple:
         """
         Random samples a batch of size items.

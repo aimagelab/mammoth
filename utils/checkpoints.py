@@ -2,6 +2,7 @@
 import torch
 import os
 
+
 def _load_mammoth_model(dict_keys, model: torch.nn.Module, args):
     for k in list(dict_keys):
         if args.distributed != 'dp':
@@ -16,7 +17,7 @@ def _load_mammoth_model(dict_keys, model: torch.nn.Module, args):
     if 'lucir' in args.model.lower():
         model.register_buffer('classes_so_far', torch.zeros_like(
             dict_keys['classes_so_far']).to('cpu'))
-    
+
     model.load_state_dict(dict_keys)
     model.net.to(model.device)
     return model
@@ -49,19 +50,20 @@ def _load_net(dict_keys, model: torch.nn.Module, args, ignore_classifier=True):
     for k in list(dict_keys):
         if 'wrappee.' in k:
             dict_keys[k.replace('wrappee.', '')] = dict_keys.pop(k)
-    
+
     try:
         model.net.load_state_dict(dict_keys)
-    except:
+    except BaseException:
         _, unm = model.net.load_state_dict(dict_keys, strict=False)
         if ignore_classifier:
             assert all(['classifier' in k for k in unm]
-                        ), f"Some of the keys not loaded where not classifier keys: {unm}"
+                       ), f"Some of the keys not loaded where not classifier keys: {unm}"
         else:
             assert unm is None, f"Missing keys: {unm}"
-            
+
     model.net.to(model.device)
     return model
+
 
 def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=False) -> torch.nn.Module:
     """
@@ -70,10 +72,10 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
     - Handles checkpoints from previous versions of the code.
     - Handles head initialization for LUCIR.
     :param args: the model with the checkpoint loaded.
-    """   
+    """
     if not os.path.exists(args.loadcheck):
         raise ValueError('The given checkpoint does not exist.')
-    
+
     saved_obj = torch.load(args.loadcheck, map_location=torch.device("cpu"))
 
     if 'args' in saved_obj and 'model' in saved_obj:
@@ -85,7 +87,7 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
             if args.model != loading_model:
                 print(f'WARNING: The loaded model was trained with a different model: {loading_model}')
             model.load_buffer(saved_obj['buffer'])
-        
+
         return model, saved_obj['results']
     else:
         # Model only checkpoint
@@ -93,12 +95,13 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
 
         return model, None
 
+
 def _check_loaded_args(args, loaded_args):
     ignored_args = ['loadcheck', 'start_from', 'stop_after', 'conf_jobnum', 'conf_host', 'conf_timestamp', 'distributed', 'examples_log', 'examples_full_log',
                     'intensive_savecheck', 'job_number', 'conf_git_commit', 'loss_log', 'tensorboard', 'seed', 'savecheck', 'notes', 'non_verbose', 'autorelaunch', 'force_compat', 'conf_external_path']
     mismatched_args = [x for x in vars(args) if x not in ignored_args and (
         x not in vars(loaded_args) or getattr(args, x) != getattr(loaded_args, x))]
-    
+
     if len(mismatched_args):
         if 'force_compat' not in vars(args) or args.force_compat:
             print(

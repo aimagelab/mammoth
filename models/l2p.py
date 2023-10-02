@@ -5,7 +5,7 @@
 
 import torch
 
-import models.l2p_utils.vit_prompt # required to register the models
+import models.l2p_utils.vit_prompt  # required to register the models
 from models.utils.continual_model import ContinualModel
 from utils.args import add_management_args, add_experiment_args, ArgumentParser
 from datasets import get_dataset
@@ -13,11 +13,12 @@ import numpy as np
 from models.l2p_utils.l2p_model import L2PModel
 from utils import none_or_float
 
+
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Learning to Prompt (L2P)')
     add_management_args(parser)
     add_experiment_args(parser)
-    #add_rehearsal_args(parser)
+    # add_rehearsal_args(parser)
 
     # Optimizer parameters
     parser.add_argument('--opt', default='adam', type=str, metavar='OPTIMIZER', help='Optimizer (default: "adam"')
@@ -30,7 +31,7 @@ def get_parser() -> ArgumentParser:
     # Prompt parameters
     parser.add_argument('--prompt_pool', default=True, type=bool,)
     parser.add_argument('--pool_size_l2p', default=10, type=int,)
-    parser.add_argument('--length', default=5,type=int, )
+    parser.add_argument('--length', default=5, type=int, )
     parser.add_argument('--top_k', default=5, type=int, )
     parser.add_argument('--initializer', default='uniform', type=str,)
     parser.add_argument('--prompt_key', default=True, type=bool,)
@@ -62,8 +63,9 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--unscale_lr', type=bool, default=True, help='scaling lr by batch size (default: True)')
 
     # parser.add_argument('--network', type=str, default='vit_base_patch16_224', help='Network to use')
-    parser.add_argument('--clip_grad', type=none_or_float, default=None, metavar='NORM',  help='Clip gradient norm (default: None, no clipping)')
+    parser.add_argument('--clip_grad', type=none_or_float, default=None, metavar='NORM', help='Clip gradient norm (default: None, no clipping)')
     return parser
+
 
 class L2P(ContinualModel):
     NAME = 'l2p'
@@ -80,7 +82,7 @@ class L2P(ContinualModel):
         self.current_task = 0
         self.class_mask = torch.arange(self.n_classes, dtype=int) \
             .reshape(self.dataset.N_TASKS, self.n_classes // self.dataset.N_TASKS).tolist()
-    
+
     def begin_task(self, dataset):
         self.net.original_model.eval()
 
@@ -94,14 +96,14 @@ class L2P(ContinualModel):
             not_mask = np.setdiff1d(np.arange(self.n_classes), mask)
             not_mask = torch.tensor(not_mask, dtype=torch.int64).to(self.device)
             logits = logits.index_fill(dim=1, index=not_mask, value=float('-inf'))
-        
+
         offset_1, offset_2 = self._compute_offsets(self.current_task)
         logits = logits[:, offset_1:offset_2]
 
         loss = self.loss(logits, labels)
         if self.args.pull_constraint and 'reduce_sim' in outputs:
             loss = loss - self.args.pull_constraint_coeff * outputs['reduce_sim']
-        
+
         self.opt.zero_grad()
         loss.backward()
         if self.args.clip_grad is not None:
@@ -109,13 +111,13 @@ class L2P(ContinualModel):
         self.opt.step()
 
         return loss.item()
-    
+
     def end_task(self, dataset):
         self.current_task += 1
-    
+
     def forward(self, x):
-        if self.current_task>0:
-            offset_1, offset_2 = self._compute_offsets(self.current_task-1)
+        if self.current_task > 0:
+            offset_1, offset_2 = self._compute_offsets(self.current_task - 1)
         else:
             offset_2 = self.N_CLASSES
         return self.net(x)[:, :offset_2]

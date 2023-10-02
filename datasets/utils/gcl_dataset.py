@@ -11,4 +11,3 @@ class GCLDataset:
     SETTING = None
     N_CLASSES = None
     LENGTH = None
-    

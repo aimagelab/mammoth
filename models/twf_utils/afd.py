@@ -78,7 +78,7 @@ class DiverseLoss(nn.Module):
         loss -= 1 / self.temp
         loss -= math.log(batch_size)
 
-        return self.lambda_loss*loss
+        return self.lambda_loss * loss
 
 
 class SoftAttentionSoftmax(nn.Module):
@@ -121,7 +121,7 @@ class BinaryGumbelSoftmax(nn.Module):
 class HardAttentionSoftmax(nn.Module):
 
     def __init__(self, fin: int, fout: int, n_tasks: int,
-                 tau: float = (2./3.)):
+                 tau: float = (2. / 3.)):
 
         super(HardAttentionSoftmax, self).__init__()
 
@@ -129,7 +129,7 @@ class HardAttentionSoftmax(nn.Module):
         self.n_tasks = n_tasks
         self.gumbel = BinaryGumbelSoftmax(tau)
 
-        self.l = ConditionalLinear(self.fin, 2*self.fout, n_tasks)
+        self.l = ConditionalLinear(self.fin, 2 * self.fout, n_tasks)
 
     def forward(self, x, task_id, flag_stop_grad=None):
         assert len(task_id) == len(x)
@@ -407,14 +407,15 @@ class TeacherForcingLoss(nn.Module):
         teacher_loss *= self.lambda_forcing_loss
         return teacher_loss
 
+
 class MultiTaskAFDAlternative(nn.Module):
 
     def __init__(self, chw: Tuple[int], n_tasks: int,
-                 cpt: int, clear_grad: bool = False, 
+                 cpt: int, clear_grad: bool = False,
                  use_overhaul_fd: bool = False,
                  lambda_diverse_loss: float = 0.0,
                  use_hard_softmax: bool = True,
-                 teacher_forcing_or: bool = False, 
+                 teacher_forcing_or: bool = False,
                  lambda_forcing_loss: float = 0.0,
                  attn_mode: str = 'ch',
                  resize_maps: bool = False,
@@ -479,7 +480,7 @@ class MultiTaskAFDAlternative(nn.Module):
                 if self.resize_maps:
                     attention_map = self.attn_fn.upsample(attention_map, fm_t.shape[1:])
                 loss += self.teacher_forcing_loss(logits, output_rho,
-                                              attention_map, teacher_forcing)
+                                                  attention_map, teacher_forcing)
         if self.use_overhaul_fd:
             fm_t = self.teacher_transform(fm_t, targets)
 

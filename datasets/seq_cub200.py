@@ -14,6 +14,7 @@ from torchvision.transforms import functional as TF
 import torch
 from torch import nn
 
+
 class MyCUB200(Dataset):
     """
     Overrides dataset to change the getitem function.
@@ -41,15 +42,13 @@ class MyCUB200(Dataset):
                 print('Downloading dataset')
                 download(ln, filename=os.path.join(root, 'cub_200_2011.zip'), unzip=True, unzip_path=root, clean=True)
 
-
-
         data_file = np.load(os.path.join(root, 'train_data.npz' if train else 'test_data.npz'), allow_pickle=True)
 
         self.data = data_file['data']
         self.targets = torch.from_numpy(data_file['targets']).long()
         self.classes = data_file['classes']
         self.segs = data_file['segs']
-        self._return_segmask=False
+        self._return_segmask = False
 
     def __getitem__(self, index: int) -> Tuple[type(Image), int, type(Image)]:
         """
@@ -76,7 +75,7 @@ class MyCUB200(Dataset):
 
         if self._return_segmask:
             raise "Unsupported segmentation output in training set!"
-            
+
         return ret_tuple
 
     def __len__(self) -> int:
@@ -88,7 +87,6 @@ class CUB200(MyCUB200):
         super().__init__(root, train=train, transform=transform,
                          target_transform=target_transform, download=download)
 
-    
     def __getitem__(self, index: int, ret_segmask=False) -> Tuple[type(Image), int, type(Image)]:
         """
         Gets the requested element from the dataset.
@@ -102,7 +100,7 @@ class CUB200(MyCUB200):
 
         if self.transform is not None:
             img = self.transform(img)
-        
+
         if self.target_transform is not None:
             target = self.target_transform(target)
 
@@ -112,9 +110,10 @@ class CUB200(MyCUB200):
             seg = self.segs[index]
             seg = Image.fromarray(seg, mode='L')
             seg = transforms.ToTensor()(transforms.CenterCrop((MyCUB200.IMG_SIZE, MyCUB200.IMG_SIZE))(seg))[0]
-            ret_tuple.append((seg>0).int())
+            ret_tuple.append((seg > 0).int())
 
         return ret_tuple
+
 
 class SequentialCUB200(ContinualDataset):
     NAME = 'seq-cub200'
@@ -122,20 +121,20 @@ class SequentialCUB200(ContinualDataset):
     N_CLASSES_PER_TASK = 20
     N_TASKS = 10
     MEAN, STD = (0.4856, 0.4994, 0.4324), (0.2272, 0.2226, 0.2613)
-    TRANSFORM = transforms.Compose([ 
-         transforms.Resize(MyCUB200.IMG_SIZE),
-         transforms.RandomCrop(MyCUB200.IMG_SIZE, padding=4),
-         transforms.RandomHorizontalFlip(),
-         transforms.ToTensor(),
-         transforms.Normalize(MEAN, STD)])
+    TRANSFORM = transforms.Compose([
+        transforms.Resize(MyCUB200.IMG_SIZE),
+        transforms.RandomCrop(MyCUB200.IMG_SIZE, padding=4),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(MEAN, STD)])
     TEST_TRANSFORM = MyCUB200.TEST_TRANSFORM
-    
+
     def get_data_loaders(self, test_only=False):
         transform = self.TRANSFORM
 
         test_transform = transforms.Compose(
-            [transforms.Resize((MyCUB200.IMG_SIZE,MyCUB200.IMG_SIZE)), transforms.ToTensor(), self.get_normalization_transform()])
-        
+            [transforms.Resize((MyCUB200.IMG_SIZE, MyCUB200.IMG_SIZE)), transforms.ToTensor(), self.get_normalization_transform()])
+
         train_dataset = MyCUB200(base_path() + 'CUB200', train=True,
                                  download=True, transform=transform)
         if self.args.validation:

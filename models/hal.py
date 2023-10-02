@@ -63,7 +63,7 @@ class HAL(ContinualModel):
 
         # fine tune on memory buffer
         for _ in range(self.finetuning_epochs):
-            inputs, labels = self.buffer.get_data(self.args.batch_size, 
+            inputs, labels = self.buffer.get_data(self.args.batch_size,
                                                   transform=self.transform, device=self.device)
             self.spare_opt.zero_grad()
             out = self.spare_model(inputs)

@@ -100,7 +100,7 @@ default_cfgs = {
             'B_8-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.01-res_224.npz'),
     'vit_large_patch32_224': _cfg(
         url='',  # no official model weights for this combo, only for in21k
-        ),
+    ),
     'vit_large_patch32_384': _cfg(
         url='https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-vitjx/jx_vit_large_p32_384-9b920ba8.pth',
         input_size=(3, 384, 384), crop_pct=1.0),
@@ -323,6 +323,7 @@ class ParallelBlock(nn.Module):
         else:
             return self._forward(x)
 
+
 class VisionTransformer(nn.Module):
     """ Vision Transformer
     A PyTorch impl of : `An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale`
@@ -391,11 +392,11 @@ class VisionTransformer(nn.Module):
         self.prompt_pool = prompt_pool
         self.head_type = head_type
         self.use_prompt_mask = use_prompt_mask
-        
-        if prompt_length is not None and pool_size is not None and prompt_pool: 
+
+        if prompt_length is not None and pool_size is not None and prompt_pool:
             self.prompt = Prompt(length=prompt_length, embed_dim=embed_dim, embedding_key=embedding_key, prompt_init=prompt_init,
-                    prompt_pool=prompt_pool, prompt_key=prompt_key, pool_size=pool_size, top_k=top_k, batchwise_prompt=batchwise_prompt,
-                    prompt_key_init=prompt_key_init,)
+                                 prompt_pool=prompt_pool, prompt_key=prompt_key, pool_size=pool_size, top_k=top_k, batchwise_prompt=batchwise_prompt,
+                                 prompt_key_init=prompt_key_init,)
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
         self.blocks = nn.Sequential(*[
@@ -471,17 +472,17 @@ class VisionTransformer(nn.Module):
             self.total_prompt_len = res['total_prompt_len']
             x = res['prompted_embedding']
         else:
-            res=dict()
+            res = dict()
         if self.cls_token is not None:
             x = torch.cat((self.cls_token.expand(x.shape[0], -1, -1), x), dim=1)
-        
+
         x = self.pos_drop(x + self.pos_embed)
 
         if self.grad_checkpointing and not torch.jit.is_scripting():
             x = checkpoint_seq(self.blocks, x)
         else:
             x = self.blocks(x)
-        
+
         x = self.norm(x)
         res['x'] = x
 
@@ -501,13 +502,13 @@ class VisionTransformer(nn.Module):
             x = x.mean(dim=1)
         else:
             raise ValueError(f'Invalid classifier={self.classifier}')
-        
+
         res['pre_logits'] = x
 
         x = self.fc_norm(x)
-        
+
         res['logits'] = self.head(x)
-        
+
         return res
 
     def forward(self, x, task_id=-1, cls_features=None, train=False):
@@ -740,6 +741,7 @@ def vit_base_patch16_224_l2p(pretrained=False, **kwargs):
     model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, **kwargs)
     model = _create_vision_transformer('vit_base_patch16_224', pretrained=pretrained, **model_kwargs)
     return model
+
 
 @register_model
 def vit_small_patch16_224_l2p(pretrained=False, **kwargs):

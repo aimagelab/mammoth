@@ -42,6 +42,7 @@ def num_flat_features(x: torch.Tensor) -> int:
         num_features *= ff
     return num_features
 
+
 class MammothBackbone(nn.Module):
 
     def __init__(self, **kwargs) -> None:
@@ -78,7 +79,7 @@ class MammothBackbone(nn.Module):
         progress = 0
         for pp in list(self.parameters()):
             cand_params = new_params[progress: progress +
-                torch.tensor(pp.size()).prod()].view(pp.size())
+                                     torch.tensor(pp.size()).prod()].view(pp.size())
             progress += torch.tensor(pp.size()).prod()
             pp.data = cand_params
 
