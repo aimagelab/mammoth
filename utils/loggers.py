@@ -13,28 +13,53 @@ import numpy as np
 from utils import create_if_not_exists
 from utils.conf import base_path
 from utils.metrics import backward_transfer, forward_transfer, forgetting
+import wandb
 
 useless_args = ['dataset', 'tensorboard', 'validation', 'model',
                 'csv_log', 'notes', 'load_best_args']
 
 
+def log_accs(args, logger, accs, t, setting, epoch=None):
+    mean_acc = np.mean(accs, axis=1)
+    print_mean_accuracy(mean_acc, t + 1, setting, joint=args.joint, epoch=epoch)
+
+    if not args.disable_log:
+        logger.log(mean_acc)
+        logger.log_fullacc(accs)
+
+    if not args.nowand:
+        postfix = "" if epoch is None else f"_epoch_{epoch}"
+        d2={f'RESULT_class_mean_accs{postfix}': mean_acc[0], f'RESULT_task_mean_accs{postfix}': mean_acc[1],
+            **{f'RESULT_class_acc_{i}{postfix}': a for i, a in enumerate(accs[0])},
+            **{f'RESULT_task_acc_{i}{postfix}': a for i, a in enumerate(accs[1])}}
+
+        wandb.log(d2)
+
 def print_mean_accuracy(mean_acc: np.ndarray, task_number: int,
-                        setting: str) -> None:
+                        setting: str, joint=False, epoch=None) -> None:
     """
     Prints the mean accuracy on stderr.
     :param mean_acc: mean accuracy value
     :param task_number: task index
     :param setting: the setting of the benchmark
     """
-    if setting == 'domain-il':
-        mean_acc, _ = mean_acc
-        print('\nAccuracy for {} task(s): {} %'.format(
-            task_number, round(mean_acc, 2)), file=sys.stderr)
-    else:
+    if joint:
+        prefix = "Joint Accuracy" if epoch is None else f"Joint Accuracy (epoch {epoch})"
         mean_acc_class_il, mean_acc_task_il = mean_acc
-        print('\nAccuracy for {} task(s): \t [Class-IL]: {} %'
-              ' \t [Task-IL]: {} %\n'.format(task_number, round(
-                  mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
+        print('\n{}: \t [Class-IL]: {} %'
+            ' \t [Task-IL]: {} %\n'.format(prefix, round(
+                mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
+    else:
+        prefix = "Accuracy" if epoch is None else f"Accuracy (epoch {epoch})"
+        if setting == 'domain-il':
+            mean_acc, _ = mean_acc
+            print('\n{} for {} task(s): {} %'.format(prefix,
+                task_number, round(mean_acc, 2)), file=sys.stderr)
+        else:
+            mean_acc_class_il, mean_acc_task_il = mean_acc
+            print('\n for {} task(s): \t [Class-IL]: {} %'
+                ' \t [Task-IL]: {} %\n'.format(prefix, task_number, round(
+                    mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
 
 
 class Logger:

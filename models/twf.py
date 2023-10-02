@@ -16,25 +16,12 @@ def batch_iterate(size: int, batch_size: int):
         yield torch.LongTensor(list(range(i * batch_size, (i + 1) * batch_size)))
 
 
-def add_aux_dataset_args(parser: ArgumentParser) -> None:
-    """
-    Adds the arguments used to load initial (pretrain) checkpoint
-    :param parser: the parser instance
-    """
-    # parser.add_argument('--pre_epochs', type=int, default=200,
-    #                     help='pretrain_epochs.')
-    # parser.add_argument('--pre_dataset', type=str, required=True,
-    #                     choices=['cifar100', 'tinyimgR', 'imagenet'])
-    # parser.add_argument('--stop_after_prep', action='store_true')
-
-
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(
         description='Double-branch distillation + inter-branch skip attention')
     add_management_args(parser)
     add_experiment_args(parser)
     add_rehearsal_args(parser)
-    add_aux_dataset_args(parser)
 
     # Griddable parameters
     parser.add_argument('--der_alpha', type=float, required=True,
@@ -76,6 +63,12 @@ class TwF(ContinualModel):
         self.num_classes = self.N_TASKS * self.cpt
 
         self.task = 0
+
+        if self.args.lambda_fp_replay == 0:
+            print('Warning: lambda_fp_replay is 0, so no replay of attention masks will be used')
+
+        if self.args.lambda_diverse_loss == 0:
+            print('Warning: lambda_diverse_loss is 0, so no diverse loss will be used')
 
     def get_custom_double_transform(self, transform):
         tfs = []

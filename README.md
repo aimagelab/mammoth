@@ -46,6 +46,7 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 + Learning without Forgetting (LwF)
 + Progressive Neural Networks (PNN)
 + Learning to Prompt (L2P) - *Requires* `pip install timm==0.8.10.dev0`
++ Transfer without Forgetting (TwF)
 
 ## Datasets
 
@@ -56,6 +57,13 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 + Permuted MNIST (*Domain-IL*)
 + Rotated MNIST (*Domain-IL*)
 + MNIST-360 (*General Continual Learning*)
+
+## Pretrained backbones
+
+- [ResNet18 on cifar100](https://onedrive.live.com/embed?cid=D3924A2D106E0039&resid=D3924A2D106E0039%21108&authkey=AFsCv4BR-bmTUII)
+- [ResNet18 on TinyImagenet resized (seq-tinyimg-r)](https://onedrive.live.com/embed?cid=D3924A2D106E0039&resid=D3924A2D106E0039%21106&authkey=AKTxp5LFQJ9z9Ok)
+- [ResNet50 on ImageNet (pytorch version)](https://onedrive.live.com/embed?cid=D3924A2D106E0039&resid=D3924A2D106E0039%21107&authkey=ADHhbeg9cUoqJ0M)
+- [ResNet18 on SVHN](https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/ETdCpRoA891KsAAuibMKWYwBX_3lfw3dMbE4DFEkhOm96A?e=NjdzLN)
 
 ## Citing these works
 

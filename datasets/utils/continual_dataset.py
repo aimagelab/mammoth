@@ -32,6 +32,10 @@ class ContinualDataset:
         self.i = 0
         self.args = args
 
+        if args.joint:
+            self.N_CLASSES_PER_TASK = self.N_CLASSES
+            self.N_TASKS = 1
+
         if not all((self.NAME, self.SETTING, self.N_CLASSES_PER_TASK, self.N_TASKS)):
             raise NotImplementedError('The dataset must be initialized with all the required fields.')
 

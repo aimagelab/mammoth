@@ -96,6 +96,10 @@ def parse_args():
         args.ckpt_name_replace = f"{extra_ckpt_name}{args.model}_{args.dataset}_{'{}'}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}__{args.n_epochs}_{str(now)}"
         print("Saving checkpoint into", args.ckpt_name, file=sys.stderr)
 
+    if args.joint:
+        assert args.start_from is None and args.stop_after is None, "Joint training does not support start_from and stop_after"
+        assert args.enable_other_metrics == 0, "Joint training does not support other metrics"
+
     return args
 
 

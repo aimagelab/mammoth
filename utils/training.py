@@ -116,9 +116,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
         print('Checkpoint Loaded!')
 
-    progress_bar = ProgressBar(verbose=not args.non_verbose)
+    progress_bar = ProgressBar(joint=args.joint, verbose=not args.non_verbose)
 
-    if not args.ignore_other_metrics:
+    if args.enable_other_metrics:
         dataset_copy = get_dataset(args)
         for t in range(dataset.N_TASKS):
             model.net.train()
@@ -134,16 +134,14 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         train_loader, test_loader = dataset.get_data_loaders()
         if hasattr(model, 'begin_task'):
             model.begin_task(dataset)
-        if t and not args.ignore_other_metrics:
+        if t and args.enable_other_metrics:
             accs = evaluate(model, dataset, last=True)
             results[t - 1] = results[t - 1] + accs[0]
             if dataset.SETTING == 'class-il':
                 results_mask_classes[t - 1] = results_mask_classes[t - 1] + accs[1]
 
-        scheduler = dataset.get_scheduler(model, args)
+        scheduler = dataset.get_scheduler(model, args) if not hasattr(model, 'scheduler') else model.scheduler
         for epoch in range(model.args.n_epochs):
-            if args.model == 'joint':
-                continue
             for i, data in enumerate(train_loader):
                 if args.debug_mode and i > 3:
                     break
@@ -165,6 +163,11 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             if scheduler is not None:
                 scheduler.step()
 
+            if args.eval_epochs is not None and epoch % args.eval_epochs == 0 and epoch < model.args.n_epochs - 1:
+                epoch_accs = evaluate(model, dataset)
+
+                log_accs(args, logger, epoch_accs, t, dataset.SETTING, epoch=epoch)
+
         if hasattr(model, 'end_task'):
             model.end_task(dataset)
 
@@ -172,19 +175,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         results.append(accs[0])
         results_mask_classes.append(accs[1])
 
-        mean_acc = np.mean(accs, axis=1)
-        print_mean_accuracy(mean_acc, t + 1, dataset.SETTING)
-
-        if not args.disable_log:
-            logger.log(mean_acc)
-            logger.log_fullacc(accs)
-
-        if not args.nowand:
-            d2 = {'RESULT_class_mean_accs': mean_acc[0], 'RESULT_task_mean_accs': mean_acc[1],
-                  **{f'RESULT_class_acc_{i}': a for i, a in enumerate(accs[0])},
-                  **{f'RESULT_task_acc_{i}': a for i, a in enumerate(accs[1])}}
-
-            wandb.log(d2)
+        log_accs(args, logger, epoch_accs, t, dataset.SETTING)
 
         if args.savecheck:
             save_obj = {
@@ -198,9 +189,10 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 save_obj['buffer'] = deepcopy(model.buffer).to('cpu')
 
             # Saving model checkpoint
-            torch.save(save_obj, f'checkpoints/{args.ckpt_name}_{t}.pt')
+            checkpoint_name = f'checkpoints/{args.ckpt_name}_joint.pt' if args.joint else f'checkpoints/{args.ckpt_name}_{t}.pt'
+            torch.save(save_obj, checkpoint_name)
 
-    if not args.disable_log and not args.ignore_other_metrics:
+    if not args.disable_log and args.enable_other_metrics:
         logger.add_bwt(results, results_mask_classes)
         logger.add_forgetting(results, results_mask_classes)
         if model.NAME != 'icarl' and model.NAME != 'pnn':

@@ -42,6 +42,9 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     parser.add_argument('--start_from', type=int, default=None, help="Task to start from")
     parser.add_argument('--stop_after', type=int, default=None, help="Task limit")
 
+    parser.add_argument('--joint', type=int, choices=[0, 1], default=0,
+                        help='Train model on Joint (single task)?')
+
 
 def add_management_args(parser: ArgumentParser) -> None:
     parser.add_argument('--seed', type=int, default=None,
@@ -54,11 +57,14 @@ def add_management_args(parser: ArgumentParser) -> None:
 
     parser.add_argument('--validation', default=0, choices=[0, 1], type=int,
                         help='Test on the validation set')
-    parser.add_argument('--ignore_other_metrics', default=1, choices=[0, 1], type=int,
-                        help='disable additional metrics')
+    parser.add_argument('--enable_other_metrics', default=0, choices=[0, 1], type=int,
+                        help='Enable additional metrics')
     parser.add_argument('--debug_mode', type=int, default=0, help='Run only a few forward steps per epoch')
     parser.add_argument('--wandb_entity', type=str, help='Wandb entity')
     parser.add_argument('--wandb_project', type=str, default='mammoth', help='Wandb project name')
+
+    parser.add_argument('--eval_epochs', type=int, default=None,
+                        help='Perform inference intra-task at every `eval_epochs`.')
 
 
 def add_rehearsal_args(parser: ArgumentParser) -> None:
