@@ -44,6 +44,8 @@ def add_experiment_args(parser: ArgumentParser) -> None:
 
     parser.add_argument('--joint', type=int, choices=[0, 1], default=0,
                         help='Train model on Joint (single task)?')
+    parser.add_argument('--label_perc', type=float, default=1,
+                        help='Percentage in (0-1] of labeled examples per task.')
 
 
 def add_management_args(parser: ArgumentParser) -> None:
@@ -54,6 +56,7 @@ def add_management_args(parser: ArgumentParser) -> None:
 
     parser.add_argument('--non_verbose', default=0, choices=[0, 1], type=int, help='Make progress bars non verbose')
     parser.add_argument('--disable_log', default=0, choices=[0, 1], type=int, help='Enable csv logging')
+    parser.add_argument('--num_workers', type=int, default=None, help='Number of workers for the dataloaders (default=infer from number of cpus).')
 
     parser.add_argument('--validation', default=0, choices=[0, 1], type=int,
                         help='Test on the validation set')

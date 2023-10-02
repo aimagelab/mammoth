@@ -101,6 +101,8 @@ def parse_args():
         assert args.start_from is None and args.stop_after is None, "Joint training does not support start_from and stop_after"
         assert args.enable_other_metrics == 0, "Joint training does not support other metrics"
 
+    assert 0 < args.label_perc <= 1, "label_perc must be in (0, 1]"
+
     return args
 
 

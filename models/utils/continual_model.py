@@ -98,6 +98,9 @@ class ContinualModel(nn.Module):
         return self.net(x)
 
     def meta_observe(self, *args, **kwargs):
+        if 'cssl' not in self.COMPATIBILITY:  # drop unlabeled data if not supported
+            labeled_mask = args[1] != -1
+            args = [arg[labeled_mask] if isinstance(arg, torch.Tensor) and arg.shape[0] == args[0].shape[0] else arg for arg in args]
         if 'wandb' in sys.modules and not self.args.nowand:
             pl = persistent_locals(self.observe)
             ret = pl(*args, **kwargs)
