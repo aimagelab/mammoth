@@ -28,13 +28,11 @@ class Fdr(ContinualModel):
     def __init__(self, backbone, loss, args, transform):
         super(Fdr, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)
-        self.current_task = 0
         self.i = 0
         self.soft = torch.nn.Softmax(dim=1)
         self.logsoft = torch.nn.LogSoftmax(dim=1)
 
     def end_task(self, dataset):
-        self.current_task += 1
         examples_per_task = self.args.buffer_size // self.current_task
 
         if self.current_task > 1:

@@ -41,6 +41,8 @@ class ContinualModel(nn.Module):
         self.N_CLASSES = self.dataset.N_CLASSES
         self.N_TASKS = self.dataset.N_TASKS
         self.SETTING = self.dataset.SETTING
+        self.cpt = self.dataset.N_CLASSES_PER_TASK
+        self.current_task = 0
 
         try:
             self.weak_transform = to_kornia_transform(transform.transforms[-1].transforms)
@@ -59,6 +61,9 @@ class ContinualModel(nn.Module):
 
         if not self.NAME or not self.COMPATIBILITY:
             raise NotImplementedError('Please specify the name and the compatibility of the model.')
+
+        if self.args.label_perc != 1 and 'cssl' not in self.COMPATIBILITY:
+            print('WARNING: label_perc is not explicitly supported by this model -> training may break')
 
     def load_buffer(self, buffer):
         """
@@ -119,8 +124,19 @@ class ContinualModel(nn.Module):
             ret = self.observe(*args, **kwargs)
         return ret
 
+    def meta_begin_task(self, dataset):
+        self.n_classes_current_task = self.cpt if isinstance(self.cpt, int) else self.cpt[self.current_task]
+        self.n_seen_classes = self.cpt * (self.current_task + 1) if isinstance(self.cpt, int) else sum(self.cpt[:self.current_task + 1])
+        self.n_remaining_classes = self.N_CLASSES - self.n_seen_classes
+        self.n_past_classes = self.cpt * self.current_task if isinstance(self.cpt, int) else sum(self.cpt[:self.current_task])
+        self.begin_task(dataset)
+
+    def meta_end_task(self, dataset):
+        self.current_task += 1
+        self.end_task(dataset)
+
     def observe(self, inputs: torch.Tensor, labels: torch.Tensor,
-                not_aug_inputs: torch.Tensor) -> float:
+                not_aug_inputs: torch.Tensor, epoch: int = None) -> float:
         """
         Compute a training step over a given batch of examples.
         :param inputs: batch of examples

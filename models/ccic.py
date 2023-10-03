@@ -45,7 +45,6 @@ class Ccic(ContinualModel):
         super(Ccic, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size, self.device)
         self.epoch = 0
-        self.task = 0
         self.cpt = get_dataset(args).N_CLASSES_PER_TASK
         self.n_tasks = get_dataset(args).N_TASKS
         self.embeddings = None
@@ -60,21 +59,23 @@ class Ccic(ContinualModel):
         if self.embeddings is None:
             with torch.no_grad():
                 self.compute_embeddings()
+
+        n_seen_classes = self.cpt * self.current_task if isinstance(self.cpt, int) else sum(self.cpt[:self.current_task])
+        n_remaining_classes = self.N_CLASSES - n_seen_classes
         buf_labels = self.buffer.labels[:self.buffer.num_seen_examples]
         feats = self.net(x, returnt='features')
         feats = F.normalize(feats, p=2, dim=1)
         distances = (self.embeddings.unsqueeze(0) - feats.unsqueeze(1)).pow(2).sum(2)
 
         dist = torch.stack([distances[:, buf_labels == c].topk(1, largest=False)[0].mean(dim=1)
-                            for c in range(self.N_CLASSES)] +
-                           [torch.zeros(x.shape[0]).to(self.device)] * ((self.n_tasks - self.task) * self.cpt)).T
-        topkappas = self.eye[buf_labels[distances.topk(
-            self.args.knn_k, largest=False)[1]]].sum(1)
+                            if (buf_labels == c).sum() > 0 else torch.zeros(x.shape[0]).to(self.device)
+                            for c in range(n_seen_classes)] +
+                           [torch.zeros(x.shape[0]).to(self.device)] * n_remaining_classes).T
+        topkappas = self.eye[buf_labels[distances.topk(self.args.knn_k, largest=False)[1]]].sum(1)
         return topkappas - dist * 10e-6
 
     def end_task(self, dataset):
         self.embeddings = None
-        self.task += 1
         self.epoch = 0
 
     def end_epoch(self, dataset):
@@ -90,7 +91,7 @@ class Ccic(ContinualModel):
 
         return inputs[mask], labels[mask], not_aug_inputs[mask]
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.opt.zero_grad()
         real_batch_size = inputs.shape[0]
         sup_inputs, sup_labels, sup_not_aug_inputs = self.discard_unsupervised_labels(inputs, labels, not_aug_inputs)
@@ -102,7 +103,7 @@ class Ccic(ContinualModel):
         self.sup_virtual_batch.add_data(sup_not_aug_inputs, sup_labels)
         sup_inputs, sup_labels = self.sup_virtual_batch.get_data(self.args.batch_size, transform=self.transform)
 
-        if self.task > 0:
+        if self.current_task > 0:
             self.unsup_virtual_batch.add_data(unsup_not_aug_inputs, unsup_labels)
             unsup_inputs = self.unsup_virtual_batch.get_data(self.args.batch_size, transform=self.transform)[0]
 
@@ -111,9 +112,9 @@ class Ccic(ContinualModel):
             buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size, transform=self.transform)
             sup_inputs = torch.cat((sup_inputs, buf_inputs))
             sup_labels = torch.cat((sup_labels, buf_labels))
-            if self.task > 0:
+            if self.current_task > 0:
                 masked_buf_inputs, masked_buf_labels = self.buffer.get_data(self.args.minibatch_size,
-                                                                            mask_task=self.task, cpt=self.cpt,
+                                                                            mask_task=self.current_task, cpt=self.cpt,
                                                                             transform=self.transform)
                 unsup_labels = torch.cat((torch.zeros(unsup_inputs.shape[0]).to(self.device),
                                           torch.ones(masked_buf_labels.shape[0]).to(self.device))).long()
@@ -183,7 +184,7 @@ class Ccic(ContinualModel):
             loss_U = 0
 
         # CIC LOSS
-        if self.task > 0 and self.epoch < self.args.n_epochs / 10 * 9:
+        if self.current_task > 0 and self.epoch < self.args.n_epochs / 10 * 9:
             W_inputs = sup_inputs
             W_probs = self.eye[sup_labels]
             perm = torch.randperm(W_inputs.shape[0])
@@ -207,7 +208,7 @@ class Ccic(ContinualModel):
                              labels=sup_labels_for_buffer)
 
         # SELF-SUPERVISED PAST TASKS NEGATIVE ONLY
-        if self.task > 0 and self.epoch < self.args.n_epochs / 10 * 9:
+        if self.current_task > 0 and self.epoch < self.args.n_epochs / 10 * 9:
             unsup_embeddings = self.net.features(unsup_inputs)
             loss_unsup = negative_only_triplet_loss(unsup_labels, unsup_embeddings, self.args.batch_size // 10,
                                                     margin=1, margin_type='hard')

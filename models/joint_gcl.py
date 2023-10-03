@@ -28,7 +28,6 @@ class JointGCL(ContinualModel):
         super(JointGCL, self).__init__(backbone, loss, args, transform)
         self.old_data = []
         self.old_labels = []
-        self.current_task = 0
 
     def end_task(self, dataset):
         # reinit network

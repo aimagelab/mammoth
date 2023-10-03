@@ -35,7 +35,6 @@ class AGemr(ContinualModel):
             self.grad_dims.append(param.data.numel())
         self.grad_xy = torch.Tensor(np.sum(self.grad_dims)).to(self.device)
         self.grad_er = torch.Tensor(np.sum(self.grad_dims)).to(self.device)
-        self.current_task = 0
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.zero_grad()

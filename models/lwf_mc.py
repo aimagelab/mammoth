@@ -37,7 +37,6 @@ class LwFMC(ContinualModel):
 
         self.class_means = None
         self.old_net = None
-        self.current_task = 0
 
     def observe(self, inputs, labels, not_aug_inputs, logits=None, epoch=None):
         if self.current_task > 0:
@@ -84,4 +83,3 @@ class LwFMC(ContinualModel):
     def end_task(self, dataset) -> None:
         self.old_net = deepcopy(self.net.eval())
         self.net.train()
-        self.current_task += 1

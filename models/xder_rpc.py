@@ -80,7 +80,6 @@ class XDerRPC(ContinualModel):
         self.buffer = Buffer(self.args.buffer_size)
         self.cpt = get_dataset(args).N_CLASSES_PER_TASK
         self.tasks = get_dataset(args).N_TASKS
-        self.task = 0
         self.update_counter = torch.zeros(self.args.buffer_size).to(self.device)
         self.pernicehead = torch.from_numpy(dsimplex(self.cpt * self.tasks)).float().to(self.device)
 
@@ -99,10 +98,10 @@ class XDerRPC(ContinualModel):
         tng = self.training
         self.train()
 
-        if self.args.start_from is None or self.task >= self.args.start_from:
+        if self.args.start_from is None or self.current_task >= (self.args.start_from + 1):
             # Reduce Memory Buffer
-            if self.task > 0:
-                examples_per_class = self.args.buffer_size // ((self.task + 1) * self.cpt)
+            if (self.current_task - 1) > 0:
+                examples_per_class = self.args.buffer_size // (self.current_task * self.cpt)
                 buf_x, buf_lab, buf_log, buf_tl = self.buffer.get_all_data()
                 self.buffer.empty()
                 for tl in buf_lab.unique():
@@ -124,7 +123,7 @@ class XDerRPC(ContinualModel):
 
             with torch.no_grad():
                 with bn_track_stats(self, False):
-                    if self.args.start_from is None or self.args.start_from <= self.task:
+                    if self.args.start_from is None or self.args.start_from <= (self.current_task - 1):
                         for data in dataset.train_loader:
                             inputs, labels, not_aug_inputs = data
                             inputs = inputs.to(self.device)
@@ -134,8 +133,8 @@ class XDerRPC(ContinualModel):
                                 break
 
                             # Update past logits
-                            if self.task > 0:
-                                outputs = self.update_logits(outputs, outputs, labels, 0, self.task)
+                            if self.current_task - 1 > 0:
+                                outputs = self.update_logits(outputs, outputs, labels, 0, self.current_task - 1)
 
                             flags = torch.zeros(len(inputs)).bool()
                             for j in range(len(flags)):
@@ -147,7 +146,7 @@ class XDerRPC(ContinualModel):
                                                  labels=labels[flags],
                                                  logits=outputs.data[flags],
                                                  task_labels=(torch.ones(len(not_aug_inputs)) *
-                                                              (self.task))[flags])
+                                                              (self.current_task - 1))[flags])
 
                     # Update future past logits
                     buf_idx, buf_inputs, buf_labels, buf_logits, _ = self.buffer.get_data(self.buffer.buffer_size,
@@ -159,14 +158,13 @@ class XDerRPC(ContinualModel):
                         buf_inputs = buf_inputs[self.args.batch_size:]
                     buf_outputs = torch.cat(buf_outputs)
 
-                    chosen = (buf_labels // self.cpt) < self.task
+                    chosen = (buf_labels // self.cpt) < (self.current_task - 1)
 
                     if chosen.any():
-                        to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.task, self.tasks - self.task)
+                        to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task - 1, self.tasks - self.current_task)
                         self.buffer.logits[buf_idx[chosen], :] = to_transplant.to(self.buffer.device)
-                        self.buffer.task_labels[buf_idx[chosen]] = self.task
+                        self.buffer.task_labels[buf_idx[chosen]] = self.current_task - 1
 
-        self.task += 1
         self.update_counter = torch.zeros(self.args.buffer_size).to(self.device)
 
         self.train(tng)
@@ -192,7 +190,7 @@ class XDerRPC(ContinualModel):
         outputs = self(inputs).float()
 
         # Present head
-        loss_stream = self.loss(outputs[:, self.task * self.cpt:(self.task + 1) * self.cpt], labels % self.cpt)
+        loss_stream = self.loss(outputs[:, self.current_task * self.cpt:(self.current_task + 1) * self.cpt], labels % self.cpt)
 
         loss_der, loss_derpp = torch.tensor(0.), torch.tensor(0.)
         if not self.buffer.is_empty():
@@ -210,7 +208,7 @@ class XDerRPC(ContinualModel):
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
             buf_outputs2 = self(buf_inputs2).float()
 
-            buf_ce = self.loss(buf_outputs2[:, :(self.task) * self.cpt], buf_labels2)
+            buf_ce = self.loss(buf_outputs2[:, :(self.current_task) * self.cpt], buf_labels2)
             loss_derpp = self.args.beta * buf_ce
 
             # Merge Batches & Remove Duplicates
@@ -232,24 +230,24 @@ class XDerRPC(ContinualModel):
 
             # Update Future Past Logits
             with torch.no_grad():
-                chosen = (buf_labels // self.cpt) < self.task
+                chosen = (buf_labels // self.cpt) < self.current_task
                 self.update_counter[buf_idx[chosen]] += 1
                 c = chosen.clone()
                 chosen[c] = torch.rand_like(chosen[c].float()) * self.update_counter[buf_idx[c]] < 1
 
                 if chosen.any():
-                    assert self.task > 0
-                    to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.task, self.tasks - self.task)
+                    assert self.current_task > 0
+                    to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task, self.tasks - self.current_task)
                     self.buffer.logits[buf_idx[chosen], :] = to_transplant.to(self.buffer.device)
-                    self.buffer.task_labels[buf_idx[chosen]] = self.task
+                    self.buffer.task_labels[buf_idx[chosen]] = self.current_task
 
         # Past Logits Constraint
         loss_constr_past = torch.tensor(0.).type(loss_stream.dtype)
-        if self.task > 0:
-            chead = F.softmax(outputs[:, :(self.task + 1) * self.cpt], 1)
+        if self.current_task > 0:
+            chead = F.softmax(outputs[:, :(self.current_task + 1) * self.cpt], 1)
 
-            good_head = chead[:, self.task * self.cpt:(self.task + 1) * self.cpt]
-            bad_head = chead[:, :self.cpt * self.task]
+            good_head = chead[:, self.current_task * self.cpt:(self.current_task + 1) * self.cpt]
+            bad_head = chead[:, :self.cpt * self.current_task]
 
             loss_constr = bad_head.max(1)[0].detach() + self.args.m - good_head.max(1)[0]
 
@@ -260,13 +258,13 @@ class XDerRPC(ContinualModel):
 
         # Future Logits Constraint
         loss_constr_futu = torch.tensor(0.)
-        if self.task < self.tasks - 1:
-            bad_head = outputs[:, (self.task + 1) * self.cpt:]
-            good_head = outputs[:, self.task * self.cpt:(self.task + 1) * self.cpt]
+        if self.current_task < self.tasks - 1:
+            bad_head = outputs[:, (self.current_task + 1) * self.cpt:]
+            good_head = outputs[:, self.current_task * self.cpt:(self.current_task + 1) * self.cpt]
 
             if not self.buffer.is_empty():
                 buf_tlgt = buf_labels // self.cpt
-                bad_head = torch.cat([bad_head, buf_outputs[:, (self.task + 1) * self.cpt:]])
+                bad_head = torch.cat([bad_head, buf_outputs[:, (self.current_task + 1) * self.cpt:]])
                 good_head = torch.cat([good_head, torch.stack(buf_outputs.split(self.cpt, 1), 1)[torch.arange(len(buf_tlgt)), buf_tlgt]])
 
             loss_constr = bad_head.max(1)[0] + self.args.m - good_head.max(1)[0]

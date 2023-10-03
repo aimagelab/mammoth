@@ -103,9 +103,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
     if args.start_from is not None:
         for i in range(args.start_from):
-            train_loader, test_loader = dataset.get_data_loaders()
-            if hasattr(model, 'end_task'):
-                model.end_task(dataset)
+            train_loader, _ = dataset.get_data_loaders()
+            model.meta_begin_task(dataset)
+            model.meta_end_task(dataset)
 
     if args.loadcheck is not None:
         model, past_res = mammoth_load_checkpoint(args, model)
@@ -132,7 +132,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     for t in range(start_task, end_task):
         model.net.train()
         train_loader, test_loader = dataset.get_data_loaders()
-        model.begin_task(dataset)
+        model.meta_begin_task(dataset)
 
         if not args.inference_only:
             if t and args.enable_other_metrics:
@@ -169,7 +169,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
                     log_accs(args, logger, epoch_accs, t, dataset.SETTING, epoch=epoch)
 
-        model.end_task(dataset)
+        model.meta_end_task(dataset)
 
         accs = evaluate(model, dataset)
         results.append(accs[0])

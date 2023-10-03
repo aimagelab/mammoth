@@ -41,11 +41,6 @@ class Lwf(ContinualModel):
         self.old_net = None
         self.soft = torch.nn.Softmax(dim=1)
         self.logsoft = torch.nn.LogSoftmax(dim=1)
-        self.dataset = get_dataset(args)
-        self.current_task = 0
-        self.cpt = get_dataset(args).N_CLASSES_PER_TASK
-        nc = get_dataset(args).N_TASKS * self.cpt
-        self.eye = torch.tril(torch.ones((nc, nc))).bool().to(self.device)
 
     def begin_task(self, dataset):
         self.net.eval()
@@ -54,14 +49,13 @@ class Lwf(ContinualModel):
             opt = SGD(self.net.classifier.parameters(), lr=self.args.lr)
             for epoch in range(self.args.n_epochs):
                 for i, data in enumerate(dataset.train_loader):
-                    inputs, labels, not_aug_inputs = data
+                    inputs, labels = data[0], data[1]
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
                     opt.zero_grad()
                     with torch.no_grad():
                         feats = self.net(inputs, returnt='features')
-                    mask = self.eye[(self.current_task + 1) * self.cpt - 1] ^ self.eye[self.current_task * self.cpt - 1]
-                    outputs = self.net.classifier(feats)[:, mask]
-                    loss = self.loss(outputs, labels - self.current_task * self.cpt)
+                    outputs = self.net.classifier(feats)[:, self.n_past_classes: self.n_seen_classes]
+                    loss = self.loss(outputs, labels - self.n_past_classes)
                     loss.backward()
                     opt.step()
 
@@ -76,18 +70,14 @@ class Lwf(ContinualModel):
             setattr(dataset.train_loader.dataset, 'logits', torch.cat(logits))
         self.net.train()
 
-        self.current_task += 1
-
     def observe(self, inputs, labels, not_aug_inputs, logits=None, epoch=None):
         self.opt.zero_grad()
         outputs = self.net(inputs)
 
-        mask = self.eye[self.current_task * self.cpt - 1]
-        loss = self.loss(outputs[:, mask], labels)
+        loss = self.loss(outputs[:, :self.n_seen_classes], labels)
         if logits is not None:
-            mask = self.eye[(self.current_task - 1) * self.cpt - 1]
-            loss += self.args.alpha * modified_kl_div(smooth(self.soft(logits[:, mask]).to(self.device), 2, 1),
-                                                      smooth(self.soft(outputs[:, mask]), 2, 1))
+            loss += self.args.alpha * modified_kl_div(smooth(self.soft(logits[:, :self.n_past_classes]).to(self.device), 2, 1),
+                                                      smooth(self.soft(outputs[:, :self.n_past_classes]), 2, 1))
 
         loss.backward()
         self.opt.step()

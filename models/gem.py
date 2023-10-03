@@ -9,11 +9,12 @@ import torch
 try:
     import quadprog
 except BaseException:
+    quadprog = None
     print('Warning: GEM and A-GEM cannot be used on Windows (quadprog required)')
 
 from models.utils.continual_model import ContinualModel
 from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
-from utils.buffer import Buffer
+from utils.buffer import Buffer, fill_buffer
 
 
 def get_parser() -> ArgumentParser:
@@ -22,13 +23,8 @@ def get_parser() -> ArgumentParser:
     add_management_args(parser)
     add_experiment_args(parser)
     add_rehearsal_args(parser)
-    # remove minibatch_size from parser
-    for i in range(len(parser._actions)):
-        if parser._actions[i].dest == 'minibatch_size':
-            del parser._actions[i]
-            break
 
-    parser.add_argument('--gamma', type=float, default=None,
+    parser.add_argument('--gamma', type=float, default=0.5,
                         help='Margin parameter for GEM.')
     return parser
 
@@ -98,8 +94,8 @@ class Gem(ContinualModel):
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
     def __init__(self, backbone, loss, args, transform):
+        assert quadprog is not None, 'GEM requires quadprog (linux only)'
         super(Gem, self).__init__(backbone, loss, args, transform)
-        self.current_task = 0
         self.buffer = Buffer(self.args.buffer_size)
 
         # Allocate temporary synaptic memory
@@ -111,21 +107,10 @@ class Gem(ContinualModel):
         self.grads_da = torch.zeros(np.sum(self.grad_dims)).to(self.device)
 
     def end_task(self, dataset):
-        self.current_task += 1
         self.grads_cs.append(torch.zeros(
             np.sum(self.grad_dims)).to(self.device))
 
-        # add data to the buffer
-        samples_per_task = self.args.buffer_size // dataset.N_TASKS
-
-        loader = dataset.train_loader
-        cur_y, cur_x = next(iter(loader))[1:]
-        self.buffer.add_data(
-            examples=cur_x.to(self.device),
-            labels=cur_y.to(self.device),
-            task_labels=torch.ones(cur_x.shape[0],
-                                   dtype=torch.long).to(self.device) * (self.current_task - 1)
-        )
+        fill_buffer(self.buffer, dataset, self.current_task - 1, required_attributes=['examples', 'labels', 'task_labels'])
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 

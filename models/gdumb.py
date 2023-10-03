@@ -73,7 +73,6 @@ class GDumb(ContinualModel):
     def __init__(self, backbone, loss, args, transform):
         super(GDumb, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)
-        self.task = 0
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.buffer.add_data(examples=not_aug_inputs,
@@ -82,8 +81,7 @@ class GDumb(ContinualModel):
 
     def end_task(self, dataset):
         # new model
-        self.task += 1
-        if not (self.task == dataset.N_TASKS):
+        if not (self.current_task == dataset.N_TASKS):
             return
         self.net = dataset.get_backbone().to(self.device)
         fit_buffer(self, self.args.fitting_epochs)

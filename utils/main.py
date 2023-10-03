@@ -124,7 +124,7 @@ def main(args=None):
         args.n_epochs = dataset.get_epochs()
     if args.batch_size is None:
         args.batch_size = dataset.get_batch_size()
-    if hasattr(importlib.import_module('models.' + args.model), 'Buffer') and args.minibatch_size is None:
+    if hasattr(importlib.import_module('models.' + args.model), 'Buffer') and (not hasattr(args, 'minibatch_size') or args.minibatch_size is None):
         args.minibatch_size = dataset.get_minibatch_size()
 
     backbone = dataset.get_backbone()

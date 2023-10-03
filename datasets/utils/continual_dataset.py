@@ -32,7 +32,8 @@ class ContinualDataset:
         self.test_loaders = []
         self.i = 0
         self.args = args
-        self.N_CLASSES = self.N_CLASSES_PER_TASK * self.N_TASKS if not hasattr(self, 'N_CLASSES') else self.N_CLASSES
+        self.N_CLASSES = self.N_CLASSES if hasattr(self, 'N_CLASSES') else \
+            (self.N_CLASSES_PER_TASK * self.N_TASKS) if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK)
 
         if args.joint:
             self.N_CLASSES_PER_TASK = self.N_CLASSES
@@ -111,7 +112,7 @@ def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):
     :return: list: balanced masks for labels
     """
     if setting.args.label_perc == 1:
-        return np.zeros(train_dataset.targets.shape[0]).astype(np.int32)
+        return np.zeros(train_dataset.targets.shape[0]).astype('bool')
     else:
         lpc = int(setting.args.label_perc * (train_dataset.targets.shape[0] // setting.N_CLASSES_PER_TASK))
         ind = np.indices(train_dataset.targets.shape)[0]
@@ -134,7 +135,7 @@ def _prepare_data_loaders(train_dataset, test_dataset, setting: ContinualDataset
 
     setting.unlabeled_mask = _get_mask_unlabeled(train_dataset, setting)
 
-    if setting.unlabeled_mask.shape[0] != 0:
+    if setting.unlabeled_mask.sum() != 0:
         train_dataset.targets[setting.unlabeled_mask] = -1  # -1 is the unlabeled class
 
     return train_dataset, test_dataset

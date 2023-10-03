@@ -7,3 +7,4 @@ onedrivedownloader
 av
 tqdm
 timm==0.8.10.dev0
+kornia

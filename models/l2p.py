@@ -49,7 +49,7 @@ def get_parser() -> ArgumentParser:
 
     # Learning rate schedule parameters
     parser.add_argument('--sched', default='constant', type=str, metavar='SCHEDULER', help='LR scheduler (default: "constant"')
-    #parser.add_argument('--lr', type=float, default=0.03, metavar='LR', help='learning rate (default: 0.03)')
+    # parser.add_argument('--lr', type=float, default=0.03, metavar='LR', help='learning rate (default: 0.03)')
     parser.add_argument('--lr-noise', type=float, nargs='+', default=None, metavar='pct, pct', help='learning rate noise on/off epoch percentages')
     parser.add_argument('--lr-noise-pct', type=float, default=0.67, metavar='PERCENT', help='learning rate noise limit percent (default: 0.67)')
     parser.add_argument('--lr-noise-std', type=float, default=1.0, metavar='STDDEV', help='learning rate noise std-dev (default: 1.0)')
@@ -79,7 +79,6 @@ class L2P(ContinualModel):
         backbone = L2PModel(args, self.n_classes)
 
         super().__init__(backbone, loss, args, transform)
-        self.current_task = 0
         self.class_mask = torch.arange(self.n_classes, dtype=int) \
             .reshape(self.dataset.N_TASKS, self.n_classes // self.dataset.N_TASKS).tolist()
 
@@ -111,9 +110,6 @@ class L2P(ContinualModel):
         self.opt.step()
 
         return loss.item()
-
-    def end_task(self, dataset):
-        self.current_task += 1
 
     def forward(self, x):
         if self.current_task > 0:

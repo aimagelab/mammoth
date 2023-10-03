@@ -28,11 +28,7 @@ class ErACE(ContinualModel):
         super(ErACE, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)
         self.seen_so_far = torch.tensor([]).long().to(self.device)
-        self.num_classes = get_dataset(args).N_TASKS * get_dataset(args).N_CLASSES_PER_TASK
-        self.task = 0
-
-    def end_task(self, dataset):
-        self.task += 1
+        self.num_c
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
@@ -47,13 +43,13 @@ class ErACE(ContinualModel):
         if self.seen_so_far.max() < (self.num_classes - 1):
             mask[:, self.seen_so_far.max():] = 1
 
-        if self.task > 0:
+        if self.current_task > 0:
             logits = logits.masked_fill(mask == 0, torch.finfo(logits.dtype).min)
 
         loss = self.loss(logits, labels)
         loss_re = torch.tensor(0.)
 
-        if self.task > 0:
+        if self.current_task > 0:
             # sample from buffer
             buf_inputs, buf_labels = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, device=self.device)

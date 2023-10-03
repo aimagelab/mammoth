@@ -62,8 +62,6 @@ class TwF(ContinualModel):
             [transforms.ToPILImage(), transforms.ToTensor(), ds.get_normalization_transform()])
         self.num_classes = self.N_TASKS * self.cpt
 
-        self.task = 0
-
         if self.args.loadcheck is None:
             print("Warning: no checkpoint loaded!")
 
@@ -98,7 +96,7 @@ class TwF(ContinualModel):
                 buf_labels = self.buffer.labels[buf_idxs].to(self.device)
 
                 buf_mask = torch.div(buf_labels, self.cpt,
-                                     rounding_mode='floor') == self.task
+                                     rounding_mode='floor') == (self.current_task - 1)
 
                 if not buf_mask.any():
                     continue
@@ -119,11 +117,10 @@ class TwF(ContinualModel):
                         at[idx % len(at)].to(self.device) for at in attention_masks]
 
         self.net.train()  # TODO: check
-        self.task += 1
 
     def begin_task(self, dataset):
 
-        if self.task == 0 or ("start_from" in self.args and self.args.start_from is not None and self.task == self.args.start_from):
+        if self.current_task == 0 or ("start_from" in self.args and self.args.start_from is not None and self.current_task == self.args.start_from):
             init_twf(self, dataset)
 
             self.opt = self.get_optimizer()
@@ -200,7 +197,7 @@ class TwF(ContinualModel):
         self.opt.zero_grad()
 
         loss = self.loss(
-            stream_logits[:, self.task * self.cpt:(self.task + 1) * self.cpt], labels % self.cpt)
+            stream_logits[:, self.current_task * self.cpt:(self.current_task + 1) * self.cpt], labels % self.cpt)
 
         loss_er = torch.tensor(0.)
         loss_der = torch.tensor(0.)
@@ -211,7 +208,7 @@ class TwF(ContinualModel):
                 stream_partial_features[-len(stream_pret_partial_features):], stream_pret_partial_features, labels)
         else:
             buffer_teacher_forcing = torch.div(
-                buf_labels, self.cpt, rounding_mode='floor') != self.task
+                buf_labels, self.cpt, rounding_mode='floor') != self.current_task
             teacher_forcing = torch.cat(
                 (torch.zeros((B)).bool().to(self.device), buffer_teacher_forcing))
             attention_maps = [
@@ -223,7 +220,7 @@ class TwF(ContinualModel):
 
             stream_attention_maps = [ap[:B] for ap in all_attention_maps]
 
-            loss_er = self.loss(buf_outputs[:, :(self.task + 1) * self.cpt], buf_labels)
+            loss_er = self.loss(buf_outputs[:, :(self.current_task + 1) * self.cpt], buf_labels)
 
             loss_der = F.mse_loss(buf_outputs, buf_logits)
 

@@ -71,7 +71,6 @@ class RPC(ContinualModel):
         self.buffer = Buffer(self.args.buffer_size)
         self.cpt = get_dataset(args).N_CLASSES_PER_TASK
         self.tasks = get_dataset(args).N_TASKS
-        self.task = 0
         self.rpchead = torch.from_numpy(dsimplex(self.cpt * self.tasks)).float().to(self.device)
 
     def forward(self, x):
@@ -81,8 +80,8 @@ class RPC(ContinualModel):
 
     def end_task(self, dataset):
         # reduce coreset
-        if self.task > 0:
-            examples_per_class = self.args.buffer_size // ((self.task + 1) * self.cpt)
+        if self.current_task > 0:
+            examples_per_class = self.args.buffer_size // (self.current_task * self.cpt)
             buf_x, buf_lab = self.buffer.get_all_data()
             self.buffer.empty()
             for tl in buf_lab.unique():
@@ -115,7 +114,6 @@ class RPC(ContinualModel):
 
                 self.buffer.add_data(examples=not_aug_inputs[flags],
                                      labels=labels[flags])
-        self.task += 1
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.opt.zero_grad()
