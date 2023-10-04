@@ -45,7 +45,7 @@ class ProgressBar:
             self.old_time = time()
             self.running_sum = 0
         else:
-            self.running_sum = self.running_sum + (time() - self.old_time)
+            self.running_sum = self.running_sum + (time() - self.old_time) + 1e-8
             self.old_time = time()
         if i:  # not (i + 1) % 10 or (i + 1) == max_iter:
             progress = min(float((i + 1) / max_iter), 1)

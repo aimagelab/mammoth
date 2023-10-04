@@ -30,7 +30,7 @@ from models import get_all_models, get_model
 from utils.args import add_management_args
 from utils.best_args import best_args
 from utils.conf import set_random_seed
-from utils.continual_training import train as ctrain
+from utils.deprecated.continual_training import train as ctrain
 from utils.distributed import make_dp
 from utils.training import train
 
@@ -157,11 +157,7 @@ def main(args=None):
     except Exception:
         pass
 
-    if isinstance(dataset, ContinualDataset):
-        train(model, dataset, args)
-    else:
-        assert not hasattr(model, 'end_task') or model.NAME == 'joint_gcl'
-        ctrain(args)
+    train(model, dataset, args)
 
 
 if __name__ == '__main__':

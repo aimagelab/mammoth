@@ -143,7 +143,10 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             scheduler = dataset.get_scheduler(model, args) if not hasattr(model, 'scheduler') else model.scheduler
             for epoch in range(model.args.n_epochs):
-                for i, data in enumerate(train_loader):
+                train_iter = iter(train_loader)
+                data_len = len(train_loader)
+                for i in range(data_len):
+                    data = next(train_iter)
                     if args.debug_mode and i > 3:
                         break
                     if hasattr(dataset.train_loader.dataset, 'logits'):
@@ -159,7 +162,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                         not_aug_inputs = not_aug_inputs.to(model.device)
                         loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch)
                     assert not math.isnan(loss)
-                    progress_bar.prog(i, len(train_loader), epoch, t, loss)
+                    progress_bar.prog(i, data_len, epoch, t, loss)
 
                 if scheduler is not None:
                     scheduler.step()

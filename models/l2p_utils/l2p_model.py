@@ -56,7 +56,7 @@ class L2PModel(nn.Module):
                 cls_features = None
 
         outputs = self.model(x, task_id=-1, cls_features=cls_features, train=self.training)
-        #self.prompt_idx = outputs['prompt_idx']
+        # self.prompt_idx = outputs['prompt_idx']
         # print(self.prompt_idx)
         logits = outputs['logits']
         if return_outputs:

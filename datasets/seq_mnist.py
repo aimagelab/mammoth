@@ -60,6 +60,7 @@ class SequentialMNIST(ContinualDataset):
     N_CLASSES_PER_TASK = 2
     N_TASKS = 5
     N_CLASSES = N_CLASSES_PER_TASK * N_TASKS
+    SIZE = (28, 28)
     TRANSFORM = None
 
     def get_data_loaders(self):

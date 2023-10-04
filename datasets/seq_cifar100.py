@@ -72,12 +72,13 @@ class SequentialCIFAR100(ContinualDataset):
     N_CLASSES_PER_TASK = 10
     N_TASKS = 10
     N_CLASSES = N_CLASSES_PER_TASK * N_TASKS
+    SIZE = (32, 32)
+    MEAN, STD = (0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)
     TRANSFORM = transforms.Compose(
         [transforms.RandomCrop(32, padding=4),
          transforms.RandomHorizontalFlip(),
          transforms.ToTensor(),
-         transforms.Normalize((0.5071, 0.4867, 0.4408),
-                              (0.2675, 0.2565, 0.2761))])
+         transforms.Normalize(MEAN, STD)])
 
     def get_examples_number(self):
         train_dataset = MyCIFAR100(base_path() + 'CIFAR10', train=True,
@@ -120,14 +121,12 @@ class SequentialCIFAR100(ContinualDataset):
 
     @staticmethod
     def get_normalization_transform():
-        transform = transforms.Normalize((0.5071, 0.4867, 0.4408),
-                                         (0.2675, 0.2565, 0.2761))
+        transform = transforms.Normalize(SequentialCIFAR100.MEAN, SequentialCIFAR100.STD)
         return transform
 
     @staticmethod
     def get_denormalization_transform():
-        transform = DeNormalize((0.5071, 0.4867, 0.4408),
-                                (0.2675, 0.2565, 0.2761))
+        transform = DeNormalize(SequentialCIFAR100.MEAN, SequentialCIFAR100.STD)
         return transform
 
     @staticmethod

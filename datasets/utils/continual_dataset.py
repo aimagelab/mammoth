@@ -22,6 +22,7 @@ class ContinualDataset:
     N_CLASSES_PER_TASK: int
     N_TASKS: int
     N_CLASSES: int
+    SIZE: Tuple[int]
 
     def __init__(self, args: Namespace) -> None:
         """
@@ -39,7 +40,7 @@ class ContinualDataset:
             self.N_CLASSES_PER_TASK = self.N_CLASSES
             self.N_TASKS = 1
 
-        if not all((self.NAME, self.SETTING, self.N_CLASSES_PER_TASK, self.N_TASKS)):
+        if not all((self.NAME, self.SETTING, self.N_CLASSES_PER_TASK, self.N_TASKS, self.SIZE, self.N_CLASSES)):
             raise NotImplementedError('The dataset must be initialized with all the required fields.')
 
     def get_data_loaders(self) -> Tuple[DataLoader, DataLoader]:

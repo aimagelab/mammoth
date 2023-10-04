@@ -20,7 +20,8 @@ NAMES = {}
 for dataset in get_all_datasets():
     try:
         mod = importlib.import_module('datasets.' + dataset)
-        dataset_classes_name = [x for x in mod.__dir__() if 'type' in str(type(getattr(mod, x))) and 'ContinualDataset' in str(inspect.getmro(getattr(mod, x))[1:])]
+        dataset_classes_name = [x for x in mod.__dir__() if 'type' in str(type(getattr(mod, x)))
+                                and 'ContinualDataset' in str(inspect.getmro(getattr(mod, x))[1:]) and 'GCLDataset' not in str(inspect.getmro(getattr(mod, x)))]
         for d in dataset_classes_name:
             c = getattr(mod, d)
             NAMES[c.NAME] = c

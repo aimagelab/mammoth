@@ -71,12 +71,13 @@ class SequentialCIFAR10(ContinualDataset):
     N_CLASSES_PER_TASK = 2
     N_TASKS = 5
     N_CLASSES = N_CLASSES_PER_TASK * N_TASKS
+    SIZE = (32, 32)
+    MEAN, STD = (0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2615)
     TRANSFORM = transforms.Compose(
         [transforms.RandomCrop(32, padding=4),
          transforms.RandomHorizontalFlip(),
          transforms.ToTensor(),
-         transforms.Normalize((0.4914, 0.4822, 0.4465),
-                              (0.2470, 0.2435, 0.2615))])
+         transforms.Normalize(MEAN, STD)])
 
     def get_data_loaders(self):
         transform = self.TRANSFORM
@@ -113,14 +114,12 @@ class SequentialCIFAR10(ContinualDataset):
 
     @staticmethod
     def get_normalization_transform():
-        transform = transforms.Normalize((0.4914, 0.4822, 0.4465),
-                                         (0.2470, 0.2435, 0.2615))
+        transform = transforms.Normalize(SequentialCIFAR10.MEAN, SequentialCIFAR10.STD)
         return transform
 
     @staticmethod
     def get_denormalization_transform():
-        transform = DeNormalize((0.4914, 0.4822, 0.4465),
-                                (0.2470, 0.2435, 0.2615))
+        transform = DeNormalize(SequentialCIFAR10.MEAN, SequentialCIFAR10.STD)
         return transform
 
     @staticmethod

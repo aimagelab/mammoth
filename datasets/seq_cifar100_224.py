@@ -26,17 +26,16 @@ class SequentialCIFAR100224(ContinualDataset):
     N_TASKS = 10
     N_CLASSES = 100
     SIZE = (224, 224)
+    MEAN, STD = (0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)
     TRANSFORM = transforms.Compose(
         [transforms.Resize(224),
          transforms.RandomCrop(224, padding=28),
          transforms.RandomHorizontalFlip(),
          transforms.ToTensor(),
-         transforms.Normalize((0.5071, 0.4867, 0.4408),
-                              (0.2675, 0.2565, 0.2761))]
+         transforms.Normalize(MEAN, STD)]
     )
     TEST_TRANSFORM = transforms.Compose(
-        [transforms.Resize(224), transforms.ToTensor(), transforms.Normalize((0.5071, 0.4867, 0.4408),
-                                                                             (0.2675, 0.2565, 0.2761))])
+        [transforms.Resize(224), transforms.ToTensor(), transforms.Normalize(MEAN, STD)])
 
     def get_data_loaders(self):
         transform = self.TRANSFORM
@@ -77,14 +76,12 @@ class SequentialCIFAR100224(ContinualDataset):
 
     @staticmethod
     def get_normalization_transform():
-        transform = transforms.Normalize((0.5071, 0.4867, 0.4408),
-                                         (0.2675, 0.2565, 0.2761))
+        transform = transforms.Normalize(SequentialCIFAR100224.MEAN, SequentialCIFAR100224.STD)
         return transform
 
     @staticmethod
     def get_denormalization_transform():
-        transform = DeNormalize((0.5071, 0.4867, 0.4408),
-                                (0.2675, 0.2565, 0.2761))
+        transform = DeNormalize(SequentialCIFAR100224.MEAN, SequentialCIFAR100224.STD)
         return transform
 
     @staticmethod
