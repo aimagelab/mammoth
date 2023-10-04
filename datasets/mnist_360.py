@@ -74,7 +74,7 @@ class MNIST360(torch.utils.data.Dataset):
             self.active_remaining_items = [
                 self.remaining_training_items[self.train_classes[0]].pop(),
                 self.remaining_training_items[self.train_classes[1]].pop()]
-            self.total_remaining_items -= self.current_items
+            self.total_remaining_items = np.hstack([[len(d.dataset) for d in dls] for dls in self.dataset]).sum()  # -= self.current_items
             self.current_items = np.hstack(self.active_remaining_items).sum()
 
     def init_train_loaders(self) -> None:
@@ -205,7 +205,7 @@ class MNIST360(torch.utils.data.Dataset):
                 self.remaining_training_items[self.train_classes[1]].pop()]
 
             self.current_items = np.hstack(self.active_remaining_items).sum()
-            self.total_remaining_items = np.hstack(self.remaining_training_items).sum() + self.current_items
+            self.total_remaining_items = np.hstack([[len(d.dataset) for d in dls] for dls in self.dataset]).sum()
         else:
             self.total_remaining_items = sum([len(d.dataset) for d in self.dataset])
             self.current_items = self.total_remaining_items

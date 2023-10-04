@@ -39,6 +39,7 @@ def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> No
             dataset.N_TASKS * dataset.N_CLASSES_PER_TASK] = -float('inf')
 
 
+@torch.no_grad()
 def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tuple[list, list]:
     """
     Evaluates the accuracy of the model for each past task.
@@ -55,22 +56,21 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
             continue
         correct, correct_mask_classes, total = 0.0, 0.0, 0.0
         for data in test_loader:
-            with torch.no_grad():
-                inputs, labels = data
-                inputs, labels = inputs.to(model.device), labels.to(model.device)
-                if 'class-il' not in model.COMPATIBILITY:
-                    outputs = model(inputs, k)
-                else:
-                    outputs = model(inputs)
+            inputs, labels = data
+            inputs, labels = inputs.to(model.device), labels.to(model.device)
+            if 'class-il' not in model.COMPATIBILITY:
+                outputs = model(inputs, k)
+            else:
+                outputs = model(inputs)
 
+            _, pred = torch.max(outputs.data, 1)
+            correct += torch.sum(pred == labels).item()
+            total += labels.shape[0]
+
+            if dataset.SETTING == 'class-il':
+                mask_classes(outputs, dataset, k)
                 _, pred = torch.max(outputs.data, 1)
-                correct += torch.sum(pred == labels).item()
-                total += labels.shape[0]
-
-                if dataset.SETTING == 'class-il':
-                    mask_classes(outputs, dataset, k)
-                    _, pred = torch.max(outputs.data, 1)
-                    correct_mask_classes += torch.sum(pred == labels).item()
+                correct_mask_classes += torch.sum(pred == labels).item()
 
         accs.append(correct / total * 100
                     if 'class-il' in model.COMPATIBILITY else 0)

@@ -29,11 +29,12 @@ def log_accs(args, logger, accs, t, setting, epoch=None):
 
     if not args.nowand:
         postfix = "" if epoch is None else f"_epoch_{epoch}"
-        d2={f'RESULT_class_mean_accs{postfix}': mean_acc[0], f'RESULT_task_mean_accs{postfix}': mean_acc[1],
-            **{f'RESULT_class_acc_{i}{postfix}': a for i, a in enumerate(accs[0])},
-            **{f'RESULT_task_acc_{i}{postfix}': a for i, a in enumerate(accs[1])}}
+        d2 = {f'RESULT_class_mean_accs{postfix}': mean_acc[0], f'RESULT_task_mean_accs{postfix}': mean_acc[1],
+              **{f'RESULT_class_acc_{i}{postfix}': a for i, a in enumerate(accs[0])},
+              **{f'RESULT_task_acc_{i}{postfix}': a for i, a in enumerate(accs[1])}}
 
         wandb.log(d2)
+
 
 def print_mean_accuracy(mean_acc: np.ndarray, task_number: int,
                         setting: str, joint=False, epoch=None) -> None:
@@ -45,21 +46,25 @@ def print_mean_accuracy(mean_acc: np.ndarray, task_number: int,
     """
     if joint:
         prefix = "Joint Accuracy" if epoch is None else f"Joint Accuracy (epoch {epoch})"
-        mean_acc_class_il, mean_acc_task_il = mean_acc
-        print('\n{}: \t [Class-IL]: {} %'
-            ' \t [Task-IL]: {} %\n'.format(prefix, round(
-                mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
+        if setting == 'domain-il' or setting == 'general-continual':
+            mean_acc, _ = mean_acc
+            print('\n{}: \t [Domain-IL]: {} %\n'.format(prefix, round(mean_acc, 2), file=sys.stderr))
+        else:
+            mean_acc_class_il, mean_acc_task_il = mean_acc
+            print('\n{}: \t [Class-IL]: {} %'
+                  ' \t [Task-IL]: {} %\n'.format(prefix, round(
+                      mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
     else:
         prefix = "Accuracy" if epoch is None else f"Accuracy (epoch {epoch})"
-        if setting == 'domain-il':
+        if setting == 'domain-il' or setting == 'general-continual':
             mean_acc, _ = mean_acc
-            print('\n{} for {} task(s): {} %'.format(prefix,
-                task_number, round(mean_acc, 2)), file=sys.stderr)
+            print('\n{} for {} task(s): [Domain-IL]: {} %\n'.format(prefix,
+                                                                    task_number, round(mean_acc, 2)), file=sys.stderr)
         else:
             mean_acc_class_il, mean_acc_task_il = mean_acc
             print('\n for {} task(s): \t [Class-IL]: {} %'
-                ' \t [Task-IL]: {} %\n'.format(prefix, task_number, round(
-                    mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
+                  ' \t [Task-IL]: {} %\n'.format(prefix, task_number, round(
+                      mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
 
 
 class Logger:
