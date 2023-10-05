@@ -13,3 +13,9 @@ def create_if_not_exists(path: str) -> None:
     """
     if not os.path.exists(path):
         os.makedirs(path)
+
+
+def none_or_float(value):
+    if value == 'None':
+        return None
+    return float(value)

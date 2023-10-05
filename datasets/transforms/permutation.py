@@ -10,6 +10,7 @@ class Permutation(object):
     """
     Defines a fixed permutation for a numpy array.
     """
+
     def __init__(self) -> None:
         """
         Initializes the permutation.
@@ -33,6 +34,7 @@ class FixedPermutation(object):
     """
     Defines a fixed permutation (given the seed) for a numpy array.
     """
+
     def __init__(self, seed: int) -> None:
         """
         Defines the seed.

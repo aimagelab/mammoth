@@ -7,18 +7,30 @@ import random
 import torch
 import numpy as np
 
+
 def get_device() -> torch.device:
     """
-    Returns the GPU device if available else CPU.
+    Returns the least used GPU device if available else MPS or CPU.
     """
-    if torch.cuda.is_available():
-        return torch.device("cuda:0")
-    try:
-        if torch.backends.mps.is_available() and torch.backends.mps.is_built():
-            return torch.device("mps")
-    except:
-        pass
-    return torch.device("cpu")
+    def _get_device():
+        # get least used gpu by used memory
+        if torch.cuda.is_available():
+            gpu_memory = []
+            for i in range(torch.cuda.device_count()):
+                gpu_memory.append(torch.cuda.memory_allocated(i))
+            device = torch.device(f'cuda:{np.argmin(gpu_memory)}')
+            return device
+        try:
+            if torch.backends.mps.is_available() and torch.backends.mps.is_built():
+                return torch.device("mps")
+        except BaseException:
+            print("WARNING: Something went wrong with MPS. Using CPU.")
+            return torch.device("cpu")
+
+    if not hasattr(get_device, 'device'):
+        get_device.device = _get_device()
+
+    return get_device.device
 
 
 def base_path() -> str:
@@ -26,6 +38,7 @@ def base_path() -> str:
     Returns the base bath where to log accuracies and tensorboard data.
     """
     return './data/'
+
 
 def base_path_dataset() -> str:
     """
@@ -44,6 +57,6 @@ def set_random_seed(seed: int) -> None:
     torch.manual_seed(seed)
     try:
         torch.cuda.manual_seed_all(seed)
-    except:
+    except BaseException:
         print('Could not set cuda seed.')
         pass

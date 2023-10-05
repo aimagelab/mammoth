@@ -15,6 +15,7 @@ class Buffer:
     """
     The memory buffer of rehearsal method.
     """
+
     def __init__(self, buffer_size, device, minibatch_size, model=None):
         self.buffer_size = buffer_size
         self.device = device
@@ -48,7 +49,7 @@ class Buffer:
         grads_at_a_time = 5
         # let's split this so your gpu does not melt. You're welcome.
         for it in range(int(np.ceil(G.shape[0] / grads_at_a_time))):
-            tmp = F.cosine_similarity(g, G[it*grads_at_a_time: (it+1)*grads_at_a_time], dim=1).max().item() + 1
+            tmp = F.cosine_similarity(g, G[it * grads_at_a_time: (it + 1) * grads_at_a_time], dim=1).max().item() + 1
             c_score = max(c_score, tmp)
         return c_score
 
@@ -81,7 +82,7 @@ class Buffer:
                 typ = torch.int64 if attr_str.endswith('els') else torch.float32
                 setattr(self, attr_str, torch.zeros((self.buffer_size,
                         *attr.shape[1:]), dtype=typ, device=self.device))
-        self.scores = torch.zeros((self.buffer_size,*attr.shape[1:]),
+        self.scores = torch.zeros((self.buffer_size, *attr.shape[1:]),
                                   dtype=torch.float32, device=self.device)
 
     def add_data(self, examples, labels=None):
@@ -119,7 +120,7 @@ class Buffer:
     def drop_cache(self):
         self.cache = {}
 
-    def get_data(self, size: int, transform: transforms=None, give_index=False, random=False) -> Tuple:
+    def get_data(self, size: int, transform: transforms = None, give_index=False, random=False) -> Tuple:
         """
         Random samples a batch of size items.
         :param size: the number of requested items
@@ -132,17 +133,18 @@ class Buffer:
 
         if random:
             choice = np.random.choice(min(self.num_seen_examples, self.examples.shape[0]),
-                                  size=min(size, self.num_seen_examples),
-                                  replace=False)
+                                      size=min(size, self.num_seen_examples),
+                                      replace=False)
         else:
             choice = np.arange(self.fathom, min(self.fathom + size, self.examples.shape[0], self.num_seen_examples))
             choice = self.fathom_mask[choice]
             self.fathom += len(choice)
             if self.fathom >= self.examples.shape[0] or self.fathom >= self.num_seen_examples:
                 self.fathom = 0
-        if transform is None: transform = lambda x: x
+        if transform is None:
+            def transform(x): return x
         ret_tuple = (torch.stack([transform(ee.cpu())
-                            for ee in self.examples[choice]]).to(self.device),)
+                                  for ee in self.examples[choice]]).to(self.device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str)
@@ -161,15 +163,16 @@ class Buffer:
         else:
             return False
 
-    def get_all_data(self, transform: transforms=None) -> Tuple:
+    def get_all_data(self, transform: transforms = None) -> Tuple:
         """
         Return all the items in the memory buffer.
         :param transform: the transformation to be applied (data augmentation)
         :return: a tuple with all the items in the memory buffer
         """
-        if transform is None: transform = lambda x: x
+        if transform is None:
+            def transform(x): return x
         ret_tuple = (torch.stack([transform(ee.cpu())
-                            for ee in self.examples]).to(self.device),)
+                                  for ee in self.examples]).to(self.device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str)

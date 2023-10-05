@@ -30,9 +30,9 @@ class Derpp(ContinualModel):
     def __init__(self, backbone, loss, args, transform):
         super(Derpp, self).__init__(backbone, loss, args, transform)
 
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         self.opt.zero_grad()
         outputs = self.net(inputs)
@@ -40,12 +40,12 @@ class Derpp(ContinualModel):
 
         if not self.buffer.is_empty():
             buf_inputs, _, buf_logits = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform)
+                self.args.minibatch_size, transform=self.transform, device=self.device)
             buf_outputs = self.net(buf_inputs)
             loss += self.args.alpha * F.mse_loss(buf_outputs, buf_logits)
 
             buf_inputs, buf_labels, _ = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform)
+                self.args.minibatch_size, transform=self.transform, device=self.device)
             buf_outputs = self.net(buf_inputs)
             loss += self.args.beta * self.loss(buf_outputs, buf_labels)
 

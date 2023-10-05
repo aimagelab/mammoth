@@ -59,6 +59,8 @@ class SequentialMNIST(ContinualDataset):
     SETTING = 'class-il'
     N_CLASSES_PER_TASK = 2
     N_TASKS = 5
+    N_CLASSES = N_CLASSES_PER_TASK * N_TASKS
+    SIZE = (28, 28)
     TRANSFORM = None
 
     def get_data_loaders(self):
@@ -97,13 +99,5 @@ class SequentialMNIST(ContinualDataset):
         return None
 
     @staticmethod
-    def get_scheduler(model, args):
-        return None
-
-    @staticmethod
     def get_batch_size():
         return 64
-
-    @staticmethod
-    def get_minibatch_size():
-        return SequentialMNIST.get_batch_size()

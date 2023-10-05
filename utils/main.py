@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import time
 import numpy  # needed (don't change it)
 import importlib
 import os
@@ -16,11 +17,11 @@ sys.path.append(mammoth_path + '/datasets')
 sys.path.append(mammoth_path + '/backbone')
 sys.path.append(mammoth_path + '/models')
 
+from utils import create_if_not_exists
 import datetime
 import uuid
 from argparse import ArgumentParser
 
-import setproctitle
 import torch
 from datasets import NAMES as DATASET_NAMES
 from datasets import ContinualDataset, get_dataset
@@ -29,7 +30,7 @@ from models import get_all_models, get_model
 from utils.args import add_management_args
 from utils.best_args import best_args
 from utils.conf import set_random_seed
-from utils.continual_training import train as ctrain
+from utils.deprecated.continual_training import train as ctrain
 from utils.distributed import make_dp
 from utils.training import train
 
@@ -85,6 +86,23 @@ def parse_args():
     if args.seed is not None:
         set_random_seed(args.seed)
 
+    if args.savecheck:
+        assert args.inference_only == 0, "Should not save checkpoint in inference only mode"
+        if not os.path.isdir('checkpoints'):
+            create_if_not_exists("checkpoints")
+
+        now = time.strftime("%Y%m%d-%H%M%S")
+        extra_ckpt_name = "" if args.ckpt_name is None else f"{args.ckpt_name}_"
+        args.ckpt_name = f"{extra_ckpt_name}{args.model}_{args.dataset}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}_{args.n_epochs}_{str(now)}"
+        args.ckpt_name_replace = f"{extra_ckpt_name}{args.model}_{args.dataset}_{'{}'}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}__{args.n_epochs}_{str(now)}"
+        print("Saving checkpoint into", args.ckpt_name, file=sys.stderr)
+
+    if args.joint:
+        assert args.start_from is None and args.stop_after is None, "Joint training does not support start_from and stop_after"
+        assert args.enable_other_metrics == 0, "Joint training does not support other metrics"
+
+    assert 0 < args.label_perc <= 1, "label_perc must be in (0, 1]"
+
     return args
 
 
@@ -106,7 +124,7 @@ def main(args=None):
         args.n_epochs = dataset.get_epochs()
     if args.batch_size is None:
         args.batch_size = dataset.get_batch_size()
-    if hasattr(importlib.import_module('models.' + args.model), 'Buffer') and args.minibatch_size is None:
+    if hasattr(importlib.import_module('models.' + args.model), 'Buffer') and (not hasattr(args, 'minibatch_size') or args.minibatch_size is None):
         args.minibatch_size = dataset.get_minibatch_size()
 
     backbone = dataset.get_backbone()
@@ -122,16 +140,24 @@ def main(args=None):
         raise NotImplementedError('Distributed Data Parallel not supported yet.')
 
     if args.debug_mode:
+        print('Debug mode enabled: running only a few forward steps per epoch with W&B disabled.')
         args.nowand = 1
 
-    # set job name
-    setproctitle.setproctitle('{}_{}_{}'.format(args.model, args.buffer_size if 'buffer_size' in args else 0, args.dataset))
-
-    if isinstance(dataset, ContinualDataset):
-        train(model, dataset, args)
+    if args.wandb_entity is None or args.wandb_project is None:
+        print('Warning: wandb_entity and wandb_project not set. Disabling wandb.')
+        args.nowand = 1
     else:
-        assert not hasattr(model, 'end_task') or model.NAME == 'joint_gcl'
-        ctrain(args)
+        print('Logging to wandb: {}/{}'.format(args.wandb_entity, args.wandb_project))
+        args.nowand = 0
+
+    try:
+        import setproctitle
+        # set job name
+        setproctitle.setproctitle('{}_{}_{}'.format(args.model, args.buffer_size if 'buffer_size' in args else 0, args.dataset))
+    except Exception:
+        pass
+
+    train(model, dataset, args)
 
 
 if __name__ == '__main__':

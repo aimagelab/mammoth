@@ -20,8 +20,7 @@ from utils.buffer import Buffer, icarl_replay
 
 
 def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='A bag of tricks for '
-                                        'Continual learning.')
+    parser = ArgumentParser(description='Bias Correction.')
     add_management_args(parser)
     add_experiment_args(parser)
     add_rehearsal_args(parser)
@@ -51,19 +50,18 @@ class BiC(ContinualModel):
         self.n_tasks = dd.N_TASKS
         self.cpt = dd.N_CLASSES_PER_TASK
         self.transform = transform
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
 
-        self.task = 0
         self.lamda = 0
 
     def begin_task(self, dataset):
-        if self.task > 0:
+        if self.current_task > 0:
 
             self.old_net = deepcopy(self.net.eval())
             if hasattr(self, 'corr_factors'):
                 self.old_corr = deepcopy(self.corr_factors)
             self.net.train()
-            self.lamda = 1 / (self.task + 1)
+            self.lamda = 1 / (self.current_task + 1)
 
             icarl_replay(self, dataset, val_set_split=self.args.valset_split)
 
@@ -71,7 +69,7 @@ class BiC(ContinualModel):
             del self.corr_factors
 
     def evaluate_bias(self, fprefx):
-        resp = torch.zeros((self.task + 1) * self.cpt).to(self.device)
+        resp = torch.zeros((self.current_task + 1) * self.cpt).to(self.device)
         with torch.no_grad():
             with bn_track_stats(self, False):
                 for data in self.val_loader:
@@ -79,14 +77,14 @@ class BiC(ContinualModel):
                     inputs, labels, _ = data
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
 
-                    resp += self.forward(inputs, anticipate=fprefx == 'post')[:, :(self.task + 1) * self.cpt].sum(0)
+                    resp += self.forward(inputs, anticipate=fprefx == 'post')[:, :(self.current_task + 1) * self.cpt].sum(0)
         resp /= len(self.val_loader.dataset)
 
         if fprefx == 'pre':
             self.oldresp = resp.cpu()
 
     def end_task(self, dataset):
-        if self.task > 0:
+        if self.current_task > 0:
             self.net.eval()
 
             from utils.training import evaluate
@@ -107,8 +105,8 @@ class BiC(ContinualModel):
                     with torch.no_grad():
                         out = self.forward(inputs)
 
-                    start_last_task = (self.task) * self.cpt
-                    end_last_task = (self.task + 1) * self.cpt
+                    start_last_task = (self.current_task) * self.cpt
+                    end_last_task = (self.current_task + 1) * self.cpt
                     tout = out + 0
                     tout[:, start_last_task:end_last_task] *= corr_factors[1].repeat_interleave(end_last_task - start_last_task)
                     tout[:, start_last_task:end_last_task] += corr_factors[0].repeat_interleave(end_last_task - start_last_task)
@@ -124,41 +122,40 @@ class BiC(ContinualModel):
 
             self.net.train()
 
-        self.task += 1
         self.build_buffer(dataset)
 
     def forward(self, x, anticipate=False):
         ret = super().forward(x)
         if ret.shape[0] > 0:
             if hasattr(self, 'corr_factors'):
-                start_last_task = (self.task - 1 + (1 if anticipate else 0)) * self.cpt
-                end_last_task = (self.task + (1 if anticipate else 0)) * self.cpt
+                start_last_task = (self.current_task - 1 + (1 if anticipate else 0)) * self.cpt
+                end_last_task = (self.current_task + (1 if anticipate else 0)) * self.cpt
                 ret[:, start_last_task:end_last_task] *= self.corr_factors[1].repeat_interleave(end_last_task - start_last_task)
                 ret[:, start_last_task:end_last_task] += self.corr_factors[0].repeat_interleave(end_last_task - start_last_task)
         return ret
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.opt.zero_grad()
         outputs = self.net(inputs)
 
         dist_loss = torch.tensor(0.)
-        if self.task > 0:
+        if self.current_task > 0:
             with torch.no_grad():
 
                 old_outputs = self.old_net(inputs)
                 if self.args.distill_after_bic:
                     if hasattr(self, 'old_corr'):
-                        start_last_task = (self.task - 1) * self.cpt
-                        end_last_task = (self.task) * self.cpt
+                        start_last_task = (self.current_task - 1) * self.cpt
+                        end_last_task = (self.current_task) * self.cpt
                         old_outputs[:, start_last_task:end_last_task] *= self.old_corr[1].repeat_interleave(end_last_task - start_last_task)
                         old_outputs[:, start_last_task:end_last_task] += self.old_corr[0].repeat_interleave(end_last_task - start_last_task)
 
-            pi_hat = F.log_softmax(outputs[:, :self.task * self.cpt] / self.args.temp, dim=1)
-            pi = F.softmax(old_outputs[:, :self.task * self.cpt] / self.args.temp, dim=1)
+            pi_hat = F.log_softmax(outputs[:, :self.current_task * self.cpt] / self.args.temp, dim=1)
+            pi = F.softmax(old_outputs[:, :self.current_task * self.cpt] / self.args.temp, dim=1)
 
             dist_loss = -(pi_hat * pi).sum(1).mean()
 
-        class_loss = self.loss(outputs[:, :(self.task + 1) * self.cpt], labels, reduction='none')
+        class_loss = self.loss(outputs[:, :(self.current_task + 1) * self.cpt], labels, reduction='none')
         loss = (1 - self.lamda) * class_loss.mean() + self.lamda * dist_loss.mean() * self.args.temp * self.args.temp
 
         if self.args.wd_reg:
@@ -172,9 +169,9 @@ class BiC(ContinualModel):
 
     def build_buffer(self, dataset):
 
-        examples_per_task = self.buffer.buffer_size // self.task
+        examples_per_task = self.buffer.buffer_size // self.current_task
 
-        if self.task > 1:
+        if self.current_task > 1:
             # shrink buffer
             buf_x, buf_y, buf_tl = self.buffer.get_all_data()
             self.buffer.empty()
@@ -198,5 +195,5 @@ class BiC(ContinualModel):
                     self.buffer.add_data(examples=not_aug_inputs[:(examples_per_task - counter)],
                                          labels=labels[:(examples_per_task - counter)],
                                          task_labels=(torch.ones(self.args.batch_size) *
-                                                      (self.task - 1))[:(examples_per_task - counter)])
+                                                      (self.current_task - 1))[:(examples_per_task - counter)])
                     counter += len(not_aug_inputs)

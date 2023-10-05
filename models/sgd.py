@@ -8,8 +8,7 @@ from utils.args import add_management_args, add_experiment_args, ArgumentParser
 
 
 def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via'
-                                        ' Progressive Neural Networks.')
+    parser = ArgumentParser(description='Finetuning baseline - simple incremental training.')
     add_management_args(parser)
     add_experiment_args(parser)
     return parser
@@ -22,7 +21,7 @@ class Sgd(ContinualModel):
     def __init__(self, backbone, loss, args, transform):
         super(Sgd, self).__init__(backbone, loss, args, transform)
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.opt.zero_grad()
         outputs = self.net(inputs)
         loss = self.loss(outputs, labels)

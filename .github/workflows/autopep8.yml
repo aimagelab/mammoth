@@ -1,0 +1,19 @@
+# This action works with pull requests and pushes
+name: Continuous Integration
+
+on:
+  pull_request:
+  push:
+    branches:
+    - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: autopep8
+      id: autopep8
+      uses: peter-evans/autopep8@v2
+      with:
+        args: --recursive --in-place --aggressive --max-line-length=200 --ignore=E402  .

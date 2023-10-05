@@ -22,6 +22,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     parser.add_argument('--lr', type=float, required=True,
                         help='Learning rate.')
 
+    parser.add_argument('--optimizer', type=str, default='sgd')
     parser.add_argument('--optim_wd', type=float, default=0.,
                         help='optimizer weight decay.')
     parser.add_argument('--optim_mom', type=float, default=0.,
@@ -35,6 +36,16 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                         help='Batch size.')
 
     parser.add_argument('--distributed', type=str, default='no', choices=['no', 'dp', 'ddp'])
+    parser.add_argument('--savecheck', action='store_true', help='Save checkpoint?')
+    parser.add_argument('--loadcheck', type=str, default=None, help='Path of the checkpoint to load (.pt file for the specific task)')
+    parser.add_argument('--ckpt_name', type=str, required=False, help='(optional) checkpoint save name.')
+    parser.add_argument('--start_from', type=int, default=None, help="Task to start from")
+    parser.add_argument('--stop_after', type=int, default=None, help="Task limit")
+
+    parser.add_argument('--joint', type=int, choices=[0, 1], default=0,
+                        help='Train model on Joint (single task)?')
+    parser.add_argument('--label_perc', type=float, default=1,
+                        help='Percentage in (0-1] of labeled examples per task.')
 
 
 def add_management_args(parser: ArgumentParser) -> None:
@@ -45,15 +56,20 @@ def add_management_args(parser: ArgumentParser) -> None:
 
     parser.add_argument('--non_verbose', default=0, choices=[0, 1], type=int, help='Make progress bars non verbose')
     parser.add_argument('--disable_log', default=0, choices=[0, 1], type=int, help='Enable csv logging')
+    parser.add_argument('--num_workers', type=int, default=None, help='Number of workers for the dataloaders (default=infer from number of cpus).')
 
     parser.add_argument('--validation', default=0, choices=[0, 1], type=int,
                         help='Test on the validation set')
-    parser.add_argument('--ignore_other_metrics', default=0, choices=[0, 1], type=int,
-                        help='disable additional metrics')
+    parser.add_argument('--enable_other_metrics', default=0, choices=[0, 1], type=int,
+                        help='Enable additional metrics')
     parser.add_argument('--debug_mode', type=int, default=0, help='Run only a few forward steps per epoch')
-    parser.add_argument('--nowand', default=0, choices=[0, 1], type=int, help='Inhibit wandb logging')
-    parser.add_argument('--wandb_entity', type=str, default='regaz', help='Wandb entity')
+    parser.add_argument('--wandb_entity', type=str, help='Wandb entity')
     parser.add_argument('--wandb_project', type=str, default='mammoth', help='Wandb project name')
+
+    parser.add_argument('--eval_epochs', type=int, default=None,
+                        help='Perform inference intra-task at every `eval_epochs`.')
+    parser.add_argument('--inference_only', action="store_true",
+                        help='Perform inference only for each task (no training).')
 
 
 def add_rehearsal_args(parser: ArgumentParser) -> None:

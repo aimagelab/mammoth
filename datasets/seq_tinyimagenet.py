@@ -120,12 +120,14 @@ class SequentialTinyImagenet(ContinualDataset):
     SETTING = 'class-il'
     N_CLASSES_PER_TASK = 20
     N_TASKS = 10
+    N_CLASSES = N_CLASSES_PER_TASK * N_TASKS
+    MEAN, STD = (0.4802, 0.4480, 0.3975), (0.2770, 0.2691, 0.2821)
+    SIZE = (64, 64)
     TRANSFORM = transforms.Compose(
         [transforms.RandomCrop(64, padding=4),
          transforms.RandomHorizontalFlip(),
          transforms.ToTensor(),
-         transforms.Normalize((0.4802, 0.4480, 0.3975),
-                              (0.2770, 0.2691, 0.2821))])
+         transforms.Normalize(MEAN, STD)])
 
     def get_data_loaders(self):
         transform = self.TRANSFORM
@@ -161,19 +163,13 @@ class SequentialTinyImagenet(ContinualDataset):
 
     @staticmethod
     def get_normalization_transform():
-        transform = transforms.Normalize((0.4802, 0.4480, 0.3975),
-                                         (0.2770, 0.2691, 0.2821))
+        transform = transforms.Normalize(SequentialTinyImagenet.MEAN, SequentialTinyImagenet.STD)
         return transform
 
     @staticmethod
     def get_denormalization_transform():
-        transform = DeNormalize((0.4802, 0.4480, 0.3975),
-                                (0.2770, 0.2691, 0.2821))
+        transform = DeNormalize(SequentialTinyImagenet.MEAN, SequentialTinyImagenet.STD)
         return transform
-
-    @staticmethod
-    def get_scheduler(model, args):
-        return None
 
     @staticmethod
     def get_epochs():
@@ -182,7 +178,3 @@ class SequentialTinyImagenet(ContinualDataset):
     @staticmethod
     def get_batch_size():
         return 32
-
-    @staticmethod
-    def get_minibatch_size():
-        return SequentialTinyImagenet.get_batch_size()

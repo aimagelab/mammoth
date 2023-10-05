@@ -13,7 +13,7 @@ from utils.buffer import Buffer
 
 def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Continual learning via'
-                                        ' Experience Replay.')
+                                        ' Experience Replay with asymmetric cross-entropy.')
     add_management_args(parser)
     add_experiment_args(parser)
     add_rehearsal_args(parser)
@@ -26,15 +26,11 @@ class ErACE(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform):
         super(ErACE, self).__init__(backbone, loss, args, transform)
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
         self.seen_so_far = torch.tensor([]).long().to(self.device)
-        self.num_classes = get_dataset(args).N_TASKS * get_dataset(args).N_CLASSES_PER_TASK
-        self.task = 0
+        self.num_c
 
-    def end_task(self, dataset):
-        self.task += 1
-
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         present = labels.unique()
         self.seen_so_far = torch.cat([self.seen_so_far, present]).unique()
@@ -47,16 +43,16 @@ class ErACE(ContinualModel):
         if self.seen_so_far.max() < (self.num_classes - 1):
             mask[:, self.seen_so_far.max():] = 1
 
-        if self.task > 0:
+        if self.current_task > 0:
             logits = logits.masked_fill(mask == 0, torch.finfo(logits.dtype).min)
 
         loss = self.loss(logits, labels)
         loss_re = torch.tensor(0.)
 
-        if self.task > 0:
+        if self.current_task > 0:
             # sample from buffer
             buf_inputs, buf_labels = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform)
+                self.args.minibatch_size, transform=self.transform, device=self.device)
             loss_re = self.loss(self.net(buf_inputs), buf_labels)
 
         loss += loss_re

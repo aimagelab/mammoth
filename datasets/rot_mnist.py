@@ -17,6 +17,8 @@ class RotatedMNIST(ContinualDataset):
     SETTING = 'domain-il'
     N_CLASSES_PER_TASK = 10
     N_TASKS = 20
+    N_CLASSES = N_CLASSES_PER_TASK * N_TASKS
+    SIZE = (28, 28)
 
     def get_data_loaders(self):
         transform = transforms.Compose((Rotation(), transforms.ToTensor()))
@@ -44,13 +46,5 @@ class RotatedMNIST(ContinualDataset):
         return None
 
     @staticmethod
-    def get_scheduler(model, args):
-        return None
-
-    @staticmethod
     def get_batch_size() -> int:
         return 128
-
-    @staticmethod
-    def get_minibatch_size() -> int:
-        return RotatedMNIST.get_batch_size()

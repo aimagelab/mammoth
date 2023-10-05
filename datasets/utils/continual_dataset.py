@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from argparse import Namespace
+import os
 from typing import Tuple
 
 import numpy as np
@@ -20,6 +21,8 @@ class ContinualDataset:
     SETTING: str
     N_CLASSES_PER_TASK: int
     N_TASKS: int
+    N_CLASSES: int
+    SIZE: Tuple[int]
 
     def __init__(self, args: Namespace) -> None:
         """
@@ -30,8 +33,14 @@ class ContinualDataset:
         self.test_loaders = []
         self.i = 0
         self.args = args
+        self.N_CLASSES = self.N_CLASSES if hasattr(self, 'N_CLASSES') else \
+            (self.N_CLASSES_PER_TASK * self.N_TASKS) if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK)
 
-        if not all((self.NAME, self.SETTING, self.N_CLASSES_PER_TASK, self.N_TASKS)):
+        if args.joint:
+            self.N_CLASSES_PER_TASK = self.N_CLASSES
+            self.N_TASKS = 1
+
+        if not all((self.NAME, self.SETTING, self.N_CLASSES_PER_TASK, self.N_TASKS, self.SIZE, self.N_CLASSES)):
             raise NotImplementedError('The dataset must be initialized with all the required fields.')
 
     def get_data_loaders(self) -> Tuple[DataLoader, DataLoader]:
@@ -82,7 +91,7 @@ class ContinualDataset:
         """
         Returns the scheduler to be used for to the current dataset.
         """
-        raise NotImplementedError
+        return None
 
     @staticmethod
     def get_epochs():
@@ -92,9 +101,45 @@ class ContinualDataset:
     def get_batch_size():
         raise NotImplementedError
 
-    @staticmethod
-    def get_minibatch_size():
-        raise NotImplementedError
+    @classmethod
+    def get_minibatch_size(cls):
+        return cls.get_batch_size()
+
+
+def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):
+    """
+    Creates a balanced mask for each class in the dataset.
+    :param train_dataset: the entire training set
+    :return: list: balanced masks for labels
+    """
+    if setting.args.label_perc == 1:
+        return np.zeros(train_dataset.targets.shape[0]).astype('bool')
+    else:
+        lpc = int(setting.args.label_perc * (train_dataset.targets.shape[0] // setting.N_CLASSES_PER_TASK))
+        ind = np.indices(train_dataset.targets.shape)[0]
+        mask = []
+        for i_label, _ in enumerate(train_dataset.classes):
+            partial_targets = train_dataset.targets[train_dataset.targets == i_label]
+            current_mask = np.random.choice(partial_targets.shape[0], max(
+                partial_targets.shape[0] - lpc, 0), replace=False)
+
+            mask = np.append(mask, ind[train_dataset.targets == i_label][current_mask])
+
+        return mask.astype(np.int32)
+
+
+def _prepare_data_loaders(train_dataset, test_dataset, setting: ContinualDataset):
+    if isinstance(train_dataset.targets, list) or not train_dataset.targets.dtype is torch.long:
+        train_dataset.targets = torch.tensor(train_dataset.targets, dtype=torch.long)
+    if isinstance(test_dataset.targets, list) or not test_dataset.targets.dtype is torch.long:
+        test_dataset.targets = torch.tensor(test_dataset.targets, dtype=torch.long)
+
+    setting.unlabeled_mask = _get_mask_unlabeled(train_dataset, setting)
+
+    if setting.unlabeled_mask.sum() != 0:
+        train_dataset.targets[setting.unlabeled_mask] = -1  # -1 is the unlabeled class
+
+    return train_dataset, test_dataset
 
 
 def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
@@ -117,10 +162,14 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     train_dataset.targets = np.array(train_dataset.targets)[train_mask]
     test_dataset.targets = np.array(test_dataset.targets)[test_mask]
 
+    train_dataset, test_dataset = _prepare_data_loaders(train_dataset, test_dataset, setting)
+
+    n_cpus = 4 if not hasattr(os, 'sched_getaffinity') else len(os.sched_getaffinity(0))
+    num_workers = n_cpus if setting.args.num_workers is None else setting.args.num_workers
     train_loader = DataLoader(train_dataset,
-                              batch_size=setting.args.batch_size, shuffle=True, num_workers=4)
+                              batch_size=setting.args.batch_size, shuffle=True, num_workers=num_workers)
     test_loader = DataLoader(test_dataset,
-                             batch_size=setting.args.batch_size, shuffle=False, num_workers=4)
+                             batch_size=setting.args.batch_size, shuffle=False, num_workers=num_workers)
     setting.test_loaders.append(test_loader)
     setting.train_loader = train_loader
 

@@ -6,6 +6,7 @@
 import torch
 import torch.nn as nn
 
+
 class bn_track_stats:
     def __init__(self, module: nn.Module, condition=True):
         self.module = module
@@ -17,7 +18,7 @@ class bn_track_stats:
                 if isinstance(m, (torch.nn.BatchNorm2d, torch.nn.BatchNorm1d)):
                     m.track_running_stats = False
 
-    def __exit__(self ,type, value, traceback):
+    def __exit__(self, type, value, traceback):
         if not self.enable:
             for m in self.module.modules():
                 if isinstance(m, (torch.nn.BatchNorm2d, torch.nn.BatchNorm1d)):

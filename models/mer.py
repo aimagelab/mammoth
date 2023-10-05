@@ -38,14 +38,15 @@ class Mer(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform):
         super(Mer, self).__init__(backbone, loss, args, transform)
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
         assert args.batch_size == 1, 'Mer only works with batch_size=1'
 
     def draw_batches(self, inp, lab):
         batches = []
         for i in range(self.args.batch_num):
             if not self.buffer.is_empty():
-                buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size, transform=self.transform)
+                buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size,
+                                                              transform=self.transform, device=self.device)
                 inputs = torch.cat((buf_inputs, inp.unsqueeze(0)))
                 labels = torch.cat((buf_labels, torch.tensor([lab]).to(self.device)))
                 batches.append((inputs, labels))
@@ -53,7 +54,7 @@ class Mer(ContinualModel):
                 batches.append((inp.unsqueeze(0), torch.tensor([lab]).unsqueeze(0).to(self.device)))
         return batches
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         batches = self.draw_batches(inputs, labels)
         theta_A0 = self.net.get_params().data.clone()

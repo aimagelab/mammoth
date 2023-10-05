@@ -52,7 +52,7 @@ class SI(ContinualModel):
         self.checkpoint = self.net.get_params().data.clone().to(self.device)
         self.small_omega = 0
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.opt.zero_grad()
         outputs = self.net(inputs)
         penalty = self.penalty()

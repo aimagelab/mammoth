@@ -28,7 +28,6 @@ class JointGCL(ContinualModel):
         super(JointGCL, self).__init__(backbone, loss, args, transform)
         self.old_data = []
         self.old_labels = []
-        self.current_task = 0
 
     def end_task(self, dataset):
         # reinit network
@@ -56,7 +55,7 @@ class JointGCL(ContinualModel):
                 self.opt.step()
                 progress_bar(i, math.ceil(len(all_data) / self.args.batch_size), e, 'J', loss.item())
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.old_data.append(inputs.data)
         self.old_labels.append(labels.data)
         return 0

@@ -48,7 +48,7 @@ class Gss(ContinualModel):
             grads = grads.unsqueeze(0)
         return grads
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         real_batch_size = inputs.shape[0]
         self.buffer.drop_cache()
@@ -58,7 +58,7 @@ class Gss(ContinualModel):
             self.opt.zero_grad()
             if not self.buffer.is_empty():
                 buf_inputs, buf_labels = self.buffer.get_data(
-                    self.args.minibatch_size, transform=self.transform)
+                    self.args.minibatch_size, transform=self.transform, device=self.device)
                 tinputs = torch.cat((inputs, buf_inputs))
                 tlabels = torch.cat((labels, buf_labels))
             else:

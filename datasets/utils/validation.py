@@ -18,7 +18,7 @@ from utils import create_if_not_exists
 class ValidationDataset(Dataset):
     def __init__(self, data: torch.Tensor, targets: np.ndarray,
                  transform: Optional[nn.Module] = None,
-                  target_transform: Optional[nn.Module] = None) -> None:
+                 target_transform: Optional[nn.Module] = None) -> None:
         self.data = data
         self.targets = targets
         self.transform = transform

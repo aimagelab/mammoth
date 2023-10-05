@@ -55,8 +55,7 @@ def dsimplex(num_classes=10):
 
 
 def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Experience Replay.')
+    parser = ArgumentParser(description='Regular Polytope Classifier.')
     add_management_args(parser)
     add_experiment_args(parser)
     add_rehearsal_args(parser)
@@ -69,10 +68,9 @@ class RPC(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform):
         super(RPC, self).__init__(backbone, loss, args, transform)
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
         self.cpt = get_dataset(args).N_CLASSES_PER_TASK
         self.tasks = get_dataset(args).N_TASKS
-        self.task = 0
         self.rpchead = torch.from_numpy(dsimplex(self.cpt * self.tasks)).float().to(self.device)
 
     def forward(self, x):
@@ -82,8 +80,8 @@ class RPC(ContinualModel):
 
     def end_task(self, dataset):
         # reduce coreset
-        if self.task > 0:
-            examples_per_class = self.args.buffer_size // ((self.task + 1) * self.cpt)
+        if self.current_task > 0:
+            examples_per_class = self.args.buffer_size // (self.current_task * self.cpt)
             buf_x, buf_lab = self.buffer.get_all_data()
             self.buffer.empty()
             for tl in buf_lab.unique():
@@ -116,13 +114,12 @@ class RPC(ContinualModel):
 
                 self.buffer.add_data(examples=not_aug_inputs[flags],
                                      labels=labels[flags])
-        self.task += 1
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.opt.zero_grad()
         if not self.buffer.is_empty():
             buf_inputs, buf_labels = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform)
+                self.args.minibatch_size, transform=self.transform, device=self.device)
             inputs = torch.cat((inputs, buf_inputs))
             labels = torch.cat((labels, buf_labels))
 

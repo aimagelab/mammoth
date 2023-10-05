@@ -5,6 +5,7 @@
 
 from argparse import Namespace
 from copy import deepcopy
+import os
 from typing import Tuple
 
 import numpy as np
@@ -17,42 +18,38 @@ from torchvision.datasets import MNIST
 
 from datasets.perm_mnist import MyMNIST
 from datasets.transforms.rotation import IncrementalRotation
+from datasets.utils.continual_dataset import store_masked_loaders
 from datasets.utils.gcl_dataset import GCLDataset
 from datasets.utils.validation import get_train_val
 from utils.conf import base_path_dataset as base_path
+from PIL import Image
 
 
-class MNIST360(GCLDataset):
-    """
-    MNIST-360 general continual dataset.
-    """
-    NAME = 'mnist-360'
-    SETTING = 'general-continual'
+def custom_collate_unbatch(batch):
+    # return custom collate
+    return [b.squeeze(0) for b in torch.utils.data._utils.collate.default_collate(batch)]
+
+
+class MNIST360(torch.utils.data.Dataset):
     N_CLASSES = 9
-    LENGTH = 54051
 
-    def __init__(self, args: Namespace) -> None:
+    def __init__(self, args, is_train=False):
+        super().__init__()
+        self.dataset = []
+        self.remaining_training_items = []
         self.num_rounds = 3
         self.args = args
-        self.train_over, self.test_over = False, False
-
-        self.train_loaders, self.test_loaders = [], []
-        self.remaining_training_items = []
-        self.val_dataset = None
-
-        self.train_classes = [0, 1]
+        self.is_train = is_train
+        self.is_over = False
         self.completed_rounds, self.test_class, self.test_iteration = 0, 0, 0
 
-        self.init_train_loaders()
-        self.init_test_loaders()
+        self.train_classes = [0, 1]
+        if is_train:
+            self.init_train_loaders()
+        else:
+            self.init_test_loaders()
 
-        self.active_train_loaders = [
-            self.train_loaders[self.train_classes[0]].pop(),
-            self.train_loaders[self.train_classes[1]].pop()]
-
-        self.active_remaining_training_items = [
-            self.remaining_training_items[self.train_classes[0]].pop(),
-            self.remaining_training_items[self.train_classes[1]].pop()]
+        self.reinit()
 
     def train_next_class(self) -> None:
         """
@@ -68,15 +65,17 @@ class MNIST360(GCLDataset):
         if self.train_classes[0] == 0:
             self.completed_rounds += 1
             if self.completed_rounds == 3:
-                self.train_over = True
+                self.is_over = True
 
-        if not self.train_over:
+        if not self.is_over:
             self.active_train_loaders = [
-                self.train_loaders[self.train_classes[0]].pop(),
-                self.train_loaders[self.train_classes[1]].pop()]
-            self.active_remaining_training_items = [
+                self.dataset[self.train_classes[0]].pop(),
+                self.dataset[self.train_classes[1]].pop()]
+            self.active_remaining_items = [
                 self.remaining_training_items[self.train_classes[0]].pop(),
                 self.remaining_training_items[self.train_classes[1]].pop()]
+            self.total_remaining_items = np.hstack([[len(d.dataset) for d in dls] for dls in self.dataset]).sum()  # -= self.current_items
+            self.current_items = np.hstack(self.active_remaining_items).sum()
 
     def init_train_loaders(self) -> None:
         """
@@ -87,10 +86,10 @@ class MNIST360(GCLDataset):
         if self.args.validation:
             test_transform = transforms.ToTensor()
             train_dataset, self.val_dataset = get_train_val(
-                train_dataset, test_transform, self.NAME)
+                train_dataset, test_transform, 'mnist-360')
 
         for j in range(self.N_CLASSES):
-            self.train_loaders.append([])
+            self.dataset.append([])
             self.remaining_training_items.append([])
             train_mask = np.isin(np.array(train_dataset.targets), [j])
             train_rotation = IncrementalRotation(init_deg=(j - 1) * 60,
@@ -104,7 +103,7 @@ class MNIST360(GCLDataset):
                     train_mask][k * numbers_per_batch:(k + 1) * numbers_per_batch]
                 tmp_train_dataset.transform = transforms.Compose(
                     [train_rotation, transforms.ToTensor()])
-                self.train_loaders[-1].append(DataLoader(
+                self.dataset[-1].append(DataLoader(
                     tmp_train_dataset, batch_size=1, shuffle=True))
                 self.remaining_training_items[-1].append(
                     tmp_train_dataset.data.shape[0])
@@ -127,8 +126,8 @@ class MNIST360(GCLDataset):
                 increase_per_iteration=360.0 / test_mask.sum())
             tmp_test_dataset.transform = transforms.Compose(
                 [test_rotation, transforms.ToTensor()])
-            self.test_loaders.append(DataLoader(tmp_test_dataset,
-                                                batch_size=self.args.batch_size, shuffle=True))
+            self.dataset.append(DataLoader(tmp_test_dataset,
+                                           batch_size=self.args.batch_size, shuffle=True))
 
     def get_train_data(self) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
@@ -136,15 +135,14 @@ class MNIST360(GCLDataset):
         :return: the augmented and not aumented version of the examples of the
                  current batch, along with their labels.
         """
-        assert not self.train_over
-        batch_size_0 = min(int(round(self.active_remaining_training_items[0] /
-                                     (self.active_remaining_training_items[0] +
-                                      self.active_remaining_training_items[1]) *
+        batch_size_0 = min(int(round(self.active_remaining_items[0] /
+                                     (self.active_remaining_items[0] +
+                                      self.active_remaining_items[1]) *
                                      self.args.batch_size)),
-                           self.active_remaining_training_items[0])
+                           self.active_remaining_items[0])
 
         batch_size_1 = min(self.args.batch_size - batch_size_0,
-                           self.active_remaining_training_items[1])
+                           self.active_remaining_items[1])
 
         x_train, y_train, x_train_naug = [], [], []
         for j in range(batch_size_0):
@@ -162,11 +160,11 @@ class MNIST360(GCLDataset):
         x_train, y_train, x_train_naug = torch.cat(x_train),\
             torch.cat(y_train), torch.cat(x_train_naug)
 
-        self.active_remaining_training_items[0] -= batch_size_0
-        self.active_remaining_training_items[1] -= batch_size_1
+        self.active_remaining_items[0] -= batch_size_0
+        self.active_remaining_items[1] -= batch_size_1
 
-        if self.active_remaining_training_items[0] <= 0 or \
-                self.active_remaining_training_items[1] <= 0:
+        if self.active_remaining_items[0] <= 0 or \
+                self.active_remaining_items[1] <= 0:
             self.train_next_class()
 
         return x_train, y_train, x_train_naug
@@ -176,9 +174,8 @@ class MNIST360(GCLDataset):
         Ensembles the next examples of the current class in a batch.
         :return: the batch of examples along with its label.
         """
-        assert not self.test_over
-        x_test, y_test = next(iter(self.test_loaders[self.test_class]))
-        residual_items = len(self.test_loaders[self.test_class].dataset) - \
+        x_test, y_test = next(iter(self.dataset[self.test_class]))
+        residual_items = len(self.dataset[self.test_class].dataset) - \
             self.test_iteration * self.args.batch_size - len(x_test)
         self.test_iteration += 1
         if residual_items <= 0:
@@ -188,8 +185,80 @@ class MNIST360(GCLDataset):
             self.test_iteration = 0
             self.test_class += 1
             if self.test_class == self.N_CLASSES:
-                self.test_over = True
+                self.is_over = True
+
+        self.active_remaining_items[0] -= x_test.shape[0]
         return x_test, y_test
+
+    def reinit(self):
+        self.is_over = False
+        self.completed_rounds, self.test_class, self.test_iteration = 0, 0, 0
+
+        self.train_classes = [0, 1]
+        if self.is_train:
+            self.active_train_loaders = [
+                self.dataset[self.train_classes[0]].pop(),
+                self.dataset[self.train_classes[1]].pop()]
+
+            self.active_remaining_items = [
+                self.remaining_training_items[self.train_classes[0]].pop(),
+                self.remaining_training_items[self.train_classes[1]].pop()]
+
+            self.current_items = np.hstack(self.active_remaining_items).sum()
+            self.total_remaining_items = np.hstack([[len(d.dataset) for d in dls] for dls in self.dataset]).sum()
+        else:
+            self.total_remaining_items = sum([len(d.dataset) for d in self.dataset])
+            self.current_items = self.total_remaining_items
+            self.active_remaining_items = [self.total_remaining_items]
+
+    def __len__(self):
+        clen = self.total_remaining_items - self.current_items + np.hstack(self.active_remaining_items).sum()
+        return clen // self.args.batch_size
+
+    def __iter__(self):
+        self.reinit()
+
+        return self
+
+    def __getitem__(self, index):
+        return next(self)
+
+    def __next__(self):
+        if self.is_over:
+            raise StopIteration
+
+        if self.is_train:
+            return self.get_train_data()
+        else:
+            return self.get_test_data()
+
+
+class SequentialMNIST360(GCLDataset):
+    """
+    MNIST-360 general continual dataset.
+    """
+    NAME = 'mnist-360'
+    SETTING = 'general-continual'
+    N_CLASSES = 9
+    TRANSFORM = torch.nn.Identity()
+    SIZE = (28, 28)
+
+    def __init__(self, args: Namespace) -> None:
+        super().__init__(args)
+        self.args = args
+        assert args.label_perc == 1, "MNIST-360 does not support partial labels."
+
+    def get_data_loaders(self):
+        train_dataset = MNIST360(self.args, is_train=True)
+        test_dataset = MNIST360(self.args, is_train=False)
+
+        train_loader = DataLoader(train_dataset,
+                                  batch_size=1, shuffle=False, num_workers=0, collate_fn=custom_collate_unbatch)  # dataset is already shuffled and batched
+        test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0, collate_fn=custom_collate_unbatch)  # dataset already has dataloader
+        self.test_loaders.append(test_loader)
+        self.train_loader = train_loader
+
+        return train_loader, test_loader
 
     @staticmethod
     def get_backbone() -> torch.nn.Module:
@@ -204,13 +273,13 @@ class MNIST360(GCLDataset):
         return None
 
     @staticmethod
+    def get_normalization_transform():
+        return None
+
+    @staticmethod
     def get_denormalization_transform():
         return None
 
     @staticmethod
     def get_batch_size() -> int:
-        return 16
-
-    @staticmethod
-    def get_minibatch_size() -> int:
         return 16

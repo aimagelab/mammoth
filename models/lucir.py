@@ -13,11 +13,10 @@ from datasets import get_dataset
 from torch import nn
 from torch.utils.data.dataloader import DataLoader
 
-from models.icarl import fill_buffer
 from models.utils.continual_model import ContinualModel
 from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
-from utils.buffer import Buffer, icarl_replay
+from utils.buffer import Buffer, fill_buffer, icarl_replay
 
 
 def lucir_batch_hard_triplet_loss(labels, embeddings, k, margin, num_old_classes):
@@ -80,7 +79,6 @@ class CustomClassifier(nn.Module):
         self.sigma = nn.parameter.Parameter(torch.Tensor(1))
 
         self.in_features = in_features
-        self.task = 0
         self.cpt = cpt
         self.n_tasks = n_tasks
         self.reset_parameters()
@@ -127,12 +125,11 @@ class Lucir(ContinualModel):
         self.dataset = get_dataset(args)
 
         # Instantiate buffers
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
         self.eye = torch.eye(self.dataset.N_CLASSES_PER_TASK *
                              self.dataset.N_TASKS).to(self.device)
 
         self.old_net = None
-        self.task = 0
         self.epochs = int(args.n_epochs)
         self.lamda_cos_sim = args.lamda_base
 
@@ -152,7 +149,7 @@ class Lucir(ContinualModel):
 
     def update_classifier(self):
         self.net.classifier.task += 1
-        self.net.classifier.reset_weight(self.task)
+        self.net.classifier.reset_weight(self.current_task)
 
     def forward(self, x):
         with torch.no_grad():
@@ -169,7 +166,7 @@ class Lucir(ContinualModel):
 
         self.opt.zero_grad()
         loss = self.get_loss(
-            inputs, labels.long(), self.task)
+            inputs, labels.long(), self.current_task)
         loss.backward()
 
         self.opt.step()
@@ -214,7 +211,7 @@ class Lucir(ContinualModel):
 
     def begin_task(self, dataset):
 
-        if self.task > 0:
+        if self.current_task > 0:
             icarl_replay(self, dataset)
 
             with torch.no_grad():
@@ -226,13 +223,13 @@ class Lucir(ContinualModel):
 
                 # Restore optimizer LR
                 upd_weights = [p for n, p in self.net.named_parameters()
-                               if 'classifier' not in n] + [self.net.classifier.weights[self.task], self.net.classifier.sigma]
+                               if 'classifier' not in n] + [self.net.classifier.weights[self.current_task], self.net.classifier.sigma]
                 fix_weights = list(
-                    self.net.classifier.weights[:self.task])
+                    self.net.classifier.weights[:self.current_task])
 
-                if self.task < self.dataset.N_TASKS - 1:
+                if self.current_task < self.dataset.N_TASKS - 1:
                     fix_weights += list(
-                        self.net.classifier.weights[self.task + 1:])
+                        self.net.classifier.weights[self.current_task + 1:])
 
                 self.opt = torch.optim.SGD([{'params': upd_weights, 'lr': self.args.lr, 'weight_decay': self.args.optim_wd}, {
                     'params': fix_weights, 'lr': 0, 'weight_decay': 0}], lr=self.args.lr, momentum=self.args.optim_mom, weight_decay=self.args.optim_wd)
@@ -242,20 +239,18 @@ class Lucir(ContinualModel):
 
         self.net.train()
         with torch.no_grad():
-            fill_buffer(self, self.buffer, dataset, self.task)
+            fill_buffer(self.buffer, dataset, self.current_task - 1, net=self.net, use_herding=True)
 
         if self.args.fitting_epochs is not None and self.args.fitting_epochs > 0:
             self.fit_buffer(self.args.fitting_epochs)
 
-        self.task += 1
-
         # Adapt lambda
         self.lamda_cos_sim = math.sqrt(
-            self.task) * float(self.args.lamda_base)
+            self.current_task) * float(self.args.lamda_base)
 
     def imprint_weights(self, dataset):
         self.net.eval()
-        old_embedding_norm = torch.cat([self.net.classifier.weights[i] for i in range(self.task)]).norm(
+        old_embedding_norm = torch.cat([self.net.classifier.weights[i] for i in range(self.current_task)]).norm(
             dim=1, keepdim=True)
         average_old_embedding_norm = torch.mean(
             old_embedding_norm, dim=0).cpu().type(torch.DoubleTensor)
@@ -266,7 +261,7 @@ class Lucir(ContinualModel):
 
         cur_dataset = deepcopy(loader.dataset)
 
-        for cls_idx in range(self.task * self.dataset.N_CLASSES_PER_TASK, (self.task + 1) * self.dataset.N_CLASSES_PER_TASK):
+        for cls_idx in range(self.current_task * self.dataset.N_CLASSES_PER_TASK, (self.current_task + 1) * self.dataset.N_CLASSES_PER_TASK):
 
             cls_indices = np.asarray(
                 loader.dataset.targets) == cls_idx
@@ -287,10 +282,10 @@ class Lucir(ContinualModel):
             norm_features = F.normalize(cls_features, p=2, dim=1)
             cls_embedding = torch.mean(norm_features, dim=0)
 
-            novel_embedding[cls_idx - self.task * self.dataset.N_CLASSES_PER_TASK] = F.normalize(
+            novel_embedding[cls_idx - self.current_task * self.dataset.N_CLASSES_PER_TASK] = F.normalize(
                 cls_embedding, p=2, dim=0) * average_old_embedding_norm
 
-        self.net.classifier.weights[self.task].data = novel_embedding.to(
+        self.net.classifier.weights[self.current_task].data = novel_embedding.to(
             self.device)
         self.net.train()
 
@@ -305,7 +300,7 @@ class Lucir(ContinualModel):
 
         with bn_track_stats(self, False):
             for _ in range(opt_steps):
-                examples, labels, _ = self.buffer.get_all_data(self.transform)
+                examples, labels, _ = self.buffer.get_all_data(self.transform, device=self.device)
                 dt = DataLoader([(e, l) for e, l in zip(examples, labels)],
                                 shuffle=True, batch_size=self.args.batch_size)
                 for inputs, labels in dt:

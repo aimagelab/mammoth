@@ -13,11 +13,11 @@ import numpy as np
 
 
 def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via iCaRL.')
+    parser = ArgumentParser(description='Learning without Forgetting - Multi-Class.')
 
     add_management_args(parser)
     add_experiment_args(parser)
-    
+
     parser.add_argument('--wd_reg', type=float, required=True,
                         help='L2 regularization applied to the parameters.')
     return parser
@@ -37,7 +37,6 @@ class LwFMC(ContinualModel):
 
         self.class_means = None
         self.old_net = None
-        self.current_task = 0
 
     def observe(self, inputs, labels, not_aug_inputs, logits=None, epoch=None):
         if self.current_task > 0:
@@ -84,5 +83,3 @@ class LwFMC(ContinualModel):
     def end_task(self, dataset) -> None:
         self.old_net = deepcopy(self.net.eval())
         self.net.train()
-        self.current_task += 1
-    
