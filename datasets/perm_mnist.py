@@ -106,3 +106,7 @@ class PermutedMNIST(ContinualDataset):
     @staticmethod
     def get_batch_size() -> int:
         return 128
+
+    @staticmethod
+    def get_epochs():
+        return 1

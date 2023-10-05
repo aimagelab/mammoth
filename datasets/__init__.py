@@ -7,6 +7,7 @@ import importlib
 import inspect
 import os
 from argparse import Namespace
+from typing import Type
 
 from datasets.utils.continual_dataset import ContinualDataset
 
@@ -42,4 +43,14 @@ def get_dataset(args: Namespace) -> ContinualDataset:
     :return: the continual dataset
     """
     assert args.dataset in NAMES
-    return NAMES[args.dataset](args)
+    return get_dataset_class(args)(args)
+
+
+def get_dataset_class(args: Namespace) -> Type[ContinualDataset]:
+    """
+    Returns a continual dataset.
+    :param args: the arguments which contains the hyperparameters
+    :return: the continual dataset
+    """
+    assert args.dataset in NAMES
+    return NAMES[args.dataset]
