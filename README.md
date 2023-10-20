@@ -7,6 +7,8 @@
 
 Official repository of [Class-Incremental Continual Learning into the eXtended DER-verse](https://arxiv.org/abs/2201.00766) and [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html)
 
+**NEW** Join our Discord Server for all your Mammoth-related questions → ![Discord Shield](https://discordapp.com/api/guilds/1164956257392799860/widget.png?style=shield)
+
 <p align="center">
   <img width="112" height="112" src="seq_mnist.gif" alt="Sequential MNIST">
   <img width="112" height="112" src="seq_cifar10.gif" alt="Sequential CIFAR-10">
