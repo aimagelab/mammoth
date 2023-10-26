@@ -105,6 +105,7 @@ class ResNet(nn.Module):
         num_classes: int = 1000,
         zero_init_residual: bool = False,
         groups: int = 1,
+        pretrained: bool = False,
         width_per_group: int = 64,
         replace_stride_with_dilation: Optional[List[bool]] = None,
         norm_layer: Optional[Callable[..., nn.Module]] = None
@@ -159,6 +160,15 @@ class ResNet(nn.Module):
                 if isinstance(m, Bottleneck):
                     # type: ignore[arg-type]
                     nn.init.constant_(m.bn3.weight, 0)
+
+        if pretrained:
+            ckpt = torch.hub.load_state_dict_from_url(model_urls['resnet50'], progress=True, check_hash=True)
+            # drop classifier weights
+            ckpt.pop('fc.weight')
+            ckpt.pop('fc.bias')
+            missing, unexpected = self.load_state_dict(ckpt, strict=False)
+            assert len([x for x in missing if 'classifier' not in x]) == 0, "Missing keys: {}".format(missing)
+            assert len(unexpected) == 0, "Unexpected keys: {}".format(unexpected)
 
     def to(self, device, **kwargs):
         self.device = device
@@ -243,7 +253,7 @@ class ResNet(nn.Module):
                 p.requires_grad = enable
 
 
-def resnet50(num_classes: int, **kwargs: Any) -> ResNet:
+def resnet50(num_classes: int, pretrained=False, **kwargs: Any) -> ResNet:
     r"""ResNet-50 model from
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_.
 
@@ -251,4 +261,4 @@ def resnet50(num_classes: int, **kwargs: Any) -> ResNet:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return ResNet(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, **kwargs)
+    return ResNet(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, pretrained=pretrained, **kwargs)

@@ -159,7 +159,7 @@ class SequentialCUB200(ContinualDataset):
     @staticmethod
     def get_backbone(hookme=False):
         num_classes = SequentialCUB200.N_CLASSES_PER_TASK * SequentialCUB200.N_TASKS
-        return resnet50(num_classes)
+        return resnet50(num_classes, pretrained=True)
 
     @staticmethod
     def get_loss():
