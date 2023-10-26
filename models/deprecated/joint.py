@@ -47,7 +47,7 @@ class Joint(ContinualModel):
             self.net = dataset.get_backbone()
             self.net.to(self.device)
             self.net.train()
-            self.opt = SGD(self.net.parameters(), lr=self.args.lr)
+            self.opt = self.get_optimizer()
 
             # prepare dataloader
             all_data, all_labels = None, None
