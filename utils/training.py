@@ -147,7 +147,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 data_len = len(train_loader)
                 for i in range(data_len):
                     data = next(train_iter)
-                    if args.debug_mode and i > 3:
+                    if args.debug_mode and i > model.get_debug_iters():
                         break
                     if hasattr(dataset.train_loader.dataset, 'logits'):
                         inputs, labels, not_aug_inputs, logits = data

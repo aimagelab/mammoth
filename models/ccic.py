@@ -50,10 +50,15 @@ class Ccic(ContinualModel):
         self.embeddings = None
 
         self.eye = torch.eye(self.N_CLASSES).to(self.device)
-        self.sup_virtual_batch = RingBuffer(
-            self.args.batch_size, self.device, 1)
-        self.unsup_virtual_batch = RingBuffer(
-            self.args.batch_size, self.device, 1)
+        self.sup_virtual_batch = RingBuffer(self.args.batch_size)
+        self.unsup_virtual_batch = RingBuffer(self.args.batch_size)
+
+    def get_debug_iters(self):
+        """
+        Returns the number of iterations to wait before logging.
+        - CCIC needs a couple more iterations to initialize the KNN.
+        """
+        return self.args.buffer_size // self.args.batch_size + 3
 
     def forward(self, x):
         if self.embeddings is None:
@@ -101,23 +106,25 @@ class Ccic(ContinualModel):
             return 1.
 
         self.sup_virtual_batch.add_data(sup_not_aug_inputs, sup_labels)
-        sup_inputs, sup_labels = self.sup_virtual_batch.get_data(self.args.batch_size, transform=self.transform)
+        sup_inputs, sup_labels = self.sup_virtual_batch.get_data(self.args.batch_size, transform=self.transform, device=self.device)
 
         if self.current_task > 0:
-            self.unsup_virtual_batch.add_data(unsup_not_aug_inputs, unsup_labels)
-            unsup_inputs = self.unsup_virtual_batch.get_data(self.args.batch_size, transform=self.transform)[0]
+            self.unsup_virtual_batch.add_data(unsup_not_aug_inputs)
+            unsup_inputs = self.unsup_virtual_batch.get_data(self.args.batch_size, transform=self.transform, device=self.device)[0]
 
         # BUFFER RETRIEVAL
         if not self.buffer.is_empty():
-            buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size, transform=self.transform)
+            buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size, transform=self.transform, device=self.device)
             sup_inputs = torch.cat((sup_inputs, buf_inputs))
             sup_labels = torch.cat((sup_labels, buf_labels))
             if self.current_task > 0:
-                masked_buf_inputs, masked_buf_labels = self.buffer.get_data(self.args.minibatch_size,
-                                                                            mask_task=self.current_task, cpt=self.cpt,
-                                                                            transform=self.transform)
+                masked_buf_inputs = self.buffer.get_data(self.args.minibatch_size,
+                                                         mask_task_out=self.current_task,
+                                                         transform=self.transform,
+                                                         cpt=self.n_classes_current_task,
+                                                         device=self.device)[0]
                 unsup_labels = torch.cat((torch.zeros(unsup_inputs.shape[0]).to(self.device),
-                                          torch.ones(masked_buf_labels.shape[0]).to(self.device))).long()
+                                          torch.ones(masked_buf_inputs.shape[0]).to(self.device))).long()
                 unsup_inputs = torch.cat((unsup_inputs, masked_buf_inputs))
 
         # ------------------ K AUG ---------------------

@@ -28,6 +28,7 @@ class ContinualModel(nn.Module):
     """
     NAME: str
     COMPATIBILITY: List[str]
+    AVAIL_OPTIMS = ['sgd', 'adam', 'adamw']
 
     def __init__(self, backbone: nn.Module, loss: nn.Module,
                  args: Namespace, transform: nn.Module) -> None:
@@ -75,11 +76,19 @@ class ContinualModel(nn.Module):
 
     def get_optimizer(self):
         # check if optimizer is in torch.optim
-        supported_optims = {optim_name.lower(): optim_name for optim_name in dir(optim)}
+        supported_optims = {optim_name.lower(): optim_name for optim_name in dir(optim) if optim_name.lower() in self.AVAIL_OPTIMS}
+        opt = None
         if self.args.optimizer.lower() in supported_optims:
-            opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.net.parameters(), lr=self.args.lr,
-                                                                                weight_decay=self.args.optim_wd, momentum=self.args.optim_mom)
-        else:
+            if self.args.optimizer.lower() == 'sgd':
+                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.net.parameters(), lr=self.args.lr,
+                                                                                    weight_decay=self.args.optim_wd,
+                                                                                    momentum=self.args.optim_mom,
+                                                                                    nesterov=self.args.optim_nesterov == 1)
+            elif self.args.optimizer.lower() == 'adam' or self.args.optimizer.lower() == 'adamw':
+                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.net.parameters(), lr=self.args.lr,
+                                                                                    weight_decay=self.args.optim_wd)
+
+        if opt is None:
             raise ValueError('Unknown optimizer: {}'.format(self.args.optimizer))
         return opt
 
@@ -88,6 +97,13 @@ class ContinualModel(nn.Module):
         offset1 = task * cpt
         offset2 = (task + 1) * cpt
         return offset1, offset2
+
+    def get_debug_iters(self):
+        """
+        Returns the number of iterations to be used for debugging.
+        Default: 3
+        """
+        return 5
 
     def begin_task(self, dataset: ContinualDataset) -> None:
         """
@@ -115,6 +131,8 @@ class ContinualModel(nn.Module):
     def meta_observe(self, *args, **kwargs):
         if 'cssl' not in self.COMPATIBILITY:  # drop unlabeled data if not supported
             labeled_mask = args[1] != -1
+            if labeled_mask.sum() == 0:
+                return 0
             args = [arg[labeled_mask] if isinstance(arg, torch.Tensor) and arg.shape[0] == args[0].shape[0] else arg for arg in args]
         if 'wandb' in sys.modules and not self.args.nowand:
             pl = persistent_locals(self.observe)

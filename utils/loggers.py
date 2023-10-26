@@ -62,7 +62,7 @@ def print_mean_accuracy(mean_acc: np.ndarray, task_number: int,
                                                                     task_number, round(mean_acc, 2)), file=sys.stderr)
         else:
             mean_acc_class_il, mean_acc_task_il = mean_acc
-            print('\n for {} task(s): \t [Class-IL]: {} %'
+            print('\n{} for {} task(s): \t [Class-IL]: {} %'
                   ' \t [Task-IL]: {} %\n'.format(prefix, task_number, round(
                       mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
 

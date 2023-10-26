@@ -161,27 +161,40 @@ class Buffer:
                 if attention_maps is not None:
                     self.attention_maps[index] = [at[i].byte().to(self.device) for at in attention_maps]
 
-    def get_data(self, size: int, transform: nn.Module = None, return_index=False, device=None) -> Tuple:
+    def get_data(self, size: int, transform: nn.Module = None, return_index=False, device=None, mask_task_out=None, cpt=None) -> Tuple:
         """
         Random samples a batch of size items.
         :param size: the number of requested items
         :param transform: the transformation to be applied (data augmentation)
+        :param return_index: if True, returns the indexes of the sampled items
+        :param mask_task: if not None, masks OUT the examples from the given task
+        :param cpt: the number of classes per task (required if mask_task is not None and task_labels are not present)
         :return:
         """
         target_device = self.device if device is None else device
 
+        if mask_task_out is not None:
+            assert hasattr(self, 'task_labels') or cpt is not None
+            assert hasattr(self, 'task_labels') or hasattr(self, 'labels')
+            samples_mask = (self.task_labels != mask_task_out) if hasattr(self, 'task_labels') else self.labels // cpt != mask_task_out
+
+        num_avail_samples = self.examples.shape[0] if mask_task_out is None else samples_mask.sum()
+
         if size > min(self.num_seen_examples, self.examples.shape[0]):
             size = min(self.num_seen_examples, self.examples.shape[0])
 
-        choice = np.random.choice(min(self.num_seen_examples, self.examples.shape[0]),
+        choice = np.random.choice(min(self.num_seen_examples, num_avail_samples),
                                   size=size, replace=False)
         if transform is None:
             def transform(x): return x
-        ret_tuple = (torch.stack([transform(ee) for ee in self.examples[choice].cpu()]).to(target_device),)
+
+        selected_samples = self.examples[choice] if mask_task_out is None else self.examples[samples_mask][choice]
+        ret_tuple = (torch.stack([transform(ee) for ee in selected_samples.cpu()]).to(target_device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
-                attr = getattr(self, attr_str).to(target_device)
-                ret_tuple += (attr[choice],)
+                attr = getattr(self, attr_str)
+                selected_attr = attr[choice] if mask_task_out is None else attr[samples_mask][choice]
+                ret_tuple += (selected_attr.to(target_device),)
 
         if not return_index:
             return ret_tuple
