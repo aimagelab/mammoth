@@ -101,3 +101,7 @@ class SequentialMNIST(ContinualDataset):
     @staticmethod
     def get_batch_size():
         return 64
+
+    @staticmethod
+    def get_epochs():
+        return 1

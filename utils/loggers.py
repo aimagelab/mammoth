@@ -149,6 +149,7 @@ class Logger:
         :param mean_acc: mean accuracy value
         """
         if self.setting == 'general-continual':
+            mean_acc, _ = mean_acc
             self.accs.append(mean_acc)
         elif self.setting == 'domain-il':
             mean_acc, _ = mean_acc

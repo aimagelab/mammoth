@@ -283,3 +283,7 @@ class SequentialMNIST360(GCLDataset):
     @staticmethod
     def get_batch_size() -> int:
         return 16
+
+    @staticmethod
+    def get_epochs():
+        return 1

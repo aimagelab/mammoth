@@ -23,7 +23,7 @@ import uuid
 from argparse import ArgumentParser
 
 import torch
-from datasets import NAMES as DATASET_NAMES
+from datasets import NAMES as DATASET_NAMES, get_dataset_class
 from datasets import ContinualDataset, get_dataset
 from models import get_all_models, get_model
 
@@ -82,6 +82,14 @@ def parse_args():
         get_parser = getattr(mod, 'get_parser')
         parser = get_parser()
         args = parser.parse_args()
+
+    tmp_dset_class = get_dataset_class(args)
+    n_epochs = tmp_dset_class.get_epochs()
+    if args.n_epochs is None:
+        args.n_epochs = n_epochs
+    else:
+        if args.n_epochs != n_epochs:
+            print('Warning: n_epochs set to {} instead of {}'.format(args.n_epochs, n_epochs), file=sys.stderr)
 
     if args.seed is not None:
         set_random_seed(args.seed)

@@ -16,7 +16,7 @@ def get_parser() -> ArgumentParser:
     add_management_args(parser)
     add_experiment_args(parser)
     add_rehearsal_args(parser)
-    parser.add_argument('--batch_num', type=int, required=True,
+    parser.add_argument('--batch_num', type=int, default=1,
                         help='Number of batches extracted from the buffer.')
     parser.add_argument('--gss_minibatch_size', type=int, default=None,
                         help='The batch size of the gradient comparison.')
