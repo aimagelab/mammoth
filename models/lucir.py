@@ -36,8 +36,9 @@ def lucir_batch_hard_triplet_loss(labels, embeddings, k, margin, num_old_classes
         max_novel_scores = max_novel_scores[hard_index]
         assert (gt_scores.size() == max_novel_scores.size())
         assert (gt_scores.size(0) == hard_num)
+        target = torch.ones(hard_num * k, 1).to(embeddings.device)
         loss = nn.MarginRankingLoss(margin=margin)(gt_scores.view(-1, 1),
-                                                   max_novel_scores.view(-1, 1), torch.ones(hard_num * k).to(embeddings.device))
+                                                   max_novel_scores.view(-1, 1), target)
     else:
         loss = torch.zeros(1).to(embeddings.device)
 
@@ -148,7 +149,6 @@ class Lucir(ContinualModel):
         self.c_epoch = -1
 
     def update_classifier(self):
-        self.net.classifier.task += 1
         self.net.classifier.reset_weight(self.current_task)
 
     def forward(self, x):
@@ -300,7 +300,7 @@ class Lucir(ContinualModel):
 
         with bn_track_stats(self, False):
             for _ in range(opt_steps):
-                examples, labels, _ = self.buffer.get_all_data(self.transform, device=self.device)
+                examples, labels = self.buffer.get_all_data(self.transform, device=self.device)
                 dt = DataLoader([(e, l) for e, l in zip(examples, labels)],
                                 shuffle=True, batch_size=self.args.batch_size)
                 for inputs, labels in dt:
