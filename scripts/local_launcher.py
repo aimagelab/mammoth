@@ -8,16 +8,14 @@ from multiprocessing.pool import ThreadPool
 import argparse
 import signal
 
+from utils import smart_joint
+
 global active_jobs
 global completed_jobs
 global failed_jobs
 active_jobs = {}
 completed_jobs = {}
 failed_jobs = {}
-
-
-def smart_joint(*paths):
-    return os.path.join(*paths).replace("\\", "/")
 
 
 def parse_args():

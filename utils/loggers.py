@@ -10,7 +10,7 @@ from typing import Any, Dict
 
 import numpy as np
 
-from utils import create_if_not_exists
+from utils import create_if_not_exists, smart_joint
 from utils.conf import base_path
 from utils.metrics import backward_transfer, forward_transfer, forgetting
 import wandb
@@ -197,7 +197,7 @@ class Logger:
             f.write(str(wrargs) + '\n')
 
         if self.setting == 'class-il':
-            create_if_not_exists(os.path.join(*[target_folder, "task-il/", self.dataset]))
+            create_if_not_exists(smart_joint(*[target_folder, "task-il/", self.dataset]))
             create_if_not_exists(target_folder + "task-il/"
                                  + self.dataset + "/" + self.model)
 
