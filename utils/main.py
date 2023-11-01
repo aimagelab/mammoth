@@ -27,7 +27,6 @@ from datasets import NAMES as DATASET_NAMES, get_dataset_class
 from datasets import ContinualDataset, get_dataset
 from models import get_all_models, get_model
 
-from utils.args import add_management_args
 from utils.best_args import best_args
 from utils.conf import set_random_seed
 from utils.deprecated.continual_training import train as ctrain
@@ -44,15 +43,18 @@ def lecun_fix():
 
 
 def parse_args():
-    parser = ArgumentParser(description='mammoth', allow_abbrev=False)
-    parser.add_argument('--model', type=str, required=True,
-                        help='Model name.', choices=get_all_models())
+    parser = ArgumentParser(description='mammoth', allow_abbrev=False, add_help=False)
+    parser.add_argument('--model', type=str, help='Model name.', choices=get_all_models())
     parser.add_argument('--load_best_args', action='store_true',
                         help='Loads the best arguments for each method, '
                              'dataset and memory buffer.')
     torch.set_num_threads(4)
-    add_management_args(parser)
     args = parser.parse_known_args()[0]
+    if args.model is None:
+        print('No model specified. Please specify a model with --model to see all other options.')
+        print('Available models are: {}'.format(get_all_models()))
+        sys.exit(1)
+
     mod = importlib.import_module('models.' + args.model)
 
     if args.load_best_args:

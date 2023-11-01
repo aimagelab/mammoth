@@ -30,6 +30,65 @@ class ContinualModel(nn.Module):
     COMPATIBILITY: List[str]
     AVAIL_OPTIMS = ['sgd', 'adam', 'adamw']
 
+    @property
+    def current_task(self):
+        """
+        Returns the index of current task.
+        """
+        return self._current_task
+
+    @property
+    def n_classes_current_task(self):
+        """
+        Returns the number of classes in the current task.
+        Returns -1 if task has not been initialized yet.
+        """
+        if hasattr(self, '_n_classes_current_task'):
+            return self._n_classes_current_task
+        else:
+            return -1
+
+    @property
+    def n_seen_classes(self):
+        """
+        Returns the number of classes seen so far.
+        Returns -1 if task has not been initialized yet.
+        """
+        if hasattr(self, '_n_seen_classes'):
+            return self._n_seen_classes
+        else:
+            return -1
+
+    @property
+    def n_remaining_classes(self):
+        """
+        Returns the number of classes remaining to be seen.
+        Returns -1 if task has not been initialized yet.
+        """
+        if hasattr(self, '_n_remaining_classes'):
+            return self._n_remaining_classes
+        else:
+            return -1
+
+    @property
+    def n_past_classes(self):
+        """
+        Returns the number of classes seen up to the PAST task.
+        Returns -1 if task has not been initialized yet.
+        """
+        if hasattr(self, '_n_past_classes'):
+            return self._n_past_classes
+        else:
+            return -1
+
+    @property
+    def cpt(self):
+        """
+        Returns the raw number of classes per task.
+        Warning: return value might be either an integer or a list of integers.
+        """
+        return self._cpt
+
     def __init__(self, backbone: nn.Module, loss: nn.Module,
                  args: Namespace, transform: nn.Module) -> None:
         super(ContinualModel, self).__init__()
@@ -42,8 +101,8 @@ class ContinualModel(nn.Module):
         self.N_CLASSES = self.dataset.N_CLASSES
         self.N_TASKS = self.dataset.N_TASKS
         self.SETTING = self.dataset.SETTING
-        self.cpt = self.dataset.N_CLASSES_PER_TASK
-        self.current_task = 0
+        self._cpt = self.dataset.N_CLASSES_PER_TASK
+        self._current_task = 0
 
         try:
             self.weak_transform = to_kornia_transform(transform.transforms[-1].transforms)
@@ -143,14 +202,14 @@ class ContinualModel(nn.Module):
         return ret
 
     def meta_begin_task(self, dataset):
-        self.n_classes_current_task = self.cpt if isinstance(self.cpt, int) else self.cpt[self.current_task]
-        self.n_seen_classes = self.cpt * (self.current_task + 1) if isinstance(self.cpt, int) else sum(self.cpt[:self.current_task + 1])
-        self.n_remaining_classes = self.N_CLASSES - self.n_seen_classes
-        self.n_past_classes = self.cpt * self.current_task if isinstance(self.cpt, int) else sum(self.cpt[:self.current_task])
+        self._n_classes_current_task = self._cpt if isinstance(self._cpt, int) else self._cpt[self._current_task]
+        self._n_seen_classes = self._cpt * (self._current_task + 1) if isinstance(self._cpt, int) else sum(self._cpt[:self._current_task + 1])
+        self._n_remaining_classes = self.N_CLASSES - self._n_seen_classes
+        self._n_past_classes = self._cpt * self._current_task if isinstance(self._cpt, int) else sum(self._cpt[:self._current_task])
         self.begin_task(dataset)
 
     def meta_end_task(self, dataset):
-        self.current_task += 1
+        self._current_task += 1
         self.end_task(dataset)
 
     def observe(self, inputs: torch.Tensor, labels: torch.Tensor,

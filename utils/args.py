@@ -3,7 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, SUPPRESS
 from datasets import NAMES as DATASET_NAMES
 from models import get_all_models
 
@@ -31,7 +31,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                         help='optimizer nesterov momentum.')
 
     parser.add_argument('--n_epochs', type=int,
-                        help='Batch size.')
+                        help='Number of epochs.')
     parser.add_argument('--batch_size', type=int,
                         help='Batch size.')
 
