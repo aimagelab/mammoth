@@ -8,6 +8,14 @@ import torch
 import torch.nn.functional as F
 from torchvision.transforms import functional as TF
 from torchvision import transforms
+from utils.kornia_utils import KorniaAugNoGrad
+
+
+def apply_transform(x: torch.Tensor, transform) -> torch.Tensor:
+    if isinstance(transform, KorniaAugNoGrad):
+        return transform(x)
+    else:
+        return torch.stack([transform(xi) for xi in x.cpu()], dim=0).to(x.device)
 
 
 def rand_bbox(size, lam):

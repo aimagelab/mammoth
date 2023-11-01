@@ -12,6 +12,7 @@ import torch.nn as nn
 
 from datasets.utils.continual_dataset import ContinualDataset
 from models.utils.continual_model import ContinualModel
+from utils.augmentations import apply_transform
 from utils.conf import get_device
 
 
@@ -212,8 +213,7 @@ class Buffer:
 
         if transform is None:
             def transform(x): return x
-        ret_tuple = (torch.stack([transform(ee)
-                                  for ee in self.examples[indexes].cpu()]).to(target_device),)
+        ret_tuple = (apply_transform(self.examples[:len(self)], transform=transform).to(target_device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str).to(target_device)
@@ -238,8 +238,8 @@ class Buffer:
         target_device = self.device if device is None else device
         if transform is None:
             def transform(x): return x
-        ret_tuple = (torch.stack([transform(ee.cpu())
-                                  for ee in self.examples[:len(self)]]).to(target_device),)
+
+        ret_tuple = (apply_transform(self.examples[:len(self)], transform=transform).to(target_device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str)[:len(self)].to(target_device)

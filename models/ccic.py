@@ -45,7 +45,6 @@ class Ccic(ContinualModel):
         super(Ccic, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size, self.device)
         self.epoch = 0
-        self.cpt = get_dataset(args).N_CLASSES_PER_TASK
         self.n_tasks = get_dataset(args).N_TASKS
         self.embeddings = None
 

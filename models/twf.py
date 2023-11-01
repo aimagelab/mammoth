@@ -1,6 +1,6 @@
 import torch
 from models.twf_utils.utils import init_twf
-from utils.augmentations import CustomRandomCrop, CustomRandomHorizontalFlip, DoubleCompose, DoubleTransform
+from utils.augmentations import CustomRandomCrop, CustomRandomHorizontalFlip, DoubleCompose, DoubleTransform, apply_transform
 from utils.buffer import Buffer
 from utils.args import *
 from models.utils.continual_model import ContinualModel
@@ -38,7 +38,8 @@ def get_parser() -> ArgumentParser:
                         help='Apply downscale and upscale to feature maps before save in buffer?')
     parser.add_argument('--min_resize_threshold', type=int, required=False, default=16,
                         help='Min size of feature maps to be resized?')
-
+    parser.add_argument('--virtual_batch_size', type=int, required=False,
+                        help='Virtual batch size')
     return parser
 
 
@@ -55,12 +56,10 @@ class TwF(ContinualModel):
 
         self.buffer = Buffer(self.args.buffer_size)
         self.buf_transform = self.get_custom_double_transform(self.transform.transforms)
+        self.args.virtual_batch_size = self.args.virtual_batch_size if self.args.virtual_batch_size is not None else self.args.batch_size
 
-        ds = get_dataset(args)
-        self.cpt = ds.N_CLASSES_PER_TASK
-        self.not_aug_transform = transforms.Compose([transforms.ToPILImage(), ds.TEST_TRANSFORM]) if hasattr(ds, 'TEST_TRANSFORM') else transforms.Compose(
-            [transforms.ToPILImage(), transforms.ToTensor(), ds.get_normalization_transform()])
-        self.num_classes = self.N_TASKS * self.cpt
+        assert self.args.virtual_batch_size % self.args.batch_size == 0, "virtual_batch_size must be a multiple of batch_size"
+        assert self.args.virtual_batch_size >= self.args.batch_size, "virtual_batch_size must be greater or equal to batch_size"
 
         if self.args.loadcheck is None:
             print("Warning: no checkpoint loaded!")
@@ -95,7 +94,7 @@ class TwF(ContinualModel):
 
                 buf_labels = self.buffer.labels[buf_idxs].to(self.device)
 
-                buf_mask = torch.div(buf_labels, self.cpt,
+                buf_mask = torch.div(buf_labels, self.n_classes_current_task,
                                      rounding_mode='floor') == (self.current_task - 1)
 
                 if not buf_mask.any():
@@ -103,8 +102,7 @@ class TwF(ContinualModel):
 
                 buf_inputs = self.buffer.examples[buf_idxs].to(self.device)[buf_mask]
                 buf_labels = buf_labels[buf_mask]
-                buf_inputs = torch.stack([self.not_aug_transform(
-                    ee.cpu()) for ee in buf_inputs]).to(self.device)
+                buf_inputs = apply_transform(buf_inputs, self.normalization_transform).to(self.device)
 
                 _, buf_partial_features = self.net(buf_inputs, returnt='full')
                 pret_buf_partial_features = self.teacher(buf_inputs)
@@ -119,6 +117,7 @@ class TwF(ContinualModel):
         self.net.train()  # TODO: check
 
     def begin_task(self, dataset):
+        self._it = 0
 
         if self.current_task == 0 or ("start_from" in self.args and self.args.start_from is not None and self.current_task == self.args.start_from):
             init_twf(self, dataset)
@@ -194,10 +193,8 @@ class TwF(ContinualModel):
         stream_partial_features = [p[:B] for p in all_partial_features]
         stream_pret_partial_features = [p[:B] for p in all_pret_partial_features]
 
-        self.opt.zero_grad()
-
         loss = self.loss(
-            stream_logits[:, self.current_task * self.cpt:(self.current_task + 1) * self.cpt], labels % self.cpt)
+            stream_logits[:, self.current_task * self.n_classes_current_task:(self.current_task + 1) * self.n_classes_current_task], labels % self.n_classes_current_task)
 
         loss_er = torch.tensor(0.)
         loss_der = torch.tensor(0.)
@@ -208,7 +205,7 @@ class TwF(ContinualModel):
                 stream_partial_features[-len(stream_pret_partial_features):], stream_pret_partial_features, labels)
         else:
             buffer_teacher_forcing = torch.div(
-                buf_labels, self.cpt, rounding_mode='floor') != self.current_task
+                buf_labels, self.n_classes_current_task, rounding_mode='floor') != self.current_task
             teacher_forcing = torch.cat(
                 (torch.zeros((B)).bool().to(self.device), buffer_teacher_forcing))
             attention_maps = [
@@ -220,7 +217,7 @@ class TwF(ContinualModel):
 
             stream_attention_maps = [ap[:B] for ap in all_attention_maps]
 
-            loss_er = self.loss(buf_outputs[:, :(self.current_task + 1) * self.cpt], buf_labels)
+            loss_er = self.loss(buf_outputs[:, :(self.current_task + 1) * self.n_classes_current_task], buf_labels)
 
             loss_der = F.mse_loss(buf_outputs, buf_logits)
 
@@ -228,12 +225,17 @@ class TwF(ContinualModel):
         loss += self.args.der_alpha * loss_der
         loss += self.args.lambda_fp * loss_afd
 
+        if self._it == 0:
+            self.opt.zero_grad()
         loss.backward()
-        self.opt.step()
+        if self._it > 0 and (self._it % (self.args.virtual_batch_size // self.args.batch_size) == 0 or (self.args.virtual_batch_size == self.args.batch_size)):
+            self.opt.step()
+            self.opt.zero_grad()
 
         self.buffer.add_data(examples=not_aug_inputs,
                              labels=labels,
                              logits=stream_logits.data,
                              attention_maps=stream_attention_maps)
 
+        self._it += 1
         return loss.item()

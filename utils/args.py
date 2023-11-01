@@ -51,6 +51,8 @@ def add_experiment_args(parser: ArgumentParser) -> None:
 def add_management_args(parser: ArgumentParser) -> None:
     parser.add_argument('--seed', type=int, default=None,
                         help='The random seed.')
+    parser.add_argument('--base_path', type=str, default="./data/",
+                        help='The base path where to save datasets, logs, results.')
     parser.add_argument('--notes', type=str, default=None,
                         help='Notes for this run.')
 

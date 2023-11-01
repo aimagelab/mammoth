@@ -13,6 +13,7 @@ from torchvision import transforms
 
 from models.utils.continual_model import ContinualModel
 from utils.args import add_management_args, add_experiment_args, ArgumentParser
+from utils.conf import create_seeded_dataloader
 from utils.status import progress_bar
 
 
@@ -61,7 +62,7 @@ class Joint(ContinualModel):
 
             transform = dataset.TRANSFORM if dataset.TRANSFORM is not None else transforms.ToTensor()
             temp_dataset = ValidationDataset(all_data, all_labels, transform=transform)
-            loader = torch.utils.data.DataLoader(temp_dataset, batch_size=self.args.batch_size, shuffle=True)
+            loader = create_seeded_dataloader(self.args, temp_dataset, batch_size=self.args.batch_size, shuffle=True)
 
             # train
             for e in range(self.args.n_epochs):

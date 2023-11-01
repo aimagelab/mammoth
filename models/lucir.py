@@ -11,12 +11,12 @@ import torch
 import torch.nn.functional as F
 from datasets import get_dataset
 from torch import nn
-from torch.utils.data.dataloader import DataLoader
 
 from models.utils.continual_model import ContinualModel
 from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer, fill_buffer, icarl_replay
+from utils.conf import create_seeded_dataloader
 
 
 def lucir_batch_hard_triplet_loss(labels, embeddings, k, margin, num_old_classes):
@@ -267,8 +267,8 @@ class Lucir(ContinualModel):
                 loader.dataset.targets) == cls_idx
             cur_dataset.data = loader.dataset.data[cls_indices]
             cur_dataset.targets = np.zeros((cur_dataset.data.shape[0]))
-            dt = DataLoader(
-                cur_dataset, batch_size=self.args.batch_size, num_workers=0)
+            dt = create_seeded_dataloader(self.args,
+                                          cur_dataset, batch_size=self.args.batch_size, num_workers=0)
 
             num_samples = cur_dataset.data.shape[0]
             cls_features = torch.empty((num_samples, num_features))
@@ -301,8 +301,8 @@ class Lucir(ContinualModel):
         with bn_track_stats(self, False):
             for _ in range(opt_steps):
                 examples, labels = self.buffer.get_all_data(self.transform, device=self.device)
-                dt = DataLoader([(e, l) for e, l in zip(examples, labels)],
-                                shuffle=True, batch_size=self.args.batch_size)
+                dt = create_seeded_dataloader(self.args, [(e, l) for e, l in zip(examples, labels)],
+                                              shuffle=True, batch_size=self.args.batch_size)
                 for inputs, labels in dt:
                     self.observe(inputs, labels, None, fitting=True)
                     lr_scheduler.step()

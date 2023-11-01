@@ -5,19 +5,20 @@ from utils.main import main, parse_args
 import pytest
 
 
-@pytest.mark.parametrize('dataset', ['seq-mnist', 'seq-cifar10', 'rot-mnist', 'perm-mnist', 'mnist-360', 'seq-cifar100-224'])
-def test_der(dataset):
+@pytest.mark.parametrize('dataset', ['seq-cifar10', 'seq-tinyimg'])
+@pytest.mark.parametrize('label_perc', ['0.1', '0.08', '0.5', '1'])
+def test_cssl_support(dataset, label_perc):
     sys.argv = ['mammoth',
                 '--model',
-                'der',
+                'er',
                 '--dataset',
                 dataset,
                 '--buffer_size',
                 '10',
+                '--label_perc',
+                label_perc,
                 '--lr',
                 '1e-4',
-                '--alpha',
-                '.5',
                 '--n_epochs',
                 '1',
                 '--batch_size',
@@ -34,6 +35,7 @@ def test_der(dataset):
     # log all outputs to file
     if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
         os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_der_example.{dataset}.log'), 'w', encoding='utf-8')
+    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_cssl_support.{dataset}.{label_perc}.log'), 'w', encoding='utf-8')
     sys.stderr = sys.stdout
+
     main()

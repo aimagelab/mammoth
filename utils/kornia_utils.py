@@ -1,5 +1,3 @@
-import os
-import importlib
 import kornia
 from torch import nn
 import torch
@@ -13,8 +11,8 @@ class KorniaAugNoGrad(kornia.augmentation.AugmentationSequential):
 
     def _do_transform(self, *args, **kwargs) -> torch.Tensor:
         x = super().forward(*args, **kwargs)
-        if len(x.shape) == 4 and x.shape[0] == 1:
-            x = x.squeeze(0)
+        # if len(x.shape) == 4 and x.shape[0] == 1:
+        #     x = x.squeeze(0)
         return x
 
     @torch.no_grad()

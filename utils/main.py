@@ -28,7 +28,7 @@ from datasets import ContinualDataset, get_dataset
 from models import get_all_models, get_model
 
 from utils.best_args import best_args
-from utils.conf import set_random_seed
+from utils.conf import base_path, set_random_seed
 from utils.deprecated.continual_training import train as ctrain
 from utils.distributed import make_dp
 from utils.training import train
@@ -120,6 +120,9 @@ def main(args=None):
     lecun_fix()
     if args is None:
         args = parse_args()
+
+    # set base path
+    base_path(args.base_path)
 
     os.putenv("MKL_SERVICE_FORCE_INTEL", "1")
     os.putenv("NPY_MKL_FORCE_INTEL", "1")

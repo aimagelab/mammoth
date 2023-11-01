@@ -15,8 +15,9 @@ from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
 
 from utils.conf import get_device
-from utils.kornia_utils import to_kornia_transform
+from utils.kornia_utils import KorniaAugNoGrad, to_kornia_transform
 from utils.magic import persistent_locals
+from torchvision import transforms
 
 with suppress(ImportError):
     import wandb
@@ -109,8 +110,9 @@ class ContinualModel(nn.Module):
             self.normalization_transform = to_kornia_transform(self.dataset.get_normalization_transform())
         except BaseException:
             print("Warning: could not initialize kornia transforms.")
-            self.weak_transform = None
-            self.normalization_transform = None
+            self.weak_transform = transforms.Compose([transforms.ToPILImage(), self.transform])
+            self.normalization_transform = transforms.Compose([transforms.ToPILImage(), self.dataset.TEST_TRANSFORM]) if hasattr(
+                self.dataset, 'TEST_TRANSFORM') else transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), self.dataset.get_normalization_transform()])
 
         if self.net is not None:
             self.opt = self.get_optimizer()
