@@ -55,14 +55,14 @@ def add_management_args(parser: ArgumentParser) -> None:
                         help='Notes for this run.')
 
     parser.add_argument('--non_verbose', default=0, choices=[0, 1], type=int, help='Make progress bars non verbose')
-    parser.add_argument('--disable_log', default=0, choices=[0, 1], type=int, help='Enable csv logging')
+    parser.add_argument('--disable_log', default=0, choices=[0, 1], type=int, help='Disable logging?')
     parser.add_argument('--num_workers', type=int, default=None, help='Number of workers for the dataloaders (default=infer from number of cpus).')
 
     parser.add_argument('--validation', default=0, choices=[0, 1], type=int,
                         help='Test on the validation set')
     parser.add_argument('--enable_other_metrics', default=0, choices=[0, 1], type=int,
                         help='Enable additional metrics')
-    parser.add_argument('--debug_mode', type=int, default=0, help='Run only a few forward steps per epoch')
+    parser.add_argument('--debug_mode', type=int, default=0, choices=[0, 1], help='Run only a few forward steps per epoch')
     parser.add_argument('--wandb_entity', type=str, help='Wandb entity')
     parser.add_argument('--wandb_project', type=str, default='mammoth', help='Wandb project name')
 

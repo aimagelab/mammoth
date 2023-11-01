@@ -16,7 +16,7 @@ from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
 from datasets.utils.validation import get_train_val
-from utils.conf import base_path_dataset as base_path
+from utils.conf import base_path
 
 
 class TCIFAR100(CIFAR100):

@@ -15,9 +15,6 @@ from utils.conf import base_path
 from utils.metrics import backward_transfer, forward_transfer, forgetting
 import wandb
 
-useless_args = ['dataset', 'tensorboard', 'validation', 'model',
-                'csv_log', 'notes', 'load_best_args']
-
 
 def log_accs(args, logger, accs, t, setting, epoch=None):
     mean_acc = np.mean(accs, axis=1)
@@ -193,6 +190,7 @@ class Logger:
 
         path = target_folder + self.setting + "/" + self.dataset\
             + "/" + self.model + "/logs.pyd"
+        print("Logging results and arguments in " + path)
         with open(path, 'a') as f:
             f.write(str(wrargs) + '\n')
 

@@ -21,7 +21,7 @@ from datasets.transforms.rotation import IncrementalRotation
 from datasets.utils.continual_dataset import store_masked_loaders
 from datasets.utils.gcl_dataset import GCLDataset
 from datasets.utils.validation import get_train_val
-from utils.conf import base_path_dataset as base_path
+from utils.conf import base_path
 from PIL import Image
 
 

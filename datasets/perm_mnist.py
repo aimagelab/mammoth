@@ -15,7 +15,7 @@ from torchvision.datasets import MNIST
 from datasets.transforms.permutation import Permutation
 from datasets.utils.continual_dataset import ContinualDataset
 from datasets.utils.validation import get_train_val
-from utils.conf import base_path_dataset as base_path
+from utils.conf import base_path
 
 
 def store_mnist_loaders(transform, setting):

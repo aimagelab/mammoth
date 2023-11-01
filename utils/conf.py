@@ -40,13 +40,6 @@ def base_path() -> str:
     return './data/'
 
 
-def base_path_dataset() -> str:
-    """
-    Returns the base bath where to log accuracies and tensorboard data.
-    """
-    return '/tmp/mammoth_datasets/'
-
-
 def set_random_seed(seed: int) -> None:
     """
     Sets the seeds at a certain value.
