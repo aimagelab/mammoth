@@ -3,13 +3,16 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import time
 import numpy  # needed (don't change it)
+import time
 import importlib
 import os
 import socket
 import sys
-
+import datetime
+import uuid
+from argparse import ArgumentParser
+import torch
 
 mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(mammoth_path)
@@ -18,20 +21,10 @@ sys.path.append(mammoth_path + '/backbone')
 sys.path.append(mammoth_path + '/models')
 
 from utils import create_if_not_exists
-import datetime
-import uuid
-from argparse import ArgumentParser
-
-import torch
-from datasets import NAMES as DATASET_NAMES, get_dataset_class
-from datasets import ContinualDataset, get_dataset
-from models import get_all_models, get_model
-
-from utils.best_args import best_args
-from utils.conf import base_path, set_random_seed
-from utils.deprecated.continual_training import train as ctrain
+from utils.conf import base_path
 from utils.distributed import make_dp
-from utils.training import train
+from utils.best_args import best_args
+from utils.conf import set_random_seed
 
 
 def lecun_fix():
@@ -43,6 +36,9 @@ def lecun_fix():
 
 
 def parse_args():
+    from models import get_all_models
+    from datasets import NAMES as DATASET_NAMES, get_dataset_class
+
     parser = ArgumentParser(description='mammoth', allow_abbrev=False, add_help=False)
     parser.add_argument('--model', type=str, help='Model name.', choices=get_all_models())
     parser.add_argument('--load_best_args', action='store_true',
@@ -117,6 +113,10 @@ def parse_args():
 
 
 def main(args=None):
+    from models import get_model
+    from datasets import ContinualDataset, get_dataset
+    from utils.training import train
+
     lecun_fix()
     if args is None:
         args = parse_args()

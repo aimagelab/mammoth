@@ -179,13 +179,13 @@ class Buffer:
             assert hasattr(self, 'task_labels') or hasattr(self, 'labels')
             samples_mask = (self.task_labels != mask_task_out) if hasattr(self, 'task_labels') else self.labels // cpt != mask_task_out
 
-        num_avail_samples = self.examples.shape[0] if mask_task_out is None else samples_mask.sum()
+        num_avail_samples = self.examples.shape[0] if mask_task_out is None else samples_mask.sum().item()
+        num_avail_samples = min(self.num_seen_examples, num_avail_samples)
 
-        if size > min(self.num_seen_examples, self.examples.shape[0]):
-            size = min(self.num_seen_examples, self.examples.shape[0])
+        if size > min(num_avail_samples, self.examples.shape[0]):
+            size = min(num_avail_samples, self.examples.shape[0])
 
-        choice = np.random.choice(min(self.num_seen_examples, num_avail_samples),
-                                  size=size, replace=False)
+        choice = np.random.choice(num_avail_samples, size=size, replace=False)
         if transform is None:
             def transform(x): return x
 

@@ -9,6 +9,19 @@ import torch
 import numpy as np
 
 
+def warn_once(*msg):
+    """
+    Prints a warning message only once.
+    :param msg: the message to be printed
+    """
+    msg = ' '.join([str(m) for m in msg])
+    if not hasattr(warn_once, 'warned'):
+        warn_once.warned = set()
+    if msg not in warn_once.warned:
+        warn_once.warned.add(msg)
+        print(msg)
+
+
 def get_device() -> torch.device:
     """
     Returns the least used GPU device if available else MPS or CPU.
@@ -20,6 +33,7 @@ def get_device() -> torch.device:
             for i in range(torch.cuda.device_count()):
                 gpu_memory.append(torch.cuda.memory_allocated(i))
             device = torch.device(f'cuda:{np.argmin(gpu_memory)}')
+            print(f'Using device {device}')
             return device
         try:
             if torch.backends.mps.is_available() and torch.backends.mps.is_built():

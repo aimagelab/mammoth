@@ -10,6 +10,7 @@ from argparse import Namespace
 from typing import Type
 
 from datasets.utils.continual_dataset import ContinualDataset
+from utils.conf import warn_once
 
 
 def get_all_datasets():
@@ -32,8 +33,8 @@ for dataset in get_all_datasets():
             c = getattr(mod, d)
             NAMES[c.NAME] = c
     except Exception as e:
-        print(f'Error in dataset {dataset}')
-        print(e)
+        warn_once(f'Error in dataset {dataset}')
+        warn_once(e)
 
 
 def get_dataset(args: Namespace) -> ContinualDataset:

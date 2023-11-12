@@ -120,7 +120,7 @@ def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):
         lpc = int(setting.args.label_perc * (train_dataset.targets.shape[0] // setting.N_CLASSES_PER_TASK))
         ind = np.indices(train_dataset.targets.shape)[0]
         mask = []
-        for i_label, _ in enumerate(train_dataset.classes):
+        for i_label, _ in enumerate(np.unique(train_dataset.targets)):
             partial_targets = train_dataset.targets[train_dataset.targets == i_label]
             current_mask = np.random.choice(partial_targets.shape[0], max(
                 partial_targets.shape[0] - lpc, 0), replace=False)

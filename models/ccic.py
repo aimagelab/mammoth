@@ -57,7 +57,7 @@ class Ccic(ContinualModel):
         Returns the number of iterations to wait before logging.
         - CCIC needs a couple more iterations to initialize the KNN.
         """
-        return self.args.buffer_size // self.args.batch_size + 3
+        return 1000 if len(self.buffer) < self.args.buffer_size else 5
 
     def forward(self, x):
         if self.embeddings is None:
@@ -107,7 +107,7 @@ class Ccic(ContinualModel):
         self.sup_virtual_batch.add_data(sup_not_aug_inputs, sup_labels)
         sup_inputs, sup_labels = self.sup_virtual_batch.get_data(self.args.batch_size, transform=self.transform, device=self.device)
 
-        if self.current_task > 0:
+        if self.current_task > 0 and unsup_not_aug_inputs.shape[0] > 0:
             self.unsup_virtual_batch.add_data(unsup_not_aug_inputs)
             unsup_inputs = self.unsup_virtual_batch.get_data(self.args.batch_size, transform=self.transform, device=self.device)[0]
 
@@ -131,7 +131,7 @@ class Ccic(ContinualModel):
         mask = labels != -1
         real_mask = mask[:real_batch_size]
 
-        if real_mask.sum() > 0:
+        if (~real_mask).sum() > 0:
             unsup_aug_inputs = self.weak_transform(not_aug_inputs[~real_mask].repeat_interleave(self.args.k_aug, 0))
         else:
             unsup_aug_inputs = torch.zeros((0,)).to(self.device)

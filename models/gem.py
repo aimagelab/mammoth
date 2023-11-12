@@ -7,15 +7,17 @@
 import numpy as np
 import torch
 import os
+from utils.conf import warn_once
+
 try:
     import quadprog
 except BaseException:
     quadprog = None
     if os.name == 'nt':
         # check if os is windows
-        print('Warning: GEM and A-GEM cannot be used on Windows (quadprog required)')
+        warn_once('Warning: GEM and A-GEM cannot be used on Windows (quadprog required)')
     else:
-        print('Warning: quadprog not found (GEM and A-GEM will not work)')
+        warn_once('Warning: quadprog not found (GEM and A-GEM will not work)')
     raise ImportError
 
 from models.utils.continual_model import ContinualModel
