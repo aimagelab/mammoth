@@ -25,9 +25,9 @@ def get_parser() -> ArgumentParser:
 
     # Griddable parameters
     parser.add_argument('--der_alpha', type=float, required=True,
-                        help='Distillation alpha hyperparameter for student stream.')
+                        help='Distillation alpha hyperparameter for student stream (`alpha` in the paper).')
     parser.add_argument('--der_beta', type=float, required=True,
-                        help='Distillation beta hyperparameter.')
+                        help='Distillation beta hyperparameter (`beta` in the paper).')
     parser.add_argument('--lambda_fp', type=float, required=True,
                         help='weight of feature propagation loss replay')
     parser.add_argument('--lambda_diverse_loss', type=float, required=False, default=0,
@@ -95,7 +95,7 @@ class TwF(ContinualModel):
                 buf_labels = self.buffer.labels[buf_idxs].to(self.device)
 
                 buf_mask = torch.div(buf_labels, self.n_classes_current_task,
-                                     rounding_mode='floor') == self.current_task
+                                     rounding_mode='floor') == (self.current_task - 1)
 
                 if not buf_mask.any():
                     continue
