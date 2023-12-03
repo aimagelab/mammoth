@@ -1,27 +1,26 @@
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.main import main, parse_args
+from utils.main import main
 import pytest
 
 
-@pytest.mark.parametrize('dataset', ['seq-mnist', 'seq-cifar10', 'rot-mnist', 'perm-mnist', 'mnist-360', 'seq-cifar100-224'])
-def test_der(dataset):
+def test_fdr():
     sys.argv = ['mammoth',
                 '--model',
-                'der',
+                'fdr',
                 '--dataset',
-                dataset,
+                'seq-cifar10',
                 '--buffer_size',
-                '10',
+                '50',
+                '--alpha',
+                '0.5',
                 '--lr',
                 '1e-4',
-                '--alpha',
-                '.5',
                 '--n_epochs',
                 '1',
                 '--batch_size',
-                '2',
+                '4',
                 '--non_verbose',
                 '1',
                 '--num_workers',
@@ -34,6 +33,6 @@ def test_der(dataset):
     # log all outputs to file
     if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
         os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_der_example.{dataset}.log'), 'w', encoding='utf-8')
+    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_fdr.log'), 'w', encoding='utf-8')
     sys.stderr = sys.stdout
     main()

@@ -6,11 +6,19 @@
 
 import numpy as np
 import torch
+import os
+from utils.conf import warn_once
+
 try:
     import quadprog
 except BaseException:
     quadprog = None
-    print('Warning: GEM and A-GEM cannot be used on Windows (quadprog required)')
+    if os.name == 'nt':
+        # check if os is windows
+        warn_once('Warning: GEM and A-GEM cannot be used on Windows (quadprog required)')
+    else:
+        warn_once('Warning: quadprog not found (GEM and A-GEM will not work)')
+    raise ImportError
 
 from models.utils.continual_model import ContinualModel
 from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
@@ -110,7 +118,7 @@ class Gem(ContinualModel):
         self.grads_cs.append(torch.zeros(
             np.sum(self.grad_dims)).to(self.device))
 
-        fill_buffer(self.buffer, dataset, self.current_task - 1, required_attributes=['examples', 'labels', 'task_labels'])
+        fill_buffer(self.buffer, dataset, self.current_task, required_attributes=['examples', 'labels', 'task_labels'])
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 

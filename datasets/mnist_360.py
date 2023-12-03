@@ -13,7 +13,6 @@ import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from backbone.MNISTMLP import MNISTMLP
-from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST
 
 from datasets.perm_mnist import MyMNIST
@@ -21,7 +20,7 @@ from datasets.transforms.rotation import IncrementalRotation
 from datasets.utils.continual_dataset import store_masked_loaders
 from datasets.utils.gcl_dataset import GCLDataset
 from datasets.utils.validation import get_train_val
-from utils.conf import base_path_dataset as base_path
+from utils.conf import base_path, create_seeded_dataloader
 from PIL import Image
 
 
@@ -103,8 +102,8 @@ class MNIST360(torch.utils.data.Dataset):
                     train_mask][k * numbers_per_batch:(k + 1) * numbers_per_batch]
                 tmp_train_dataset.transform = transforms.Compose(
                     [train_rotation, transforms.ToTensor()])
-                self.dataset[-1].append(DataLoader(
-                    tmp_train_dataset, batch_size=1, shuffle=True))
+                self.dataset[-1].append(create_seeded_dataloader(self.args,
+                                                                 tmp_train_dataset, batch_size=1, shuffle=True))
                 self.remaining_training_items[-1].append(
                     tmp_train_dataset.data.shape[0])
 
@@ -126,8 +125,8 @@ class MNIST360(torch.utils.data.Dataset):
                 increase_per_iteration=360.0 / test_mask.sum())
             tmp_test_dataset.transform = transforms.Compose(
                 [test_rotation, transforms.ToTensor()])
-            self.dataset.append(DataLoader(tmp_test_dataset,
-                                           batch_size=self.args.batch_size, shuffle=True))
+            self.dataset.append(create_seeded_dataloader(self.args, tmp_test_dataset,
+                                                         batch_size=self.args.batch_size, shuffle=True))
 
     def get_train_data(self) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
@@ -252,9 +251,10 @@ class SequentialMNIST360(GCLDataset):
         train_dataset = MNIST360(self.args, is_train=True)
         test_dataset = MNIST360(self.args, is_train=False)
 
-        train_loader = DataLoader(train_dataset,
-                                  batch_size=1, shuffle=False, num_workers=0, collate_fn=custom_collate_unbatch)  # dataset is already shuffled and batched
-        test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=0, collate_fn=custom_collate_unbatch)  # dataset already has dataloader
+        train_loader = create_seeded_dataloader(self.args, train_dataset,
+                                                batch_size=1, shuffle=False, num_workers=0, collate_fn=custom_collate_unbatch)  # dataset is already shuffled and batched
+        test_loader = create_seeded_dataloader(self.args,
+                                               test_dataset, batch_size=1, shuffle=False, num_workers=0, collate_fn=custom_collate_unbatch)  # dataset already has dataloader
         self.test_loaders.append(test_loader)
         self.train_loader = train_loader
 

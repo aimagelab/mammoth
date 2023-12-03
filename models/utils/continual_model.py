@@ -15,8 +15,9 @@ from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
 
 from utils.conf import get_device
-from utils.kornia_utils import to_kornia_transform
+from utils.kornia_utils import KorniaAugNoGrad, to_kornia_transform
 from utils.magic import persistent_locals
+from torchvision import transforms
 
 with suppress(ImportError):
     import wandb
@@ -28,6 +29,66 @@ class ContinualModel(nn.Module):
     """
     NAME: str
     COMPATIBILITY: List[str]
+    AVAIL_OPTIMS = ['sgd', 'adam', 'adamw']
+
+    @property
+    def current_task(self):
+        """
+        Returns the index of current task.
+        """
+        return self._current_task
+
+    @property
+    def n_classes_current_task(self):
+        """
+        Returns the number of classes in the current task.
+        Returns -1 if task has not been initialized yet.
+        """
+        if hasattr(self, '_n_classes_current_task'):
+            return self._n_classes_current_task
+        else:
+            return -1
+
+    @property
+    def n_seen_classes(self):
+        """
+        Returns the number of classes seen so far.
+        Returns -1 if task has not been initialized yet.
+        """
+        if hasattr(self, '_n_seen_classes'):
+            return self._n_seen_classes
+        else:
+            return -1
+
+    @property
+    def n_remaining_classes(self):
+        """
+        Returns the number of classes remaining to be seen.
+        Returns -1 if task has not been initialized yet.
+        """
+        if hasattr(self, '_n_remaining_classes'):
+            return self._n_remaining_classes
+        else:
+            return -1
+
+    @property
+    def n_past_classes(self):
+        """
+        Returns the number of classes seen up to the PAST task.
+        Returns -1 if task has not been initialized yet.
+        """
+        if hasattr(self, '_n_past_classes'):
+            return self._n_past_classes
+        else:
+            return -1
+
+    @property
+    def cpt(self):
+        """
+        Returns the raw number of classes per task.
+        Warning: return value might be either an integer or a list of integers.
+        """
+        return self._cpt
 
     def __init__(self, backbone: nn.Module, loss: nn.Module,
                  args: Namespace, transform: nn.Module) -> None:
@@ -39,18 +100,21 @@ class ContinualModel(nn.Module):
         self.transform = transform
         self.dataset = get_dataset(self.args)
         self.N_CLASSES = self.dataset.N_CLASSES
+        self.num_classes = self.N_CLASSES
         self.N_TASKS = self.dataset.N_TASKS
+        self.n_tasks = self.N_TASKS
         self.SETTING = self.dataset.SETTING
-        self.cpt = self.dataset.N_CLASSES_PER_TASK
-        self.current_task = 0
+        self._cpt = self.dataset.N_CLASSES_PER_TASK
+        self._current_task = 0
 
         try:
             self.weak_transform = to_kornia_transform(transform.transforms[-1].transforms)
             self.normalization_transform = to_kornia_transform(self.dataset.get_normalization_transform())
         except BaseException:
             print("Warning: could not initialize kornia transforms.")
-            self.weak_transform = None
-            self.normalization_transform = None
+            self.weak_transform = transforms.Compose([transforms.ToPILImage(), self.transform])
+            self.normalization_transform = transforms.Compose([transforms.ToPILImage(), self.dataset.TEST_TRANSFORM]) if hasattr(
+                self.dataset, 'TEST_TRANSFORM') else transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), self.dataset.get_normalization_transform()])
 
         if self.net is not None:
             self.opt = self.get_optimizer()
@@ -75,11 +139,19 @@ class ContinualModel(nn.Module):
 
     def get_optimizer(self):
         # check if optimizer is in torch.optim
-        supported_optims = {optim_name.lower(): optim_name for optim_name in dir(optim)}
+        supported_optims = {optim_name.lower(): optim_name for optim_name in dir(optim) if optim_name.lower() in self.AVAIL_OPTIMS}
+        opt = None
         if self.args.optimizer.lower() in supported_optims:
-            opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.net.parameters(), lr=self.args.lr,
-                                                                                weight_decay=self.args.optim_wd, momentum=self.args.optim_mom)
-        else:
+            if self.args.optimizer.lower() == 'sgd':
+                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.net.parameters(), lr=self.args.lr,
+                                                                                    weight_decay=self.args.optim_wd,
+                                                                                    momentum=self.args.optim_mom,
+                                                                                    nesterov=self.args.optim_nesterov == 1)
+            elif self.args.optimizer.lower() == 'adam' or self.args.optimizer.lower() == 'adamw':
+                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.net.parameters(), lr=self.args.lr,
+                                                                                    weight_decay=self.args.optim_wd)
+
+        if opt is None:
             raise ValueError('Unknown optimizer: {}'.format(self.args.optimizer))
         return opt
 
@@ -88,6 +160,13 @@ class ContinualModel(nn.Module):
         offset1 = task * cpt
         offset2 = (task + 1) * cpt
         return offset1, offset2
+
+    def get_debug_iters(self):
+        """
+        Returns the number of iterations to be used for debugging.
+        Default: 3
+        """
+        return 5
 
     def begin_task(self, dataset: ContinualDataset) -> None:
         """
@@ -115,6 +194,8 @@ class ContinualModel(nn.Module):
     def meta_observe(self, *args, **kwargs):
         if 'cssl' not in self.COMPATIBILITY:  # drop unlabeled data if not supported
             labeled_mask = args[1] != -1
+            if labeled_mask.sum() == 0:
+                return 0
             args = [arg[labeled_mask] if isinstance(arg, torch.Tensor) and arg.shape[0] == args[0].shape[0] else arg for arg in args]
         if 'wandb' in sys.modules and not self.args.nowand:
             pl = persistent_locals(self.observe)
@@ -125,15 +206,15 @@ class ContinualModel(nn.Module):
         return ret
 
     def meta_begin_task(self, dataset):
-        self.n_classes_current_task = self.cpt if isinstance(self.cpt, int) else self.cpt[self.current_task]
-        self.n_seen_classes = self.cpt * (self.current_task + 1) if isinstance(self.cpt, int) else sum(self.cpt[:self.current_task + 1])
-        self.n_remaining_classes = self.N_CLASSES - self.n_seen_classes
-        self.n_past_classes = self.cpt * self.current_task if isinstance(self.cpt, int) else sum(self.cpt[:self.current_task])
+        self._n_classes_current_task = self._cpt if isinstance(self._cpt, int) else self._cpt[self._current_task]
+        self._n_seen_classes = self._cpt * (self._current_task + 1) if isinstance(self._cpt, int) else sum(self._cpt[:self._current_task + 1])
+        self._n_remaining_classes = self.N_CLASSES - self._n_seen_classes
+        self._n_past_classes = self._cpt * self._current_task if isinstance(self._cpt, int) else sum(self._cpt[:self._current_task])
         self.begin_task(dataset)
 
     def meta_end_task(self, dataset):
-        self.current_task += 1
         self.end_task(dataset)
+        self._current_task += 1
 
     def observe(self, inputs: torch.Tensor, labels: torch.Tensor,
                 not_aug_inputs: torch.Tensor, epoch: int = None) -> float:

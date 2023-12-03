@@ -7,6 +7,8 @@ import os
 from tqdm import tqdm
 import urllib.request as request
 
+from utils import smart_joint
+
 
 def _load_mammoth_model(dict_keys, model: torch.nn.Module, args):
     for k in list(dict_keys):
@@ -78,7 +80,7 @@ def _download_from_raw_url(url: str, root: str):
     os.makedirs(root, exist_ok=True)
     filename = _get_random_filename()
 
-    download_target = os.path.join(root, filename)
+    download_target = smart_joint(root, filename)
 
     if os.path.exists(download_target) and not os.path.isfile(download_target):
         raise RuntimeError(f"{download_target} exists and is not a regular file")

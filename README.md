@@ -48,7 +48,12 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 - Transfer without Forgetting (TwF)
 - Continual Contrastive Interpolation Consistency (CCIC) - _Requires_ `pip install kornia`
 
+
 ## Datasets
+
+**NOTE**: Datasets are automatically downloaded in the `data/`. 
+- This can be changes by changing the `base_path` function in `utils/conf.py`.
+- The `data/` folder is not tracked by git and is craeted automatically if missing.
 
 - Sequential MNIST (_Class-Il / Task-IL_)
 - Sequential CIFAR-10 (_Class-Il / Task-IL_)

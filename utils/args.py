@@ -3,7 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from argparse import ArgumentParser
+from argparse import ArgumentParser, SUPPRESS
 from datasets import NAMES as DATASET_NAMES
 from models import get_all_models
 
@@ -31,7 +31,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                         help='optimizer nesterov momentum.')
 
     parser.add_argument('--n_epochs', type=int,
-                        help='Batch size.')
+                        help='Number of epochs.')
     parser.add_argument('--batch_size', type=int,
                         help='Batch size.')
 
@@ -51,18 +51,20 @@ def add_experiment_args(parser: ArgumentParser) -> None:
 def add_management_args(parser: ArgumentParser) -> None:
     parser.add_argument('--seed', type=int, default=None,
                         help='The random seed.')
+    parser.add_argument('--base_path', type=str, default="./data/",
+                        help='The base path where to save datasets, logs, results.')
     parser.add_argument('--notes', type=str, default=None,
                         help='Notes for this run.')
 
     parser.add_argument('--non_verbose', default=0, choices=[0, 1], type=int, help='Make progress bars non verbose')
-    parser.add_argument('--disable_log', default=0, choices=[0, 1], type=int, help='Enable csv logging')
+    parser.add_argument('--disable_log', default=0, choices=[0, 1], type=int, help='Disable logging?')
     parser.add_argument('--num_workers', type=int, default=None, help='Number of workers for the dataloaders (default=infer from number of cpus).')
 
     parser.add_argument('--validation', default=0, choices=[0, 1], type=int,
                         help='Test on the validation set')
     parser.add_argument('--enable_other_metrics', default=0, choices=[0, 1], type=int,
                         help='Enable additional metrics')
-    parser.add_argument('--debug_mode', type=int, default=0, help='Run only a few forward steps per epoch')
+    parser.add_argument('--debug_mode', type=int, default=0, choices=[0, 1], help='Run only a few forward steps per epoch')
     parser.add_argument('--wandb_entity', type=str, help='Wandb entity')
     parser.add_argument('--wandb_project', type=str, default='mammoth', help='Wandb project name')
 

@@ -31,10 +31,9 @@ def get_parser() -> ArgumentParser:
                         help='softmax temperature')
     parser.add_argument('--valset_split', type=float, default=0.1,
                         help='bias injector.')
-    parser.add_argument('--multi_bic', type=int, default=0)
     parser.add_argument('--wd_reg', type=float, default=None,
                         help='bias injector.')
-    parser.add_argument('--distill_after_bic', type=int, default=1)
+    parser.add_argument('--distill_after_bic', type=int, default=1, choices=[0, 1])
 
     return parser
 
@@ -47,8 +46,6 @@ class BiC(ContinualModel):
         super().__init__(backbone, loss, args, transform)
 
         dd = get_dataset(args)
-        self.n_tasks = dd.N_TASKS
-        self.cpt = dd.N_CLASSES_PER_TASK
         self.transform = transform
         self.buffer = Buffer(self.args.buffer_size)
 
@@ -105,8 +102,8 @@ class BiC(ContinualModel):
                     with torch.no_grad():
                         out = self.forward(inputs)
 
-                    start_last_task = (self.current_task) * self.cpt
-                    end_last_task = (self.current_task + 1) * self.cpt
+                    start_last_task = self.n_past_classes
+                    end_last_task = self.n_seen_classes
                     tout = out + 0
                     tout[:, start_last_task:end_last_task] *= corr_factors[1].repeat_interleave(end_last_task - start_last_task)
                     tout[:, start_last_task:end_last_task] += corr_factors[0].repeat_interleave(end_last_task - start_last_task)
@@ -169,7 +166,7 @@ class BiC(ContinualModel):
 
     def build_buffer(self, dataset):
 
-        examples_per_task = self.buffer.buffer_size // self.current_task
+        examples_per_task = self.buffer.buffer_size // self.current_task if self.current_task > 0 else self.buffer.buffer_size
 
         if self.current_task > 1:
             # shrink buffer

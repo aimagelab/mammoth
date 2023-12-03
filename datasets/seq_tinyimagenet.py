@@ -18,7 +18,8 @@ from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
 from datasets.utils.validation import get_train_val
-from utils.conf import base_path_dataset as base_path
+from utils import smart_joint
+from utils.conf import base_path
 
 
 class TinyImagenet(Dataset):
@@ -43,18 +44,18 @@ class TinyImagenet(Dataset):
 
                 print('Downloading dataset')
                 ln = "https://unimore365-my.sharepoint.com/:u:/g/personal/263133_unimore_it/EVKugslStrtNpyLGbgrhjaABqRHcE3PB_r2OEaV7Jy94oQ?e=9K29aD"
-                download(ln, filename=os.path.join(root, 'tiny-imagenet-processed.zip'), unzip=True, unzip_path=root, clean=True)
+                download(ln, filename=smart_joint(root, 'tiny-imagenet-processed.zip'), unzip=True, unzip_path=root, clean=True)
 
         self.data = []
         for num in range(20):
-            self.data.append(np.load(os.path.join(
+            self.data.append(np.load(smart_joint(
                 root, 'processed/x_%s_%02d.npy' %
                       ('train' if self.train else 'val', num + 1))))
         self.data = np.concatenate(np.array(self.data))
 
         self.targets = []
         for num in range(20):
-            self.targets.append(np.load(os.path.join(
+            self.targets.append(np.load(smart_joint(
                 root, 'processed/y_%s_%02d.npy' %
                       ('train' if self.train else 'val', num + 1))))
         self.targets = np.concatenate(np.array(self.targets))

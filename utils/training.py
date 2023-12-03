@@ -55,7 +55,9 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
         if last and k < len(dataset.test_loaders) - 1:
             continue
         correct, correct_mask_classes, total = 0.0, 0.0, 0.0
-        for data in test_loader:
+        for i, data in enumerate(test_loader):
+            if model.args.debug_mode and i > model.get_debug_iters():
+                break
             inputs, labels = data
             inputs, labels = inputs.to(model.device), labels.to(model.device)
             if 'class-il' not in model.COMPATIBILITY:
@@ -147,7 +149,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 data_len = len(train_loader)
                 for i in range(data_len):
                     data = next(train_iter)
-                    if args.debug_mode and i > 3:
+                    if args.debug_mode and i > model.get_debug_iters():
                         break
                     if hasattr(dataset.train_loader.dataset, 'logits'):
                         inputs, labels, not_aug_inputs, logits = data

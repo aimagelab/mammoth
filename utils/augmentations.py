@@ -8,14 +8,22 @@ import torch
 import torch.nn.functional as F
 from torchvision.transforms import functional as TF
 from torchvision import transforms
+from utils.kornia_utils import KorniaAugNoGrad
+
+
+def apply_transform(x: torch.Tensor, transform) -> torch.Tensor:
+    if isinstance(transform, KorniaAugNoGrad):
+        return transform(x)
+    else:
+        return torch.stack([transform(xi) for xi in x.cpu()], dim=0).to(x.device)
 
 
 def rand_bbox(size, lam):
     W = size[2]
     H = size[3]
     cut_rat = np.sqrt(1. - lam)
-    cut_w = np.int(W * cut_rat)
-    cut_h = np.int(H * cut_rat)
+    cut_w = int(W * cut_rat)
+    cut_h = int(H * cut_rat)
 
     # uniform
     cx = np.random.randint(W)
@@ -38,7 +46,7 @@ def cutmix_data(x, y, alpha=1.0, cutmix_prob=0.5):
     index = torch.randperm(batch_size)
 
     if torch.cuda.is_available():
-        index = index.cuda()
+        index = index.to(x.device)
 
     y_a, y_b = y, y[index]
     bbx1, bby1, bbx2, bby2 = rand_bbox(x.size(), lam)

@@ -94,7 +94,7 @@ class SoftAttentionSoftmax(nn.Module):
         self.init_parameters()
 
     def forward(self, x, task_id):
-        logits = self.l(x, tasks_id)
+        logits = self.l(x, task_id)
         rho = torch.softmax(logits, dim=-1)
         return rho, logits
 
@@ -109,6 +109,10 @@ class BinaryGumbelSoftmax(nn.Module):
     def forward(self, logits):
 
         if self.training:
+            if str(logits.device) == 'cpu':
+                if not hasattr(self, 'warned') or not self.warned:
+                    print('Warning: GumbelSoftmax may be unstable in CPU (see https://github.com/pytorch/pytorch/issues/101620)')
+                    self.warned = True
             h = nn.functional.gumbel_softmax(logits, tau=self.tau, hard=True)
             h = h[..., 0]
             return h
