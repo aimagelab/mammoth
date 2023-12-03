@@ -32,7 +32,7 @@ def icarl_replay(self: ContinualModel, dataset, val_set_split=0):
         val_train_mask[torch.randperm(len(dataset.train_loader.dataset.data))[:buff_val_mask.sum()]] = True
 
         if val_set_split > 0:
-            self.val_loader = deepcopy(dataset.train_loader)
+            self.val_dataset = deepcopy(dataset.train_loader.dataset)
 
         data_concatenate = torch.cat if isinstance(dataset.train_loader.dataset.data, torch.Tensor) else np.concatenate
         need_aug = hasattr(dataset.train_loader.dataset, 'not_aug_transform')
@@ -57,14 +57,17 @@ def icarl_replay(self: ContinualModel, dataset, val_set_split=0):
 
         if val_set_split > 0:
             # REDUCE AND MERGE VALIDATION SET
-            self.val_loader.dataset.targets = np.concatenate([
-                self.val_loader.dataset.targets[val_train_mask],
+            self.val_dataset.targets = np.concatenate([
+                self.val_dataset.targets[val_train_mask],
                 self.buffer.labels.cpu().numpy()[:len(self.buffer)][buff_val_mask]
             ])
-            self.val_loader.dataset.data = data_concatenate([
-                self.val_loader.dataset.data[val_train_mask],
+            self.val_dataset.data = data_concatenate([
+                self.val_dataset.data[val_train_mask],
                 refold_transform((self.buffer.examples)[:len(self.buffer)][buff_val_mask])
             ])
+
+            self.val_loader = torch.utils.data.DataLoader(self.val_dataset, batch_size=self.args.batch_size, shuffle=True,
+                                                          num_workers=self.args.num_workers)
 
 
 def reservoir(num_seen_examples: int, buffer_size: int) -> int:

@@ -95,7 +95,7 @@ class TwF(ContinualModel):
                 buf_labels = self.buffer.labels[buf_idxs].to(self.device)
 
                 buf_mask = torch.div(buf_labels, self.n_classes_current_task,
-                                     rounding_mode='floor') == (self.current_task - 1)
+                                     rounding_mode='floor') == self.current_task
 
                 if not buf_mask.any():
                     continue

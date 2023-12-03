@@ -34,7 +34,7 @@ def test_twf_random_init(dataset, resize_maps):
                 '--batch_size',
                 '2',
                 '--virtual_batch_size',
-                '8',
+                '2',
                 '--non_verbose',
                 '1',
                 '--num_workers',

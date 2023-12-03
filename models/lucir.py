@@ -239,14 +239,13 @@ class Lucir(ContinualModel):
 
         self.net.train()
         with torch.no_grad():
-            fill_buffer(self.buffer, dataset, self.current_task - 1, net=self.net, use_herding=True)
+            fill_buffer(self.buffer, dataset, self.current_task, net=self.net, use_herding=True)
 
         if self.args.fitting_epochs is not None and self.args.fitting_epochs > 0:
             self.fit_buffer(self.args.fitting_epochs)
 
         # Adapt lambda
-        self.lamda_cos_sim = math.sqrt(
-            self.current_task) * float(self.args.lamda_base)
+        self.lamda_cos_sim = math.sqrt(self.current_task) * float(self.args.lamda_base)
 
     def imprint_weights(self, dataset):
         self.net.eval()

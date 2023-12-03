@@ -48,9 +48,9 @@ class XDerCE(ContinualModel):
         tng = self.training
         self.train()
 
-        if self.args.start_from is None or self.current_task >= (self.args.start_from + 1):
+        if self.args.start_from is None or self.current_task >= self.args.start_from:
             # Reduce Memory Buffer
-            if (self.current_task - 1) > 0:
+            if self.current_task > 0:
                 examples_per_class = self.args.buffer_size // self.n_seen_classes
                 buf_x, buf_lab, buf_log, buf_tl = self.buffer.get_all_data()
                 self.buffer.empty()
@@ -79,7 +79,7 @@ class XDerCE(ContinualModel):
 
             with torch.no_grad():
                 with bn_track_stats(self, False):
-                    if self.args.start_from is None or self.args.start_from <= (self.current_task - 1):
+                    if self.args.start_from is None or self.args.start_from <= self.current_task:
                         for data in dataset.train_loader:
                             inputs, labels, not_aug_inputs = data
                             inputs = inputs.to(self.device)
@@ -89,8 +89,8 @@ class XDerCE(ContinualModel):
                                 break
 
                             # Update past logits
-                            if (self.current_task - 1) > 0:
-                                outputs = self.update_logits(outputs, outputs, labels, 0, self.current_task - 1)
+                            if self.current_task > 0:
+                                outputs = self.update_logits(outputs, outputs, labels, 0, self.current_task)
 
                             flags = torch.zeros(len(inputs)).bool()
                             for j in range(len(flags)):
@@ -101,8 +101,7 @@ class XDerCE(ContinualModel):
                             self.buffer.add_data(examples=not_aug_inputs[flags],
                                                  labels=labels[flags],
                                                  logits=outputs.data[flags],
-                                                 task_labels=(torch.ones(len(not_aug_inputs)) *
-                                                              (self.current_task - 1))[flags])
+                                                 task_labels=(torch.ones(len(not_aug_inputs)) * self.current_task)[flags])
 
                     # Update future past logits
                     buf_idx, buf_inputs, buf_labels, buf_logits, _ = self.buffer.get_data(self.buffer.buffer_size,
@@ -114,13 +113,12 @@ class XDerCE(ContinualModel):
                         buf_inputs = buf_inputs[self.args.batch_size:]
                     buf_outputs = torch.cat(buf_outputs)
 
-                    chosen = ((buf_labels // self.cpt) < (self.current_task - 1)).to(self.buffer.device)
+                    chosen = ((buf_labels // self.cpt) < self.current_task).to(self.buffer.device)
 
                     if chosen.any():
-                        if (self.n_tasks - self.current_task) > 0:
-                            to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task)
-                            self.buffer.logits[buf_idx[chosen], :] = to_transplant.to(self.buffer.device)
-                            self.buffer.task_labels[buf_idx[chosen]] = self.current_task
+                        to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task)
+                        self.buffer.logits[buf_idx[chosen], :] = to_transplant.to(self.buffer.device)
+                        self.buffer.task_labels[buf_idx[chosen]] = self.current_task
 
         self.update_counter = torch.zeros(self.args.buffer_size)
 
@@ -187,7 +185,7 @@ class XDerCE(ContinualModel):
 
             # Update Future Past Logits
             with torch.no_grad():
-                chosen = (buf_labels // self.cpt) < self.current_task
+                chosen = ((buf_labels // self.cpt) < self.current_task).to(self.buffer.device)
                 self.update_counter[buf_idx[chosen]] += 1
                 c = chosen.clone()
                 chosen[c] = torch.rand_like(chosen[c].float()) * self.update_counter[buf_idx[c]] < 1

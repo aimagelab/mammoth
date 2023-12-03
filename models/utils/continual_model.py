@@ -213,8 +213,8 @@ class ContinualModel(nn.Module):
         self.begin_task(dataset)
 
     def meta_end_task(self, dataset):
-        self._current_task += 1
         self.end_task(dataset)
+        self._current_task += 1
 
     def observe(self, inputs: torch.Tensor, labels: torch.Tensor,
                 not_aug_inputs: torch.Tensor, epoch: int = None) -> float:

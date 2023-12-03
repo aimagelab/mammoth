@@ -118,7 +118,7 @@ class Gem(ContinualModel):
         self.grads_cs.append(torch.zeros(
             np.sum(self.grad_dims)).to(self.device))
 
-        fill_buffer(self.buffer, dataset, self.current_task - 1, required_attributes=['examples', 'labels', 'task_labels'])
+        fill_buffer(self.buffer, dataset, self.current_task, required_attributes=['examples', 'labels', 'task_labels'])
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 

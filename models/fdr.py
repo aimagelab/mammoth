@@ -33,9 +33,9 @@ class Fdr(ContinualModel):
         self.logsoft = torch.nn.LogSoftmax(dim=1)
 
     def end_task(self, dataset):
-        examples_per_task = self.args.buffer_size // self.current_task
+        examples_per_task = self.args.buffer_size // self.current_task if self.current_task > 0 else self.args.buffer_size
 
-        if self.current_task > 1:
+        if self.current_task > 0:
             buf_x, buf_log, buf_tl = self.buffer.get_all_data()
             self.buffer.empty()
 
@@ -60,7 +60,7 @@ class Fdr(ContinualModel):
                 self.buffer.add_data(examples=not_aug_inputs[:(examples_per_task - counter)],
                                      logits=outputs.data[:(examples_per_task - counter)],
                                      task_labels=(torch.ones(self.args.batch_size) *
-                                                  (self.current_task - 1))[:(examples_per_task - counter)])
+                                                  self.current_task)[:(examples_per_task - counter)])
                 counter += self.args.batch_size
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):

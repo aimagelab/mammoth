@@ -97,10 +97,10 @@ class XDerRPC(ContinualModel):
         tng = self.training
         self.train()
 
-        if self.args.start_from is None or self.current_task >= (self.args.start_from + 1):
+        if self.args.start_from is None or self.current_task >= self.args.start_from:
             # Reduce Memory Buffer
-            if (self.current_task - 1) > 0:
-                examples_per_class = self.args.buffer_size // (self.current_task * self.cpt)
+            if self.current_task > 0:
+                examples_per_class = self.args.buffer_size // ((self.current_task + 1) * self.cpt)
                 buf_x, buf_lab, buf_log, buf_tl = self.buffer.get_all_data()
                 self.buffer.empty()
                 for tl in buf_lab.unique():
@@ -122,7 +122,7 @@ class XDerRPC(ContinualModel):
 
             with torch.no_grad():
                 with bn_track_stats(self, False):
-                    if self.args.start_from is None or self.args.start_from <= (self.current_task - 1):
+                    if self.args.start_from is None or self.args.start_from <= self.current_task:
                         for data in dataset.train_loader:
                             inputs, labels, not_aug_inputs = data
                             inputs = inputs.to(self.device)
@@ -132,8 +132,8 @@ class XDerRPC(ContinualModel):
                                 break
 
                             # Update past logits
-                            if self.current_task - 1 > 0:
-                                outputs = self.update_logits(outputs, outputs, labels, 0, self.current_task - 1)
+                            if self.current_task > 0:
+                                outputs = self.update_logits(outputs, outputs, labels, 0, self.current_task)
 
                             flags = torch.zeros(len(inputs)).bool()
                             for j in range(len(flags)):
@@ -144,8 +144,7 @@ class XDerRPC(ContinualModel):
                             self.buffer.add_data(examples=not_aug_inputs[flags],
                                                  labels=labels[flags],
                                                  logits=outputs.data[flags],
-                                                 task_labels=(torch.ones(len(not_aug_inputs)) *
-                                                              (self.current_task - 1))[flags])
+                                                 task_labels=(torch.ones(len(not_aug_inputs)) * self.current_task)[flags])
 
                     # Update future past logits
                     buf_idx, buf_inputs, buf_labels, buf_logits, _ = self.buffer.get_data(self.buffer.buffer_size,
@@ -157,13 +156,12 @@ class XDerRPC(ContinualModel):
                         buf_inputs = buf_inputs[self.args.batch_size:]
                     buf_outputs = torch.cat(buf_outputs)
 
-                    chosen = ((buf_labels // self.cpt) < (self.current_task - 1)).to(self.buffer.device)
+                    chosen = ((buf_labels // self.cpt) < self.current_task).to(self.buffer.device)
 
                     if chosen.any():
-                        if (self.n_tasks - self.current_task) > 0:
-                            to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task - 1, self.n_tasks - self.current_task)
-                            self.buffer.logits[buf_idx[chosen], :] = to_transplant.to(self.buffer.device)
-                            self.buffer.task_labels[buf_idx[chosen]] = self.current_task - 1
+                        to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task, self.n_tasks - self.current_task)
+                        self.buffer.logits[buf_idx[chosen], :] = to_transplant.to(self.buffer.device)
+                        self.buffer.task_labels[buf_idx[chosen]] = self.current_task
 
         self.update_counter = torch.zeros(self.args.buffer_size)
 
