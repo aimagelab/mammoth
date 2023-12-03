@@ -13,7 +13,8 @@ import numpy as np
 from utils import create_if_not_exists, smart_joint
 from utils.conf import base_path
 from utils.metrics import backward_transfer, forward_transfer, forgetting
-import wandb
+with suppress(ImportError):
+    import wandb
 
 
 def log_accs(args, logger, accs, t, setting, epoch=None):
