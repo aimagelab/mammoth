@@ -38,6 +38,15 @@ class ContinualDataset:
         self.N_CLASSES = self.N_CLASSES if hasattr(self, 'N_CLASSES') else \
             (self.N_CLASSES_PER_TASK * self.N_TASKS) if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK)
 
+        if self.args.permute_classes:
+            if not hasattr(self.args, 'class_order'):  # set only once
+                if self.args.seed is not None:
+                    np.random.seed(self.args.seed)
+                if isinstance(self.N_CLASSES_PER_TASK, int):
+                    self.args.class_order = np.random.permutation(self.N_CLASSES_PER_TASK * self.N_TASKS)
+                else:
+                    self.args.class_order = np.random.permutation(sum(self.N_CLASSES_PER_TASK))
+
         if args.joint:
             self.N_CLASSES_PER_TASK = self.N_CLASSES
             self.N_TASKS = 1
@@ -153,6 +162,10 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     :param setting: continual learning setting
     :return: train and test loaders
     """
+    if setting.args.permute_classes:
+        train_dataset.targets = setting.args.class_order[np.array(train_dataset.targets)]
+        test_dataset.targets = setting.args.class_order[np.array(test_dataset.targets)]
+
     train_mask = np.logical_and(np.array(train_dataset.targets) >= setting.i,
                                 np.array(train_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
     test_mask = np.logical_and(np.array(test_dataset.targets) >= setting.i,
