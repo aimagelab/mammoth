@@ -47,8 +47,6 @@ class BiC(ContinualModel):
         super().__init__(backbone, loss, args, transform)
 
         dd = get_dataset(args)
-        self.n_tasks = dd.N_TASKS
-        self.cpt = dd.N_CLASSES_PER_TASK
         self.transform = transform
         self.buffer = Buffer(self.args.buffer_size)
 

@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
+import sys
 import random
 import torch
 import numpy as np
@@ -19,7 +20,7 @@ def warn_once(*msg):
         warn_once.warned = set()
     if msg not in warn_once.warned:
         warn_once.warned.add(msg)
-        print(msg)
+        print(msg, file=sys.stderr)
 
 
 def get_device() -> torch.device:

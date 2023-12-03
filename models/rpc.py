@@ -69,9 +69,7 @@ class RPC(ContinualModel):
     def __init__(self, backbone, loss, args, transform):
         super(RPC, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)
-        self.cpt = get_dataset(args).N_CLASSES_PER_TASK
-        self.tasks = get_dataset(args).N_TASKS
-        self.rpchead = torch.from_numpy(dsimplex(self.cpt * self.tasks)).float().to(self.device)
+        self.rpchead = torch.from_numpy(dsimplex(self.cpt * self.n_tasks)).float().to(self.device)
 
     def forward(self, x):
         x = self.net(x)[:, :-1]

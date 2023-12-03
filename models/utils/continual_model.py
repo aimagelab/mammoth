@@ -100,7 +100,9 @@ class ContinualModel(nn.Module):
         self.transform = transform
         self.dataset = get_dataset(self.args)
         self.N_CLASSES = self.dataset.N_CLASSES
+        self.num_classes = self.N_CLASSES
         self.N_TASKS = self.dataset.N_TASKS
+        self.n_tasks = self.N_TASKS
         self.SETTING = self.dataset.SETTING
         self._cpt = self.dataset.N_CLASSES_PER_TASK
         self._current_task = 0

@@ -37,9 +37,8 @@ class XDerCE(ContinualModel):
     def __init__(self, backbone, loss, args, transform):
         super(XDerCE, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)
-        self.cpt = get_dataset(args).N_CLASSES_PER_TASK
-        self.tasks = get_dataset(args).N_TASKS
-        self.update_counter = torch.zeros(self.args.buffer_size).to(self.device)
+        self.n_tasks = get_dataset(args).N_TASKS
+        self.update_counter = torch.zeros(self.args.buffer_size)
 
         if not hasattr(self.args, 'start_from'):
             self.args.start_from = 0
@@ -115,14 +114,15 @@ class XDerCE(ContinualModel):
                         buf_inputs = buf_inputs[self.args.batch_size:]
                     buf_outputs = torch.cat(buf_outputs)
 
-                    chosen = (buf_labels // self.cpt) < (self.current_task - 1)
+                    chosen = ((buf_labels // self.cpt) < (self.current_task - 1)).to(self.buffer.device)
 
                     if chosen.any():
-                        to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task)
-                        self.buffer.logits[buf_idx[chosen], :] = to_transplant.to(self.buffer.device)
-                        self.buffer.task_labels[buf_idx[chosen]] = self.current_task
+                        if (self.n_tasks - self.current_task) > 0:
+                            to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task)
+                            self.buffer.logits[buf_idx[chosen], :] = to_transplant.to(self.buffer.device)
+                            self.buffer.task_labels[buf_idx[chosen]] = self.current_task
 
-        self.update_counter = torch.zeros(self.args.buffer_size).to(self.device)
+        self.update_counter = torch.zeros(self.args.buffer_size)
 
         self.train(tng)
 
@@ -175,7 +175,7 @@ class XDerCE(ContinualModel):
             buf_logits = torch.cat([buf_logits1, buf_logits2])
             buf_outputs = torch.cat([buf_outputs1, buf_outputs2])
             buf_tl = torch.cat([buf_tl1, buf_tl2])
-            eyey = torch.eye(self.buffer.buffer_size).to(self.device)[buf_idx]
+            eyey = torch.eye(self.buffer.buffer_size).to(buf_idx.device)[buf_idx]
             umask = (eyey * eyey.cumsum(0)).sum(1) < 2
 
             buf_idx = buf_idx[umask]
@@ -194,7 +194,7 @@ class XDerCE(ContinualModel):
 
                 if chosen.any():
                     assert self.current_task > 0
-                    to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task, self.tasks - self.current_task)
+                    to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task, self.n_tasks - self.current_task).to(self.buffer.device)
                     self.buffer.logits[buf_idx[chosen], :] = to_transplant.to(self.buffer.device)
                     self.buffer.task_labels[buf_idx[chosen]] = self.current_task
 
@@ -215,7 +215,7 @@ class XDerCE(ContinualModel):
 
         # Future Logits Constraint
         loss_constr_futu = torch.tensor(0.)
-        if self.current_task < self.tasks - 1:
+        if self.current_task < self.n_tasks - 1:
             bad_head = outputs[:, (self.current_task + 1) * self.cpt:]
             good_head = outputs[:, self.current_task * self.cpt:(self.current_task + 1) * self.cpt]
 
