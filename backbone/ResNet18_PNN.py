@@ -52,7 +52,7 @@ class ResNetPNN(ResNet):
 
         self.old_cols = old_cols
         self.x_shape = x_shape
-        self.classifier = self.linear
+        self.linear = self.classifier
         if len(old_cols) == 0:
             return
 
