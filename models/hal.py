@@ -33,9 +33,9 @@ class HAL(ContinualModel):
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
     def __init__(self, backbone, loss, args, transform):
-        super(HAL, self).__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform)
         self.task_number = 0
-        self.buffer = Buffer(self.args.buffer_size, self.device, get_dataset(args).N_TASKS, mode='ring')
+        self.buffer = Buffer(self.args.buffer_size, n_tasks=get_dataset(args).N_TASKS, mode='ring')
         self.hal_lambda = args.hal_lambda
         self.beta = args.beta
         self.gamma = args.gamma
