@@ -16,7 +16,7 @@ def get_parser() -> ArgumentParser:
     add_management_args(parser)
     add_experiment_args(parser)
     add_rehearsal_args(parser)
-    parser.add_argument('--batch_num', type=int, required=True,
+    parser.add_argument('--batch_num', type=int, default=1,
                         help='Number of batches extracted from the buffer.')
     parser.add_argument('--gss_minibatch_size', type=int, default=None,
                         help='The batch size of the gradient comparison.')
@@ -58,7 +58,7 @@ class Gss(ContinualModel):
             self.opt.zero_grad()
             if not self.buffer.is_empty():
                 buf_inputs, buf_labels = self.buffer.get_data(
-                    self.args.minibatch_size, transform=self.transform, device=self.device)
+                    self.args.minibatch_size, transform=self.transform)
                 tinputs = torch.cat((inputs, buf_inputs))
                 tlabels = torch.cat((labels, buf_labels))
             else:

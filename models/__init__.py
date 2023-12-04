@@ -5,6 +5,7 @@
 
 import os
 import importlib
+from utils.conf import warn_once
 
 
 def get_all_models():
@@ -19,7 +20,8 @@ for model in get_all_models():
         class_name = {x.lower(): x for x in mod.__dir__()}[model.replace('_', '')]
         names[model] = getattr(mod, class_name)
     except Exception as e:
-        print("Error in model", model, ':', e)
+        warn_once("Error in model", model)
+        warn_once(e)
 
 
 def get_model(args, backbone, loss, transform):

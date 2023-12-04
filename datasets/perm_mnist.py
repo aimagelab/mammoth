@@ -9,13 +9,12 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from backbone.MNISTMLP import MNISTMLP
 from PIL import Image
-from torch.utils.data import DataLoader
 from torchvision.datasets import MNIST
 
 from datasets.transforms.permutation import Permutation
 from datasets.utils.continual_dataset import ContinualDataset
 from datasets.utils.validation import get_train_val
-from utils.conf import base_path_dataset as base_path
+from utils.conf import base_path, create_seeded_dataloader
 
 
 def store_mnist_loaders(transform, setting):
@@ -28,10 +27,10 @@ def store_mnist_loaders(transform, setting):
         test_dataset = MNIST(base_path() + 'MNIST',
                              train=False, download=True, transform=transform)
 
-    train_loader = DataLoader(train_dataset,
-                              batch_size=setting.args.batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset,
-                             batch_size=setting.args.batch_size, shuffle=False)
+    train_loader = create_seeded_dataloader(setting.args, train_dataset,
+                                            batch_size=setting.args.batch_size, shuffle=True)
+    test_loader = create_seeded_dataloader(setting.args, test_dataset,
+                                           batch_size=setting.args.batch_size, shuffle=False)
     setting.test_loaders.append(test_loader)
     setting.train_loader = train_loader
 
@@ -106,3 +105,7 @@ class PermutedMNIST(ContinualDataset):
     @staticmethod
     def get_batch_size() -> int:
         return 128
+
+    @staticmethod
+    def get_epochs():
+        return 1

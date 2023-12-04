@@ -3,6 +3,7 @@ import torchvision.transforms as transforms
 from backbone.ResNet50 import resnet50
 import torch.nn.functional as F
 import numpy as np
+from utils import smart_joint
 from utils.conf import base_path
 from PIL import Image
 from datasets.utils.validation import get_train_val
@@ -40,9 +41,9 @@ class MyCUB200(Dataset):
                 from onedrivedownloader import download
                 ln = '<iframe src="https://onedrive.live.com/embed?cid=D3924A2D106E0039&resid=D3924A2D106E0039%21110&authkey=AIEfi5nlRyY1yaE" width="98" height="120" frameborder="0" scrolling="no"></iframe>'
                 print('Downloading dataset')
-                download(ln, filename=os.path.join(root, 'cub_200_2011.zip'), unzip=True, unzip_path=root, clean=True)
+                download(ln, filename=smart_joint(root, 'cub_200_2011.zip'), unzip=True, unzip_path=root, clean=True)
 
-        data_file = np.load(os.path.join(root, 'train_data.npz' if train else 'test_data.npz'), allow_pickle=True)
+        data_file = np.load(smart_joint(root, 'train_data.npz' if train else 'test_data.npz'), allow_pickle=True)
 
         self.data = data_file['data']
         self.targets = torch.from_numpy(data_file['targets']).long()
@@ -159,7 +160,7 @@ class SequentialCUB200(ContinualDataset):
     @staticmethod
     def get_backbone(hookme=False):
         num_classes = SequentialCUB200.N_CLASSES_PER_TASK * SequentialCUB200.N_TASKS
-        return resnet50(num_classes)
+        return resnet50(num_classes, pretrained=True)
 
     @staticmethod
     def get_loss():

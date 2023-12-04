@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 # from backbone.ResNet18 import resnet18_twf1
 import torch.nn.functional as F
 import numpy as np
-from utils.conf import base_path_dataset as base_path
+from utils.conf import base_path
 from PIL import Image
 from datasets.utils.validation import get_train_val
 from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
@@ -26,7 +26,7 @@ class SequentialCIFAR100224(ContinualDataset):
     N_TASKS = 10
     N_CLASSES = 100
     SIZE = (224, 224)
-    MEAN, STD = (0.5071, 0.4867, 0.4408), (0.2675, 0.2565, 0.2761)
+    MEAN, STD = (0, 0, 0), (1, 1, 1)  # Normalized in [0,1] as in L2P paper
     TRANSFORM = transforms.Compose(
         [transforms.Resize(224),
          transforms.RandomCrop(224, padding=28),
@@ -86,8 +86,8 @@ class SequentialCIFAR100224(ContinualDataset):
 
     @staticmethod
     def get_epochs():
-        return 50
+        return 5
 
     @staticmethod
     def get_batch_size():
-        return 32
+        return 128

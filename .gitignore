@@ -90,3 +90,4 @@ dmypy.json
 .pytype/
 cython_debug/
 wandb
+logs

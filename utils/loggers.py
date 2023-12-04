@@ -10,13 +10,11 @@ from typing import Any, Dict
 
 import numpy as np
 
-from utils import create_if_not_exists
+from utils import create_if_not_exists, smart_joint
 from utils.conf import base_path
 from utils.metrics import backward_transfer, forward_transfer, forgetting
-import wandb
-
-useless_args = ['dataset', 'tensorboard', 'validation', 'model',
-                'csv_log', 'notes', 'load_best_args']
+with suppress(ImportError):
+    import wandb
 
 
 def log_accs(args, logger, accs, t, setting, epoch=None):
@@ -62,7 +60,7 @@ def print_mean_accuracy(mean_acc: np.ndarray, task_number: int,
                                                                     task_number, round(mean_acc, 2)), file=sys.stderr)
         else:
             mean_acc_class_il, mean_acc_task_il = mean_acc
-            print('\n for {} task(s): \t [Class-IL]: {} %'
+            print('\n{} for {} task(s): \t [Class-IL]: {} %'
                   ' \t [Task-IL]: {} %\n'.format(prefix, task_number, round(
                       mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
 
@@ -149,6 +147,7 @@ class Logger:
         :param mean_acc: mean accuracy value
         """
         if self.setting == 'general-continual':
+            mean_acc, _ = mean_acc
             self.accs.append(mean_acc)
         elif self.setting == 'domain-il':
             mean_acc, _ = mean_acc
@@ -192,11 +191,12 @@ class Logger:
 
         path = target_folder + self.setting + "/" + self.dataset\
             + "/" + self.model + "/logs.pyd"
+        print("Logging results and arguments in " + path)
         with open(path, 'a') as f:
             f.write(str(wrargs) + '\n')
 
         if self.setting == 'class-il':
-            create_if_not_exists(os.path.join(*[target_folder, "task-il/", self.dataset]))
+            create_if_not_exists(smart_joint(*[target_folder, "task-il/", self.dataset]))
             create_if_not_exists(target_folder + "task-il/"
                                  + self.dataset + "/" + self.model)
 

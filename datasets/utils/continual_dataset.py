@@ -12,6 +12,8 @@ import torch.nn as nn
 import torch.optim
 from torch.utils.data import DataLoader, Dataset
 
+from utils.conf import create_seeded_dataloader, set_random_seed_worker
+
 
 class ContinualDataset:
     """
@@ -35,6 +37,15 @@ class ContinualDataset:
         self.args = args
         self.N_CLASSES = self.N_CLASSES if hasattr(self, 'N_CLASSES') else \
             (self.N_CLASSES_PER_TASK * self.N_TASKS) if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK)
+
+        if self.args.permute_classes:
+            if not hasattr(self.args, 'class_order'):  # set only once
+                if self.args.seed is not None:
+                    np.random.seed(self.args.seed)
+                if isinstance(self.N_CLASSES_PER_TASK, int):
+                    self.args.class_order = np.random.permutation(self.N_CLASSES_PER_TASK * self.N_TASKS)
+                else:
+                    self.args.class_order = np.random.permutation(sum(self.N_CLASSES_PER_TASK))
 
         if args.joint:
             self.N_CLASSES_PER_TASK = self.N_CLASSES
@@ -118,7 +129,7 @@ def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):
         lpc = int(setting.args.label_perc * (train_dataset.targets.shape[0] // setting.N_CLASSES_PER_TASK))
         ind = np.indices(train_dataset.targets.shape)[0]
         mask = []
-        for i_label, _ in enumerate(train_dataset.classes):
+        for i_label, _ in enumerate(np.unique(train_dataset.targets)):
             partial_targets = train_dataset.targets[train_dataset.targets == i_label]
             current_mask = np.random.choice(partial_targets.shape[0], max(
                 partial_targets.shape[0] - lpc, 0), replace=False)
@@ -151,6 +162,10 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     :param setting: continual learning setting
     :return: train and test loaders
     """
+    if setting.args.permute_classes:
+        train_dataset.targets = setting.args.class_order[np.array(train_dataset.targets)]
+        test_dataset.targets = setting.args.class_order[np.array(test_dataset.targets)]
+
     train_mask = np.logical_and(np.array(train_dataset.targets) >= setting.i,
                                 np.array(train_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
     test_mask = np.logical_and(np.array(test_dataset.targets) >= setting.i,
@@ -164,33 +179,12 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
 
     train_dataset, test_dataset = _prepare_data_loaders(train_dataset, test_dataset, setting)
 
-    n_cpus = 4 if not hasattr(os, 'sched_getaffinity') else len(os.sched_getaffinity(0))
-    num_workers = n_cpus if setting.args.num_workers is None else setting.args.num_workers
-    train_loader = DataLoader(train_dataset,
-                              batch_size=setting.args.batch_size, shuffle=True, num_workers=num_workers)
-    test_loader = DataLoader(test_dataset,
-                             batch_size=setting.args.batch_size, shuffle=False, num_workers=num_workers)
+    train_loader = create_seeded_dataloader(setting.args, train_dataset,
+                                            batch_size=setting.args.batch_size, shuffle=True)
+    test_loader = create_seeded_dataloader(setting.args, test_dataset,
+                                           batch_size=setting.args.batch_size, shuffle=False)
     setting.test_loaders.append(test_loader)
     setting.train_loader = train_loader
 
     setting.i += setting.N_CLASSES_PER_TASK
     return train_loader, test_loader
-
-
-def get_previous_train_loader(train_dataset: Dataset, batch_size: int,
-                              setting: ContinualDataset) -> DataLoader:
-    """
-    Creates a dataloader for the previous task.
-    :param train_dataset: the entire training set
-    :param batch_size: the desired batch size
-    :param setting: the continual dataset at hand
-    :return: a dataloader
-    """
-    train_mask = np.logical_and(np.array(train_dataset.targets) >=
-                                setting.i - setting.N_CLASSES_PER_TASK, np.array(train_dataset.targets)
-                                < setting.i - setting.N_CLASSES_PER_TASK + setting.N_CLASSES_PER_TASK)
-
-    train_dataset.data = train_dataset.data[train_mask]
-    train_dataset.targets = np.array(train_dataset.targets)[train_mask]
-
-    return DataLoader(train_dataset, batch_size=batch_size, shuffle=True)

@@ -34,8 +34,8 @@ class Buffer:
         self.fathom = 0
         self.fathom_mask = torch.randperm(min(self.num_seen_examples, self.examples.shape[0] if hasattr(self, 'examples') else self.num_seen_examples))
 
-    def get_grad_score(self, x, y, X, Y, indices):
-        g = self.model.get_grads(x, y)
+    def get_grad_score(self, batch_x, batch_y, X, Y, indices):
+        g = self.model.get_grads(batch_x, batch_y)
         G = []
         for x, y, idx in zip(X, Y, indices):
             if idx in self.cache:

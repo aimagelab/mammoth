@@ -1,10 +1,7 @@
 torch
 numpy
 torchvision
-six
-wandb
-onedrivedownloader
-av
-tqdm
+kornia>=0.7.0
+Pillow
 timm==0.8.10.dev0
-kornia
+tqdm

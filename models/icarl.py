@@ -112,7 +112,7 @@ class ICarl(ContinualModel):
         self.old_net = deepcopy(self.net.eval())
         self.net.train()
         with torch.no_grad():
-            fill_buffer(self.buffer, dataset, self.current_task - 1, net=self.net, use_herding=True)
+            fill_buffer(self.buffer, dataset, self.current_task, net=self.net, use_herding=True)
         self.class_means = None
 
     def compute_class_means(self) -> None:

@@ -1,6 +1,13 @@
 
+import random
+import string
 import torch
 import os
+
+from tqdm import tqdm
+import urllib.request as request
+
+from utils import smart_joint
 
 
 def _load_mammoth_model(dict_keys, model: torch.nn.Module, args):
@@ -65,6 +72,32 @@ def _load_net(dict_keys, model: torch.nn.Module, args, ignore_classifier=True):
     return model
 
 
+def _get_random_filename(length=10):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
+
+def _download_from_raw_url(url: str, root: str):
+    os.makedirs(root, exist_ok=True)
+    filename = _get_random_filename()
+
+    download_target = smart_joint(root, filename)
+
+    if os.path.exists(download_target) and not os.path.isfile(download_target):
+        raise RuntimeError(f"{download_target} exists and is not a regular file")
+
+    with request.urlopen(url) as source, open(download_target, "wb") as output:
+        with tqdm(total=int(source.info().get("Content-Length")), unit='iB', unit_scale=True, unit_divisor=1024) as loop:
+            while True:
+                buffer = source.read(8192)
+                if not buffer:
+                    break
+
+                output.write(buffer)
+                loop.update(len(buffer))
+
+    return download_target
+
+
 def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=False) -> torch.nn.Module:
     """
     Loads the keys from the given checkpoint.
@@ -73,8 +106,28 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
     - Handles head initialization for LUCIR.
     :param args: the model with the checkpoint loaded.
     """
-    if not os.path.exists(args.loadcheck):
-        raise ValueError('The given checkpoint does not exist.')
+    # check if checkpoint is a URL
+    if args.loadcheck.startswith('http'):
+        if 'sharepoint' in args.loadcheck:
+            from onedrivedownloader import download
+            print('Downloading checkpoint using OneDriveDownloader...')
+            args.loadcheck = download(args.loadcheck, filename='checkpoints/', unzip=True, unzip_path='checkpoints/', clean=True)
+        elif 'drive.google.com' in args.loadcheck:
+            from google_drive_downloader import GoogleDriveDownloader as gdd
+            print('Downloading checkpoint using GoogleDriveDownloader...')
+            # get random filename
+            filename = _get_random_filename()
+            gdd.download_file_from_google_drive(file_id=args.loadcheck.split('/')[-2],
+                                                dest_path=f'checkpoints/{filename}', unzip=True)
+            args.loadcheck = f'checkpoints/{filename}'
+        else:
+            print('Attempting to download raw checkpoint...')
+            args.loadcheck = _download_from_raw_url(args.loadcheck, 'checkpoints/')
+
+        print(f'Checkpoint downloaded to {args.loadcheck}')
+    else:
+        if not os.path.exists(args.loadcheck):
+            raise ValueError('The given checkpoint does not exist.')
 
     saved_obj = torch.load(args.loadcheck, map_location=torch.device("cpu"))
 

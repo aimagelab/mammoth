@@ -21,12 +21,12 @@ def get_parser() -> ArgumentParser:
     # add_rehearsal_args(parser)
 
     # Optimizer parameters
-    parser.add_argument('--opt', default='adam', type=str, metavar='OPTIMIZER', help='Optimizer (default: "adam"')
-    parser.add_argument('--opt-eps', default=1e-8, type=float, metavar='EPSILON', help='Optimizer Epsilon (default: 1e-8)')
-    parser.add_argument('--opt-betas', default=(0.9, 0.999), type=float, nargs='+', metavar='BETA', help='Optimizer Betas (default: (0.9, 0.999), use opt default)')
-    parser.add_argument('--momentum', type=float, default=0.9, metavar='M', help='SGD momentum (default: 0.9)')
-    parser.add_argument('--weight-decay', type=float, default=0.0, help='weight decay (default: 0.0)')
-    parser.add_argument('--reinit_optimizer', type=bool, default=True, help='reinit optimizer (default: True)')
+    # parser.add_argument('--opt', default='adam', type=str, metavar='OPTIMIZER', help='Optimizer (default: "adam"')
+    # parser.add_argument('--opt-eps', default=1e-8, type=float, metavar='EPSILON', help='Optimizer Epsilon (default: 1e-8)')
+    # parser.add_argument('--opt-betas', default=(0.9, 0.999), type=float, nargs='+', metavar='BETA', help='Optimizer Betas (default: (0.9, 0.999), use opt default)')
+    # parser.add_argument('--momentum', type=float, default=0.9, metavar='M', help='SGD momentum (default: 0.9)')
+    # parser.add_argument('--weight-decay', type=float, default=0.0, help='weight decay (default: 0.0)')
+    # parser.add_argument('--reinit_optimizer', type=bool, default=True, help='reinit optimizer (default: True)')
 
     # Prompt parameters
     parser.add_argument('--prompt_pool', default=True, type=bool,)
@@ -99,7 +99,7 @@ class L2P(ContinualModel):
         offset_1, offset_2 = self._compute_offsets(self.current_task)
         logits = logits[:, offset_1:offset_2]
 
-        loss = self.loss(logits, labels)
+        loss = self.loss(logits, labels - offset_1)
         if self.args.pull_constraint and 'reduce_sim' in outputs:
             loss = loss - self.args.pull_constraint_coeff * outputs['reduce_sim']
 

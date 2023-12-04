@@ -44,8 +44,6 @@ class XDer(ContinualModel):
     def __init__(self, backbone, loss, args, transform):
         super(XDer, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)
-        self.cpt = get_dataset(args).N_CLASSES_PER_TASK
-        self.tasks = get_dataset(args).N_TASKS
         self.update_counter = torch.zeros(self.args.buffer_size).to(self.device)
 
         denorm = get_dataset(args).get_denormalization_transform()
@@ -64,7 +62,7 @@ class XDer(ContinualModel):
 
         if self.args.start_from is None or self.current_task >= (self.args.start_from + 1):
             # Reduce Memory Buffer
-            if (self.current_task - 1) > 0:
+            if self.current_task > 0:
                 examples_per_class = self.args.buffer_size // (self.current_task * self.cpt)
                 buf_x, buf_lab, buf_log, buf_tl = self.buffer.get_all_data()
                 self.buffer.empty()
@@ -87,7 +85,7 @@ class XDer(ContinualModel):
 
             with torch.no_grad():
                 with bn_track_stats(self, False):
-                    if self.args.start_from is None or self.args.start_from <= (self.current_task - 1):
+                    if self.args.start_from is None or self.args.start_from <= self.current_task:
                         for data in dataset.train_loader:
                             inputs, labels, not_aug_inputs = data
                             inputs = inputs.to(self.device)
@@ -97,8 +95,8 @@ class XDer(ContinualModel):
                                 break
 
                             # Update past logits
-                            if (self.current_task - 1) > 0:
-                                outputs = self.update_logits(outputs, outputs, labels, 0, self.current_task - 1)
+                            if self.current_task > 0:
+                                outputs = self.update_logits(outputs, outputs, labels, 0, self.current_task)
 
                             flags = torch.zeros(len(inputs)).bool()
                             for j in range(len(flags)):
@@ -109,8 +107,7 @@ class XDer(ContinualModel):
                             self.buffer.add_data(examples=not_aug_inputs[flags],
                                                  labels=labels[flags],
                                                  logits=outputs.data[flags],
-                                                 task_labels=(torch.ones(len(not_aug_inputs)) *
-                                                              (self.current_task - 1))[flags])
+                                                 task_labels=(torch.ones(len(not_aug_inputs)) * self.current_task)[flags])
 
                     # Update future past logits
                     buf_idx, buf_inputs, buf_labels, buf_logits, _ = self.buffer.get_data(self.buffer.buffer_size,
@@ -122,15 +119,14 @@ class XDer(ContinualModel):
                         buf_inputs = buf_inputs[self.args.batch_size:]
                     buf_outputs = torch.cat(buf_outputs)
 
-                    chosen = (buf_labels // self.cpt) < (self.current_task - 1)
+                    chosen = ((buf_labels // self.cpt) < self.current_task).to(self.buffer.device)
 
                     if chosen.any():
-                        to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task - 1, self.tasks - self.current_task)
+                        to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task, self.n_tasks - self.current_task)
                         self.buffer.logits[buf_idx[chosen], :] = to_transplant.to(self.buffer.device)
-                        self.buffer.task_labels[buf_idx[chosen]] = self.current_task - 1
+                        self.buffer.task_labels[buf_idx[chosen]] = self.current_task
 
-        self.current_task += 1
-        self.update_counter = torch.zeros(self.args.buffer_size).to(self.device)
+        self.update_counter = torch.zeros(self.args.buffer_size)
 
         self.train(tng)
 
@@ -183,7 +179,7 @@ class XDer(ContinualModel):
             buf_logits = torch.cat([buf_logits1, buf_logits2])
             buf_outputs = torch.cat([buf_outputs1, buf_outputs2])
             buf_tl = torch.cat([buf_tl1, buf_tl2])
-            eyey = torch.eye(self.buffer.buffer_size).to(self.device)[buf_idx]
+            eyey = torch.eye(self.buffer.buffer_size).to(buf_idx.device)[buf_idx]
             umask = (eyey * eyey.cumsum(0)).sum(1) < 2
 
             buf_idx = buf_idx[umask]
@@ -195,21 +191,21 @@ class XDer(ContinualModel):
 
             # Update Future Past Logits
             with torch.no_grad():
-                chosen = (buf_labels // self.cpt) < self.current_task
+                chosen = ((buf_labels // self.cpt) < self.current_task).to(self.buffer.device)
                 self.update_counter[buf_idx[chosen]] += 1
                 c = chosen.clone()
                 chosen[c] = torch.rand_like(chosen[c].float()) * self.update_counter[buf_idx[c]] < 1
 
                 if chosen.any():
                     assert self.current_task > 0
-                    to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task, self.tasks - self.current_task)
+                    to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task, self.n_tasks - self.current_task).to(self.buffer.device)
                     self.buffer.logits[buf_idx[chosen], :] = to_transplant.to(self.buffer.device)
                     self.buffer.task_labels[buf_idx[chosen]] = self.current_task
 
         # Consistency Loss (future heads)
         loss_cons = torch.tensor(0.)
         loss_cons = loss_cons.type(loss_stream.dtype)
-        if self.current_task < self.tasks - 1:
+        if self.current_task < self.n_tasks - 1:
 
             scl_labels = labels[:self.args.simclr_batch_size]
             scl_na_inputs = not_aug_inputs[:self.args.simclr_batch_size]
@@ -227,7 +223,7 @@ class XDer(ContinualModel):
             scl_featuresFull = scl_outputs.reshape(-1, self.args.simclr_num_aug, scl_outputs.shape[-1])  # [N, n_aug, 100]
 
             scl_features = scl_featuresFull[:, :, (self.current_task + 1) * self.cpt:]  # [N, n_aug, 70]
-            scl_n_heads = self.tasks - self.current_task - 1
+            scl_n_heads = self.n_tasks - self.current_task - 1
 
             scl_features = torch.stack(scl_features.split(self.cpt, 2), 1)  # [N, 7, n_aug, 10]
 
@@ -253,7 +249,7 @@ class XDer(ContinualModel):
 
         # Future Logits Constraint
         loss_constr_futu = torch.tensor(0.)
-        if self.current_task < self.tasks - 1:
+        if self.current_task < self.n_tasks - 1:
             bad_head = outputs[:, (self.current_task + 1) * self.cpt:]
             good_head = outputs[:, self.current_task * self.cpt:(self.current_task + 1) * self.cpt]
 

@@ -28,7 +28,6 @@ class ErACE(ContinualModel):
         super(ErACE, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)
         self.seen_so_far = torch.tensor([]).long().to(self.device)
-        self.num_c
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 

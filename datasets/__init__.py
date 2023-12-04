@@ -7,8 +7,10 @@ import importlib
 import inspect
 import os
 from argparse import Namespace
+from typing import Type
 
 from datasets.utils.continual_dataset import ContinualDataset
+from utils.conf import warn_once
 
 
 def get_all_datasets():
@@ -31,8 +33,8 @@ for dataset in get_all_datasets():
             c = getattr(mod, d)
             NAMES[c.NAME] = c
     except Exception as e:
-        print(f'Error in dataset {dataset}')
-        print(e)
+        warn_once(f'Error in dataset {dataset}')
+        warn_once(e)
 
 
 def get_dataset(args: Namespace) -> ContinualDataset:
@@ -42,4 +44,14 @@ def get_dataset(args: Namespace) -> ContinualDataset:
     :return: the continual dataset
     """
     assert args.dataset in NAMES
-    return NAMES[args.dataset](args)
+    return get_dataset_class(args)(args)
+
+
+def get_dataset_class(args: Namespace) -> Type[ContinualDataset]:
+    """
+    Returns a continual dataset.
+    :param args: the arguments which contains the hyperparameters
+    :return: the continual dataset
+    """
+    assert args.dataset in NAMES
+    return NAMES[args.dataset]
