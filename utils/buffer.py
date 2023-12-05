@@ -203,7 +203,7 @@ class Buffer:
         if not return_index:
             return ret_tuple
         else:
-            return (torch.tensor(choice).to(self.device), ) + ret_tuple
+            return (torch.tensor(choice).to(target_device), ) + ret_tuple
 
     def get_data_by_index(self, indexes, transform: nn.Module = None, device=None) -> Tuple:
         """

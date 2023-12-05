@@ -35,25 +35,33 @@ class Derpp(ContinualModel):
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         self.opt.zero_grad()
+
+        tot_loss = 0
+
         outputs = self.net(inputs)
         loss = self.loss(outputs, labels)
+        tot_loss += loss.item()
+        loss.backward()
 
         if not self.buffer.is_empty():
-            buf_inputs, _, buf_logits = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform, device=self.device)
-            buf_outputs = self.net(buf_inputs)
-            loss += self.args.alpha * F.mse_loss(buf_outputs, buf_logits)
+            buf_inputs, _, buf_logits = self.buffer.get_data(self.args.minibatch_size, transform=self.transform, device=self.device)
 
-            buf_inputs, buf_labels, _ = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform, device=self.device)
             buf_outputs = self.net(buf_inputs)
-            loss += self.args.beta * self.loss(buf_outputs, buf_labels)
+            loss = self.args.alpha * F.mse_loss(buf_outputs, buf_logits)
+            tot_loss += loss.item()
+            loss.backward()
 
-        loss.backward()
+            buf_inputs, buf_labels, _ = self.buffer.get_data(self.args.minibatch_size, transform=self.transform, device=self.device)
+
+            buf_outputs = self.net(buf_inputs)
+            loss = self.args.beta * self.loss(buf_outputs, buf_labels)
+            tot_loss += loss.item()
+            loss.backward()
+
         self.opt.step()
 
         self.buffer.add_data(examples=not_aug_inputs,
                              labels=labels,
                              logits=outputs.data)
 
-        return loss.item()
+        return tot_loss
