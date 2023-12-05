@@ -35,6 +35,7 @@ for dataset in get_all_datasets():
     except Exception as e:
         warn_once(f'Error in dataset {dataset}')
         warn_once(e)
+        NAMES[dataset.replace('_', '-')] = e
 
 
 def get_dataset(args: Namespace) -> ContinualDataset:
@@ -54,4 +55,6 @@ def get_dataset_class(args: Namespace) -> Type[ContinualDataset]:
     :return: the continual dataset
     """
     assert args.dataset in NAMES
+    if isinstance(NAMES[args.dataset], Exception):
+        raise NAMES[args.dataset]
     return NAMES[args.dataset]
