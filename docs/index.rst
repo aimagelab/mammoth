@@ -3,44 +3,14 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Mammoth's documentation!
-===================================
-
-**BETA**
+.. include:: readme.rst
 
 .. toctree::
-   :maxdepth: 5
-   :caption: Contents:
+    :hidden:
+    :maxdepth: 3
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
-Models
-======
-
-.. automodule:: models
-   :members:
-
-Datasets
-========
-
-.. automodule:: datasets
-   :members:
-
-Backbones
-=========
-
-.. automodule:: backbone
-   :members:
-
-Utils
-=====
-
-.. automodule:: utils
-   :members:
-
+    models/index
+    datasets/index
+    backbone/index
+    GitHub repository <https://github.com/aimagelab/mammoth>
+    Paper <https://papers.nips.cc/paper_files/paper/2020/file/b704ea2c39778f07c617f6b7ce480e9e-Paper.pdf>
