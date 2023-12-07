@@ -51,7 +51,7 @@ class MammothBackbone(nn.Module):
     def forward(self, x: torch.Tensor, returnt='out') -> torch.Tensor:
         """
         Compute a forward pass.
-        :param x: input tensor (batch_size, *input_shape)
+        :param x: input tensor (batch_size, \\*input_shape)
         :param returnt: return type (a string among 'out', 'features', 'all')
         :return: output tensor (output_classes)
         """

@@ -3,9 +3,14 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import os
+import sys
+mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(mammoth_path)
+os.chdir(mammoth_path)
+
 import importlib
 import inspect
-import os
 from argparse import Namespace
 from typing import Type
 

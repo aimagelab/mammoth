@@ -4,6 +4,10 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
+import sys
+mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(mammoth_path)
+os.chdir(mammoth_path)
 import importlib
 from utils.conf import warn_once
 
