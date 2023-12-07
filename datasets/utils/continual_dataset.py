@@ -4,7 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 
 from argparse import Namespace
-import os
 from typing import Tuple
 
 import numpy as np
@@ -12,13 +11,26 @@ import torch.nn as nn
 import torch.optim
 from torch.utils.data import DataLoader, Dataset
 
-from utils.conf import create_seeded_dataloader, set_random_seed_worker
+from utils.conf import create_seeded_dataloader
 
 
 class ContinualDataset:
     """
-    Continual learning evaluation setting.
+    A base class for defining continual learning datasets.
+
+    Attributes:
+        NAME (str): the name of the dataset
+        SETTING (str): the setting of the dataset
+        N_CLASSES_PER_TASK (int): the number of classes per task
+        N_TASKS (int): the number of tasks
+        N_CLASSES (int): the number of classes
+        SIZE (Tuple[int]): the size of the dataset
+        train_loader (DataLoader): the training loader
+        test_loaders (List[DataLoader]): the test loaders
+        i (int): the current task
+        args (Namespace): the arguments which contains the hyperparameters
     """
+
     NAME: str
     SETTING: str
     N_CLASSES_PER_TASK: int
@@ -55,8 +67,7 @@ class ContinualDataset:
             raise NotImplementedError('The dataset must be initialized with all the required fields.')
 
     def get_data_loaders(self) -> Tuple[DataLoader, DataLoader]:
-        """
-        Creates and returns the training and test loaders for the current task.
+        """Creates and returns the training and test loaders for the current task.
         The current training loader and all test loaders are stored in self.
         :return: the current training and test loaders
         """
@@ -64,65 +75,51 @@ class ContinualDataset:
 
     @staticmethod
     def get_backbone() -> nn.Module:
-        """
-        Returns the backbone to be used for to the current dataset.
-        """
+        """Returns the backbone to be used for the current dataset."""
         raise NotImplementedError
 
     @staticmethod
     def get_transform() -> nn.Module:
-        """
-        Returns the transform to be used for to the current dataset.
-        """
+        """Returns the transform to be used for the current dataset."""
         raise NotImplementedError
 
     @staticmethod
     def get_loss() -> nn.Module:
-        """
-        Returns the loss to be used for to the current dataset.
-        """
+        """Returns the loss to be used for the current dataset."""
         raise NotImplementedError
 
     @staticmethod
     def get_normalization_transform() -> nn.Module:
-        """
-        Returns the transform used for normalizing the current dataset.
-        """
+        """Returns the transform used for normalizing the current dataset."""
         raise NotImplementedError
 
     @staticmethod
     def get_denormalization_transform() -> nn.Module:
-        """
-        Returns the transform used for denormalizing the current dataset.
-        """
+        """Returns the transform used for denormalizing the current dataset."""
         raise NotImplementedError
 
     @staticmethod
     def get_scheduler(model, args: Namespace) -> torch.optim.lr_scheduler._LRScheduler:
-        """
-        Returns the scheduler to be used for to the current dataset.
-        """
+        """Returns the scheduler to be used for the current dataset."""
         return None
 
     @staticmethod
     def get_epochs():
+        """Returns the number of epochs to be used for the current dataset."""
         raise NotImplementedError
 
     @staticmethod
     def get_batch_size():
+        """Returns the batch size to be used for the current dataset."""
         raise NotImplementedError
 
     @classmethod
     def get_minibatch_size(cls):
+        """Returns the minibatch size to be used for the current dataset."""
         return cls.get_batch_size()
 
 
 def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):
-    """
-    Creates a balanced mask for each class in the dataset.
-    :param train_dataset: the entire training set
-    :return: list: balanced masks for labels
-    """
     if setting.args.label_perc == 1:
         return np.zeros(train_dataset.targets.shape[0]).astype('bool')
     else:
@@ -157,10 +154,14 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
                          setting: ContinualDataset) -> Tuple[DataLoader, DataLoader]:
     """
     Divides the dataset into tasks.
-    :param train_dataset: train dataset
-    :param test_dataset: test dataset
-    :param setting: continual learning setting
-    :return: train and test loaders
+
+    Attributes:
+        train_dataset (Dataset): the training dataset
+        test_dataset (Dataset): the test dataset
+        setting (ContinualDataset): the setting of the dataset
+
+    Returns:
+        the training and test loaders
     """
     if setting.args.permute_classes:
         train_dataset.targets = setting.args.class_order[np.array(train_dataset.targets)]

@@ -5,34 +5,64 @@
 
 from argparse import Namespace
 from copy import deepcopy
-import os
-from typing import Tuple
+from typing import Callable, List, Tuple
 
 import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from backbone.MNISTMLP import MNISTMLP
 from torchvision.datasets import MNIST
 
+from backbone.MNISTMLP import MNISTMLP
 from datasets.perm_mnist import MyMNIST
 from datasets.transforms.rotation import IncrementalRotation
-from datasets.utils.continual_dataset import store_masked_loaders
 from datasets.utils.gcl_dataset import GCLDataset
 from datasets.utils.validation import get_train_val
 from utils.conf import base_path, create_seeded_dataloader
-from PIL import Image
 
 
-def custom_collate_unbatch(batch):
-    # return custom collate
+def custom_collate_unbatch(batch) -> List[torch.Tensor]:
+    """
+    Custom collate function to unbatch a batch of data.
+
+    Args:
+        batch (list): A list of tensors representing a batch of data.
+
+    Returns:
+        list: A list of tensors, where each tensor is unbatched from the input batch.
+    """
     return [b.squeeze(0) for b in torch.utils.data._utils.collate.default_collate(batch)]
 
 
 class MNIST360(torch.utils.data.Dataset):
+    """A custom dataset class for MNIST360 that provides training and testing data
+    with incremental rotation for each class.
+
+    Args:
+        args (object): An object containing the arguments for the dataset.
+        is_train (bool): A flag indicating whether the dataset is for training or testing.
+
+    Attributes:
+        N_CLASSES (int): The number of classes in the dataset.
+        dataset (list): A list of data loaders for each class.
+        remaining_training_items (list): A list of the remaining training items for each class.
+        num_rounds (int): The number of rounds for each class.
+        args (object): An object containing the arguments for the dataset.
+        is_train (bool): A flag indicating whether the dataset is for training or testing.
+        is_over (bool): A flag indicating whether the dataset is completed.
+        completed_rounds (int): The number of completed rounds.
+        test_class (int): The current test class index.
+        test_iteration (int): The current test iteration index.
+        train_classes (list): A list of the current training classes.
+        active_train_loaders (list): A list of the active training data loaders.
+        active_remaining_items (list): A list of the remaining items for the active training classes.
+        total_remaining_items (int): The total number of remaining items in the dataset.
+        current_items (int): The current number of items in the dataset.
+    """
+
     N_CLASSES = 9
 
-    def __init__(self, args, is_train=False):
+    def __init__(self, args: Namespace, is_train: bool = False) -> None:
         super().__init__()
         self.dataset = []
         self.remaining_training_items = []
@@ -78,7 +108,7 @@ class MNIST360(torch.utils.data.Dataset):
 
     def init_train_loaders(self) -> None:
         """
-        Initializes the test loader.
+        Initializes the train loader.
         """
         train_dataset = MyMNIST(base_path() + 'MNIST',
                                 train=True, download=True)
@@ -129,10 +159,14 @@ class MNIST360(torch.utils.data.Dataset):
                                                          batch_size=self.args.batch_size, shuffle=True))
 
     def get_train_data(self) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        """
-        Ensembles the next examples of the current classes in a single batch.
-        :return: the augmented and not aumented version of the examples of the
-                 current batch, along with their labels.
+        """Ensembles the next examples of the current classes in a single batch.
+
+        Returns:
+            Tensor: The batch of examples.
+
+            Tensor: The labels of the examples.
+
+            Tensor: The batch of examples without augmentation.
         """
         batch_size_0 = min(int(round(self.active_remaining_items[0] /
                                      (self.active_remaining_items[0] +
@@ -156,7 +190,7 @@ class MNIST360(torch.utils.data.Dataset):
             x_train.append(i_x_train)
             y_train.append(i_y_train)
             x_train_naug.append(i_x_train_naug)
-        x_train, y_train, x_train_naug = torch.cat(x_train),\
+        x_train, y_train, x_train_naug = torch.cat(x_train), \
             torch.cat(y_train), torch.cat(x_train_naug)
 
         self.active_remaining_items[0] -= batch_size_0
@@ -169,9 +203,11 @@ class MNIST360(torch.utils.data.Dataset):
         return x_train, y_train, x_train_naug
 
     def get_test_data(self) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Ensembles the next examples of the current class in a batch.
-        :return: the batch of examples along with its label.
+        """Ensembles the next examples of the current class in a batch.
+
+        Returns:
+            Tensor: The batch of examples.
+            Tensor: The labels of the examples.
         """
         x_test, y_test = next(iter(self.dataset[self.test_class]))
         residual_items = len(self.dataset[self.test_class].dataset) - \
@@ -189,7 +225,7 @@ class MNIST360(torch.utils.data.Dataset):
         self.active_remaining_items[0] -= x_test.shape[0]
         return x_test, y_test
 
-    def reinit(self):
+    def reinit(self) -> None:
         self.is_over = False
         self.completed_rounds, self.test_class, self.test_iteration = 0, 0, 0
 
@@ -234,7 +270,15 @@ class MNIST360(torch.utils.data.Dataset):
 
 class SequentialMNIST360(GCLDataset):
     """
-    MNIST-360 general continual dataset.
+    A dataset class for the MNIST-360 dataset in the context of general-continual learning.
+
+    Attributes:
+        NAME (str): The name of the dataset.
+        SETTING (str): The setting of the dataset.
+        N_CLASSES (int): The number of classes in the dataset.
+        TRANSFORM (torch.nn.Module): The transformation to apply to the data.
+        SIZE (tuple): The size of the input images.
+        args (Namespace): An object containing the arguments for the dataset.
     """
     NAME = 'mnist-360'
     SETTING = 'general-continual'
@@ -247,7 +291,15 @@ class SequentialMNIST360(GCLDataset):
         self.args = args
         assert args.label_perc == 1, "MNIST-360 does not support partial labels."
 
-    def get_data_loaders(self):
+    def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
+        """
+        Get the data loaders for the MNIST360 dataset, add them to the current object and return them.
+
+        Returns:
+            train_loader (torch.utils.data.DataLoader): DataLoader for the training dataset.
+
+            test_loader (torch.utils.data.DataLoader): DataLoader for the test dataset.
+        """
         train_dataset = MNIST360(self.args, is_train=True)
         test_dataset = MNIST360(self.args, is_train=False)
 
@@ -265,7 +317,7 @@ class SequentialMNIST360(GCLDataset):
         return MNISTMLP(28 * 28, 10)
 
     @staticmethod
-    def get_loss() -> F.cross_entropy:
+    def get_loss() -> Callable:
         return F.cross_entropy
 
     @staticmethod
