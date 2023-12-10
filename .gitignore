@@ -92,3 +92,4 @@ cython_debug/
 wandb
 logs
 docs/_build/
+_autosummary

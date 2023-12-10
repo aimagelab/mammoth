@@ -1,11 +1,10 @@
 Models
 ===============
 
-.. toctree::
-    :caption: Models
-    :maxdepth: 2
-    :hidden:
 
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-base-template.rst
+   :recursive:
 
-.. automodule:: models
-    :members:
+   models

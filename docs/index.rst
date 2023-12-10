@@ -7,10 +7,11 @@
 
 .. toctree::
     :hidden:
-    :maxdepth: 3
+    :maxdepth: 5
 
     models/index
     datasets/index
     backbone/index
+    utils/index
     GitHub repository <https://github.com/aimagelab/mammoth>
     Paper <https://papers.nips.cc/paper_files/paper/2020/file/b704ea2c39778f07c617f6b7ce480e9e-Paper.pdf>

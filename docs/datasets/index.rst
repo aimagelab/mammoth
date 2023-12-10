@@ -1,11 +1,10 @@
 Datasets
 ===============
 
-.. toctree::
-    :caption: Datasets
-    :maxdepth: 2
-    :hidden:
 
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-base-template.rst
+   :recursive:
 
-.. automodule:: datasets
-    :members:
+   datasets

@@ -9,6 +9,8 @@
 import os
 import sys
 from typing import List
+from importlib import import_module
+from jinja2.filters import FILTERS
 
 mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(mammoth_path)
@@ -23,7 +25,10 @@ copyright = f'{date.today().year}, {author}'
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx',]
+extensions = ['sphinx.ext.autodoc',
+              'sphinx.ext.intersphinx',
+              'sphinx.ext.autosummary',
+              'sphinx.ext.napoleon']
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
@@ -72,3 +77,21 @@ pygments_style = 'friendly'
 html_theme = "furo"
 html_title = "Mammoth"
 html_static_path = ['_static']
+
+autosummary_generate = True
+
+
+def get_attributes(item, obj, modulename):
+    """Filters attributes to be used in autosummary.
+
+    Fixes import errors when documenting inherited attributes with autosummary.
+
+    """
+    module = import_module(modulename)
+    if hasattr(getattr(module, obj), item):
+        return f"{item}"
+    else:
+        return ""
+
+
+FILTERS["get_attributes"] = get_attributes
