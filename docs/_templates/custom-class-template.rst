@@ -24,8 +24,11 @@
    .. rubric:: {{ _('Attributes') }}
 
    .. autosummary::
+      :toctree:
    {% for item in attributes %}
+      {%- if not item.startswith('_') %}
       ~{{ name }}.{{ item }}
+      {%- endif %}
    {%- endfor %}
    {% endif %}
    {% endblock %}

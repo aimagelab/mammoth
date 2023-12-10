@@ -5,13 +5,12 @@
 
 .. include:: readme.rst
 
-.. toctree::
-    :hidden:
-    :maxdepth: 5
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-base-template.rst
+   :recursive:
 
-    models/index
-    datasets/index
-    backbone/index
-    utils/index
-    GitHub repository <https://github.com/aimagelab/mammoth>
-    Paper <https://papers.nips.cc/paper_files/paper/2020/file/b704ea2c39778f07c617f6b7ce480e9e-Paper.pdf>
+   backbone
+   models
+   datasets
+   utils

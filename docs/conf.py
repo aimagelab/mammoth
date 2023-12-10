@@ -79,6 +79,16 @@ html_title = "Mammoth"
 html_static_path = ['_static']
 
 autosummary_generate = True
+numpydoc_show_class_members = False
+
+# Disable docstring inheritance
+autodoc_inherit_docstrings = False
+
+# Show type hints in the description
+autodoc_typehints = "description"
+
+# Add parameter types if the parameter is documented in the docstring
+autodoc_typehints_description_target = "documented_params"
 
 
 def get_attributes(item, obj, modulename):
