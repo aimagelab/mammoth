@@ -21,7 +21,7 @@ jobs:
           sphinx-build -j auto docs _build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/wiki' }}
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/release/wiki' }}
         with:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
