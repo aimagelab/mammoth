@@ -5,6 +5,7 @@
 
 import os
 import sys
+
 mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(mammoth_path)
 os.chdir(mammoth_path)
@@ -12,13 +13,13 @@ os.chdir(mammoth_path)
 import importlib
 import inspect
 from argparse import Namespace
-from typing import Type
 
 from datasets.utils.continual_dataset import ContinualDataset
 from utils.conf import warn_once
 
 
 def get_all_datasets():
+    """Returns the list of all the available datasets in the datasets folder."""
     return [model.split('.')[0] for model in os.listdir('datasets')
             if not model.find('__') > -1 and 'py' in model]
 
@@ -46,18 +47,25 @@ for dataset in get_all_datasets():
 def get_dataset(args: Namespace) -> ContinualDataset:
     """
     Creates and returns a continual dataset.
-    :param args: the arguments which contains the hyperparameters
-    :return: the continual dataset
+    Args:
+        args (Namespace): the arguments which contains the hyperparameters
+
+    Returns:
+        the continual dataset
     """
     assert args.dataset in NAMES
     return get_dataset_class(args)(args)
 
 
-def get_dataset_class(args: Namespace) -> Type[ContinualDataset]:
+def get_dataset_class(args: Namespace) -> ContinualDataset:
     """
     Returns a continual dataset.
-    :param args: the arguments which contains the hyperparameters
-    :return: the continual dataset
+
+    Args:
+        args (Namespace): the arguments which contains the hyperparameters
+
+    Returns:
+        the continual dataset
     """
     assert args.dataset in NAMES
     if isinstance(NAMES[args.dataset], Exception):

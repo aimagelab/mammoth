@@ -8,10 +8,10 @@ from typing import Tuple
 import torch.nn.functional as F
 import torch.optim
 import torchvision.transforms as transforms
-from backbone.ResNet18 import resnet18
 from PIL import Image
 from torchvision.datasets import CIFAR100
 
+from backbone.ResNet18 import resnet18
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
@@ -66,6 +66,18 @@ class MyCIFAR100(CIFAR100):
 
 
 class SequentialCIFAR100(ContinualDataset):
+    """Sequential CIFAR100 Dataset.
+
+    Args:
+        NAME (str): name of the dataset.
+        SETTING (str): setting of the dataset.
+        N_CLASSES_PER_TASK (int): number of classes per task.
+        N_TASKS (int): number of tasks.
+        N_CLASSES (int): number of classes.
+        SIZE (tuple): size of the images.
+        MEAN (tuple): mean of the dataset.
+        STD (tuple): standard deviation of the dataset.
+        TRANSFORM (torchvision.transforms): transformation to apply to the data."""
 
     NAME = 'seq-cifar100'
     SETTING = 'class-il'
@@ -80,12 +92,12 @@ class SequentialCIFAR100(ContinualDataset):
          transforms.ToTensor(),
          transforms.Normalize(MEAN, STD)])
 
-    def get_examples_number(self):
+    def get_examples_number(self) -> int:
         train_dataset = MyCIFAR100(base_path() + 'CIFAR10', train=True,
                                    download=True)
         return len(train_dataset.data)
 
-    def get_data_loaders(self):
+    def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = self.TRANSFORM
 
         test_transform = transforms.Compose(

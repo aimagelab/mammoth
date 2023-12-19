@@ -91,5 +91,5 @@ dmypy.json
 cython_debug/
 wandb
 logs
-docs/_build/
+**/_build/
 _autosummary

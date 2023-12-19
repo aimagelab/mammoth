@@ -3,21 +3,33 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Tuple, Type
+from typing import Tuple
 
+import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from backbone.MNISTMLP import MNISTMLP
 from PIL import Image
 from torchvision.datasets import MNIST
 
+from backbone.MNISTMLP import MNISTMLP
 from datasets.transforms.permutation import Permutation
 from datasets.utils.continual_dataset import ContinualDataset
 from datasets.utils.validation import get_train_val
 from utils.conf import base_path, create_seeded_dataloader
 
 
-def store_mnist_loaders(transform, setting):
+def store_mnist_loaders(transform: transforms.Compose,
+                        setting: ContinualDataset) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
+    """
+    Creates the data loaders for the MNIST dataset.
+
+    Args:
+        transform: the transformation to apply to the data
+        setting: the setting of the experiment
+
+    Returns:
+        the training and test data loaders
+    """
     train_dataset = MyMNIST(base_path() + 'MNIST',
                             train=True, download=True, transform=transform)
     if setting.args.validation:
@@ -69,6 +81,19 @@ class MyMNIST(MNIST):
 
 
 class PermutedMNIST(ContinualDataset):
+    """Permuted MNIST Dataset.
+
+    Creates a dataset composed by a sequence of tasks, each containing a
+    different permutation of the pixels of the MNIST dataset.
+
+    Args:
+        NAME (str): name of the dataset
+        SETTING (str): setting of the experiment
+        N_CLASSES_PER_TASK (int): number of classes in each task
+        N_TASKS (int): number of tasks
+        N_CLASSES (int): total number of classes
+        SIZE (tuple): size of the images
+    """
 
     NAME = 'perm-mnist'
     SETTING = 'domain-il'
@@ -77,7 +102,7 @@ class PermutedMNIST(ContinualDataset):
     N_CLASSES = N_CLASSES_PER_TASK * N_TASKS
     SIZE = (28, 28)
 
-    def get_data_loaders(self):
+    def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = transforms.Compose((transforms.ToTensor(), Permutation()))
         train, test = store_mnist_loaders(transform, self)
         return train, test

@@ -5,12 +5,13 @@
 
 from typing import Tuple
 
+import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from backbone.MNISTMLP import MNISTMLP
 from PIL import Image
 from torchvision.datasets import MNIST
 
+from backbone.MNISTMLP import MNISTMLP
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
 from datasets.utils.validation import get_train_val
@@ -54,6 +55,16 @@ class MyMNIST(MNIST):
 
 
 class SequentialMNIST(ContinualDataset):
+    """The Sequential MNIST dataset.
+
+    Args:
+        NAME (str): name of the dataset.
+        SETTING (str): setting of the dataset.
+        N_CLASSES_PER_TASK (int): number of classes per task.
+        N_TASKS (int): number of tasks.
+        N_CLASSES (int): number of classes.
+        SIZE (tuple): size of the images.
+    """
 
     NAME = 'seq-mnist'
     SETTING = 'class-il'
@@ -63,7 +74,7 @@ class SequentialMNIST(ContinualDataset):
     SIZE = (28, 28)
     TRANSFORM = None
 
-    def get_data_loaders(self):
+    def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = transforms.ToTensor()
         train_dataset = MyMNIST(base_path() + 'MNIST',
                                 train=True, download=True, transform=transform)
