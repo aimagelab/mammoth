@@ -10,4 +10,6 @@
    :template: custom-base-template.rst
    :recursive:
 
+   models
+   datasets
    utils
