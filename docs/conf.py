@@ -11,6 +11,7 @@ import sys
 from typing import List
 from importlib import import_module
 from jinja2.filters import FILTERS
+import torch
 
 mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(mammoth_path)
@@ -28,7 +29,9 @@ copyright = f'{date.today().year}, {author}'
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.intersphinx',
               'sphinx.ext.autosummary',
-              'sphinx.ext.napoleon']
+              'sphinx.ext.napoleon',
+              'sphinx.ext.viewcode',
+              'sphinx.ext.autosectionlabel']
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
@@ -104,4 +107,19 @@ def get_attributes(item, obj, modulename):
         return ""
 
 
+def drop_torch_items(items, obj, module):
+    """Filters attributes to be used in autosummary.
+
+    Fixes import errors when documenting inherited attributes with autosummary.
+
+    """
+    mod = import_module(module)
+    import_obj = getattr(mod, obj)
+    fn_to_keep = import_obj.__dict__.keys()
+    for item in items:
+        if item in fn_to_keep:
+            yield item
+
+
+FILTERS["drop_torch_items"] = drop_torch_items
 FILTERS["get_attributes"] = get_attributes

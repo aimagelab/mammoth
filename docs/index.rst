@@ -10,7 +10,4 @@
    :template: custom-base-template.rst
    :recursive:
 
-   backbone
-   models
-   datasets
    utils

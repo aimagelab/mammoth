@@ -1,4 +1,4 @@
-{{ fullname | escape | underline}}
+{{ name | escape | underline }}
 
 .. automodule:: {{ fullname }}
 
@@ -14,18 +14,6 @@
    {% endif %}
    {% endblock %}
 
-   {% block functions %}
-   {% if functions %}
-   .. rubric:: {{ _('Functions') }}
-
-   .. autosummary::
-      :toctree:
-   {% for item in functions %}
-      {{ item }}
-   {%- endfor %}
-   {% endif %}
-   {% endblock %}
-
    {% block classes %}
    {% if classes %}
    .. rubric:: {{ _('Classes') }}
@@ -35,6 +23,21 @@
       :template: custom-class-template.rst
    {% for item in classes %}
       {{ item }}
+   {%- endfor %}
+   {% endif %}
+   {% endblock %}
+
+   {% block functions %}
+   {% if functions %}
+   .. rubric:: {{ _('Functions') }}
+
+   .. autosummary:: {{ _('Functions') }}
+      {% for item in functions %}
+      {{ item }}
+      {%- endfor %}
+
+   {% for item in functions %}
+   .. autofunction:: {{ item }}
    {%- endfor %}
    {% endif %}
    {% endblock %}
@@ -59,6 +62,8 @@
    :toctree:
    :template: custom-module-template.rst
    :recursive:
+   
+
 {% for item in modules %}
    {{ item }}
 {%- endfor %}

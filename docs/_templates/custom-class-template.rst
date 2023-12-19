@@ -1,11 +1,16 @@
-{{ fullname | escape | underline}}
+{{ name | escape | underline}}
 
 .. currentmodule:: {{ module }}
 
 .. autoclass:: {{ objname }}
    :members:
    :show-inheritance:
-   :inherited-members:
+   
+   .. :no-inherited-members:
+
+   .. :inherited-members: 
+
+
    {% block methods %}
    .. automethod:: __init__
 
@@ -13,7 +18,7 @@
    .. rubric:: {{ _('Methods') }}
 
    .. autosummary::
-   {% for item in methods %}
+   {% for item in methods | drop_torch_items(name, module) %}
       ~{{ name }}.{{ item }}
    {%- endfor %}
    {% endif %}
@@ -25,7 +30,7 @@
 
    .. autosummary::
       :toctree:
-   {% for item in attributes %}
+   {% for item in attributes | drop_torch_items(name, module) %}
       {%- if not item.startswith('_') %}
       ~{{ name }}.{{ item }}
       {%- endif %}
