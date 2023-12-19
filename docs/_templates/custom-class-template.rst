@@ -2,38 +2,32 @@
 
 .. currentmodule:: {{ module }}
 
-.. autoclass:: {{ objname }}
-   :members:
+.. autoclass:: {{ fullname }}
    :show-inheritance:
-   
-   .. :no-inherited-members:
 
-   .. :inherited-members: 
+   .. automethod:: {{ name }}.__init__
 
+   {% block attributes %}
+   {% if attributes | has_items(name, module) %}
 
-   {% block methods %}
-   .. automethod:: __init__
+   .. rubric:: {{ _('Attribute details') }}
 
-   {% if methods %}
-   .. rubric:: {{ _('Methods') }}
+   {% for item in attributes | drop_torch_items(name, module) %}
+   {%- if not item.startswith('_') %}
+   .. autoattribute:: {{ name }}.{{ item }}      
 
-   .. autosummary::
-   {% for item in methods | drop_torch_items(name, module) %}
-      ~{{ name }}.{{ item }}
+   {%- endif %}
    {%- endfor %}
    {% endif %}
    {% endblock %}
 
-   {% block attributes %}
-   {% if attributes %}
-   .. rubric:: {{ _('Attributes') }}
+   {% block methods %}
 
-   .. autosummary::
-      :toctree:
-   {% for item in attributes | drop_torch_items(name, module) %}
-      {%- if not item.startswith('_') %}
-      ~{{ name }}.{{ item }}
-      {%- endif %}
+   {% if methods | has_items(name, module) %}
+   .. rubric:: {{ _('Methods') }}
+      
+   {% for item in methods | drop_torch_items(name, module) %}
+   .. automethod:: {{ name }}.{{ item }}
    {%- endfor %}
    {% endif %}
    {% endblock %}

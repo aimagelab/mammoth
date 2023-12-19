@@ -6,8 +6,6 @@
 
 {% block modules %}
 {% if modules %}
-
-
 .. autosummary::
    :toctree:
    :template: custom-module-template.rst

@@ -117,9 +117,23 @@ def drop_torch_items(items, obj, module):
     import_obj = getattr(mod, obj)
     fn_to_keep = import_obj.__dict__.keys()
     for item in items:
-        if item in fn_to_keep:
+        if item in fn_to_keep and item != "__init__":
             yield item
 
 
+def has_items(items, obj, module):
+    """Filters attributes to be used in autosummary.
+
+    Fixes import errors when documenting inherited attributes with autosummary.
+
+    """
+    mod = import_module(module)
+    import_obj = getattr(mod, obj)
+    fn_to_keep = import_obj.__dict__.keys()
+    its = [item for item in items if item in fn_to_keep and item != "__init__"]
+    return len(its) > 0
+
+
+FILTERS["has_items"] = has_items
 FILTERS["drop_torch_items"] = drop_torch_items
 FILTERS["get_attributes"] = get_attributes
