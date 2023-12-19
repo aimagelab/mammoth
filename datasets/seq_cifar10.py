@@ -65,6 +65,7 @@ class MyCIFAR10(CIFAR10):
 
 
 class SequentialCIFAR10(ContinualDataset):
+    """Sequential CIFAR10 Dataset."""
 
     NAME = 'seq-cifar10'
     SETTING = 'class-il'
@@ -80,6 +81,7 @@ class SequentialCIFAR10(ContinualDataset):
          transforms.Normalize(MEAN, STD)])
 
     def get_data_loaders(self):
+        """Class method that returns the PyTorch train and test loaders."""
         transform = self.TRANSFORM
 
         test_transform = transforms.Compose(
