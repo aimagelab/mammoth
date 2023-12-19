@@ -1,19 +1,21 @@
-from torch.utils.data.dataset import Dataset
-import torchvision.transforms as transforms
-from backbone.ResNet50 import resnet50
-import torch.nn.functional as F
+import os
+from typing import Tuple
+
 import numpy as np
+import torch
+import torch.nn.functional as F
+import torchvision.transforms as transforms
+from PIL import Image
+from torch.utils.data.dataset import Dataset
+
+
+from backbone.ResNet50 import resnet50
+from datasets.transforms.denormalization import DeNormalize
+from datasets.utils.continual_dataset import (ContinualDataset,
+                                              store_masked_loaders)
+from datasets.utils.validation import get_train_val
 from utils import smart_joint
 from utils.conf import base_path
-from PIL import Image
-from datasets.utils.validation import get_train_val
-from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
-from typing import Tuple
-from datasets.transforms.denormalization import DeNormalize
-import os
-from torchvision.transforms import functional as TF
-import torch
-from torch import nn
 
 
 class MyCUB200(Dataset):
@@ -84,6 +86,8 @@ class MyCUB200(Dataset):
 
 
 class CUB200(MyCUB200):
+    """Base CUB200 dataset."""
+
     def __init__(self, root, train=True, transform=None, target_transform=None, download=False) -> None:
         super().__init__(root, train=train, transform=transform,
                          target_transform=target_transform, download=download)
@@ -117,6 +121,19 @@ class CUB200(MyCUB200):
 
 
 class SequentialCUB200(ContinualDataset):
+    """Sequential CUB200 Dataset.
+
+    Args:
+        NAME (str): name of the dataset.
+        SETTING (str): setting of the dataset.
+        N_CLASSES_PER_TASK (int): number of classes per task.
+        N_TASKS (int): number of tasks.
+        SIZE (tuple): size of the images.
+        MEAN (tuple): mean of the dataset.
+        STD (tuple): standard deviation of the dataset.
+        TRANSFORM (torchvision.transforms): transformation to apply to the data.
+        TEST_TRANSFORM (torchvision.transforms): transformation to apply to the test data.
+    """
     NAME = 'seq-cub200'
     SETTING = 'class-il'
     N_CLASSES_PER_TASK = 20
@@ -131,7 +148,7 @@ class SequentialCUB200(ContinualDataset):
         transforms.Normalize(MEAN, STD)])
     TEST_TRANSFORM = MyCUB200.TEST_TRANSFORM
 
-    def get_data_loaders(self, test_only=False):
+    def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = self.TRANSFORM
 
         test_transform = transforms.Compose(
