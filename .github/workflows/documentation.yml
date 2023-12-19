@@ -18,13 +18,12 @@ jobs:
           pip install -r docs/requirements.txt -r requirements.txt
       - name: Sphinx build
         run: |
-          cd docs
-          sphinx-build -j auto . _build
+          sphinx-build -j auto docs _build
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/feature/wiki' }}
         with:
           publish_branch: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: _build/html
+          publish_dir: _build
           force_orphan: true
