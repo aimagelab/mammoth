@@ -1,25 +1,21 @@
-# Copyright 2021-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
-# All rights reserved.
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
 import torch
 
 
 def negative_only_triplet_loss(labels, embeddings, k, margin=0, margin_type='soft'):
-    """Build the triplet loss over a batch of embeddings.
+    """Variant of the triplet loss, computed only to separate the hardest negatives.
 
-    For each anchor, we get the hardest positive and hardest negative to form a triplet.
+    See `batch_hard_triplet_loss` for details.
 
     Args:
-        labels: labels of the batch, of size (batch_size,)
+        labels: labels of the batch, of shape (batch_size,)
         embeddings: tensor of shape (batch_size, embed_dim)
+        k: number of negatives to consider
         margin: margin for triplet loss
-        squared: Boolean. If true, output is the pairwise squared euclidean distance matrix.
-                 If false, output is the pairwise euclidean distance matrix.
+        margin_type: 'soft' or 'hard'. If 'soft', the loss is `log(1 + exp(positives - negatives + margin))`.
+            If 'hard', the loss is `max(0, positives - negatives + margin)`.
 
     Returns:
-        triplet_loss: scalar tensor containing the triplet loss
+        torch.Tensor: scalar tensor containing the triplet loss
     """
     k = min(k, labels.shape[0])
 
@@ -58,17 +54,18 @@ def negative_only_triplet_loss(labels, embeddings, k, margin=0, margin_type='sof
 def batch_hard_triplet_loss(labels, embeddings, k, margin=0, margin_type='soft'):
     """Build the triplet loss over a batch of embeddings.
 
-    For each anchor, we get the hardest positive and hardest negative to form a triplet.
+    For each anchor, get the hardest positive and hardest negative to compute the triplet loss.
 
     Args:
-        labels: labels of the batch, of size (batch_size,)
+        labels: labels of the batch, of shape (batch_size,)
         embeddings: tensor of shape (batch_size, embed_dim)
+        k: number of negatives to consider
         margin: margin for triplet loss
-        squared: Boolean. If true, output is the pairwise squared euclidean distance matrix.
-                 If false, output is the pairwise euclidean distance matrix.
+        margin_type: 'soft' or 'hard'. If 'soft', the loss is `log(1 + exp(positives - negatives + margin))`.
+            If 'hard', the loss is `max(0, positives - negatives + margin)`.
 
     Returns:
-        triplet_loss: scalar tensor containing the triplet loss
+        torch.Tensor: scalar tensor containing the triplet loss
     """
     k = min(k, labels.shape[0])
 
@@ -107,7 +104,5 @@ def batch_hard_triplet_loss(labels, embeddings, k, margin=0, margin_type='soft')
 
     # Get thanchor_negative_diste true loss value
     loss = torch.mean(loss)
-    if loss < 0:
-        import pdb; pdb.set_trace()
 
     return loss

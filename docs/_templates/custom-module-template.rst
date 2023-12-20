@@ -43,14 +43,14 @@
    {% block functions %}
    {% if functions %}
    .. rubric:: {{ _('Functions') }}
-   .. autosummary:: 
+   .. autosummary::
       {% for item in functions %}
       {{ item }}
       {%- endfor %}
       
    {% for item in functions %}
    .. autofunction:: {{ item }}
-   {%- endfor %}
+   {% endfor %}
    {% endif %}
    {% endblock %}
 
