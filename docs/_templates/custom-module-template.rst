@@ -1,18 +1,5 @@
 {{ name | escape | underline }}
 
-{% block modules %}
-{% if modules %}
-.. rubric:: Modules
-.. autosummary::
-   :toctree:
-   :template: custom-module-template.rst
-   :recursive:
-   {% for item in modules %}
-   {{ item }}
-   {%- endfor %}
-{% endif %}
-{% endblock %}
-
 .. automodule:: {{ fullname }}
 
    {% block attributes %}
@@ -50,7 +37,7 @@
       
    {% for item in functions %}
    .. autofunction:: {{ item }}
-   {% endfor %}
+   {%- endfor %}
    {% endif %}
    {% endblock %}
 
