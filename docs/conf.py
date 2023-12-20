@@ -80,6 +80,7 @@ pygments_style = 'friendly'
 html_theme = "furo"
 html_title = "Mammoth"
 html_static_path = ['_static']
+html_favicon = 'images/logo.png'
 
 autosummary_generate = True
 numpydoc_show_class_members = False
