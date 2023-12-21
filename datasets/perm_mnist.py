@@ -91,7 +91,6 @@ class PermutedMNIST(ContinualDataset):
         SETTING (str): setting of the experiment
         N_CLASSES_PER_TASK (int): number of classes in each task
         N_TASKS (int): number of tasks
-        N_CLASSES (int): total number of classes
         SIZE (tuple): size of the images
     """
 
@@ -99,7 +98,6 @@ class PermutedMNIST(ContinualDataset):
     SETTING = 'domain-il'
     N_CLASSES_PER_TASK = 10
     N_TASKS = 20
-    N_CLASSES = N_CLASSES_PER_TASK * N_TASKS
     SIZE = (28, 28)
 
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:

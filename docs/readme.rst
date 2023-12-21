@@ -11,6 +11,11 @@ Mammoth - An Extendible (General) Continual Learning Framework for Pytorch
 
 Official repository of `Class-Incremental Continual Learning into the eXtended DER-verse <https://arxiv.org/abs/2201.00766>`_ and `Dark Experience for General Continual Learning: a Strong, Simple Baseline <https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html>`_
 
+Mammoth is a framework for continual learning research. It is designed to be modular, easy to extend, and - most importantly - *easy to debug*.
+Idelly, all the code necessary to run the experiments is included *in the repository*, without needing to check out other repositories or install additional packages. 
+
+With Mammoth, nothing is written in stone. You can easily add new models, datasets, training strategies, or functionalities.
+
 .. list-table::
    :widths: 15 15 15 15 15 15
    :class: centered
