@@ -31,7 +31,14 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosummary',
               'sphinx.ext.napoleon',
               'sphinx.ext.viewcode',
+              'sphinx.ext.viewcode',
+              'sphinx_tabs.tabs',
+              'sphinx-prompt',
+              'sphinx_toolbox',
               'sphinx.ext.autosectionlabel']
+
+github_username = 'grupposimo'
+github_repository = 'mammoth'
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),

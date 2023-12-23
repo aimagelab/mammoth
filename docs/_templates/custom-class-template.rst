@@ -1,6 +1,6 @@
-{{ name | escape | underline}}
+{{ name | escape | underline }}
 
-.. currentmodule:: {{ module }}
+.. currentmodule:: {{ fullname }}
 
 .. autoclass:: {{ fullname }}
    :show-inheritance:

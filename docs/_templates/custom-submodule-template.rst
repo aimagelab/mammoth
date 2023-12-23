@@ -1,6 +1,4 @@
-{{ name | escape | underline }}
-
-.. currentmodule:: {{ fullname }}
+.. currentmodule:: {{ module }}
 
 .. automodule:: {{ fullname }}
 
@@ -40,6 +38,7 @@
       
    {% for item in functions %}
    .. autofunction:: {{ item }}
+      :toctree:
    {%- endfor %}
    {% endif %}
    {% endblock %}
@@ -58,6 +57,7 @@
 
 {% block modules %}
 {% if modules %}
+
 .. rubric:: {{ _('Sub-Modules') }}
    
 .. autosummary::
