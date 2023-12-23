@@ -6,12 +6,22 @@
 
 {% block modules %}
 {% if modules %}
+
 .. autosummary::
-   :toctree:
-   :template: custom-module-template.rst
    :recursive:
-{% for item in modules %}
+   :toctree:
+   :hidden:
+   :template: custom-module-template.rst
+   {% for item in modules | reorder_modules %}
    {{ item }}
-{%- endfor %}
+   {%- endfor %}
+
+.. toctree::
+   :hidden:
+   {% for item in modules |  reorder_modules %}
+   {{ item }}
+   {%- endfor %}
+
 {% endif %}
 {% endblock %}
+

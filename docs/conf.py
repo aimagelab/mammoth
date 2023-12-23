@@ -103,11 +103,6 @@ autodoc_typehints_description_target = "documented_params"
 
 
 def get_attributes(item, obj, modulename):
-    """Filters attributes to be used in autosummary.
-
-    Fixes import errors when documenting inherited attributes with autosummary.
-
-    """
     module = import_module(modulename)
     if hasattr(getattr(module, obj), item):
         return f"{item}"
@@ -116,11 +111,6 @@ def get_attributes(item, obj, modulename):
 
 
 def drop_torch_items(items, obj, module):
-    """Filters attributes to be used in autosummary.
-
-    Fixes import errors when documenting inherited attributes with autosummary.
-
-    """
     mod = import_module(module)
     import_obj = getattr(mod, obj)
     fn_to_keep = import_obj.__dict__.keys()
@@ -130,11 +120,6 @@ def drop_torch_items(items, obj, module):
 
 
 def has_items(items, obj, module):
-    """Filters attributes to be used in autosummary.
-
-    Fixes import errors when documenting inherited attributes with autosummary.
-
-    """
     mod = import_module(module)
     import_obj = getattr(mod, obj)
     fn_to_keep = import_obj.__dict__.keys()
@@ -142,6 +127,50 @@ def has_items(items, obj, module):
     return len(its) > 0
 
 
+def get_headling_module(fullname):
+    paths = fullname.split('.')
+    name = paths[-1]
+    module = '/'.join(paths[:-1])
+    if os.path.exists(f'./docs/{ module }/{ name }.rst'):
+        fs = open(f'./docs/{ module }/{ name }.rst', 'r').read()
+        return fs
+    else:
+        if os.path.isdir('./' + '/'.join(paths)):
+            name = name.capitalize()
+        else:
+            name = name
+        return f"{name}\n" + "=" * (len(name) + 1)
+
+
+def reorder_modules(modules):
+    past_path = os.getcwd()
+    os.chdir(mammoth_path)
+
+    mods, others = [], []
+    for module in modules:
+        paths = module.split('.')
+
+        if os.path.isdir('./' + '/'.join(paths)):  # module
+            mods.append(module)
+        else:
+            others.append(module)
+
+    mods = sorted(mods, key=lambda x: x.split('.')[-1])
+    others = sorted(others, key=lambda x: x.split('.')[-1])
+    os.chdir(past_path)
+    return mods + others
+
+
+FILTERS["reorder_modules"] = reorder_modules
+FILTERS["get_headling_module"] = get_headling_module
 FILTERS["has_items"] = has_items
 FILTERS["drop_torch_items"] = drop_torch_items
 FILTERS["get_attributes"] = get_attributes
+
+
+# .. {% if '../{{ module }}/{{ name }}.rst' | exists %}
+# .. .. include:: ../{{ module }}/{{ name }}.rst
+# ..    :literal:
+# .. {$ else %}
+# .. {{ name | escape | underline }}
+# .. {% endif %}
