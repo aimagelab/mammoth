@@ -1,68 +1,14 @@
-.. currentmodule:: {{ module }}
+{{ name | escape | underline }}
 
 .. automodule:: {{ fullname }}
-
-   {% block attributes %}
-   {% if attributes %}
-   .. rubric:: {{ _('Module Attributes') }}
-
-   .. autosummary::
-      :toctree:
-   {% for item in attributes %}
-      {{ item }}
-   {%- endfor %}
-   {% endif %}
-   {% endblock %}
-
-   {% block classes %}
-   {% if classes %}
-   .. rubric:: {{ _('Classes') }}
-
-   .. autosummary::
-      :toctree:
-      :template: custom-class-template.rst
-   {% for item in classes %}
-      {{ item }}
-   {%- endfor %}
-   {% endif %}
-   {% endblock %}
-
-   {% block functions %}
-   {% if functions %}
-   .. rubric:: {{ _('Functions') }}
-      
-   .. autosummary::
-      {% for item in functions %}
-      {{ item }}
-      {%- endfor %}
-      
-   {% for item in functions %}
-   .. autofunction:: {{ item }}
-      :toctree:
-   {%- endfor %}
-   {% endif %}
-   {% endblock %}
-
-   {% block exceptions %}
-   {% if exceptions %}
-   .. rubric:: {{ _('Exceptions') }}
-
-   .. autosummary::
-      :toctree:
-   {% for item in exceptions %}
-      {{ item }}
-   {%- endfor %}
-   {% endif %}
-   {% endblock %}
+   :members:
+   :undoc-members:
 
 {% block modules %}
 {% if modules %}
-
-.. rubric:: {{ _('Sub-Modules') }}
-   
 .. autosummary::
    :toctree:
-   :template: custom-submodule-template.rst
+   :template: custom-module-template.rst
    :recursive:
 {% for item in modules %}
    {{ item }}
