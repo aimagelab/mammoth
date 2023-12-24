@@ -3,15 +3,27 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from argparse import ArgumentParser, SUPPRESS
+if __name__ == '__main__':
+    import os
+    import sys
+    mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    sys.path.append(mammoth_path)
+
+from argparse import ArgumentParser
 from datasets import NAMES as DATASET_NAMES
 from models import get_all_models
+from models.utils.continual_model import ContinualModel
 
 
 def add_experiment_args(parser: ArgumentParser) -> None:
     """
     Adds the arguments used by all the models.
-    :param parser: the parser instance
+
+    Args:
+        parser: the parser instance
+
+    Returns:
+        None
     """
     parser.add_argument('--dataset', type=str, required=True,
                         choices=DATASET_NAMES,
@@ -22,7 +34,9 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     parser.add_argument('--lr', type=float, required=True,
                         help='Learning rate.')
 
-    parser.add_argument('--optimizer', type=str, default='sgd')
+    parser.add_argument('--optimizer', type=str, default='sgd',
+                        choices=ContinualModel.AVAIL_OPTIMS,
+                        help='Optimizer.')
     parser.add_argument('--optim_wd', type=float, default=0.,
                         help='optimizer weight decay.')
     parser.add_argument('--optim_mom', type=float, default=0.,
@@ -35,7 +49,8 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     parser.add_argument('--batch_size', type=int,
                         help='Batch size.')
 
-    parser.add_argument('--distributed', type=str, default='no', choices=['no', 'dp', 'ddp'])
+    parser.add_argument('--distributed', type=str, default='no', choices=['no', 'dp', 'ddp'],
+                        help='Enable distributed training?')
     parser.add_argument('--savecheck', action='store_true', help='Save checkpoint?')
     parser.add_argument('--loadcheck', type=str, default=None, help='Path of the checkpoint to load (.pt file for the specific task)')
     parser.add_argument('--ckpt_name', type=str, required=False, help='(optional) checkpoint save name.')
@@ -49,6 +64,15 @@ def add_experiment_args(parser: ArgumentParser) -> None:
 
 
 def add_management_args(parser: ArgumentParser) -> None:
+    """
+    Adds the management arguments.
+
+    Args:
+        parser: the parser instance
+
+    Returns:
+        None
+    """
     parser.add_argument('--seed', type=int, default=None,
                         help='The random seed.')
     parser.add_argument('--permute_classes', type=int, choices=[0, 1], default=0,
@@ -79,9 +103,89 @@ def add_management_args(parser: ArgumentParser) -> None:
 def add_rehearsal_args(parser: ArgumentParser) -> None:
     """
     Adds the arguments used by all the rehearsal-based methods
-    :param parser: the parser instance
+
+    Args:
+        parser: the parser instance
+
+    Returns:
+        None
     """
     parser.add_argument('--buffer_size', type=int, required=True,
                         help='The size of the memory buffer.')
     parser.add_argument('--minibatch_size', type=int,
                         help='The batch size of the memory buffer.')
+
+
+class _DocsArgs:
+    """
+    This class is used to generate the documentation of the arguments.
+    """
+
+    def __init__(self, name: str, type_: str, choices: str, default: str, help_: str):
+        self.name = name
+        self.type = type_
+        self.choices = choices
+        self.default = default
+        self.help = help_
+
+    def parse_choices(self) -> str:
+        if self.choices is None:
+            return ''
+        return ', '.join([c.keys() if isinstance(c, dict) else str(c) for c in self.choices])
+
+    def __str__(self):
+        tb = '\t'
+        return f"""**\\-\\-{self.name}** : {self.type}
+            *Help*: {self.help}\n
+            - Default: {self.default}\n
+            - Choices: {self.parse_choices() if self.choices is not None else ''}"""
+
+
+if __name__ == '__main__':
+    print("Generating documentation for the arguments...")
+    os.chdir(mammoth_path)
+    parser = ArgumentParser()
+    add_experiment_args(parser)
+
+    docs_args = []
+    for action in parser._actions:
+        if action.dest == 'help':
+            continue
+        docs_args.append(_DocsArgs(action.dest, action.type, action.choices, action.default, action.help))
+
+    with open('docs/utils/args.rst', 'w') as f:
+        f.write('.. _args:\n\n')
+        f.write('Arguments\n')
+        f.write('=========\n\n')
+        f.write('.. rubric:: EXPERIMENT-RELATED ARGS\n\n')
+        for arg in docs_args:
+            f.write(str(arg) + '\n\n')
+
+    parser = ArgumentParser()
+    add_management_args(parser)
+    docs_args = []
+    for action in parser._actions:
+        if action.dest == 'help':
+            continue
+        docs_args.append(_DocsArgs(action.dest, action.type, action.choices, action.default, action.help))
+
+    with open('docs/utils/args.rst', 'a') as f:
+        f.write('.. rubric:: MANAGEMENT ARGS\n\n')
+        for arg in docs_args:
+            f.write(str(arg) + '\n\n')
+
+    parser = ArgumentParser()
+    add_rehearsal_args(parser)
+    docs_args = []
+    for action in parser._actions:
+        if action.dest == 'help':
+            continue
+        docs_args.append(_DocsArgs(action.dest, action.type, action.choices, action.default, action.help))
+
+    with open('docs/utils/args.rst', 'a') as f:
+        f.write('.. rubric:: REEHARSAL-ONLY ARGS\n\n')
+        for arg in docs_args:
+            f.write(str(arg) + '\n\n')
+
+    print("Saving documentation in docs/utils/args.rst")
+    print("Done!")
