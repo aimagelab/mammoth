@@ -1,2 +1,4 @@
+.. _module-models:
+
 Models
 ========

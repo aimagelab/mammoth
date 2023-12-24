@@ -37,21 +37,17 @@ each dataset **must statically define** all the necessary information to run a c
     - **get_denormalization_transform** static method (``callable``): returns the transform to apply on the tensors to revert the normalization. You can use the `DeNormalize` function defined in `datasets/transforms/denormalization.py`.
 
 
-See ``datasets/utils/continual_dataset.py`` for more details or :ref:`SequentialCIFAR10` in ``datasets/seq_cifar10.py`` for an example.
-
-
-All datasets must inherit from the :ref:`ContinualDataset` class, which is defined in ``datasets/utils/continual_dataset.py``. The only
-exception are datasets that follow the `general-continual` setting, which inherit from the :ref:`GCLDataset` class, (defined in ``datasets/utils/gcl_dataset.py``).
-These classes provide some useful methods to create data loaders and store masked data loaders for continual learning experiments. See more in section :ref:`utils`.
+See :ref:`continual_dataset` for more details or **SequentialCIFAR10** in :ref:`seq_cifar10` for an example.
 
 .. note::
     Datasets are downloaded by default in the **data** folder. You can change this
-    default location by setting the **base_path** function in ``utils/conf.py``.
+    default location by setting the **base_path** function in :ref:`conf`.
 
 Settings
 --------
 
-There are three possible settings for a continual learning experiment:
+Experimental settings follow and extend the notation of `Three Scenarios for Continual Learning <https://arxiv.org/abs/1904.07734>`_, 
+and are defined in the **SETTING** attribute of each dataset. The following settings are available:
 
 - `class-il`: the total number of classes increases at each task, following the **N_CLASSES_PER_TASK** attribute.
     .. admonition:: On *task-il* and *class-il*
@@ -61,27 +57,48 @@ There are three possible settings for a continual learning experiment:
         `task-il` will be computed by masking the correct task for each sample during inference. This 
         allows to compute metrics for both settings without having to run the experiment twice.
 
-- `domain-il`: the total number of classes is fixed, but the domain of the data changes at each task.
+- `domain-il`: the total number of classes is fixed, but the distribution of the input data changes at each task.
 
 - `general-continual`: the distribution of the classes change gradually over time, without notion of task boundaries. In this setting, the **TASKS** and **N_CLASSES_PER_TASK** attributes are ignored as there is only a single long tasks that changes over time.
 
 Steps to create a new dataset:
+------------------------------
     
-    1. ...
+All datasets must inherit from the **ContinualDataset** class, which is defined in :ref:`continual_dataset`. The only
+exception are datasets that follow the `general-continual` setting, which inherit from the **GCLDataset** class, (defined in :ref:`gcl_dataset`).
+These classes provide some useful methods to create data loaders and store masked data loaders for continual learning experiments. See more in section :ref:`utils`.
 
-Required return values of train and test datasets:
-    
-    1. `__getitem__` method that returns a tuple of (image, label)
+    1. Create a new file in the `datasets` folder, e.g. ``my_dataset.py``.
 
-    2. `__len__` method that returns the length of the dataset
+    2. Define a new class that inherits from `ContinualDataset` or `GCLDataset` and implements all the required methods and attributes.
+
+    3. Define the **get_data_loaders** method, which returns a list of train and test data loaders for each task (see more in section :ref:`utils`). 
+
+    .. tip::
+        For convenience, most datasets are initially created with all classes and then masked appropriately by the **store_masked_loaders** function. 
+        For example, in :ref:`seq_cifar10` the **get_data_loaders** function of **SequentialCIFAR10** dataset first inizializes the **MyCIFAR10** and **TCIFAR10** 
+        datasets with train and test data for all classes respectively, and then masks the data loaders to return only the data for the current task.
+
+    .. important::
+        The train data loader **must** return both augmented and non-augmented data. This is done to allow the storage of raw data for replay-based methods 
+        (for more information, check out `Rethinking Experience Replay: a Bag of Tricks for Continual Learning <https://arxiv.org/abs/2010.05595>`_).
+        The signature return for the train data loader is ``(augmented_data, labels, non_augmented_data)``, while the test data loader should return ``(data, labels)``.
+
+    4. If all goes well, your dataset should be picked up by the **get_dataset** function and you should be able to run an experiment with it.
 
 Utils
 --------
 
-Useful functions:
+- **get_data_loaders**: This function should take care of downloading the dataset if necessary, make sure that it contains samples and labels for 
+**only** the current task (you can use the **store_masked_loaders** function), and create the data loaders.
 
-    - `get_data_loaders`
+- **store_masked_loaders**: This function is defined in :ref:`continual_dataset` and takes care of masking the data loaders to return only the data for the current task.
+It is used by most datasets to create the data loaders for each task. 
 
-    - `store_masked_loaders`
+    - If the ``--permute_classes`` flag is set to ``1``, it also applies the appropriate permutation to the classes before splitting the data.
 
- 
+    - If the ``--label_perc`` argument is set to a value between ``0`` and ``1``, it also randomly masks a percentage of the labels for each task. This 
+    is used to simulate the case where a percentage of the labels is not available for training. For example, if ``--label_perc`` is set to ``0.5``,
+    only 50% of the labels will be available for training. The remaining 50% will be masked with a label of ``-1`` and ignored during training if 
+    the currently used method does not support partial labels (check out the **COMPATIBILITY** attribute in :ref:`module-models`).
+
