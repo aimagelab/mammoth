@@ -3,6 +3,8 @@ from torch import Tensor
 import torch.nn as nn
 from typing import Type, Any, Callable, Union, List, Optional
 
+from backbone import MammothBackbone
+
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
            'resnet152', 'resnext50_32x4d', 'resnext101_32x8d',
@@ -96,7 +98,7 @@ class Bottleneck(nn.Module):
         return out
 
 
-class ResNet(nn.Module):
+class ResNet(MammothBackbone):
 
     def __init__(
         self,
