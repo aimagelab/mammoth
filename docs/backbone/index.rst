@@ -1,10 +1,12 @@
+.. _module-backbones:
+
 Backbones
 =========
 
 Backbones constitute the underlying architecture of the network. They are responsible for extracting features from the input.
 Once loaded by the model (:ref:`module-models`), the backbone is accessible as the ``self.net`` attribute.
 
-The specific choice of the backbone depends on the benchmark (i.e, the dataset - see :ref:`datasets`), which defines the backbone from the **get_backbone** method.
+The specific choice of the backbone depends on the benchmark (i.e, the dataset - see :ref:`module-datasets`), which defines the backbone from the **get_backbone** method.
 
 Features and logits
 -------------------

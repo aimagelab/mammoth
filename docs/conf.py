@@ -139,7 +139,7 @@ def get_headling_module(fullname):
             name = name.capitalize()
         else:
             name = name
-        return f"{name}\n" + "=" * (len(name) + 1)
+        return f".. _module-{name}:\n{name}\n" + "=" * (len(name) + 1)
 
 
 def reorder_modules(modules):
@@ -149,13 +149,15 @@ def reorder_modules(modules):
             mods.append(module)
         else:
             others.append(module)
-    
+
     mods = sorted(mods, key=lambda x: x.split('.')[-1])
     others = sorted(others, key=lambda x: x.split('.')[-1])
     return mods + others
 
+
 def _is_dir(module):
     return os.path.isdir(os.path.join(mammoth_path, module.replace('.', '/')))
+
 
 def parse_toctree_name(item):
     name = item.split('.')[-1]

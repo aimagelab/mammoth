@@ -10,6 +10,8 @@ To be compatible with the auto-detection mechanism (the **get_model** function b
 
 * be defined in a file named **<model_name>.py** and placed in the **models** folder. 
 
+The model-specific hyper-parameters of the model can be set in the **get_parser** function (see in :ref:`Model parameters`). 
+
 .. note::
     The name of the file will be used to identify the model. For example, if the model is defined in a file named **my_model.py**, the name of the model will be **my_model** and will be called with the command line option **--model my_model**.
 
@@ -56,7 +58,7 @@ Attributes and utility methods
 Backbone model
 ~~~~~~~~~~~~~~
 
-The **ContinualModel** loads the backbone model (i.e., the model used to compute the output of the model) during the initialization. By default, the backbone model is defined by the chosen **dataset** (see :ref:`dataset` for more details). Once loaded, the backbone model can be accessed through the **net** attribute.
+The **ContinualModel** loads the backbone model (i.e., the model used to compute the output of the model) during the initialization. By default, the backbone model is defined by the chosen **dataset** (see :ref:`module-datasets` for more details). Once loaded, the backbone model can be accessed through the **net** attribute.
 
 Begin and end task
 ~~~~~~~~~~~~~~~~~~
@@ -86,7 +88,7 @@ The base class **ContinualModel** provides a few properties that are automatical
 
 .. admonition:: Transforms and dataset-related Attributes
 
-    - **transform**: the transform applied to the input data. This attribute is automatically set during the initialization of the model and is defined by the chosen **dataset** (see :ref:`dataset` for more details).
+    - **transform**: the transform applied to the input data. This attribute is automatically set during the initialization of the model and is defined by the chosen **dataset** (see :ref:`module-datasets` for more details).
 
     - **weak_transform**: this function is used to apply a new transform to a :ref:`torch.Tensor`. In most cases, this is implemented as a `kornia <https://github.com/kornia/kornia>`_ transform. However, if a transform is not supported by the **to_kornia_transform**, it is implemented as `PIL <https://pillow.readthedocs.io/en/stable/>`_.
 
@@ -100,7 +102,7 @@ The base class **ContinualModel** provides a few properties that are automatical
 
     - **opt**: the optimizer used to train the model.
 
-    - **loss**: the loss function, defined by the chosen **dataset** (see :ref:`dataset` for more details).
+    - **loss**: the loss function, defined by the chosen **dataset** (see :ref:`module-datasets` for more details).
 
     - **dataset**: a reference to the chosen **dataset**, to ease the access to its attributes.
 
@@ -108,6 +110,24 @@ The base class **ContinualModel** provides a few properties that are automatical
 
 .. note::
     The automatic conversion between `PIL <https://pillow.readthedocs.io/en/stable/>`_ and `kornia <https://github.com/kornia/kornia>`_ is handeled by the **to_kornia_transform** function in :ref:`kornia_utils`, which converts (*most*) PIL transforms to kornia transforms. However, not all the transforms are supported, and thus this function *may not be always available*. If you want to use a custom transform, you have to extend the **to_kornia_transform** function.
+
+Model parameters
+~~~~~~~~~~~~~~~~~
+
+The **get_parser** function is used to define the model-specific hyper-parameters. It must return a :ref:`parser` object. For example, the following code defines the hyper-parameters of the **MyModel** model:
+
+.. code-block:: python
+
+    def get_parser() -> argparse.ArgumentParser:
+        parser = argparse.ArgumentParser('MyModel parameters')
+
+        # Add the model-specific hyper-parameters
+        parser.add_argument('--my_param', type=int, default=1, help='My parameter')
+        ...
+
+        return parser
+
+Once the model is selected with the command line option **--model**, the hyper-parameters are loaded and can be viewed with ``--help``.
 
 Other utility methods
 ~~~~~~~~~~~~~~~~~~~~~

@@ -1,3 +1,5 @@
+.. _module-datasets:
+
 Datasets
 ========
 
@@ -66,13 +68,13 @@ Steps to create a new dataset:
     
 All datasets must inherit from the **ContinualDataset** class, which is defined in :ref:`continual_dataset`. The only
 exception are datasets that follow the `general-continual` setting, which inherit from the **GCLDataset** class, (defined in :ref:`gcl_dataset`).
-These classes provide some useful methods to create data loaders and store masked data loaders for continual learning experiments. See more in section :ref:`utils`.
+These classes provide some useful methods to create data loaders and store masked data loaders for continual learning experiments. See more in section :ref:`Utils`.
 
     1. Create a new file in the `datasets` folder, e.g. ``my_dataset.py``.
 
     2. Define a new class that inherits from `ContinualDataset` or `GCLDataset` and implements all the required methods and attributes.
 
-    3. Define the **get_data_loaders** method, which returns a list of train and test data loaders for each task (see more in section :ref:`utils`). 
+    3. Define the **get_data_loaders** method, which returns a list of train and test data loaders for each task (see more in section :ref:`Utils`). 
 
     .. tip::
         For convenience, most datasets are initially created with all classes and then masked appropriately by the **store_masked_loaders** function. 
