@@ -22,7 +22,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--file", type=str, help="file containing jobs")
     parser.add_argument("--redundancy", type=int, default=1, help="number of times to run each job")
-    parser.add_argument("--at-a-time", type=int, default=1, help="number of jobs to run at a time")
+    parser.add_argument("--at_a_time", type=int, default=1, help="number of jobs to run at a time")
     parser.add_argument("--start_from", type=int, default=0, help="start from job number")
     parser.add_argument("--reverse", action="store_true", help="reverse job order")
     args = parser.parse_args()

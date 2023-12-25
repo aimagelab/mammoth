@@ -190,11 +190,3 @@ Previous versions
 
 If you're interested in a version of this repo that only includes the code for `Dark Experience for General Continual Learning: a Strong, Simple Baseline <https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html>`_, please use our `neurips2020 tag <https://github.com/aimagelab/mammoth/releases/tag/neurips2020>`_.
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
