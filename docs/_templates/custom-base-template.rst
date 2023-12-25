@@ -1,5 +1,8 @@
 .. include:: ../{{ module }}/index.rst   
 
+Module attributes and functions
+-------------------------------
+
 .. automodule:: {{ fullname }}
    :members:
    :undoc-members:
@@ -18,8 +21,8 @@
 
 .. toctree::
    :hidden:
-   {% for item in modules |  reorder_modules %}
-   {{ item }}
+   {% for item in modules | reorder_modules %}
+   {{ item | parse_toctree_name }} <{{ item }}.rst>
    {%- endfor %}
 
 {% endif %}

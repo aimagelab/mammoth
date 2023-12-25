@@ -143,34 +143,36 @@ def get_headling_module(fullname):
 
 
 def reorder_modules(modules):
-    past_path = os.getcwd()
-    os.chdir(mammoth_path)
-
     mods, others = [], []
     for module in modules:
-        paths = module.split('.')
-
-        if os.path.isdir('./' + '/'.join(paths)):  # module
+        if os.path.isdir(os.path.join(mammoth_path, module.replace('.', '/'))):  # module
             mods.append(module)
         else:
             others.append(module)
-
+    
     mods = sorted(mods, key=lambda x: x.split('.')[-1])
     others = sorted(others, key=lambda x: x.split('.')[-1])
-    os.chdir(past_path)
     return mods + others
 
+def _is_dir(module):
+    return os.path.isdir(os.path.join(mammoth_path, module.replace('.', '/')))
 
+def parse_toctree_name(item):
+    name = item.split('.')[-1]
+
+    if _is_dir(item):
+        # camel case name
+        name = name.split('_')
+        name = [n.capitalize() for n in name]
+        name = ' '.join(name)
+        return name
+    else:
+        return name
+
+
+FILTERS["parse_toctree_name"] = parse_toctree_name
 FILTERS["reorder_modules"] = reorder_modules
 FILTERS["get_headling_module"] = get_headling_module
 FILTERS["has_items"] = has_items
 FILTERS["drop_torch_items"] = drop_torch_items
 FILTERS["get_attributes"] = get_attributes
-
-
-# .. {% if '../{{ module }}/{{ name }}.rst' | exists %}
-# .. .. include:: ../{{ module }}/{{ name }}.rst
-# ..    :literal:
-# .. {$ else %}
-# .. {{ name | escape | underline }}
-# .. {% endif %}
