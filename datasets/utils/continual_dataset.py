@@ -41,7 +41,9 @@ class ContinualDataset:
     def __init__(self, args: Namespace) -> None:
         """
         Initializes the train and test lists of dataloaders.
-        :param args: the arguments which contains the hyperparameters
+
+        Args:
+            args: the arguments which contains the hyperparameters
         """
         self.train_loader = None
         self.test_loaders = []

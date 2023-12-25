@@ -6,15 +6,25 @@
 
 class DeNormalize(object):
     def __init__(self, mean, std):
+        """
+        Initializes a DeNormalize object.
+
+        Args:
+            mean (list): List of mean values for each channel.
+            std (list): List of standard deviation values for each channel.
+        """
         self.mean = mean
         self.std = std
 
     def __call__(self, tensor):
         """
+        Applies denormalization to the input tensor.
+
         Args:
-            tensor (Tensor): Tensor image of size (C, H, W) to be normalized.
+            tensor (Tensor): Tensor image of size (C, H, W) to be denormalized.
+
         Returns:
-            Tensor: Normalized image.
+            Tensor: Denormalized image.
         """
         for t, m, s in zip(tensor, self.mean, self.std):
             t.mul_(s).add_(m)

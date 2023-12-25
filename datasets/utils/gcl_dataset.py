@@ -23,7 +23,9 @@ class GCLDataset(ContinualDataset):
     def __init__(self, args: Namespace) -> None:
         """
         Initializes the train and test lists of dataloaders.
-        :param args: the arguments which contains the hyperparameters
+
+        Args:
+            args: the arguments which contains the hyperparameters
         """
         self.N_CLASSES_PER_TASK = self.N_CLASSES
         self.N_TASKS = 1
@@ -35,4 +37,8 @@ class GCLDataset(ContinualDataset):
 
     @staticmethod
     def get_epochs():
+        """
+        A GCLDataset is not compatible with multiple epochs.
+        """
+
         return 1

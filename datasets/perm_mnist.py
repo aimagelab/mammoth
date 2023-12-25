@@ -62,8 +62,12 @@ class MyMNIST(MNIST):
     def __getitem__(self, index: int) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
-        :param index: index of the element to be returned
-        :returns: tuple: (image, target) where target is index of the target class.
+        
+        Args:
+            index: index of the element to be returned
+        
+        Returns:
+            tuple: (image, target) where target is index of the target class.
         """
         img, target = self.data[index], int(self.targets[index])
 

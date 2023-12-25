@@ -56,8 +56,12 @@ class MyCUB200(Dataset):
     def __getitem__(self, index: int) -> Tuple[type(Image), int, type(Image)]:
         """
         Gets the requested element from the dataset.
-        :param index: index of the element to be returned
-        :returns: tuple: (image, target) where target is index of the target class.
+
+        Args:
+            index: index of the element to be returned
+
+        Returns:
+            tuple: (image, target) where target is index of the target class.
         """
         img, target = self.data[index], self.targets[index]
 
@@ -95,8 +99,12 @@ class CUB200(MyCUB200):
     def __getitem__(self, index: int, ret_segmask=False) -> Tuple[type(Image), int, type(Image)]:
         """
         Gets the requested element from the dataset.
-        :param index: index of the element to be returned
-        :returns: tuple: (image, target) where target is index of the target class.
+
+        Args:
+            index: index of the element to be returned
+
+        Returns:
+            tuple: (image, target) where target is index of the target class.
         """
         img, target = self.data[index], self.targets[index]
 
