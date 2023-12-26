@@ -115,12 +115,16 @@ The base class **ContinualModel** provides a few properties that are automatical
 Model parameters
 ~~~~~~~~~~~~~~~~~
 
-The **get_parser** function is used to define the model-specific hyper-parameters. It must return a :ref:`parser` object. For example, the following code defines the hyper-parameters of the **MyModel** model:
+The **get_parser** function is used to define the model-specific hyper-parameters. It must always include the parameters defined in **add_management_args** and **add_experiment_args** (see in :ref:`args` for more details). In addition, it can include any other parameter. For example, the following code defines the hyper-parameters of the **MyModel** model:
 
 .. code-block:: python
+    from utils.args import add_management_args, add_experiment_args
 
     def get_parser() -> argparse.ArgumentParser:
         parser = argparse.ArgumentParser('MyModel parameters')
+
+        add_management_args(parser) # these are always required
+        add_experiment_args(parser)
 
         # Add the model-specific hyper-parameters
         parser.add_argument('--my_param', type=int, default=1, help='My parameter')

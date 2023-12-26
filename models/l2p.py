@@ -18,15 +18,6 @@ def get_parser() -> ArgumentParser:
     parser = ArgumentParser(description='Learning to Prompt (L2P)')
     add_management_args(parser)
     add_experiment_args(parser)
-    # add_rehearsal_args(parser)
-
-    # Optimizer parameters
-    # parser.add_argument('--opt', default='adam', type=str, metavar='OPTIMIZER', help='Optimizer (default: "adam"')
-    # parser.add_argument('--opt-eps', default=1e-8, type=float, metavar='EPSILON', help='Optimizer Epsilon (default: 1e-8)')
-    # parser.add_argument('--opt-betas', default=(0.9, 0.999), type=float, nargs='+', metavar='BETA', help='Optimizer Betas (default: (0.9, 0.999), use opt default)')
-    # parser.add_argument('--momentum', type=float, default=0.9, metavar='M', help='SGD momentum (default: 0.9)')
-    # parser.add_argument('--weight-decay', type=float, default=0.0, help='weight decay (default: 0.0)')
-    # parser.add_argument('--reinit_optimizer', type=bool, default=True, help='reinit optimizer (default: True)')
 
     # Prompt parameters
     parser.add_argument('--prompt_pool', default=True, type=bool,)
@@ -49,7 +40,6 @@ def get_parser() -> ArgumentParser:
 
     # Learning rate schedule parameters
     parser.add_argument('--sched', default='constant', type=str, metavar='SCHEDULER', help='LR scheduler (default: "constant"')
-    # parser.add_argument('--lr', type=float, default=0.03, metavar='LR', help='learning rate (default: 0.03)')
     parser.add_argument('--lr-noise', type=float, nargs='+', default=None, metavar='pct, pct', help='learning rate noise on/off epoch percentages')
     parser.add_argument('--lr-noise-pct', type=float, default=0.67, metavar='PERCENT', help='learning rate noise limit percent (default: 0.67)')
     parser.add_argument('--lr-noise-std', type=float, default=1.0, metavar='STDDEV', help='learning rate noise std-dev (default: 1.0)')
@@ -72,6 +62,10 @@ class L2P(ContinualModel):
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     def __init__(self, backbone, loss, args, transform):
+        """
+        L2P re-defines the backbone model to include the prompt parameters. This is done *before* calling the super constructor, so that the backbone is already initialized when the super constructor is called.
+        """
+
         self.dataset = get_dataset(args)
         assert self.dataset.SIZE is not None and self.dataset.SIZE[0] >= 224, 'L2P only supports 224x224 images or greater'
         self.n_classes = self.dataset.N_CLASSES if hasattr(self.dataset, 'N_CLASSES') else self.dataset.N_CLASSES_PER_TASK * self.dataset.N_TASKS
