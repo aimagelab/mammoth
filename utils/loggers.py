@@ -38,9 +38,11 @@ def print_mean_accuracy(mean_acc: np.ndarray, task_number: int,
                         setting: str, joint=False, epoch=None) -> None:
     """
     Prints the mean accuracy on stderr.
-    :param mean_acc: mean accuracy value
-    :param task_number: task index
-    :param setting: the setting of the benchmark
+
+    Args:
+        mean_acc: mean accuracy value
+        task_number: task index
+        setting: the setting of the benchmark
     """
     if joint:
         prefix = "Joint Accuracy" if epoch is None else f"Joint Accuracy (epoch {epoch})"
@@ -144,7 +146,9 @@ class Logger:
     def log(self, mean_acc: np.ndarray) -> None:
         """
         Logs a mean accuracy value.
-        :param mean_acc: mean accuracy value
+
+        Args:
+            mean_acc: mean accuracy value
         """
         if self.setting == 'general-continual':
             mean_acc, _ = mean_acc
@@ -165,8 +169,10 @@ class Logger:
 
     def write(self, args: Dict[str, Any]) -> None:
         """
-        writes out the logged value along with its arguments.
-        :param args: the namespace of the current experiment
+        Writes out the logged value along with its arguments.
+
+        Args:
+            args: the namespace of the current experiment
         """
         wrargs = args.copy()
 

@@ -41,14 +41,19 @@ class ContinualDataset:
     def __init__(self, args: Namespace) -> None:
         """
         Initializes the train and test lists of dataloaders.
-        :param args: the arguments which contains the hyperparameters
+
+        Args:
+            args: the arguments which contains the hyperparameters
         """
         self.train_loader = None
         self.test_loaders = []
         self.i = 0
         self.args = args
-        self.N_CLASSES = self.N_CLASSES if hasattr(self, 'N_CLASSES') else \
-            (self.N_CLASSES_PER_TASK * self.N_TASKS) if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK)
+        if self.SETTING == 'class-il':
+            self.N_CLASSES = self.N_CLASSES if hasattr(self, 'N_CLASSES') else \
+                (self.N_CLASSES_PER_TASK * self.N_TASKS) if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK)
+        else:
+            self.N_CLASSES = self.N_CLASSES_PER_TASK
 
         if self.args.permute_classes:
             if not hasattr(self.args, 'class_order'):  # set only once

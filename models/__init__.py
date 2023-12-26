@@ -5,28 +5,74 @@
 
 import os
 import sys
+from argparse import Namespace
+from torch import nn
+import importlib
+import inspect
 mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(mammoth_path)
 os.chdir(mammoth_path)
-import importlib
+from models.utils.continual_model import ContinualModel
 from utils.conf import warn_once
 
 
 def get_all_models():
     return [model.split('.')[0] for model in os.listdir('models')
-            if not model.find('__') > -1 and 'py' in model]
+            if not model.find('__') > -1 and not os.path.isdir('models/' + model)]
 
 
-names = {}
+NAMES = {}
 for model in get_all_models():
     try:
         mod = importlib.import_module('models.' + model)
-        class_name = {x.lower(): x for x in mod.__dir__()}[model.replace('_', '')]
-        names[model] = getattr(mod, class_name)
+        model_classes_name = [x for x in mod.__dir__() if 'type' in str(type(getattr(mod, x)))
+                                and 'ContinualModel' in str(inspect.getmro(getattr(mod, x))[1:])]
+        for d in model_classes_name:
+            c = getattr(mod, d)
+            NAMES[c.NAME] = c
     except Exception as e:
         warn_once("Error in model", model)
         warn_once(e)
+        NAMES[model.replace('_', '-')] = e
 
 
-def get_model(args, backbone, loss, transform):
-    return names[args.model](backbone, loss, args, transform)
+def get_model(args: Namespace, backbone: nn.Module, loss, transform) -> ContinualModel:
+    """
+    Return the class of the selected continual model among those that are available.
+    If an error was detected while loading the available datasets, it raises the appropriate error message.
+
+    Args:
+        args (Namespace): the arguments which contains the `--model` attribute
+        backbone (nn.Module): the backbone of the model
+        loss: the loss function
+        transform: the transform function
+
+    Exceptions:
+        AssertError: if the model is not available
+        Exception: if an error is detected in the model
+
+    Returns:
+        the continual model instance
+    """
+    assert args.model in NAMES
+    return get_model_class(args)(backbone, loss, args, transform)
+
+def get_model_class(args: Namespace) -> ContinualModel:
+    """
+    Return the class of the selected continual model among those that are available.
+    If an error was detected while loading the available datasets, it raises the appropriate error message.
+
+    Args:
+        args (Namespace): the arguments which contains the `--model` attribute
+
+    Exceptions:
+        AssertError: if the model is not available
+        Exception: if an error is detected in the model
+
+    Returns:
+        the continual model class
+    """
+    assert args.model in NAMES
+    if isinstance(NAMES[args.model], Exception):
+        raise NAMES[args.model]
+    return NAMES[args.model]

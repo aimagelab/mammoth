@@ -23,12 +23,22 @@ class GCLDataset(ContinualDataset):
     def __init__(self, args: Namespace) -> None:
         """
         Initializes the train and test lists of dataloaders.
-        :param args: the arguments which contains the hyperparameters
+
+        Args:
+            args: the arguments which contains the hyperparameters
         """
         self.N_CLASSES_PER_TASK = self.N_CLASSES
         self.N_TASKS = 1
         assert args.n_epochs == 1, 'GCLDataset is not compatible with multiple epochs'
         super().__init__(args)
 
-        if not all((self.NAME, self.SETTING)):
+        if not all((self.NAME, self.SETTING, self.SIZE)):
             raise NotImplementedError('The dataset must be initialized with all the required fields.')
+
+    @staticmethod
+    def get_epochs():
+        """
+        A GCLDataset is not compatible with multiple epochs.
+        """
+
+        return 1

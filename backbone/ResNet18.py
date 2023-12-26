@@ -16,10 +16,14 @@ from backbone import MammothBackbone
 def conv3x3(in_planes: int, out_planes: int, stride: int = 1) -> F.conv2d:
     """
     Instantiates a 3x3 convolutional layer with no bias.
-    :param in_planes: number of input channels
-    :param out_planes: number of output channels
-    :param stride: stride of the convolution
-    :return: convolutional layer
+
+    Args:
+        in_planes: number of input channels
+        out_planes: number of output channels
+        stride: stride of the convolution
+
+    Returns:
+        convolutional layer
     """
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
                      padding=1, bias=False)
@@ -34,8 +38,10 @@ class BasicBlock(nn.Module):
     def __init__(self, in_planes: int, planes: int, stride: int = 1) -> None:
         """
         Instantiates the basic block of the network.
-        :param in_planes: the number of input channels
-        :param planes: the number of channels (to be possibly expanded)
+
+        Args:
+            in_planes: the number of input channels
+            planes: the number of channels (to be possibly expanded)
         """
         super(BasicBlock, self).__init__()
         self.return_prerelu = False
@@ -55,8 +61,12 @@ class BasicBlock(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Compute a forward pass.
-        :param x: input tensor (batch_size, input_size)
-        :return: output tensor (10)
+
+        Args:
+            x: input tensor (batch_size, input_size)
+
+        Returns:
+            output tensor (10)
         """
         out = relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
@@ -78,10 +88,12 @@ class ResNet(MammothBackbone):
                  num_classes: int, nf: int) -> None:
         """
         Instantiates the layers of the network.
-        :param block: the basic ResNet block
-        :param num_blocks: the number of blocks per layer
-        :param num_classes: the number of output classes
-        :param nf: the number of filters
+
+        Args:
+            block: the basic ResNet block
+            num_blocks: the number of blocks per layer
+            num_classes: the number of output classes
+            nf: the number of filters
         """
         super(ResNet, self).__init__()
         self.return_prerelu = False
@@ -112,11 +124,15 @@ class ResNet(MammothBackbone):
                     num_blocks: int, stride: int) -> nn.Module:
         """
         Instantiates a ResNet layer.
-        :param block: ResNet basic block
-        :param planes: channels across the network
-        :param num_blocks: number of blocks
-        :param stride: stride
-        :return: ResNet layer
+
+        Args:
+            block: ResNet basic block
+            planes: channels across the network
+            num_blocks: number of blocks
+            stride: stride
+
+        Returns:
+            ResNet layer
         """
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -128,9 +144,13 @@ class ResNet(MammothBackbone):
     def forward(self, x: torch.Tensor, returnt='out') -> torch.Tensor:
         """
         Compute a forward pass.
-        :param x: input tensor (batch_size, *input_shape)
-        :param returnt: return type (a string among 'out', 'features', 'both', and 'full')
-        :return: output tensor (output_classes)
+
+        Args:
+            x: input tensor (batch_size, *input_shape)
+            returnt: return type (a string among 'out', 'features', 'both', and 'full')
+
+        Returns:
+            output tensor (output_classes)
         """
         out_0 = self.bn1(self.conv1(x))  # 64, 32, 32
         if self.return_prerelu:
@@ -171,8 +191,12 @@ class ResNet(MammothBackbone):
 def resnet18(nclasses: int, nf: int = 64) -> ResNet:
     """
     Instantiates a ResNet18 network.
-    :param nclasses: number of output classes
-    :param nf: number of filters
-    :return: ResNet network
+
+    Args:
+        nclasses: number of output classes
+        nf: number of filters
+
+    Returns:
+        ResNet network
     """
     return ResNet(BasicBlock, [2, 2, 2, 2], nclasses, nf)

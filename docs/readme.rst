@@ -11,6 +11,11 @@ Mammoth - An Extendible (General) Continual Learning Framework for Pytorch
 
 Official repository of `Class-Incremental Continual Learning into the eXtended DER-verse <https://arxiv.org/abs/2201.00766>`_ and `Dark Experience for General Continual Learning: a Strong, Simple Baseline <https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html>`_
 
+Mammoth is a framework for continual learning research. It is designed to be modular, easy to extend, and - most importantly - *easy to debug*.
+Idelly, all the code necessary to run the experiments is included *in the repository*, without needing to check out other repositories or install additional packages. 
+
+With Mammoth, nothing is written in stone. You can easily add new models, datasets, training strategies, or functionalities.
+
 .. list-table::
    :widths: 15 15 15 15 15 15
    :class: centered
@@ -136,7 +141,7 @@ Awesome Papers using Mammoth
 ----------------------------
 
 Our Papers
-~~~~~~~~~~
+~~~~~~~~~~~
 
 - `Dark Experience for General Continual Learning: a Strong, Simple Baseline (NeurIPS 2020) <https://arxiv.org/abs/2004.07211>`_
 - `Rethinking Experience Replay: a Bag of Tricks for Continual Learning (ICPR 2020) <https://arxiv.org/abs/2010.05595>`_ (`code <https://github.com/hastings24/rethinking_er>`_)
@@ -147,7 +152,7 @@ Our Papers
 - `On the Effectiveness of Lipschitz-Driven Rehearsal in Continual Learning (NeurIPS 2022) <https://arxiv.org/abs/2210.06443>`_ (`code <https://github.com/aimagelab/lider>`_)
 
 Other Awesome CL works using Mammoth
-~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - `New Insights on Reducing Abrupt Representation Change in Online Continual Learning (ICLR2022) <https://openreview.net/pdf?id=N8MaByOzUfb>`_ (`code <https://github.com/pclucas14/AML>`_)
 - `Learning fast, learning slow: A general continual learning method based on complementary learning system (ICLR2022) <https://openreview.net/pdf?id=uxxFrDwrE7Y>`_ (`code <https://github.com/NeurAI-Lab/CLS-ER>`_)
@@ -185,11 +190,3 @@ Previous versions
 
 If you're interested in a version of this repo that only includes the code for `Dark Experience for General Continual Learning: a Strong, Simple Baseline <https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html>`_, please use our `neurips2020 tag <https://github.com/aimagelab/mammoth/releases/tag/neurips2020>`_.
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

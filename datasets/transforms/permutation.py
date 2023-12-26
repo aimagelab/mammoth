@@ -20,8 +20,12 @@ class Permutation(object):
     def __call__(self, sample: np.ndarray) -> np.ndarray:
         """
         Randomly defines the permutation and applies the transformation.
-        :param sample: image to be permuted
-        :return: permuted image
+
+        Args:
+            sample: image to be permuted
+
+        Returns:
+            permuted image
         """
         old_shape = sample.shape
         if self.perm is None:
@@ -38,7 +42,9 @@ class FixedPermutation(object):
     def __init__(self, seed: int) -> None:
         """
         Defines the seed.
-        :param seed: seed of the permutation
+
+        Args:
+            seed: seed of the permutation
         """
         self.perm = None
         self.seed = seed
@@ -46,8 +52,12 @@ class FixedPermutation(object):
     def __call__(self, sample: np.ndarray) -> np.ndarray:
         """
         Defines the permutation and applies the transformation.
-        :param sample: image to be permuted
-        :return: permuted image
+
+        Args:
+            sample: image to be permuted
+
+        Returns:
+            permuted image
         """
         old_shape = sample.shape
         if self.perm is None:

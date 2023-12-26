@@ -185,9 +185,13 @@ class ContinualModel(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Computes a forward pass.
-        :param x: batch of inputs
-        :param task_label: some models require the task label
-        :return: the result of the computation
+
+        Args:
+            x: batch of inputs
+            task_label: some models require the task label
+
+        Returns:
+            the result of the computation
         """
         return self.net(x)
 
@@ -220,10 +224,14 @@ class ContinualModel(nn.Module):
                 not_aug_inputs: torch.Tensor, epoch: int = None) -> float:
         """
         Compute a training step over a given batch of examples.
-        :param inputs: batch of examples
-        :param labels: ground-truth labels
-        :param kwargs: some methods could require additional parameters
-        :return: the value of the loss function
+
+        Args:
+            inputs: batch of examples
+            labels: ground-truth labels
+            kwargs: some methods could require additional parameters
+
+        Returns:
+            the value of the loss function
         """
         raise NotImplementedError
 

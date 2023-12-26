@@ -39,7 +39,7 @@ def get_parser() -> ArgumentParser:
 
 class Ccic(ContinualModel):
     NAME = 'ccic'
-    COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual', 'cssl']
+    COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'cssl']
 
     def __init__(self, backbone, loss, args, transform):
         super(Ccic, self).__init__(backbone, loss, args, transform)

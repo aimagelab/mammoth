@@ -46,12 +46,18 @@ for dataset in get_all_datasets():
 
 def get_dataset(args: Namespace) -> ContinualDataset:
     """
-    Creates and returns a continual dataset.
+    Creates and returns a continual dataset among those that are available.
+    If an error was detected while loading the available datasets, it raises the appropriate error message.
+
     Args:
         args (Namespace): the arguments which contains the hyperparameters
 
+    Exceptions:
+        AssertError: if the dataset is not available
+        Exception: if an error is detected in the dataset
+
     Returns:
-        the continual dataset
+        the continual dataset instance
     """
     assert args.dataset in NAMES
     return get_dataset_class(args)(args)
@@ -59,13 +65,18 @@ def get_dataset(args: Namespace) -> ContinualDataset:
 
 def get_dataset_class(args: Namespace) -> ContinualDataset:
     """
-    Returns a continual dataset.
+    Return the class of the selected continual dataset among those that are available.
+    If an error was detected while loading the available datasets, it raises the appropriate error message.
 
     Args:
-        args (Namespace): the arguments which contains the hyperparameters
+        args (Namespace): the arguments which contains the `--dataset` attribute
+
+    Exceptions:
+        AssertError: if the dataset is not available
+        Exception: if an error is detected in the dataset
 
     Returns:
-        the continual dataset
+        the continual dataset class
     """
     assert args.dataset in NAMES
     if isinstance(NAMES[args.dataset], Exception):

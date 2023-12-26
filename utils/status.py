@@ -20,11 +20,13 @@ class ProgressBar:
              task_number: int, loss: float) -> None:
         """
         Prints out the progress bar on the stderr file.
-        :param i: the current iteration
-        :param max_iter: the maximum number of iteration
-        :param epoch: the epoch
-        :param task_number: the task index
-        :param loss: the current value of the loss function
+
+        Args:
+            i: the current iteration
+            max_iter: the maximum number of iteration
+            epoch: the epoch
+            task_number: the task index
+            loss: the current value of the loss function
         """
         if not self.verbose:
             if i == 0:
@@ -73,11 +75,13 @@ def progress_bar(i: int, max_iter: int, epoch: Union[int, str],
                  task_number: int, loss: float) -> None:
     """
     Prints out the progress bar on the stderr file.
-    :param i: the current iteration
-    :param max_iter: the maximum number of iteration
-    :param epoch: the epoch
-    :param task_number: the task index
-    :param loss: the current value of the loss function
+
+    Args:
+        i: the current iteration
+        max_iter: the maximum number of iteration
+        epoch: the epoch
+        task_number: the task index
+        loss: the current value of the loss function
     """
     global static_bar
 

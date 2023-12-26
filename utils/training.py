@@ -30,9 +30,11 @@ def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> No
     Given the output tensor, the dataset at hand and the current task,
     masks the former by setting the responses for the other tasks at -inf.
     It is used to obtain the results for the task-il setting.
-    :param outputs: the output tensor
-    :param dataset: the continual dataset
-    :param k: the task index
+
+    Args:
+        outputs: the output tensor
+        dataset: the continual dataset
+        k: the task index
     """
     outputs[:, 0:k * dataset.N_CLASSES_PER_TASK] = -float('inf')
     outputs[:, (k + 1) * dataset.N_CLASSES_PER_TASK:
@@ -43,10 +45,13 @@ def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> No
 def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tuple[list, list]:
     """
     Evaluates the accuracy of the model for each past task.
-    :param model: the model to be evaluated
-    :param dataset: the continual dataset at hand
-    :return: a tuple of lists, containing the class-il
-             and task-il accuracy for each task
+
+    Args:
+        model: the model to be evaluated
+        dataset: the continual dataset at hand
+
+    Returns:
+        a tuple of lists, containing the class-il and task-il accuracy for each task
     """
     status = model.net.training
     model.net.eval()
@@ -86,9 +91,11 @@ def train(model: ContinualModel, dataset: ContinualDataset,
           args: Namespace) -> None:
     """
     The training process, including evaluations and loggers.
-    :param model: the module to be trained
-    :param dataset: the continual dataset at hand
-    :param args: the arguments of the current execution
+
+    Args:
+        model: the module to be trained
+        dataset: the continual dataset at hand
+        args: the arguments of the current execution
     """
     print(args)
 
@@ -187,7 +194,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 'model': model.state_dict(),
                 'args': args,
                 'results': [results, results_mask_classes, logger.dump()],
-                'optimizer': model.optimizer.state_dict() if hasattr(model, 'optimizer') else None,
+                'optimizer': model.opt.state_dict() if hasattr(model, 'opt') else None,
                 'scheduler': scheduler.state_dict() if scheduler is not None else None,
             }
             if 'buffer_size' in model.args:

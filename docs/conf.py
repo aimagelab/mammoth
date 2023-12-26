@@ -31,7 +31,14 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosummary',
               'sphinx.ext.napoleon',
               'sphinx.ext.viewcode',
+              'sphinx.ext.viewcode',
+              'sphinx_tabs.tabs',
+              'sphinx-prompt',
+              'sphinx_toolbox',
               'sphinx.ext.autosectionlabel']
+
+github_username = 'grupposimo'
+github_repository = 'mammoth'
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
@@ -80,6 +87,7 @@ pygments_style = 'friendly'
 html_theme = "furo"
 html_title = "Mammoth"
 html_static_path = ['_static']
+html_favicon = 'images/logo.png'
 
 autosummary_generate = True
 numpydoc_show_class_members = False
@@ -95,11 +103,6 @@ autodoc_typehints_description_target = "documented_params"
 
 
 def get_attributes(item, obj, modulename):
-    """Filters attributes to be used in autosummary.
-
-    Fixes import errors when documenting inherited attributes with autosummary.
-
-    """
     module = import_module(modulename)
     if hasattr(getattr(module, obj), item):
         return f"{item}"
@@ -108,11 +111,6 @@ def get_attributes(item, obj, modulename):
 
 
 def drop_torch_items(items, obj, module):
-    """Filters attributes to be used in autosummary.
-
-    Fixes import errors when documenting inherited attributes with autosummary.
-
-    """
     mod = import_module(module)
     import_obj = getattr(mod, obj)
     fn_to_keep = import_obj.__dict__.keys()
@@ -122,11 +120,6 @@ def drop_torch_items(items, obj, module):
 
 
 def has_items(items, obj, module):
-    """Filters attributes to be used in autosummary.
-
-    Fixes import errors when documenting inherited attributes with autosummary.
-
-    """
     mod = import_module(module)
     import_obj = getattr(mod, obj)
     fn_to_keep = import_obj.__dict__.keys()
@@ -134,6 +127,54 @@ def has_items(items, obj, module):
     return len(its) > 0
 
 
+def get_headling_module(fullname):
+    paths = fullname.split('.')
+    name = paths[-1]
+    module = '/'.join(paths[:-1])
+    if os.path.exists(f'./docs/{ module }/{ name }.rst'):
+        fs = open(f'./docs/{ module }/{ name }.rst', 'r').read()
+        return fs
+    else:
+        if os.path.isdir('./' + '/'.join(paths)):
+            name = name.capitalize()
+        else:
+            name = name
+        return f".. _module-{name}:\n{name}\n" + "=" * (len(name) + 1)
+
+
+def reorder_modules(modules):
+    mods, others = [], []
+    for module in modules:
+        if os.path.isdir(os.path.join(mammoth_path, module.replace('.', '/'))):  # module
+            mods.append(module)
+        else:
+            others.append(module)
+
+    mods = sorted(mods, key=lambda x: x.split('.')[-1])
+    others = sorted(others, key=lambda x: x.split('.')[-1])
+    return mods + others
+
+
+def _is_dir(module):
+    return os.path.isdir(os.path.join(mammoth_path, module.replace('.', '/')))
+
+
+def parse_toctree_name(item):
+    name = item.split('.')[-1]
+
+    if _is_dir(item):
+        # camel case name
+        name = name.split('_')
+        name = [n.capitalize() for n in name]
+        name = ' '.join(name)
+        return name
+    else:
+        return name
+
+
+FILTERS["parse_toctree_name"] = parse_toctree_name
+FILTERS["reorder_modules"] = reorder_modules
+FILTERS["get_headling_module"] = get_headling_module
 FILTERS["has_items"] = has_items
 FILTERS["drop_torch_items"] = drop_torch_items
 FILTERS["get_attributes"] = get_attributes

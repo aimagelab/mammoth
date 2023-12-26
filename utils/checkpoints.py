@@ -104,7 +104,14 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
     - Handles DataParallel and DistributedDataParallel checkpoints.
     - Handles checkpoints from previous versions of the code.
     - Handles head initialization for LUCIR.
-    :param args: the model with the checkpoint loaded.
+
+    Args:
+        args: the model with the checkpoint loaded.
+        model: the model to be loaded.
+        ignore_classifier: whether to ignore the classifier weights.
+
+    Returns:
+        the model with the checkpoint loaded.
     """
     # check if checkpoint is a URL
     if args.loadcheck.startswith('http'):

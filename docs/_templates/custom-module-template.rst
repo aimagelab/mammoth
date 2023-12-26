@@ -1,17 +1,6 @@
-{{ name | escape | underline }}
+{{ fullname | get_headling_module }}
 
-{% block modules %}
-{% if modules %}
-.. rubric:: Modules
-.. autosummary::
-   :toctree:
-   :template: custom-module-template.rst
-   :recursive:
-   {% for item in modules %}
-   {{ item }}
-   {%- endfor %}
-{% endif %}
-{% endblock %}
+.. currentmodule:: {{ fullname }}
 
 .. automodule:: {{ fullname }}
 
@@ -19,10 +8,9 @@
    {% if attributes %}
    .. rubric:: {{ _('Module Attributes') }}
 
-   .. autosummary::
-      :toctree:
    {% for item in attributes %}
-      {{ item }}
+   .. autoattribute:: {{ item }}
+      :annotation:
    {%- endfor %}
    {% endif %}
    {% endblock %}
@@ -31,11 +19,11 @@
    {% if classes %}
    .. rubric:: {{ _('Classes') }}
 
-   .. autosummary::
-      :toctree:
-      :template: custom-class-template.rst
    {% for item in classes %}
-      {{ item }}
+   .. autoclass:: {{ item }}
+      :members:
+      :undoc-members:
+      :show-inheritance:
    {%- endfor %}
    {% endif %}
    {% endblock %}
@@ -43,10 +31,13 @@
    {% block functions %}
    {% if functions %}
    .. rubric:: {{ _('Functions') }}
-   .. autosummary:: 
-      {% for item in functions %}
-      {{ item }}
-      {%- endfor %}
+      
+   {% for item in functions %}
+   .. autofunction:: {{ item }}
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   {%- endfor %}
       
    {% for item in functions %}
    .. autofunction:: {{ item }}
@@ -58,10 +49,29 @@
    {% if exceptions %}
    .. rubric:: {{ _('Exceptions') }}
 
-   .. autosummary::
-      :toctree:
    {% for item in exceptions %}
-      {{ item }}
+   .. autoexception:: {{ item }}
    {%- endfor %}
    {% endif %}
    {% endblock %}
+
+{% block modules %}
+{% if modules %}
+
+.. autosummary::
+   :recursive:
+   :toctree:
+   :hidden:
+   :template: custom-module-template.rst
+   {% for item in modules | reorder_modules %}
+   {{ item }}
+   {%- endfor %}
+
+.. toctree::
+   :hidden:
+{% for item in modules | reorder_modules %}
+   {{ item }}
+{%- endfor %}
+
+{% endif %}
+{% endblock %}

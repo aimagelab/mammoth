@@ -15,11 +15,12 @@ help:
 .PHONY: help Makefile
 
 clean:
-	rm -rf _autosummary
-	rm -rf **/_autosummary
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+# rm -rf _autosummary
+# rm -rf **/_autosummary
 
 # Catch-all target: route all unknown targets to Sphinx using the new
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
+	python ../utils/args.py
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

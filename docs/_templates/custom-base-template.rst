@@ -1,17 +1,30 @@
 .. include:: ../{{ module }}/index.rst   
 
+Module attributes and functions
+-------------------------------
+
 .. automodule:: {{ fullname }}
    :members:
    :undoc-members:
 
 {% block modules %}
 {% if modules %}
+
 .. autosummary::
-   :toctree:
-   :template: custom-module-template.rst
    :recursive:
-{% for item in modules %}
+   :toctree:
+   :hidden:
+   :template: custom-module-template.rst
+   {% for item in modules | reorder_modules %}
    {{ item }}
-{%- endfor %}
+   {%- endfor %}
+
+.. toctree::
+   :hidden:
+   {% for item in modules | reorder_modules %}
+   {{ item | parse_toctree_name }} <{{ item }}.rst>
+   {%- endfor %}
+
 {% endif %}
 {% endblock %}
+
