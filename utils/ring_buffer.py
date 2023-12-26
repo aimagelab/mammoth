@@ -1,3 +1,7 @@
+"""
+This module contains a version of the reservoir buffer that uses a ring buffer strategy instead of reservoir.
+"""
+
 # Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the

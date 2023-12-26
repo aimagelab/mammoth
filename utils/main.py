@@ -1,9 +1,22 @@
+"""
+This script is the main entry point for the Mammoth project. It contains the main function `main()` that orchestrates the training process.
+
+The script performs the following tasks:
+- Imports necessary modules and libraries.
+- Sets up the necessary paths and configurations.
+- Parses command-line arguments.
+- Initializes the dataset, model, and other components.
+- Trains the model using the `train()` function.
+
+To run the script, execute it directly or import it as a module and call the `main()` function.
+"""
 # Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import numpy  # needed (don't change it)
+# needed (don't change it)
+import numpy  # noqa
 import time
 import importlib
 import os
@@ -36,6 +49,12 @@ def lecun_fix():
 
 
 def parse_args():
+    """
+    Parse command line arguments for the mammoth program and sets up the `args` object.
+
+    Returns:
+        args (argparse.Namespace): Parsed command line arguments.
+    """
     from models import get_all_models
     from datasets import NAMES as DATASET_NAMES, get_dataset_class
 
@@ -110,6 +129,23 @@ def parse_args():
     assert 0 < args.label_perc <= 1, "label_perc must be in (0, 1]"
 
     return args
+
+
+def main(args=None) -> None:
+    """
+    Main function for training a model on a dataset.
+
+    Args:
+        args (argparse.Namespace): Optional. Command-line arguments. If not specified, they are parsed from the command line.
+
+    Returns:
+        None
+    """
+    from models import get_model
+    from datasets import ContinualDataset, get_dataset
+    from utils.training import train
+
+    # Rest of the code...
 
 
 def main(args=None):

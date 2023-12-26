@@ -37,6 +37,7 @@
    getting_started/checkpoints.rst
    getting_started/distributed_training.rst
    getting_started/scripts.rst
+   Parseval <getting_started/parseval.rst>
 
 .. toctree::
    :glob:

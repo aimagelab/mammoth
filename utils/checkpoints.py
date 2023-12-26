@@ -116,11 +116,19 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
     # check if checkpoint is a URL
     if args.loadcheck.startswith('http'):
         if 'sharepoint' in args.loadcheck:
-            from onedrivedownloader import download
+            try:
+                from onedrivedownloader import download
+            except ImportError:
+                raise ImportError('OneDriveDownloader is required to download from Sharepoint. Please install it with "pip install onedrivedownloader"')
+
             print('Downloading checkpoint using OneDriveDownloader...')
             args.loadcheck = download(args.loadcheck, filename='checkpoints/', unzip=True, unzip_path='checkpoints/', clean=True)
         elif 'drive.google.com' in args.loadcheck:
-            from google_drive_downloader import GoogleDriveDownloader as gdd
+            try:
+                from google_drive_downloader import GoogleDriveDownloader as gdd
+            except ImportError:
+                raise ImportError('GoogleDriveDownloader is required to download from Google Drive. Please install it with "pip install googledrivedownloader"')
+
             print('Downloading checkpoint using GoogleDriveDownloader...')
             # get random filename
             filename = _get_random_filename()

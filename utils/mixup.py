@@ -6,7 +6,19 @@
 import torch
 from torch.distributions.beta import Beta
 
+
 def mixup(couples, alpha, force_lambda=None):
+    """
+    Applies mixup augmentation to the given couples of inputs.
+
+    Args:
+        couples (list): A list of tuples, where each tuple contains two inputs to be mixed.
+        alpha (float): The alpha parameter for the Beta distribution used to sample the mixing coefficients.
+        force_lambda (float or None, optional): If not None, forces the use of a specific mixing coefficient for all inputs.
+
+    Returns:
+        tuple or torch.Tensor: If more than one mixed input is generated, a tuple of mixed inputs is returned. Otherwise, a single mixed input is returned.
+    """
     lamda = Beta(alpha, alpha).rsample((len(couples[0][0]),)).to(couples[0][0].device)
     lamda = torch.max(lamda, 1 - lamda)
 
@@ -22,4 +34,3 @@ def mixup(couples, alpha, force_lambda=None):
         returns.append(x_out)
 
     return tuple(returns) if len(returns) > 1 else returns[0]
-
