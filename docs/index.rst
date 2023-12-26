@@ -3,6 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+** TODO: **
+
+- getting started
+
+   - tests
+
+   - load and save checkpoints
+
+   - parseval
+
+- validation?
 
 .. autosummary::
    :toctree: _autosummary
@@ -23,7 +34,9 @@
    :caption: Getting started:
 
    getting_started/index.rst
+   getting_started/checkpoints.rst
    getting_started/scripts.rst
+   getting_started/tests.rst
 
 .. toctree::
    :glob:

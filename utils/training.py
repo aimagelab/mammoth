@@ -187,7 +187,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 'model': model.state_dict(),
                 'args': args,
                 'results': [results, results_mask_classes, logger.dump()],
-                'optimizer': model.optimizer.state_dict() if hasattr(model, 'optimizer') else None,
+                'optimizer': model.opt.state_dict() if hasattr(model, 'opt') else None,
                 'scheduler': scheduler.state_dict() if scheduler is not None else None,
             }
             if 'buffer_size' in model.args:

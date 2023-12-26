@@ -43,10 +43,10 @@ See :ref:`continual_dataset` for more details or **SequentialCIFAR10** in :ref:`
 
 .. note::
     Datasets are downloaded by default in the **data** folder. You can change this
-    default location by setting the **base_path** function in :ref:`conf`.
+    default location by setting the **base_path** function in :ref:`conf`. 
 
-Settings
---------
+Experimental settings
+---------------------
 
 Experimental settings follow and extend the notation of `Three Scenarios for Continual Learning <https://arxiv.org/abs/1904.07734>`_, 
 and are defined in the **SETTING** attribute of each dataset. The following settings are available:
@@ -62,6 +62,14 @@ and are defined in the **SETTING** attribute of each dataset. The following sett
 - `domain-il`: the total number of classes is fixed, but the distribution of the input data changes at each task.
 
 - `general-continual`: the distribution of the classes change gradually over time, without notion of task boundaries. In this setting, the **TASKS** and **N_CLASSES_PER_TASK** attributes are ignored as there is only a single long tasks that changes over time.
+
+- `cssl`: this setting is the same as `class-il`, but with some of the labels missing due to limited supervision. This setting is used to simulate the case where a percentage of the labels is not available for training. For example, if ``--label_perc`` is set to ``0.5``, only 50% of the labels will be available for training. The remaining 50% will be masked with a label of ``-1`` and ignored during training if the currently used method does not support partial labels (check out the **COMPATIBILITY** attribute in :ref:`module-models`).
+
+.. admonition:: Experiments on the **joint** setting
+    :class: hint
+
+    Mammoth datasets support the **joint** setting, which is a special case of the `class-il` setting where all the classes are available at each task. This is useful to compare the performance of a method on what is usually considered the *upper bound* for the `class-il` setting. To run an experiment on the **joint** setting, simply set the ``--joint`` to ``1``. This will automatically set the **N_CLASSES_PER_TASK** attribute to the total number of classes in the dataset and the **TASKS** attribute to ``1``.
+
 
 Steps to create a new dataset:
 ------------------------------
@@ -96,11 +104,7 @@ Utils
 
 - **store_masked_loaders**: This function is defined in :ref:`continual_dataset` and takes care of masking the data loaders to return only the data for the current task.
 It is used by most datasets to create the data loaders for each task. 
-
     - If the ``--permute_classes`` flag is set to ``1``, it also applies the appropriate permutation to the classes before splitting the data.
 
-    - If the ``--label_perc`` argument is set to a value between ``0`` and ``1``, it also randomly masks a percentage of the labels for each task. This 
-    is used to simulate the case where a percentage of the labels is not available for training. For example, if ``--label_perc`` is set to ``0.5``,
-    only 50% of the labels will be available for training. The remaining 50% will be masked with a label of ``-1`` and ignored during training if 
-    the currently used method does not support partial labels (check out the **COMPATIBILITY** attribute in :ref:`module-models`).
+    - If the ``--label_perc`` argument is set to a value between ``0`` and ``1``, it also randomly masks a percentage of the labels for each task. 
 

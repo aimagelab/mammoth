@@ -25,7 +25,7 @@ The most important arguments are the following:
 
 - ``--dataset``: the name of the dataset to use. The list of available datasets can be found in the `datasets` folder (or with ``--help``).
 
-- ``--model``: the name of the model to run. The list of available models can be found in the `models` folder (or with ``--help``). Once the model is selected, its corresponding parser is loaded (see the `parse_args` function in :ref:`_module-models`) and the model-specific arguments are available and shown with ``--help``.
+- ``--model``: the name of the model to run. The list of available models can be found in the `models` folder (or with ``--help``). Once the model is selected, its corresponding parser is loaded (see the `parse_args` function in :ref:`module-models`) and the model-specific arguments are available and shown with ``--help``.
 
 - ``--lr``: the learning rate to use for training.
 
@@ -36,6 +36,24 @@ Other arguments such as the size of the training batch and the number of epochs 
 .. code-block:: bash
 
   python utils/main.py --dataset seq-cifar10 --model der --buffer_size 500 --lr 0.03 --batch_size 128 --epochs 10
+
+.. note::
+    To ease hyper-parameter tuning, all boolean arguments follow the convention: ``--<argument>=1`` for ``True`` and ``--<argument>=0`` for ``False``. The only exceptions are ``--savecheck`` and ``--inference_only``, as they should not be included in the hyper-parameter search.
+
+Other useful arguments
+~~~~~~~~~~~~~~~~
+
+* ``--debug_mode``: If set to ``1``, the model will run for only a few iterations per each epoch and will disable WandB logging. This is useful for debugging.
+
+* ``--num_workers**: The number of workers to use for the data loaders. If set to ``0``, the data loaders will run in the main process. This is useful for debugging.
+
+* ``--seed``: The seed to use for the random number generators. If this is not set, the seed will be randomly generated.
+
+* ``--permute_classes``: If set to ``1``, the classes will be randomly permuted before splitting them into tasks.
+
+* ``--joint``: If set to ``1``, the supplied dataset will be treated as a single task. This usually serves as a upper bound for the performance of the model.
+
+* ``--label_perc``: The percentage of labels to use for each task. If set to ``0``, the model will be trained in a fully unsupervised manner.
 
 
 Other notable modules  

@@ -5,6 +5,8 @@ First steps
 
 2. From the root directory, run ``python utils/main.py --help`` to see the available options.
 
+See :ref:`module-utils` for more information about the most useful arguments
+
 Results and logs - WandB
 ------------------------
 
