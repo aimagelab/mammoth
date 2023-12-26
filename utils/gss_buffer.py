@@ -71,10 +71,12 @@ class Buffer:
     def init_tensors(self, examples: torch.Tensor, labels: torch.Tensor) -> None:
         """
         Initializes just the required tensors.
-        :param examples: tensor containing the images
-        :param labels: tensor containing the labels
-        :param logits: tensor containing the outputs of the network
-        :param task_labels: tensor containing the task labels
+
+        Args:
+            examples: tensor containing the images
+            labels: tensor containing the labels
+            logits: tensor containing the outputs of the network
+            task_labels: tensor containing the task labels
         """
         for attr_str in self.attributes:
             attr = eval(attr_str)
@@ -88,11 +90,12 @@ class Buffer:
     def add_data(self, examples, labels=None):
         """
         Adds the data to the memory buffer according to the reservoir strategy.
-        :param examples: tensor containing the images
-        :param labels: tensor containing the labels
-        :param logits: tensor containing the outputs of the network
-        :param task_labels: tensor containing the task labels
-        :return:
+
+        Args:
+            examples: tensor containing the images
+            labels: tensor containing the labels
+            logits: tensor containing the outputs of the network
+            task_labels: tensor containing the task labels
         """
         if not hasattr(self, 'examples'):
             self.init_tensors(examples, labels)
@@ -123,9 +126,13 @@ class Buffer:
     def get_data(self, size: int, transform: transforms = None, give_index=False, random=False) -> Tuple:
         """
         Random samples a batch of size items.
-        :param size: the number of requested items
-        :param transform: the transformation to be applied (data augmentation)
-        :return:
+
+        Args:
+            size: the number of requested items
+            transform: the transformation to be applied (data augmentation)
+
+        Returns:
+            a tuple with the requested items
         """
 
         if size > self.examples.shape[0]:
@@ -166,8 +173,12 @@ class Buffer:
     def get_all_data(self, transform: transforms = None) -> Tuple:
         """
         Return all the items in the memory buffer.
-        :param transform: the transformation to be applied (data augmentation)
-        :return: a tuple with all the items in the memory buffer
+
+        Args:
+            transform: the transformation to be applied (data augmentation)
+
+        Returns:
+            a tuple with all the items in the memory buffer
         """
         if transform is None:
             def transform(x): return x

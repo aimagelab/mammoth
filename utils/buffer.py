@@ -21,9 +21,10 @@ def icarl_replay(self: ContinualModel, dataset, val_set_split=0):
     Merge the replay buffer with the current task data.
     Optionally split the replay buffer into a validation set.
 
-    :param self: the model instance
-    :param dataset: the dataset
-    :param val_set_split: the fraction of the replay buffer to be used as validation set
+    Args:
+        self: the model instance
+        dataset: the dataset
+        val_set_split: the fraction of the replay buffer to be used as validation set
     """
 
     if self.current_task > 0:
@@ -73,9 +74,13 @@ def icarl_replay(self: ContinualModel, dataset, val_set_split=0):
 def reservoir(num_seen_examples: int, buffer_size: int) -> int:
     """
     Reservoir sampling algorithm.
-    :param num_seen_examples: the number of seen examples
-    :param buffer_size: the maximum buffer size
-    :return: the target index if the current image is sampled, else -1
+
+    Args:
+        num_seen_examples: the number of seen examples
+        buffer_size: the maximum buffer size
+
+    Returns:
+        the target index if the current image is sampled, else -1
     """
     if num_seen_examples < buffer_size:
         return num_seen_examples
@@ -123,10 +128,12 @@ class Buffer:
                      logits: torch.Tensor, task_labels: torch.Tensor) -> None:
         """
         Initializes just the required tensors.
-        :param examples: tensor containing the images
-        :param labels: tensor containing the labels
-        :param logits: tensor containing the outputs of the network
-        :param task_labels: tensor containing the task labels
+
+        Args:
+            examples: tensor containing the images
+            labels: tensor containing the labels
+            logits: tensor containing the outputs of the network
+            task_labels: tensor containing the task labels
         """
         for attr_str in self.attributes:
             attr = eval(attr_str)
@@ -142,11 +149,12 @@ class Buffer:
     def add_data(self, examples, labels=None, logits=None, task_labels=None, attention_maps=None):
         """
         Adds the data to the memory buffer according to the reservoir strategy.
-        :param examples: tensor containing the images
-        :param labels: tensor containing the labels
-        :param logits: tensor containing the outputs of the network
-        :param task_labels: tensor containing the task labels
-        :return:
+
+        Args:
+            examples: tensor containing the images
+            labels: tensor containing the labels
+            logits: tensor containing the outputs of the network
+            task_labels: tensor containing the task labels
         """
         if not hasattr(self, 'examples'):
             self.init_tensors(examples, labels, logits, task_labels)
@@ -168,12 +176,16 @@ class Buffer:
     def get_data(self, size: int, transform: nn.Module = None, return_index=False, device=None, mask_task_out=None, cpt=None) -> Tuple:
         """
         Random samples a batch of size items.
-        :param size: the number of requested items
-        :param transform: the transformation to be applied (data augmentation)
-        :param return_index: if True, returns the indexes of the sampled items
-        :param mask_task: if not None, masks OUT the examples from the given task
-        :param cpt: the number of classes per task (required if mask_task is not None and task_labels are not present)
-        :return:
+
+        Args:
+            size: the number of requested items
+            transform: the transformation to be applied (data augmentation)
+            return_index: if True, returns the indexes of the sampled items
+            mask_task: if not None, masks OUT the examples from the given task
+            cpt: the number of classes per task (required if mask_task is not None and task_labels are not present)
+
+        Returns:
+            a tuple containing the requested items. If return_index is True, the tuple contains the indexes as first element.
         """
         target_device = self.device if device is None else device
 
@@ -208,9 +220,13 @@ class Buffer:
     def get_data_by_index(self, indexes, transform: nn.Module = None, device=None) -> Tuple:
         """
         Returns the data by the given index.
-        :param index: the index of the item
-        :param transform: the transformation to be applied (data augmentation)
-        :return:
+
+        Args:
+            index: the index of the item
+            transform: the transformation to be applied (data augmentation)
+
+        Returns:
+            a tuple containing the requested items. The returned items depend on the attributes stored in the buffer from previous calls to `add_data`.
         """
         target_device = self.device if device is None else device
 
@@ -235,8 +251,12 @@ class Buffer:
     def get_all_data(self, transform: nn.Module = None, device=None) -> Tuple:
         """
         Return all the items in the memory buffer.
-        :param transform: the transformation to be applied (data augmentation)
-        :return: a tuple with all the items in the memory buffer
+
+        Args:
+            transform: the transformation to be applied (data augmentation)
+
+        Returns:
+            a tuple with all the items in the memory buffer
         """
         target_device = self.device if device is None else device
         if transform is None:
@@ -264,12 +284,14 @@ def fill_buffer(buffer: Buffer, dataset: ContinualDataset, t_idx: int, net: Cont
     """
     Adds examples from the current task to the memory buffer.
     Supports images, labels, task_labels, and logits.
-    :param buffer: the memory buffer
-    :param dataset: the dataset from which take the examples
-    :param t_idx: the task index
-    :param net: (optional) the model instance. Used if logits are in buffer. If provided, adds logits.
-    :param use_herding: (optional) if True, uses herding strategy. Otherwise, random sampling.
-    :param required_attributes: (optional) the attributes to be added to the buffer. If None and buffer is empty, adds only examples and labels.
+
+    Args:
+        buffer: the memory buffer
+        dataset: the dataset from which take the examples
+        t_idx: the task index
+        net: (optional) the model instance. Used if logits are in buffer. If provided, adds logits.
+        use_herding: (optional) if True, uses herding strategy. Otherwise, random sampling.
+        required_attributes: (optional) the attributes to be added to the buffer. If None and buffer is empty, adds only examples and labels.
     """
     if net is not None:
         mode = net.training

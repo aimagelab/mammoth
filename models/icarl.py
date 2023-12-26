@@ -82,10 +82,14 @@ class ICarl(ContinualModel):
                  task_idx: int, logits: torch.Tensor) -> torch.Tensor:
         """
         Computes the loss tensor.
-        :param inputs: the images to be fed to the network
-        :param labels: the ground-truth labels
-        :param task_idx: the task index
-        :return: the differentiable loss value
+
+        Args:
+            inputs: the images to be fed to the network
+            labels: the ground-truth labels
+            task_idx: the task index
+
+        Returns:
+            the differentiable loss value
         """
 
         pc = task_idx * self.dataset.N_CLASSES_PER_TASK

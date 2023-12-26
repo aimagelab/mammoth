@@ -23,3 +23,13 @@ For advanced logging, including loss values, metrics, and hyperparameters, you c
 
 .. tip::
     By default, all arguments, loss values, and metrics are logged. Thanks to the **autolog_wandb** (:ref:`module-model`), all the variables created in the **observe** that start with *loss* or *_wandb_* will be logged. Thus, in order to loss all the separate loss values, you can simply add ``loss = loss + loss1 + loss2`` to the **observe** function.
+
+Testing
+-------
+
+Mammoth includes a few tests to ensure that the code is working as expected for all available models and datasets. The tests are run using `pytest` and can be run using the following command:
+
+.. code-block:: bash
+
+    pytest --verbose tests
+
