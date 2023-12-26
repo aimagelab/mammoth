@@ -2,13 +2,6 @@
 This module contains utility functions for configuration settings.
 """
 
-import os
-import sys
-import random
-import torch
-import numpy as np
-
-...
 # Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the

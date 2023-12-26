@@ -3,8 +3,11 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+"""
+This module contains the Logger class and related functions for logging accuracy values and other metrics.
+"""
+
 from contextlib import suppress
-import os
 import sys
 from typing import Any, Dict
 
@@ -18,6 +21,19 @@ with suppress(ImportError):
 
 
 def log_accs(args, logger, accs, t, setting, epoch=None):
+    """
+    Logs the accuracy values and other metrics.
+
+    All metrics are prefixed with `RESULT_` to be logged on wandb.
+
+    Args:
+        args: The arguments for logging.
+        logger: The Logger object.
+        accs: The accuracy values.
+        t: The task index.
+        setting: The setting of the benchmark (e.g., `class-il`).
+        epoch: The epoch number (optional).
+    """
     mean_acc = np.mean(accs, axis=1)
     print_mean_accuracy(mean_acc, t + 1, setting, joint=args.joint, epoch=epoch)
 
@@ -43,6 +59,8 @@ def print_mean_accuracy(mean_acc: np.ndarray, task_number: int,
         mean_acc: mean accuracy value
         task_number: task index
         setting: the setting of the benchmark
+        joint: whether it's joint accuracy or not
+        epoch: the epoch number (optional)
     """
     if joint:
         prefix = "Joint Accuracy" if epoch is None else f"Joint Accuracy (epoch {epoch})"
@@ -70,6 +88,14 @@ def print_mean_accuracy(mean_acc: np.ndarray, task_number: int,
 class Logger:
     def __init__(self, setting_str: str, dataset_str: str,
                  model_str: str) -> None:
+        """
+        Initializes a Logger object. This will take track and log the accuracy values and other metrics in the default path (`data/results`).
+
+        Args:
+            setting_str: The setting of the benchmark.
+            dataset_str: The dataset used.
+            model_str: The model used.
+        """
         self.accs = []
         self.fullaccs = []
         if setting_str == 'class-il':
@@ -86,6 +112,12 @@ class Logger:
         self.forgetting_mask_classes = None
 
     def dump(self):
+        """
+        Dumps the state of the logger in a dictionary.
+
+        Returns:
+            A dictionary containing the logged values.
+        """
         dic = {
             'accs': self.accs,
             'fullaccs': self.fullaccs,
@@ -103,6 +135,12 @@ class Logger:
         return dic
 
     def load(self, dic):
+        """
+        Loads the state of the logger from a dictionary.
+
+        Args:
+            dic: The dictionary containing the logged values.
+        """
         self.accs = dic['accs']
         self.fullaccs = dic['fullaccs']
         self.fwt = dic['fwt']
@@ -116,6 +154,12 @@ class Logger:
             self.fullaccs_mask_classes = dic['fullaccs_mask_classes']
 
     def rewind(self, num):
+        """
+        Rewinds the logger by a given number of values.
+
+        Args:
+            num: The number of values to rewind.
+        """
         self.accs = self.accs[:-num]
         self.fullaccs = self.fullaccs[:-num]
         with suppress(BaseException):
@@ -131,15 +175,38 @@ class Logger:
             self.fullaccs_mask_classes = self.fullaccs_mask_classes[:-num]
 
     def add_fwt(self, results, accs, results_mask_classes, accs_mask_classes):
+        """
+        Adds forward transfer values.
+
+        Args:
+            results: The results.
+            accs: The accuracy values.
+            results_mask_classes: The results for masked classes.
+            accs_mask_classes: The accuracy values for masked classes.
+        """
         self.fwt = forward_transfer(results, accs)
         if self.setting == 'class-il':
             self.fwt_mask_classes = forward_transfer(results_mask_classes, accs_mask_classes)
 
     def add_bwt(self, results, results_mask_classes):
+        """
+        Adds backward transfer values.
+
+        Args:
+            results: The results.
+            results_mask_classes: The results for masked classes.
+        """
         self.bwt = backward_transfer(results)
         self.bwt_mask_classes = backward_transfer(results_mask_classes)
 
     def add_forgetting(self, results, results_mask_classes):
+        """
+        Adds forgetting values.
+
+        Args:
+            results: The results.
+            results_mask_classes: The results for masked classes.
+        """
         self.forgetting = forgetting(results)
         self.forgetting_mask_classes = forgetting(results_mask_classes)
 
@@ -162,6 +229,12 @@ class Logger:
             self.accs_mask_classes.append(mean_acc_task_il)
 
     def log_fullacc(self, accs):
+        """
+        Logs all the accuracy of the classes from the current and past tasks.
+
+        Args:
+            accs: the accuracy values
+        """
         if self.setting == 'class-il':
             acc_class_il, acc_task_il = accs
             self.fullaccs.append(acc_class_il)
@@ -169,7 +242,7 @@ class Logger:
 
     def write(self, args: Dict[str, Any]) -> None:
         """
-        Writes out the logged value along with its arguments.
+        Writes out the logged value along with its arguments in the default path (`data/results`).
 
         Args:
             args: the namespace of the current experiment

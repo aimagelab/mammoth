@@ -11,6 +11,13 @@ from typing import Union
 
 class ProgressBar:
     def __init__(self, joint=False, verbose=True):
+        """
+        Initializes a ProgressBar object.
+
+        Args:
+            joint: a boolean indicating whether the progress bar is for a joint task
+            verbose: a boolean indicating whether to display the progress bar
+        """
         self.joint = joint
         self.old_time = 0
         self.running_sum = 0

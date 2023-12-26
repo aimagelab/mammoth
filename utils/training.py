@@ -5,7 +5,6 @@
 
 from copy import deepcopy
 import math
-import pickle
 import sys
 from argparse import Namespace
 from typing import Tuple
@@ -46,6 +45,8 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
     """
     Evaluates the accuracy of the model for each past task.
 
+    The accuracy is evaluated for all the tasks up to the current one, only for the total number of classes seen so far.
+
     Args:
         model: the model to be evaluated
         dataset: the continual dataset at hand
@@ -56,6 +57,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
     status = model.net.training
     model.net.eval()
     accs, accs_mask_classes = [], []
+    n_classes = dataset.get_offsets()[1]
     for k, test_loader in enumerate(dataset.test_loaders):
         if last and k < len(dataset.test_loaders) - 1:
             continue
@@ -70,7 +72,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
             else:
                 outputs = model(inputs)
 
-            _, pred = torch.max(outputs.data, 1)
+            _, pred = torch.max(outputs[:, :n_classes].data, 1)
             correct += torch.sum(pred == labels).item()
             total += labels.shape[0]
 

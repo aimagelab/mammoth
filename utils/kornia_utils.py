@@ -1,3 +1,4 @@
+from typing import List, Union
 import kornia
 from torch import nn
 import torch
@@ -6,21 +7,64 @@ from kornia.augmentation.container.params import ParamItem
 
 
 class KorniaAugNoGrad(kornia.augmentation.AugmentationSequential):
+    """
+    A custom augmentation class that applies Kornia augmentations without gradient computation.
+
+    Inherits from `kornia.augmentation.AugmentationSequential`.
+
+    Args:
+        *args: Variable length argument list.
+        **kwargs: Arbitrary keyword arguments.
+
+
+    Methods:
+        _do_transform: Performs the transformation without gradient computation.
+        forward: Overrides the forward method to apply the transformation without gradient computation.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def _do_transform(self, *args, **kwargs) -> torch.Tensor:
+        """
+        Performs the transformation without gradient computation.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            torch.Tensor: The transformed tensor.
+        """
         x = super().forward(*args, **kwargs)
-        # if len(x.shape) == 4 and x.shape[0] == 1:
-        #     x = x.squeeze(0)
         return x
 
     @torch.no_grad()
     def forward(self, *args, **kwargs) -> torch.Tensor:
+        """
+        Overrides the forward method to apply the transformation without gradient computation.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            torch.Tensor: The transformed tensor.
+        """
         return self._do_transform(*args, **kwargs)
 
 
-def to_kornia_transform(transform: transforms.Compose, apply: bool = True):
+def to_kornia_transform(transform: transforms.Compose, apply: bool = True) -> Union[List[kornia.augmentation.AugmentationBase2D], KorniaAugNoGrad]:
+    """
+    Converts PIL transforms to Kornia transforms.
+
+    Args:
+        transform (transforms.Compose): The torchvision transform to be converted.
+        apply (bool, optional): Whether to convert the processed kornia transforms list into a KorniaAugNoGrad object. Defaults to True.
+
+    Returns:
+        Union[List[kornia.augmentation.AugmentationBase2D], KorniaAugNoGrad]: The converted Kornia transforms.
+    """
     if isinstance(transform, kornia.augmentation.AugmentationSequential) or \
             (isinstance(transform, nn.Sequential) and isinstance(transform[0], kornia.augmentation.AugmentationBase2D)):
         return transform
@@ -77,6 +121,25 @@ def to_kornia_transform(transform: transforms.Compose, apply: bool = True):
 
 
 class CustomKorniaRandAugment(kornia.augmentation.auto.PolicyAugmentBase):
+    """
+    A custom augmentation class that applies randaug as a Kornia augmentation.
+
+    Inherits from `kornia.augmentation.auto.PolicyAugmentBase`.
+
+    Args:
+        n (int): The number of augmentations to apply.
+        policy: The policy of augmentations to apply.
+
+    Attributes:
+        rand_selector (torch.distributions.Categorical): A categorical distribution for selecting augmentations randomly.
+        n (int): The number of augmentations to apply.
+
+    Methods:
+        _getpolicy: Returns the Kornia augmentation operation based on the name, probability, and magnitude.
+        compose_subpolicy_sequential: Composes a subpolicy of augmentations sequentially.
+        get_forward_sequence: Returns the forward sequence of augmentations based on the selected indices or parameters.
+        forward_parameters: Computes the forward parameters for the augmentations.
+    """
 
     def __init__(self, n: int, policy) -> None:
         super().__init__(policy)
@@ -85,15 +148,45 @@ class CustomKorniaRandAugment(kornia.augmentation.auto.PolicyAugmentBase):
         self.n = n
 
     def _getpolicy(self, name, p, m):
+        """
+        Returns the Kornia augmentation operation based on the name, probability, and magnitude.
+
+        Args:
+            name (str): The name of the augmentation operation.
+            p (float): The probability of applying the augmentation.
+            m (float): The magnitude of the augmentation.
+
+        Returns:
+            kornia.augmentation.auto.operations.ops: The Kornia augmentation operation.
+        """
         if 'shear' in name.lower() or 'solarize' in name.lower() or 'rotate' in name.lower() or 'translate' in name.lower() or name.lower().startswith('contrast'):
-            return getattr(kornia.augmentation.auto.operations.ops, name)(m, p)  # Oh kornia, why do you have to be so inconsistent?
+            # for some reason, some kornia ops have the probability and magnitude in the opposite order
+            return getattr(kornia.augmentation.auto.operations.ops, name)(m, p)
         else:
             return getattr(kornia.augmentation.auto.operations.ops, name)(p, m)
 
     def compose_subpolicy_sequential(self, subpolicy):
+        """
+        Composes a subpolicy of augmentations sequentially.
+
+        Args:
+            subpolicy (List[Tuple[str, float, float]]): The subpolicy of augmentations.
+
+        Returns:
+            kornia.augmentation.auto.PolicySequential: The composed subpolicy of augmentations.
+        """
         return kornia.augmentation.auto.PolicySequential(*[self._getpolicy(name, p, m) for (name, p, m) in subpolicy])
 
     def get_forward_sequence(self, params=None):
+        """
+        Returns the forward sequence of augmentations based on the selected indices or parameters.
+
+        Args:
+            params (List[ParamItem], optional): The parameters of the augmentations. Defaults to None.
+
+        Returns:
+            List[Tuple[str, kornia.augmentation.auto.operations.ops]]: The forward sequence of augmentations.
+        """
         if params is None:
             idx = self.rand_selector.sample((self.n,))
             return self.get_children_by_indices(idx)
@@ -101,13 +194,21 @@ class CustomKorniaRandAugment(kornia.augmentation.auto.PolicyAugmentBase):
         return self.get_children_by_params(params)
 
     def forward_parameters(self, batch_shape: torch.Size):
+        """
+        Computes the forward parameters for the augmentations.
+
+        Args:
+            batch_shape (torch.Size): The shape of the input batch.
+
+        Returns:
+            List[ParamItem]: The forward parameters for the augmentations.
+        """
         named_modules = self.get_forward_sequence()
 
         params = []
 
         for name, module in named_modules:
             mod_param = module.forward_parameters(batch_shape)
-            # Compose it
             param = ParamItem(name, [ParamItem(mname, mp)[1] for (mname, _), mp in zip(module.named_children(), mod_param)])
             params.append(param)
 

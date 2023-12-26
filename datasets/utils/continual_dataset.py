@@ -71,6 +71,18 @@ class ContinualDataset:
         if not all((self.NAME, self.SETTING, self.N_CLASSES_PER_TASK, self.N_TASKS, self.SIZE, self.N_CLASSES)):
             raise NotImplementedError('The dataset must be initialized with all the required fields.')
 
+    def get_offsets(self):
+        """
+        Compute the start and end class index for the current task.
+
+        Returns:
+            tuple: the start and end class index for the current task
+        """
+        start_c = self.N_CLASSES_PER_TASK * self.i if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK[:self.i])
+        end_c = self.N_CLASSES_PER_TASK * (self.i + 1) if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK[:self.i + 1])
+
+        return start_c, end_c
+
     def get_data_loaders(self) -> Tuple[DataLoader, DataLoader]:
         """Creates and returns the training and test loaders for the current task.
         The current training loader and all test loaders are stored in self.

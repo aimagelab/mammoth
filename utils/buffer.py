@@ -92,29 +92,38 @@ def reservoir(num_seen_examples: int, buffer_size: int) -> int:
         return -1
 
 
-def ring(num_seen_examples: int, buffer_portion_size: int, task: int) -> int:
-    return num_seen_examples % buffer_portion_size + task * buffer_portion_size
-
-
 class Buffer:
     """
     The memory buffer of rehearsal method.
     """
 
-    def __init__(self, buffer_size, device="cpu", n_tasks=None, mode='reservoir'):
-        assert mode in ('ring', 'reservoir')
+    def __init__(self, buffer_size, device="cpu"):
+        """
+        Initialize a reservoir-based Buffer object.
+
+        Args:
+            buffer_size (int): The maximum size of the buffer.
+            device (str, optional): The device to store the buffer on. Defaults to "cpu".
+
+        Note:
+            If during the `get_data` the transform is PIL, data will be moved to cpu and then back to the device. This is why the device is set to cpu by default.
+        """
         self.buffer_size = buffer_size
         self.device = device
         self.num_seen_examples = 0
-        self.functional_index = eval(mode)
-        if mode == 'ring':
-            assert n_tasks is not None
-            self.task_number = n_tasks
-            self.buffer_portion_size = buffer_size // n_tasks
         self.attributes = ['examples', 'labels', 'logits', 'task_labels']
         self.attention_maps = [None] * buffer_size
 
     def to(self, device):
+        """
+        Move the buffer and its attributes to the specified device.
+
+        Args:
+            device: The device to move the buffer and its attributes to.
+
+        Returns:
+            The buffer instance with the updated device and attributes.
+        """
         self.device = device
         for attr_str in self.attributes:
             if hasattr(self, attr_str):
@@ -122,6 +131,9 @@ class Buffer:
         return self
 
     def __len__(self):
+        """
+        Returns the number items in the buffer.
+        """
         return min(self.num_seen_examples, self.buffer_size)
 
     def init_tensors(self, examples: torch.Tensor, labels: torch.Tensor,
@@ -143,7 +155,10 @@ class Buffer:
                         *attr.shape[1:]), dtype=typ, device=self.device))
 
     @property
-    def used_attrbutes(self):
+    def used_attributes(self):
+        """
+        Returns a list of attributes that are currently being used by the object.
+        """
         return [attr_str for attr_str in self.attributes if hasattr(self, attr_str)]
 
     def add_data(self, examples, labels=None, logits=None, task_labels=None, attention_maps=None):
@@ -155,6 +170,9 @@ class Buffer:
             labels: tensor containing the labels
             logits: tensor containing the outputs of the network
             task_labels: tensor containing the task labels
+
+        Note:
+            Only the examples are required. The other tensors are initialized only if they are provided.
         """
         if not hasattr(self, 'examples'):
             self.init_tensors(examples, labels, logits, task_labels)
