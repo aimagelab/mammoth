@@ -37,6 +37,6 @@ def test_lucir(dataset, imprint_weights):
     # log all outputs to file
     if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
         os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_lucir.{dataset}.log'), 'w', encoding='utf-8')
+    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_lucir.{dataset}.{imprint_weights}.log'), 'w', encoding='utf-8')
     sys.stderr = sys.stdout
     main()

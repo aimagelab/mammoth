@@ -327,8 +327,8 @@ def fill_buffer(buffer: Buffer, dataset: ContinualDataset, t_idx: int, net: Cont
 
     # Check for requirs attributes
     required_attributes = required_attributes or ['examples', 'labels']
-    assert all([attr in buffer.used_attrbutes for attr in required_attributes]) or len(buffer) == 0, \
-        "Required attributes not in buffer: {}".format([attr for attr in required_attributes if attr not in buffer.used_attrbutes])
+    assert all([attr in buffer.used_attributes for attr in required_attributes]) or len(buffer) == 0, \
+        "Required attributes not in buffer: {}".format([attr for attr in required_attributes if attr not in buffer.used_attributes])
 
     if t_idx > 0:
         # 1) First, subsample prior classes
@@ -347,7 +347,7 @@ def fill_buffer(buffer: Buffer, dataset: ContinualDataset, t_idx: int, net: Cont
     if norm_trans is None:
         def norm_trans(x): return x
 
-    if 'logits' in buffer.used_attrbutes:
+    if 'logits' in buffer.used_attributes:
         assert net is not None, "Logits in buffer require a model instance"
 
     # 2.1 Extract all features

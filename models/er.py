@@ -1,3 +1,13 @@
+"""
+This module implements the simplest form of rehearsal training: Experience Replay. It maintains a buffer
+of previously seen examples and uses them to augment the current batch during training.
+
+Example usage:
+    model = Er(backbone, loss, args, transform)
+    loss = model.observe(inputs, labels, not_aug_inputs, epoch)
+
+"""
+
 # Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
@@ -11,6 +21,11 @@ from utils.buffer import Buffer
 
 
 def get_parser() -> ArgumentParser:
+    """
+    Returns an ArgumentParser object with predefined arguments for the Er model.
+
+    Besides the required `add_management_args` and `add_experiment_args`, this model requires the `add_rehearsal_args` to include the buffer-related arguments.
+    """
     parser = ArgumentParser(description='Continual learning via'
                                         ' Experience Replay.')
     add_management_args(parser)
@@ -24,10 +39,16 @@ class Er(ContinualModel):
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     def __init__(self, backbone, loss, args, transform):
+        """
+        The ER model maintains a buffer of previously seen examples and uses them to augment the current batch during training.
+        """
         super(Er, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
+        """
+        ER trains on the current task using the data provided, but also augments the batch with data from the buffer.
+        """
 
         real_batch_size = inputs.shape[0]
 
