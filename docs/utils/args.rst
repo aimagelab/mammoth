@@ -69,7 +69,7 @@ Arguments
             - Choices: 
 
 **\-\-distributed** : <class 'str'>
-            *Help*: Distributed training?
+            *Help*: Enable distributed training?
 
             - Default: no
 
@@ -183,7 +183,7 @@ Arguments
             - Choices: 0, 1
 
 **\-\-enable_other_metrics** : <class 'int'>
-            *Help*: Enable additional metrics
+            *Help*: Enable computing additional metrics: forward and backward transfer.
 
             - Default: 0
 

@@ -219,7 +219,7 @@ class XDerRPC(ContinualModel):
             eyey = torch.eye(self.buffer.buffer_size).to(buf_idx.device)[buf_idx]
             umask = (eyey * eyey.cumsum(0)).sum(1) < 2
 
-            buf_idx = buf_idx[umask]
+            buf_idx = buf_idx[umask].to(self.buffer.device)
             buf_inputs = buf_inputs[umask]
             buf_labels = buf_labels[umask]
             buf_logits = buf_logits[umask]
