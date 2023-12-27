@@ -48,11 +48,13 @@ def get_device() -> torch.device:
                 return torch.device("mps")
         except BaseException:
             print("WARNING: Something went wrong with MPS. Using CPU.")
-            return torch.device("cpu")
+
+        return torch.device("cpu")
 
     # Permanently store the chosen device
     if not hasattr(get_device, 'device'):
         get_device.device = _get_device()
+        print(f'Using device {get_device.device}')
 
     return get_device.device
 

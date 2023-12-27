@@ -12,7 +12,7 @@ from torch.optim import SGD
 
 from models.utils.continual_model import ContinualModel
 from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
-from utils.buffer import Buffer
+from utils.ring_buffer import RingBuffer as Buffer
 
 
 def get_parser() -> ArgumentParser:
@@ -35,7 +35,7 @@ class HAL(ContinualModel):
     def __init__(self, backbone, loss, args, transform):
         super().__init__(backbone, loss, args, transform)
         self.task_number = 0
-        self.buffer = Buffer(self.args.buffer_size, n_tasks=get_dataset(args).N_TASKS, mode='ring')
+        self.buffer = Buffer(self.args.buffer_size, n_tasks=get_dataset(args).N_TASKS)
         self.hal_lambda = args.hal_lambda
         self.beta = args.beta
         self.gamma = args.gamma
