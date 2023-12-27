@@ -91,7 +91,7 @@ The base class **ContinualModel** provides a few properties that are automatical
 
     - **transform**: the transform applied to the input data. This attribute is automatically set during the initialization of the model and is defined by the chosen **dataset** (see :ref:`module-datasets` for more details).
 
-    - **weak_transform**: this function is used to apply a new transform to a :ref:`torch.Tensor`. In most cases, this is implemented as a `kornia <https://github.com/kornia/kornia>`_ transform. However, if a transform is not supported by the **to_kornia_transform**, it is implemented as `PIL <https://pillow.readthedocs.io/en/stable/>`_.
+    - **weak_transform**: this function is used to apply a new transform to a `torch.Tensor <https://pytorch.org/docs/stable/tensors.html>`_. In most cases, this is implemented as a `kornia <https://github.com/kornia/kornia>`_ transform. However, if a transform is not supported by the **to_kornia_transform**, it is implemented as `PIL <https://pillow.readthedocs.io/en/stable/>`_.
 
     - **normalization_transform**: the transform used to normalize the input data. As for the **weak_transform**, this is implemented as a `kornia <https://github.com/kornia/kornia>`_ transform if possible, otherwise it is implemented as `PIL <https://pillow.readthedocs.io/en/stable/>`_.
 
