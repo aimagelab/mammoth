@@ -45,6 +45,8 @@ See :ref:`continual_dataset` for more details or **SequentialCIFAR10** in :ref:`
     Datasets are downloaded by default in the **data** folder. You can change this
     default location by setting the **base_path** function in :ref:`conf`. 
 
+.. _settings:
+
 Experimental settings
 ---------------------
 
