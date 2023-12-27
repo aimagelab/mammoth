@@ -6,6 +6,15 @@
 
 Official repository of [Class-Incremental Continual Learning into the eXtended DER-verse](https://arxiv.org/abs/2201.00766) and [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html)
 
+Mammoth is a framework for continual learning research. It is designed to be modular, easy to extend, and - most importantly - _easy to debug_.
+Idelly, all the code necessary to run the experiments is included _in the repository_, without needing to check out other repositories or install additional packages.
+
+With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
+
+## **NEW**: WIKI
+
+We have created a [WIKI](https://aimagelab.github.io/mammoth/)! Check it out for more information on how to use Mammoth.
+
 <p align="center">
   <img width="112" height="112" src="seq_mnist.gif" alt="Sequential MNIST">
   <img width="112" height="112" src="seq_cifar10.gif" alt="Sequential CIFAR-10">
@@ -48,10 +57,10 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 - Transfer without Forgetting (TwF)
 - Continual Contrastive Interpolation Consistency (CCIC) - _Requires_ `pip install kornia`
 
-
 ## Datasets
 
-**NOTE**: Datasets are automatically downloaded in the `data/`. 
+**NOTE**: Datasets are automatically downloaded in the `data/`.
+
 - This can be changes by changing the `base_path` function in `utils/conf.py`.
 - The `data/` folder is not tracked by git and is craeted automatically if missing.
 
@@ -142,4 +151,7 @@ Please use `autopep8` with parameters:
 
 ## Previous versions
 
-If you're interested in a version of this repo that only includes the code for [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html), please use our [neurips2020 tag](https://github.com/aimagelab/mammoth/releases/tag/neurips2020).
+If you're interested in a version of this repo that only includes the original code for [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html) or [Class-Incremental Continual Learning into the eXtended DER-verse](https://arxiv.org/abs/2201.00766>), please use the following tags:
+
+- [neurips2020](https://github.com/aimagelab/mammoth/releases/tag/neurips2020) for DER (NeurIPS 2020).
+- [tpami2023](https://github.com/aimagelab/mammoth/releases/tag/tpami2023) for X-DER (TPAMI 2023).

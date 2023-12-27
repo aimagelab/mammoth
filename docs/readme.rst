@@ -14,7 +14,7 @@ Official repository of `Class-Incremental Continual Learning into the eXtended D
 Mammoth is a framework for continual learning research. It is designed to be modular, easy to extend, and - most importantly - *easy to debug*.
 Idelly, all the code necessary to run the experiments is included *in the repository*, without needing to check out other repositories or install additional packages. 
 
-With Mammoth, nothing is written in stone. You can easily add new models, datasets, training strategies, or functionalities.
+With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
 
 .. list-table::
    :widths: 15 15 15 15 15 15
@@ -90,7 +90,7 @@ Datasets
 --------
 
 **NOTE**: Datasets are automatically downloaded in the ``data/``.
-- This can be changes by changing the ``base_path`` function in ``utils/conf.py``.
+- This can be changed by changing the ``base_path`` function in ``utils/conf.py``.
 - The ``data/`` folder is not tracked by git and is created automatically if missing.
 
 - Sequential MNIST (*Class-Il / Task-IL*)
@@ -188,5 +188,9 @@ Please use `autopep8` with parameters:
 Previous versions
 -----------------
 
-If you're interested in a version of this repo that only includes the code for `Dark Experience for General Continual Learning: a Strong, Simple Baseline <https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html>`_, please use our `neurips2020 tag <https://github.com/aimagelab/mammoth/releases/tag/neurips2020>`_.
+If you're interested in a version of this repo that only includes the original code for `Dark Experience for General Continual Learning: a Strong, Simple Baseline <https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html>`_ or `Class-Incremental Continual Learning into the eXtended DER-verse <https://arxiv.org/abs/2201.00766>`_, please use the following tags:
+
+- `neurips2020 <https://github.com/aimagelab/mammoth/releases/tag/neurips2020>`_ for DER (NeurIPS 2020).
+
+- `tpami2023 <https://github.com/aimagelab/mammoth/releases/tag/tpami2023>`_ for X-DER (TPAMI 2023).
 

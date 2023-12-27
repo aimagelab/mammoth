@@ -154,7 +154,7 @@ if __name__ == '__main__':
         docs_args.append(_DocsArgs(action.dest, action.type, action.choices, action.default, action.help))
 
     with open('docs/utils/args.rst', 'w') as f:
-        f.write('.. _args:\n\n')
+        f.write('.. _module-args:\n\n')
         f.write('Arguments\n')
         f.write('=========\n\n')
         f.write('.. rubric:: EXPERIMENT-RELATED ARGS\n\n')
