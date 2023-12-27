@@ -93,3 +93,4 @@ wandb
 logs
 **/_build/
 _autosummary
+generated

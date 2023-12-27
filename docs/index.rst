@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 .. autosummary::
-   :toctree: _autosummary
+   :toctree: generated
    :hidden:
    :template: custom-base-template.rst
    :recursive:
@@ -33,9 +33,9 @@
    :hidden:
    :caption: Contents:
 
-   _autosummary/models.rst
-   _autosummary/datasets.rst
-   _autosummary/backbone.rst
-   _autosummary/utils.rst
+   generated/models.rst
+   generated/datasets.rst
+   generated/backbone.rst
+   generated/utils.rst
 
 .. include:: readme.rst
