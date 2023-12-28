@@ -93,7 +93,7 @@ class ContinualModel(nn.Module):
     def __init__(self, backbone: nn.Module, loss: nn.Module,
                  args: Namespace, transform: nn.Module) -> None:
         super(ContinualModel, self).__init__()
-
+        print("Using {} as backbone".format(backbone.__class__.__name__))
         self.net = backbone
         self.loss = loss
         self.args = args

@@ -4,8 +4,6 @@ import socket
 import time
 import math
 
-from utils import smart_joint
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Slurm sbatcher', allow_abbrev=False)
     parser.add_argument('--file', type=str, required=True, help='File with arguments to run. Should be a list of strings, one per line')
@@ -86,8 +84,8 @@ if __name__ == '__main__':
 {f"#SBATCH --nodes={args.nodes}"}
 #SBATCH --time={args.timelimit}
 {f"#SBATCH --mem={args.mem}G" if args.mem else ""}
-#SBATCH --output="{smart_joint(outbase, args.name + r'_%A_%a.out')}"
-#SBATCH --error="{smart_joint(errbase, args.name + r'_%A_%a.out')}"
+#SBATCH --output="{os.path.join(outbase, args.name + r'_%A_%a.out')}"
+#SBATCH --error="{os.path.join(errbase, args.name + r'_%A_%a.out')}"
 {f"#SBATCH -A {args.account}" if args.account is not None else ""}
 #SBATCH --gres=gpu:{args.gpus}
 {f"#SBATCH --cpus-per-task={args.cpus}" if args.cpus is not None else ""}

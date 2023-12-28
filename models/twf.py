@@ -138,6 +138,8 @@ class TwF(ContinualModel):
         loss = 0
         attention_maps = []
 
+        torch.cuda.empty_cache()
+
         for i, (net_feat, pret_feat) in enumerate(zip(net_partial_features, pret_partial_features)):
             assert net_feat.shape == pret_feat.shape, f"{net_feat.shape} - {pret_feat.shape}"
 
@@ -169,21 +171,22 @@ class TwF(ContinualModel):
 
         B = len(inputs)
         all_labels = labels
+        
+        with torch.no_grad():
+            if len(self.buffer) > 0:
+                # sample from buffer
+                buf_choices, buf_inputs, buf_labels, buf_logits = self.buffer.get_data(
+                    self.args.minibatch_size, transform=None, return_index=True)
+                buf_attention_maps = [self.buffer.attention_maps[c]
+                                    for c in buf_choices]
+                d = [self.buf_transform(ee, attn_map) for ee, attn_map in zip(buf_inputs, buf_attention_maps)]
+                buf_inputs, buf_attention_maps = torch.stack(
+                    [v[0] for v in d]).to(self.device), [[o.to(self.device) for o in v[1]] for v in d]
+                buf_logits = buf_logits.to(self.device)
+                buf_labels = buf_labels.to(self.device)
 
-        if len(self.buffer) > 0:
-            # sample from buffer
-            buf_choices, buf_inputs, buf_labels, buf_logits = self.buffer.get_data(
-                self.args.minibatch_size, transform=None, return_index=True)
-            buf_attention_maps = [self.buffer.attention_maps[c]
-                                  for c in buf_choices]
-            d = [self.buf_transform(ee, attn_map) for ee, attn_map in zip(buf_inputs, buf_attention_maps)]
-            buf_inputs, buf_attention_maps = torch.stack(
-                [v[0] for v in d]).to(self.device), [[o.to(self.device) for o in v[1]] for v in d]
-            buf_logits = buf_logits.to(self.device)
-            buf_labels = buf_labels.to(self.device)
-
-            inputs = torch.cat([inputs, buf_inputs])
-            all_labels = torch.cat([labels, buf_labels])
+                inputs = torch.cat([inputs, buf_inputs])
+                all_labels = torch.cat([labels, buf_labels])
 
         all_logits, all_partial_features = self.net(inputs, returnt='full')
         with torch.no_grad():
@@ -194,12 +197,13 @@ class TwF(ContinualModel):
         stream_pret_partial_features = [p[:B] for p in all_pret_partial_features]
 
         loss = self.loss(
-            stream_logits[:, self.current_task * self.n_classes_current_task:(self.current_task + 1) * self.n_classes_current_task], labels % self.n_classes_current_task)
+            stream_logits[:, self.n_past_classes:self.n_seen_classes], labels % self.n_classes_current_task)
 
         loss_er = torch.tensor(0.)
         loss_der = torch.tensor(0.)
         loss_afd = torch.tensor(0.)
 
+        torch.cuda.empty_cache()
         if len(self.buffer) == 0:
             loss_afd, stream_attention_maps = self.partial_distill_loss(
                 stream_partial_features[-len(stream_pret_partial_features):], stream_pret_partial_features, labels)
@@ -217,7 +221,7 @@ class TwF(ContinualModel):
 
             stream_attention_maps = [ap[:B] for ap in all_attention_maps]
 
-            loss_er = self.loss(buf_outputs[:, :(self.current_task + 1) * self.n_classes_current_task], buf_labels)
+            loss_er = self.loss(buf_outputs[:, :self.n_seen_classes], buf_labels)
 
             loss_der = F.mse_loss(buf_outputs, buf_logits)
 
@@ -227,6 +231,8 @@ class TwF(ContinualModel):
 
         if self._it == 0:
             self.opt.zero_grad()
+        
+        torch.cuda.empty_cache()
         loss.backward()
         if self._it > 0 and (self._it % (self.args.virtual_batch_size // self.args.batch_size) == 0 or (self.args.virtual_batch_size == self.args.batch_size)):
             self.opt.step()

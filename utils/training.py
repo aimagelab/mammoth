@@ -140,6 +140,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     print(file=sys.stderr)
     start_task = 0 if args.start_from is None else args.start_from
     end_task = dataset.N_TASKS if args.stop_after is None else args.stop_after
+
+    torch.cuda.empty_cache()
     for t in range(start_task, end_task):
         model.net.train()
         train_loader, test_loader = dataset.get_data_loaders()
