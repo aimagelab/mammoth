@@ -28,6 +28,7 @@ class ContinualDataset:
         train_loader (DataLoader): the training loader
         test_loaders (List[DataLoader]): the test loaders
         i (int): the current task
+        c_task (int): the current task
         args (Namespace): the arguments which contains the hyperparameters
     """
 
@@ -48,6 +49,7 @@ class ContinualDataset:
         self.train_loader = None
         self.test_loaders = []
         self.i = 0
+        self.c_task = -1
         self.args = args
         if self.SETTING == 'class-il':
             self.N_CLASSES = self.N_CLASSES if hasattr(self, 'N_CLASSES') else \
@@ -71,15 +73,20 @@ class ContinualDataset:
         if not all((self.NAME, self.SETTING, self.N_CLASSES_PER_TASK, self.N_TASKS, self.SIZE, self.N_CLASSES)):
             raise NotImplementedError('The dataset must be initialized with all the required fields.')
 
-    def get_offsets(self):
+    def get_offsets(self, task_idx: int = None):
         """
         Compute the start and end class index for the current task.
+
+        Args:
+            task_idx (int): the task index
 
         Returns:
             tuple: the start and end class index for the current task
         """
-        start_c = self.N_CLASSES_PER_TASK * self.i if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK[:self.i])
-        end_c = self.N_CLASSES_PER_TASK * (self.i + 1) if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK[:self.i + 1])
+        task_idx = task_idx if task_idx is not None else self.c_task
+
+        start_c = self.N_CLASSES_PER_TASK * task_idx if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK[:task_idx])
+        end_c = self.N_CLASSES_PER_TASK * (task_idx + 1) if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK[:task_idx + 1])
 
         return start_c, end_c
 
@@ -205,4 +212,5 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     setting.train_loader = train_loader
 
     setting.i += setting.N_CLASSES_PER_TASK
+    setting.c_task += 1
     return train_loader, test_loader

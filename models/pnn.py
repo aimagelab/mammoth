@@ -53,6 +53,7 @@ class Pnn(ContinualModel):
         if self.x_shape is None:
             self.x_shape = x.shape
 
+        start_idx, end_idx = self.dataset.get_offsets(task_label)
         if self.task_idx == 0:
             out = self.net(x)
         else:
@@ -60,6 +61,11 @@ class Pnn(ContinualModel):
             out = self.nets[task_label](x)
             if self.task_idx != task_label:
                 self.nets[task_label].cpu()
+
+        # mask out previous tasks - Task-IL forward
+        if start_idx > 0:
+            out[:, :start_idx] = -torch.inf
+        out[:, end_idx:] = -torch.inf
         return out
 
     def end_task(self, dataset):
