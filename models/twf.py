@@ -86,7 +86,12 @@ class TwF(ContinualModel):
         return DoubleCompose(tfs)
 
     def end_task(self, dataset):
+        self.opt(set_to_none=True)
+        delattr(self, 'opt')
+
         self.net.eval()
+
+        torch.cuda.empty_cache()
 
         with torch.no_grad():
             # loop over buffer, recompute attention maps and save them
@@ -103,6 +108,9 @@ class TwF(ContinualModel):
                 buf_inputs = self.buffer.examples[buf_idxs].to(self.device)[buf_mask]
                 buf_labels = buf_labels[buf_mask]
                 buf_inputs = apply_transform(buf_inputs, self.normalization_transform).to(self.device)
+
+                if len(buf_inputs) < torch.cuda.device_count():
+                    continue
 
                 _, buf_partial_features = self.net(buf_inputs, returnt='full')
                 pret_buf_partial_features = self.teacher(buf_inputs)
@@ -167,6 +175,10 @@ class TwF(ContinualModel):
         return loss / (i + 1), attention_maps
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
+        B = len(inputs)
+        if len(inputs) < torch.cuda.device_count():
+            return 0
+
         labels = labels.long()
 
         B = len(inputs)

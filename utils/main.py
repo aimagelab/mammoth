@@ -183,6 +183,9 @@ def main(args=None):
     model = get_model(args, backbone, loss, dataset.get_transform())
 
     if args.distributed == 'dp':
+        if args.batch_size < torch.cuda.device_count():
+            raise Exception(f"Batch too small for DataParallel (Need at least {torch.cuda.device_count()}).")
+
         model.net = make_dp(model.net)
         model.to('cuda:0')
         args.conf_ngpus = torch.cuda.device_count()
