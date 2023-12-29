@@ -74,7 +74,10 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
                 break
             inputs, labels = data
             inputs, labels = inputs.to(model.device), labels.to(model.device)
-            outputs = model(inputs)
+            if 'class-il' not in model.COMPATIBILITY and 'general-continual' not in model.COMPATIBILITY:
+                outputs = model(inputs, k)
+            else:
+                outputs = model(inputs)
 
             _, pred = torch.max(outputs[:, :n_classes].data, 1)
             correct += torch.sum(pred == labels).item()
