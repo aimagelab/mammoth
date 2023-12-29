@@ -122,7 +122,7 @@ class MNIST360(torch.utils.data.Dataset):
                 tmp_train_dataset.transform = transforms.Compose(
                     [train_rotation, transforms.ToTensor()])
                 self.dataset[-1].append(create_seeded_dataloader(self.args,
-                                                                 tmp_train_dataset, batch_size=1, shuffle=True))
+                                                                 tmp_train_dataset, batch_size=1, shuffle=True, num_workers=0))
                 self.remaining_training_items[-1].append(
                     tmp_train_dataset.data.shape[0])
 
@@ -148,7 +148,7 @@ class MNIST360(torch.utils.data.Dataset):
             tmp_test_dataset.transform = transforms.Compose(
                 [test_rotation, transforms.ToTensor()])
             self.dataset.append(create_seeded_dataloader(self.args, tmp_test_dataset,
-                                                         batch_size=self.args.batch_size, shuffle=False))
+                                                         batch_size=self.args.batch_size, shuffle=False, num_workers=0))
 
     def get_train_data(self) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Ensembles the next examples of the current classes in a single batch.
