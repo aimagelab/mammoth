@@ -12,6 +12,7 @@ from typing import Tuple
 import torch
 from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
+from datasets.utils.gcl_dataset import GCLDataset
 from models.utils.continual_model import ContinualModel
 
 from utils.checkpoints import mammoth_load_checkpoint
@@ -62,19 +63,23 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
         if last and k < len(dataset.test_loaders) - 1:
             continue
         correct, correct_mask_classes, total = 0.0, 0.0, 0.0
-        for i, data in enumerate(test_loader):
+        test_iter = iter(test_loader)
+        i = 0
+        while True:
+            try:
+                data = next(test_iter)
+            except StopIteration:
+                break
             if model.args.debug_mode and i > model.get_debug_iters():
                 break
             inputs, labels = data
             inputs, labels = inputs.to(model.device), labels.to(model.device)
-            if 'class-il' not in model.COMPATIBILITY:
-                outputs = model(inputs, k)
-            else:
-                outputs = model(inputs)
+            outputs = model(inputs)
 
             _, pred = torch.max(outputs[:, :n_classes].data, 1)
             correct += torch.sum(pred == labels).item()
             total += labels.shape[0]
+            i += 1
 
             if dataset.SETTING == 'class-il':
                 mask_classes(outputs, dataset, k)
@@ -82,7 +87,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
                 correct_mask_classes += torch.sum(pred == labels).item()
 
         accs.append(correct / total * 100
-                    if 'class-il' in model.COMPATIBILITY else 0)
+                    if 'class-il' in model.COMPATIBILITY or 'general-continual' in model.COMPATIBILITY else 0)
         accs_mask_classes.append(correct_mask_classes / total * 100)
 
     model.net.train(status)
@@ -157,9 +162,15 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             scheduler = dataset.get_scheduler(model, args) if not hasattr(model, 'scheduler') else model.scheduler
             for epoch in range(model.args.n_epochs):
                 train_iter = iter(train_loader)
-                data_len = len(train_loader)
-                for i in range(data_len):
-                    data = next(train_iter)
+                data_len = None
+                if not isinstance(dataset, GCLDataset):
+                    data_len = len(train_loader)
+                i = 0
+                while True:
+                    try:
+                        data = next(train_iter)
+                    except StopIteration:
+                        break
                     if args.debug_mode and i > model.get_debug_iters():
                         break
                     if hasattr(dataset.train_loader.dataset, 'logits'):
@@ -176,6 +187,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                         loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch)
                     assert not math.isnan(loss)
                     progress_bar.prog(i, data_len, epoch, t, loss)
+                    i += 1
 
                 if scheduler is not None:
                     scheduler.step()

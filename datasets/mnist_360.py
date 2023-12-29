@@ -55,8 +55,6 @@ class MNIST360(torch.utils.data.Dataset):
         test_iteration (int): The current test iteration index.
         train_classes (list): A list of the current training classes.
         active_train_loaders (list): A list of the active training data loaders.
-        active_remaining_items (list): A list of the remaining items for the active training classes.
-        total_remaining_items (int): The total number of remaining items in the dataset.
         current_items (int): The current number of items in the dataset.
     """
 
@@ -64,19 +62,9 @@ class MNIST360(torch.utils.data.Dataset):
 
     def __init__(self, args: Namespace, is_train: bool = False) -> None:
         super().__init__()
-        self.dataset = []
-        self.remaining_training_items = []
         self.num_rounds = 3
         self.args = args
         self.is_train = is_train
-        self.is_over = False
-        self.completed_rounds, self.test_class, self.test_iteration = 0, 0, 0
-
-        self.train_classes = [0, 1]
-        if is_train:
-            self.init_train_loaders()
-        else:
-            self.init_test_loaders()
 
         self.reinit()
 
@@ -103,13 +91,14 @@ class MNIST360(torch.utils.data.Dataset):
             self.active_remaining_items = [
                 self.remaining_training_items[self.train_classes[0]].pop(),
                 self.remaining_training_items[self.train_classes[1]].pop()]
-            self.total_remaining_items = np.hstack([[len(d.dataset) for d in dls] for dls in self.dataset]).sum()  # -= self.current_items
-            self.current_items = np.hstack(self.active_remaining_items).sum()
 
     def init_train_loaders(self) -> None:
         """
         Initializes the train loader.
         """
+        self.remaining_training_items = []
+        self.dataset = []
+
         train_dataset = MyMNIST(base_path() + 'MNIST',
                                 train=True, download=True)
         if self.args.validation:
@@ -141,6 +130,9 @@ class MNIST360(torch.utils.data.Dataset):
         """
         Initializes the test loader.
         """
+        self.remaining_training_items = []
+        self.dataset = []
+
         if self.args.validation:
             test_dataset = self.val_dataset
         else:
@@ -156,7 +148,7 @@ class MNIST360(torch.utils.data.Dataset):
             tmp_test_dataset.transform = transforms.Compose(
                 [test_rotation, transforms.ToTensor()])
             self.dataset.append(create_seeded_dataloader(self.args, tmp_test_dataset,
-                                                         batch_size=self.args.batch_size, shuffle=True))
+                                                         batch_size=self.args.batch_size, shuffle=False))
 
     def get_train_data(self) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Ensembles the next examples of the current classes in a single batch.
@@ -222,7 +214,6 @@ class MNIST360(torch.utils.data.Dataset):
             if self.test_class == self.N_CLASSES:
                 self.is_over = True
 
-        self.active_remaining_items[0] -= x_test.shape[0]
         return x_test, y_test
 
     def reinit(self) -> None:
@@ -230,6 +221,12 @@ class MNIST360(torch.utils.data.Dataset):
         self.completed_rounds, self.test_class, self.test_iteration = 0, 0, 0
 
         self.train_classes = [0, 1]
+
+        if self.is_train:
+            self.init_train_loaders()
+        else:
+            self.init_test_loaders()
+
         if self.is_train:
             self.active_train_loaders = [
                 self.dataset[self.train_classes[0]].pop(),
@@ -239,24 +236,10 @@ class MNIST360(torch.utils.data.Dataset):
                 self.remaining_training_items[self.train_classes[0]].pop(),
                 self.remaining_training_items[self.train_classes[1]].pop()]
 
-            self.current_items = np.hstack(self.active_remaining_items).sum()
-            self.total_remaining_items = np.hstack([[len(d.dataset) for d in dls] for dls in self.dataset]).sum()
-        else:
-            self.total_remaining_items = sum([len(d.dataset) for d in self.dataset])
-            self.current_items = self.total_remaining_items
-            self.active_remaining_items = [self.total_remaining_items]
-
-    def __len__(self):
-        clen = self.total_remaining_items - self.current_items + np.hstack(self.active_remaining_items).sum()
-        return clen // self.args.batch_size
-
     def __iter__(self):
         self.reinit()
 
         return self
-
-    def __getitem__(self, index):
-        return next(self)
 
     def __next__(self):
         if self.is_over:
@@ -303,14 +286,11 @@ class SequentialMNIST360(GCLDataset):
         train_dataset = MNIST360(self.args, is_train=True)
         test_dataset = MNIST360(self.args, is_train=False)
 
-        train_loader = create_seeded_dataloader(self.args, train_dataset,
-                                                batch_size=1, shuffle=False, num_workers=0, collate_fn=custom_collate_unbatch)  # dataset is already shuffled and batched
-        test_loader = create_seeded_dataloader(self.args,
-                                               test_dataset, batch_size=1, shuffle=False, num_workers=0, collate_fn=custom_collate_unbatch)  # dataset already has dataloader
-        self.test_loaders.append(test_loader)
-        self.train_loader = train_loader
+        # dataset is already shuffled and batched internally - no need for a dataloader
+        self.test_loaders.append(test_dataset)
+        self.train_loader = train_dataset
 
-        return train_loader, test_loader
+        return train_dataset, test_dataset
 
     @staticmethod
     def get_backbone() -> torch.nn.Module:
@@ -339,3 +319,22 @@ class SequentialMNIST360(GCLDataset):
     @staticmethod
     def get_epochs():
         return 1
+
+
+if __name__ == "__main__":
+    ds = SequentialMNIST360(Namespace(validation=False, label_perc=1, n_epochs=1, batch_size=16, permute_classes=False, joint=False, num_workers=0, seed=None))
+    train, test = ds.get_data_loaders()
+
+    # load all data and save it in results/tmp
+    import os
+    import torchvision
+    from PIL import Image
+    from tqdm import tqdm
+
+    os.makedirs('../data/results/mnist360images/tmp/train', exist_ok=True)
+    for i, (x, y, _) in tqdm(enumerate(train), total=len(train)):
+        torchvision.utils.save_image(x, f'../data/results/mnist360images/tmp/train/{i}.png')
+
+    os.makedirs('../data/results/mnist360images/tmp/test', exist_ok=True)
+    for i, (x, y) in tqdm(enumerate(test), total=len(test)):
+        torchvision.utils.save_image(x, f'../data/results/mnist360images/tmp/test/{i}.png')
