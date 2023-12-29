@@ -80,6 +80,8 @@ class Pnn(ContinualModel):
         if self.x_shape is None:
             self.x_shape = inputs.shape
 
+        self.net.to(self.device)
+
         self.opt.zero_grad()
         outputs = self.net(inputs)
         loss = self.loss(outputs, labels)
