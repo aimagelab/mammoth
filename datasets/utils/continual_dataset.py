@@ -86,7 +86,10 @@ class ContinualDataset:
         Returns:
             tuple: the start and end class index for the current task
         """
-        task_idx = task_idx if task_idx is not None else self.c_task
+        if self.SETTING == 'class-il' or self.SETTING == 'task-il':
+            task_idx = task_idx if task_idx is not None else self.c_task
+        else:
+            task_idx = 0
 
         start_c = self.N_CLASSES_PER_TASK * task_idx if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK[:task_idx])
         end_c = self.N_CLASSES_PER_TASK * (task_idx + 1) if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK[:task_idx + 1])
@@ -210,16 +213,17 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
         train_dataset.data, test_dataset.data = train_dataset.data[train_idxs], train_dataset.data[val_idxs]
         train_dataset.targets, test_dataset.targets = train_dataset.targets[train_idxs], train_dataset.targets[val_idxs]
 
-    train_mask = np.logical_and(np.array(train_dataset.targets) >= setting.i,
-                                np.array(train_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
-    test_mask = np.logical_and(np.array(test_dataset.targets) >= setting.i,
-                               np.array(test_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
+    if setting.SETTING == 'class-il' or setting.SETTING == 'task-il':
+        train_mask = np.logical_and(np.array(train_dataset.targets) >= setting.i,
+                                    np.array(train_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
+        test_mask = np.logical_and(np.array(test_dataset.targets) >= setting.i,
+                                   np.array(test_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
 
-    train_dataset.data = train_dataset.data[train_mask]
-    test_dataset.data = test_dataset.data[test_mask]
+        train_dataset.data = train_dataset.data[train_mask]
+        test_dataset.data = test_dataset.data[test_mask]
 
-    train_dataset.targets = np.array(train_dataset.targets)[train_mask]
-    test_dataset.targets = np.array(test_dataset.targets)[test_mask]
+        train_dataset.targets = train_dataset.targets[train_mask]
+        test_dataset.targets = test_dataset.targets[test_mask]
 
     train_dataset, test_dataset = _prepare_data_loaders(train_dataset, test_dataset, setting)
 
