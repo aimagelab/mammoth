@@ -6,9 +6,10 @@
 from argparse import Namespace
 from typing import Tuple
 
+import torch
 import numpy as np
 import torch.nn as nn
-import torch.optim
+import torch.optim.lr_scheduler as scheds
 from torch.utils.data import DataLoader, Dataset
 
 from utils.conf import create_seeded_dataloader
@@ -38,6 +39,7 @@ class ContinualDataset:
     N_TASKS: int
     N_CLASSES: int
     SIZE: Tuple[int]
+    AVAIL_SCHEDS = ['multisteplr']
 
     def __init__(self, args: Namespace) -> None:
         """
@@ -131,6 +133,19 @@ class ContinualDataset:
     @staticmethod
     def get_scheduler(model, args: Namespace) -> torch.optim.lr_scheduler._LRScheduler:
         """Returns the scheduler to be used for the current dataset."""
+        if args.lr_scheduler is not None:
+            # check if lr_scheduler is in torch.optim.lr_scheduler
+            supported_scheds = {sched_name.lower(): sched_name for sched_name in dir(scheds) if sched_name.lower() in ContinualDataset.AVAIL_SCHEDS}
+            sched = None
+            if args.lr_scheduler.lower() in supported_scheds:
+                if args.lr_scheduler.lower() == 'multisteplr':
+                    sched = getattr(scheds, supported_scheds[args.lr_scheduler.lower()])(model.opt,
+                                                                                            milestones=args.lr_milestones,
+                                                                                            gamma=args.sched_multistep_lr_gamma)
+
+            if sched is None:
+                raise ValueError('Unknown scheduler: {}'.format(args.lr_scheduler))
+            return sched
         return None
 
     @staticmethod

@@ -5,6 +5,8 @@
 
 import os
 
+def custom_str_underscore(value):
+    return str(value).replace("_", '-').strip()
 
 def smart_joint(*paths):
     return os.path.join(*paths).replace("\\", "/")

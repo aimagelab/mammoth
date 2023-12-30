@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from argparse import Namespace
 from typing import Tuple
 
 import torch.nn.functional as F
@@ -15,6 +16,7 @@ from backbone.ResNet18 import resnet18
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
+# from models.utils.continual_model import ContinualModel
 from utils.conf import base_path
 
 
@@ -149,7 +151,9 @@ class SequentialCIFAR100(ContinualDataset):
         return 32
 
     @staticmethod
-    def get_scheduler(model, args) -> torch.optim.lr_scheduler:
-        model.opt = torch.optim.SGD(model.net.parameters(), lr=args.lr, weight_decay=args.optim_wd, momentum=args.optim_mom)
-        scheduler = torch.optim.lr_scheduler.MultiStepLR(model.opt, [35, 45], gamma=0.1, verbose=False)
+    def get_scheduler(model, args: Namespace) -> torch.optim.lr_scheduler:
+        model.opt = model.get_optimizer()
+        scheduler = ContinualDataset.get_scheduler(model, args)
+        if scheduler is None:
+            scheduler = torch.optim.lr_scheduler.MultiStepLR(model.opt, [35, 45], gamma=0.1, verbose=False)
         return scheduler

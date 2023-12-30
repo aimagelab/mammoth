@@ -199,7 +199,7 @@ class SequentialCUB200(ContinualDataset):
 
     @staticmethod
     def get_batch_size():
-        return 128
+        return 16
 
     @staticmethod
     def get_epochs():
