@@ -104,7 +104,7 @@ class MNIST360(torch.utils.data.Dataset):
         if self.args.validation:
             test_transform = transforms.ToTensor()
             train_dataset, self.val_dataset = get_train_val(
-                train_dataset, test_transform, 'mnist-360')
+                train_dataset, test_transform, 'mnist-360', val_perc=self.args.validation / 100)
 
         for j in range(self.N_CLASSES):
             self.dataset.append([])
@@ -134,7 +134,11 @@ class MNIST360(torch.utils.data.Dataset):
         self.dataset = []
 
         if self.args.validation:
-            test_dataset = self.val_dataset
+            test_transform = transforms.ToTensor()
+            train_dataset = MyMNIST(base_path() + 'MNIST',
+                                    train=True, download=True)
+            _, test_dataset = get_train_val(
+                train_dataset, test_transform, 'mnist-360', val_perc=self.args.validation / 100)
         else:
             test_dataset = MNIST(base_path() + 'MNIST',
                                  train=False, download=True)

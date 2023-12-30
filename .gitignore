@@ -94,3 +94,4 @@ logs
 **/_build/
 _autosummary
 generated
+val_permutations
