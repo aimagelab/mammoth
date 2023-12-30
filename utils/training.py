@@ -223,6 +223,16 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             checkpoint_name = f'checkpoints/{args.ckpt_name}_joint.pt' if args.joint else f'checkpoints/{args.ckpt_name}_{t}.pt'
             torch.save(save_obj, checkpoint_name)
 
+    if args.validation:
+        del dataset
+        args.validation = None
+
+        final_dataset = get_dataset(args)
+        for _ in range(final_dataset.N_TASKS):
+            final_dataset.get_data_loaders()
+        accs = evaluate(model, final_dataset)
+        log_accs(args, logger, accs, t, final_dataset.SETTING, prefix="FINAL")
+
     if not args.disable_log and args.enable_other_metrics:
         logger.add_bwt(results, results_mask_classes)
         logger.add_forgetting(results, results_mask_classes)

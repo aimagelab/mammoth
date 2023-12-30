@@ -14,7 +14,6 @@ from torchvision.datasets import MNIST
 from backbone.MNISTMLP import MNISTMLP
 from datasets.transforms.permutation import Permutation
 from datasets.utils.continual_dataset import ContinualDataset
-from datasets.utils.validation import get_train_val
 from utils.conf import base_path, create_seeded_dataloader
 
 
@@ -32,12 +31,8 @@ def store_mnist_loaders(transform: transforms.Compose,
     """
     train_dataset = MyMNIST(base_path() + 'MNIST',
                             train=True, download=True, transform=transform)
-    if setting.args.validation:
-        train_dataset, test_dataset = get_train_val(train_dataset,
-                                                    transform, setting.NAME)
-    else:
-        test_dataset = MNIST(base_path() + 'MNIST',
-                             train=False, download=True, transform=transform)
+    test_dataset = MNIST(base_path() + 'MNIST',
+                         train=False, download=True, transform=transform)
 
     train_loader = create_seeded_dataloader(setting.args, train_dataset,
                                             batch_size=setting.args.batch_size, shuffle=True)
@@ -62,10 +57,10 @@ class MyMNIST(MNIST):
     def __getitem__(self, index: int) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
-        
+
         Args:
             index: index of the element to be returned
-        
+
         Returns:
             tuple: (image, target) where target is index of the target class.
         """

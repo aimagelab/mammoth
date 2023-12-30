@@ -20,7 +20,7 @@ with suppress(ImportError):
     import wandb
 
 
-def log_accs(args, logger, accs, t, setting, epoch=None):
+def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
     """
     Logs the accuracy values and other metrics.
 
@@ -33,6 +33,7 @@ def log_accs(args, logger, accs, t, setting, epoch=None):
         t: The task index.
         setting: The setting of the benchmark (e.g., `class-il`).
         epoch: The epoch number (optional).
+        prefix: The prefix for the metrics (default="RESULT").
     """
     mean_acc = np.mean(accs, axis=1)
     print_mean_accuracy(mean_acc, t + 1, setting, joint=args.joint, epoch=epoch)
@@ -43,9 +44,9 @@ def log_accs(args, logger, accs, t, setting, epoch=None):
 
     if not args.nowand:
         postfix = "" if epoch is None else f"_epoch_{epoch}"
-        d2 = {f'RESULT_class_mean_accs{postfix}': mean_acc[0], f'RESULT_task_mean_accs{postfix}': mean_acc[1],
-              **{f'RESULT_class_acc_{i}{postfix}': a for i, a in enumerate(accs[0])},
-              **{f'RESULT_task_acc_{i}{postfix}': a for i, a in enumerate(accs[1])}}
+        d2 = {f'{prefix}_class_mean_accs{postfix}': mean_acc[0], f'{prefix}_task_mean_accs{postfix}': mean_acc[1],
+              **{f'{prefix}_class_acc_{i}{postfix}': a for i, a in enumerate(accs[0])},
+              **{f'{prefix}_task_acc_{i}{postfix}': a for i, a in enumerate(accs[1])}}
 
         wandb.log(d2)
 

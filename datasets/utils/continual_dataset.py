@@ -66,6 +66,9 @@ class ContinualDataset:
                 else:
                     self.args.class_order = np.random.permutation(sum(self.N_CLASSES_PER_TASK))
 
+        if self.args.validation:
+            self._c_seed = self.args.seed if self.args.seed is not None else torch.initial_seed()
+
         if args.joint:
             self.N_CLASSES_PER_TASK = self.N_CLASSES
             self.N_TASKS = 1
@@ -187,9 +190,25 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     Returns:
         the training and test loaders
     """
+    if not isinstance(train_dataset.targets, np.ndarray):
+        train_dataset.targets = np.array(train_dataset.targets)
+    if not isinstance(test_dataset.targets, np.ndarray):
+        test_dataset.targets = np.array(test_dataset.targets)
+
     if setting.args.permute_classes:
-        train_dataset.targets = setting.args.class_order[np.array(train_dataset.targets)]
-        test_dataset.targets = setting.args.class_order[np.array(test_dataset.targets)]
+        train_dataset.targets = setting.args.class_order[train_dataset.targets]
+        test_dataset.targets = setting.args.class_order[test_dataset.targets]
+
+    if setting.args.validation:
+        n_samples = len(train_dataset)
+        n_samples_val = torch.div(n_samples, setting.args.validation, rounding_mode='floor').item()
+
+        train_idxs = torch.randperm(n_samples, generator=torch.Generator().manual_seed(setting._c_seed)).numpy()
+        val_idxs = train_idxs[:n_samples_val]
+        train_idxs = train_idxs[n_samples_val:]
+
+        train_dataset.data, test_dataset.data = train_dataset.data[train_idxs], train_dataset.data[val_idxs]
+        train_dataset.targets, test_dataset.targets = train_dataset.targets[train_idxs], train_dataset.targets[val_idxs]
 
     train_mask = np.logical_and(np.array(train_dataset.targets) >= setting.i,
                                 np.array(train_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)

@@ -130,24 +130,6 @@ def parse_args():
 
     return args
 
-
-def main(args=None) -> None:
-    """
-    Main function for training a model on a dataset.
-
-    Args:
-        args (argparse.Namespace): Optional. Command-line arguments. If not specified, they are parsed from the command line.
-
-    Returns:
-        None
-    """
-    from models import get_model
-    from datasets import ContinualDataset, get_dataset
-    from utils.training import train
-
-    # Rest of the code...
-
-
 def main(args=None):
     from models import get_model
     from datasets import ContinualDataset, get_dataset
