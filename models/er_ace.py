@@ -4,7 +4,6 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-from datasets import get_dataset
 
 from models.utils.continual_model import ContinualModel
 from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
@@ -25,7 +24,7 @@ class ErACE(ContinualModel):
     COMPATIBILITY = ['class-il', 'task-il']
 
     def __init__(self, backbone, loss, args, transform):
-        super(ErACE, self).__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)
         self.seen_so_far = torch.tensor([]).long().to(self.device)
 

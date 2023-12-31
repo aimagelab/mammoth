@@ -1,32 +1,29 @@
-# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
-# All rights reserved.
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
-from copy import deepcopy
-
 import torch
 import torch.nn.functional as F
+from copy import deepcopy
+from typing import List, Tuple
 from datasets import get_dataset
-
-from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
-from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer, fill_buffer, icarl_replay
+from utils.args import *
+from utils.distributed import make_dp
+from models.utils.lider_model import LiderOptimizer, add_lipschitz_args
+from utils.batch_norm import bn_track_stats
 
 
 def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via iCaRL.')
+    parser = ArgumentParser(description='Continual Learning via iCaRL.'
+                                        'Treated with LiDER!')
 
     add_management_args(parser)
     add_experiment_args(parser)
     add_rehearsal_args(parser)
+    add_lipschitz_args(parser)
 
     return parser
 
 
-class ICarl(ContinualModel):
-    NAME = 'icarl'
+class ICarlLider(LiderOptimizer):
+    NAME = 'icarl_lider'
     COMPATIBILITY = ['class-il', 'task-il']
 
     def __init__(self, backbone, loss, args, transform):
@@ -39,6 +36,10 @@ class ICarl(ContinualModel):
 
         self.class_means = None
         self.old_net = None
+
+    def to(self, device):
+        self.eye = self.eye.to(device)
+        return super().to(device)
 
     def forward(self, x):
         if self.class_means is None:
@@ -53,7 +54,7 @@ class ICarl(ContinualModel):
         pred = (self.class_means.unsqueeze(0) - feats).pow(2).sum(2)
         return -pred
 
-    def observe(self, inputs, labels, not_aug_inputs, logits=None, epoch=None):
+    def observe(self, inputs: torch.Tensor, labels: torch.Tensor, not_aug_inputs: torch.Tensor, logits=None, epoch=None):
 
         if not hasattr(self, 'classes_so_far'):
             self.register_buffer('classes_so_far', labels.unique().to('cpu'))
@@ -66,7 +67,20 @@ class ICarl(ContinualModel):
             with torch.no_grad():
                 logits = torch.sigmoid(self.old_net(inputs))
         self.opt.zero_grad()
-        loss = self.get_loss(inputs, labels, self.current_task, logits)
+        loss, output_features = self.get_loss(inputs, labels, self.current_task, logits)
+
+        # Lipschitz losses
+        if not self.buffer.is_empty():
+            lip_inputs = [inputs] + output_features
+
+            if self.args.alpha_lip_lambda > 0:
+                loss_lip_minimize = self.args.alpha_lip_lambda * self.minimization_lip_loss(lip_inputs)
+                loss += loss_lip_minimize
+
+            if self.args.beta_lip_lambda > 0:
+                loss_lip_budget = self.args.beta_lip_lambda * self.dynamic_budget_lip_loss(lip_inputs)
+                loss += loss_lip_budget
+
         loss.backward()
 
         self.opt.step()
@@ -78,7 +92,7 @@ class ICarl(ContinualModel):
         return -(pred.log() * y + (1 - y) * (1 - pred).log()).mean()
 
     def get_loss(self, inputs: torch.Tensor, labels: torch.Tensor,
-                 task_idx: int, logits: torch.Tensor) -> torch.Tensor:
+                 task_idx: int, logits: torch.Tensor) -> Tuple[torch.Tensor, List[torch.Tensor]]:
         """
         Computes the loss tensor.
 
@@ -89,10 +103,13 @@ class ICarl(ContinualModel):
             logits: the logits of the old network
 
         Returns:
-            the differentiable loss value
+            torch.Tensor: the loss tensor
+            List[torch.Tensor]: the output features
         """
 
-        outputs = self.net(inputs)[:, :self.n_seen_classes]
+        outputs, output_features = self.net(inputs, returnt='full')
+        outputs = outputs[:, :self.n_seen_classes]
+
         if task_idx == 0:
             # Compute loss on the current task
             targets = self.eye[labels][:, :self.n_seen_classes]
@@ -104,13 +121,24 @@ class ICarl(ContinualModel):
             loss = F.binary_cross_entropy_with_logits(outputs, comb_targets)
             assert loss >= 0
 
-        return loss
+        return loss, output_features
 
     def begin_task(self, dataset):
         icarl_replay(self, dataset)
+        if self.current_task == 0:
+            self.net.set_return_prerelu(True)
+
+            self.init_net(dataset)
 
     def end_task(self, dataset) -> None:
-        self.old_net = deepcopy(self.net.eval())
+        self.old_net = get_dataset(self.args).get_backbone().to(self.device)
+        if self.args.distributed == 'dp':
+            self.old_net = make_dp(self.old_net)
+        _, unexpected = self.old_net.load_state_dict(deepcopy(self.net.state_dict()), strict=False)
+        assert len([k for k in unexpected if 'lip_coeffs' not in k]) == 0, f"Unexpected keys in pretrained model: {unexpected}"
+        self.old_net.eval()
+        self.old_net.set_return_prerelu(True)
+
         self.net.train()
         with torch.no_grad():
             fill_buffer(self.buffer, dataset, self.current_task, net=self.net, use_herding=True)

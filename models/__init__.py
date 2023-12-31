@@ -26,11 +26,10 @@ NAMES = {}
 for model_name, model in get_all_models().items():
     try:
         mod = importlib.import_module('models.' + model)
-        model_classes_name = [x for x in mod.__dir__() if 'type' in str(type(getattr(mod, x)))
-                                and 'ContinualModel' in str(inspect.getmro(getattr(mod, x))[1:])]
-        for d in model_classes_name:
-            c = getattr(mod, d)
-            NAMES[c.NAME.replace('_', '-')] = c
+        model_classe_name = [x for x in mod.__dir__() if 'type' in str(type(getattr(mod, x)))
+                             and 'ContinualModel' in str(inspect.getmro(getattr(mod, x))[1:])][-1]
+        c = getattr(mod, model_classe_name)
+        NAMES[c.NAME.replace('_', '-')] = c
     except Exception as e:
         warn_once("Error in model", model)
         warn_once(e)
@@ -58,6 +57,7 @@ def get_model(args: Namespace, backbone: nn.Module, loss, transform) -> Continua
     model_name = args.model.replace('_', '-')
     assert model_name in NAMES
     return get_model_class(args)(backbone, loss, args, transform)
+
 
 def get_model_class(args: Namespace) -> ContinualModel:
     """

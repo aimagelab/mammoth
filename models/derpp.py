@@ -28,7 +28,7 @@ class Derpp(ContinualModel):
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     def __init__(self, backbone, loss, args, transform):
-        super(Derpp, self).__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform)
 
         self.buffer = Buffer(self.args.buffer_size)
 
@@ -36,11 +36,10 @@ class Derpp(ContinualModel):
 
         self.opt.zero_grad()
 
-        tot_loss = 0
-
         outputs = self.net(inputs)
+
         loss = self.loss(outputs, labels)
-        tot_loss += loss.item()
+        tot_loss = loss.item()
         loss.backward()
 
         if not self.buffer.is_empty():

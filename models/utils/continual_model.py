@@ -129,6 +129,13 @@ class ContinualModel(nn.Module):
         if self.args.label_perc != 1 and 'cssl' not in self.COMPATIBILITY:
             print('WARNING: label_perc is not explicitly supported by this model -> training may break')
 
+    def to(self, device):
+        """
+        Captures the device to be used for training.
+        """
+        self.device = device
+        return super().to(device)
+
     def load_buffer(self, buffer):
         """
         Default way to handle load buffer.
