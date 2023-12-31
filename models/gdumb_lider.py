@@ -43,7 +43,11 @@ def fit_buffer(self: LiderOptimizer, epochs):
         all_inputs, all_labels = self.buffer.get_data(
             len(self.buffer.examples), transform=self.transform, device=self.device)
 
+        it = 0
         while len(all_inputs):
+            if it > self.get_debug_iters() and self.args.debug_mode:
+                break
+            it += 1
             optimizer.zero_grad()
             buf_inputs, buf_labels = all_inputs[:self.args.batch_size], all_labels[:self.args.batch_size]
             all_inputs, all_labels = all_inputs[self.args.batch_size:], all_labels[self.args.batch_size:]
