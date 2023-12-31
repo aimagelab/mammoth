@@ -144,18 +144,24 @@ class ContinualModel(nn.Module):
             self.args.buffer_size, buffer.examples.shape[0])
         self.buffer = buffer
 
+    def get_parameters(self):
+        """
+        Returns the parameters of the model.
+        """
+        return self.net.parameters()
+
     def get_optimizer(self):
         # check if optimizer is in torch.optim
         supported_optims = {optim_name.lower(): optim_name for optim_name in dir(optim) if optim_name.lower() in self.AVAIL_OPTIMS}
         opt = None
         if self.args.optimizer.lower() in supported_optims:
             if self.args.optimizer.lower() == 'sgd':
-                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.net.parameters(), lr=self.args.lr,
+                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.get_parameters(), lr=self.args.lr,
                                                                                     weight_decay=self.args.optim_wd,
                                                                                     momentum=self.args.optim_mom,
                                                                                     nesterov=self.args.optim_nesterov == 1)
             elif self.args.optimizer.lower() == 'adam' or self.args.optimizer.lower() == 'adamw':
-                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.net.parameters(), lr=self.args.lr,
+                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.get_parameters(), lr=self.args.lr,
                                                                                     weight_decay=self.args.optim_wd)
 
         if opt is None:

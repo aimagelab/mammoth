@@ -58,7 +58,7 @@ class SI(ContinualModel):
         penalty = self.penalty()
         loss = self.loss(outputs, labels) + self.args.c * penalty
         loss.backward()
-        nn.utils.clip_grad.clip_grad_value_(self.net.parameters(), 1)
+        nn.utils.clip_grad.clip_grad_value_(self.get_parameters(), 1)
         self.opt.step()
 
         self.small_omega += self.args.lr * self.net.get_grads().data ** 2

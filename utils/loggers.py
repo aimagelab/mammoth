@@ -46,7 +46,8 @@ def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
         postfix = "" if epoch is None else f"_epoch_{epoch}"
         d2 = {f'{prefix}_class_mean_accs{postfix}': mean_acc[0], f'{prefix}_task_mean_accs{postfix}': mean_acc[1],
               **{f'{prefix}_class_acc_{i}{postfix}': a for i, a in enumerate(accs[0])},
-              **{f'{prefix}_task_acc_{i}{postfix}': a for i, a in enumerate(accs[1])}}
+              **{f'{prefix}_task_acc_{i}{postfix}': a for i, a in enumerate(accs[1])},
+              'Task': t}
 
         wandb.log(d2)
 

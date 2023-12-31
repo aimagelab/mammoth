@@ -28,7 +28,6 @@ import math
 import logging
 from functools import partial
 from collections import OrderedDict
-from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -89,7 +88,7 @@ default_cfgs = {
     # 'vit_base_patch16_224': _cfg(
     #     url='https://storage.googleapis.com/vit_models/augreg/'
     #         'B_16-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.01-res_224.npz'),
-    'vit_base_patch16_224': _cfg(
+    'vit_base_patch16_224_l2p': _cfg(
         url='https://storage.googleapis.com/vit_models/imagenet21k/ViT-B_16.npz'),
     'vit_base_patch16_384': _cfg(
         url='https://storage.googleapis.com/vit_models/augreg/'
@@ -336,7 +335,7 @@ class VisionTransformer(nn.Module):
             class_token=True, no_embed_class=False, fc_norm=None, drop_rate=0., attn_drop_rate=0., drop_path_rate=0.,
             weight_init='', embed_layer=PatchEmbed, norm_layer=None, act_layer=None, block_fn=Block,
             prompt_length=None, embedding_key='cls', prompt_init='uniform', prompt_pool=False, prompt_key=False, pool_size=None,
-            top_k=None, batchwise_prompt=False, prompt_key_init='uniform', head_type='token', use_prompt_mask=False,):
+            top_k=None, batchwise_prompt=False, prompt_key_init='uniform', head_type='token', use_prompt_mask=False, prompt_shuffle=False):
         """
         Args:
             img_size (int, tuple): input image size
@@ -392,11 +391,12 @@ class VisionTransformer(nn.Module):
         self.prompt_pool = prompt_pool
         self.head_type = head_type
         self.use_prompt_mask = use_prompt_mask
+        self.prompt_shuffle = prompt_shuffle
 
         if prompt_length is not None and pool_size is not None and prompt_pool:
             self.prompt = Prompt(length=prompt_length, embed_dim=embed_dim, embedding_key=embedding_key, prompt_init=prompt_init,
                                  prompt_pool=prompt_pool, prompt_key=prompt_key, pool_size=pool_size, top_k=top_k, batchwise_prompt=batchwise_prompt,
-                                 prompt_key_init=prompt_key_init,)
+                                 prompt_key_init=prompt_key_init, prompt_shuffle=self.prompt_shuffle)
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
         self.blocks = nn.Sequential(*[
@@ -716,19 +716,22 @@ def _create_vision_transformer(variant, pretrained=False, **kwargs):
     if kwargs.get('features_only', None):
         raise RuntimeError('features_only not implemented for Vision Transformer models.')
 
-    # pretrained_cfg = resolve_pretrained_cfg(variant, pretrained_cfg=kwargs.pop('pretrained_cfg', None))
-    # model = build_model_with_cfg(
-    #     VisionTransformer, variant, pretrained,
-    #     pretrained_cfg=pretrained_cfg,
-    #     pretrained_filter_fn=checkpoint_filter_fn,
-    #     pretrained_custom_load='npz' in pretrained_cfg['url'],
-    #     **kwargs)
-    # return model
+    if 'flexi' in variant:
+        # FIXME Google FlexiViT pretrained models have a strong preference for bilinear patch / embed
+        # interpolation, other pretrained models resize better w/ anti-aliased bicubic interpolation.
+        _filter_fn = partial(checkpoint_filter_fn, interpolation='bilinear', antialias=False)
+    else:
+        _filter_fn = checkpoint_filter_fn
 
-    assert 'flexi' not in variant
+    pretrained_cfg = resolve_pretrained_cfg(variant, pretrained_cfg=kwargs.pop('pretrained_cfg', None))
+    pretrained_cfg.custom_load = True
+
     return build_model_with_cfg(
-        VisionTransformer, variant, pretrained,
-        pretrained_filter_fn=checkpoint_filter_fn,
+        VisionTransformer,
+        variant,
+        pretrained,
+        pretrained_cfg=pretrained_cfg,
+        pretrained_filter_fn=_filter_fn,
         **kwargs,
     )
 
@@ -739,14 +742,5 @@ def vit_base_patch16_224_l2p(pretrained=False, **kwargs):
     ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
     """
     model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, **kwargs)
-    model = _create_vision_transformer('vit_base_patch16_224', pretrained=pretrained, **model_kwargs)
-    return model
-
-
-@register_model
-def vit_small_patch16_224_l2p(pretrained=False, **kwargs):
-    """ ViT-Small (ViT-S/16)
-    """
-    model_kwargs = dict(patch_size=16, embed_dim=384, depth=12, num_heads=6)
-    model = _create_vision_transformer('vit_small_patch16_224', pretrained=pretrained, **dict(model_kwargs, **kwargs))
+    model = _create_vision_transformer('vit_base_patch16_224_l2p', pretrained=pretrained, **model_kwargs)
     return model

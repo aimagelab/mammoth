@@ -4,7 +4,8 @@ import torch.nn as nn
 
 class Prompt(nn.Module):
     def __init__(self, length=5, embed_dim=768, embedding_key='mean', prompt_init='uniform', prompt_pool=False,
-                 prompt_key=False, pool_size=None, top_k=None, batchwise_prompt=False, prompt_key_init='uniform',):
+                 prompt_key=False, pool_size=None, top_k=None, batchwise_prompt=False, prompt_key_init='uniform',
+                 prompt_shuffle=False):
         super().__init__()
 
         self.length = length
@@ -16,6 +17,7 @@ class Prompt(nn.Module):
         self.pool_size = pool_size
         self.top_k = top_k
         self.batchwise_prompt = batchwise_prompt
+        self.prompt_shuffle = prompt_shuffle
 
         if self.prompt_pool:
             prompt_pool_shape = (pool_size, length, embed_dim)
@@ -83,6 +85,9 @@ class Prompt(nn.Module):
                     idx = major_prompt_id.expand(x_embed.shape[0], -1)  # B, top_k
             else:
                 idx = prompt_mask  # B, top_k
+
+            if self.prompt_shuffle:
+                idx = idx[:, torch.randperm(idx.shape[1])]
 
             batched_prompt_raw = self.prompt[idx]  # B, top_k, length, C
             batch_size, top_k, length, c = batched_prompt_raw.shape
