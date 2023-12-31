@@ -86,7 +86,7 @@ class TwF(ContinualModel):
         return DoubleCompose(tfs)
 
     def end_task(self, dataset):
-        self.opt(set_to_none=True)
+        self.opt.zero_grad(set_to_none=True)
         delattr(self, 'opt')
 
         self.net.eval()
@@ -122,7 +122,8 @@ class TwF(ContinualModel):
                     self.buffer.attention_maps[idx] = [
                         at[idx % len(at)].to(self.device) for at in attention_masks]
 
-        self.net.train()  # TODO: check
+        self.net.train()
+        self.opt = self.get_optimizer()
 
     def begin_task(self, dataset):
         self._it = 0
@@ -183,14 +184,14 @@ class TwF(ContinualModel):
 
         B = len(inputs)
         all_labels = labels
-        
+
         with torch.no_grad():
             if len(self.buffer) > 0:
                 # sample from buffer
                 buf_choices, buf_inputs, buf_labels, buf_logits = self.buffer.get_data(
                     self.args.minibatch_size, transform=None, return_index=True)
                 buf_attention_maps = [self.buffer.attention_maps[c]
-                                    for c in buf_choices]
+                                      for c in buf_choices]
                 d = [self.buf_transform(ee, attn_map) for ee, attn_map in zip(buf_inputs, buf_attention_maps)]
                 buf_inputs, buf_attention_maps = torch.stack(
                     [v[0] for v in d]).to(self.device), [[o.to(self.device) for o in v[1]] for v in d]
@@ -243,7 +244,7 @@ class TwF(ContinualModel):
 
         if self._it == 0:
             self.opt.zero_grad()
-        
+
         torch.cuda.empty_cache()
         loss.backward()
         if self._it > 0 and (self._it % (self.args.virtual_batch_size // self.args.batch_size) == 0 or (self.args.virtual_batch_size == self.args.batch_size)):

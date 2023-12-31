@@ -101,10 +101,8 @@ class GDumbLider(LiderOptimizer):
         if not (self.current_task == dataset.N_TASKS - 1):
             return
         self.net = dataset.get_backbone().to(self.device)
+
+        self.net.set_return_prerelu(True)
+        self.init_net(dataset)
+
         fit_buffer(self, self.args.fitting_epochs)
-
-    def begin_task(self, dataset):
-        if self.current_task == 0:
-            self.net.set_return_prerelu(True)
-
-            self.init_net(dataset)

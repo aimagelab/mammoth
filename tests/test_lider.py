@@ -5,7 +5,7 @@ from utils.main import main
 import pytest
 
 
-def test_icarl():
+def test_gdumb_lider():
     sys.argv = ['mammoth',
                 '--model',
                 'gdumb-lider',
@@ -40,7 +40,7 @@ def test_icarl():
     main()
 
 
-def test_icarl():
+def test_icarl_lider():
     sys.argv = ['mammoth',
                 '--model',
                 'icarl-lider',
@@ -75,7 +75,7 @@ def test_icarl():
     main()
 
 
-def test_erace():
+def test_erace_lider():
     sys.argv = ['mammoth',
                 '--model',
                 'er-ace-lider',
@@ -110,7 +110,7 @@ def test_erace():
     main()
 
 
-def test_derpp():
+def test_derpp_lider():
     sys.argv = ['mammoth',
                 '--model',
                 'derpp-lider',
@@ -144,6 +144,6 @@ def test_derpp():
     # log all outputs to file
     if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
         os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_derpp.log'), 'w', encoding='utf-8')
+    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_derpp-lider.log'), 'w', encoding='utf-8')
     sys.stderr = sys.stdout
     main()
