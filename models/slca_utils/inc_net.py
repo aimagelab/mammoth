@@ -8,8 +8,8 @@ from models.slca_utils.convs.vits import vit_base_patch16_224_in21k, vit_base_pa
 import torch.nn.functional as F
 
 
-def get_convnet(convnet_type, pretrained=False):
-    name = convnet_type.lower()
+def get_convnet(feature_extractor_type, pretrained=False):
+    name = feature_extractor_type.lower()
     if name == 'resnet32':
         return resnet32()
     elif name == 'resnet18':
@@ -23,19 +23,20 @@ def get_convnet(convnet_type, pretrained=False):
     elif name == 'resnet50':
         return resnet50(pretrained=pretrained)
     elif name == 'vit-b-p16':
+        print("Using ViT-B/16 pretrained on ImageNet21k (NO FINETUNE ON IN1K)")
         return vit_base_patch16_224_in21k(pretrained=pretrained)
     elif name == 'vit-b-p16-mocov3':
         return vit_base_patch16_224_mocov3(pretrained=True)
     else:
-        raise NotImplementedError('Unknown type {}'.format(convnet_type))
+        raise NotImplementedError('Unknown type {}'.format(feature_extractor_type))
 
 
 class BaseNet(nn.Module):
 
-    def __init__(self, convnet_type, pretrained):
+    def __init__(self, feature_extractor_type, pretrained):
         super(BaseNet, self).__init__()
 
-        self.convnet = get_convnet(convnet_type, pretrained)
+        self.convnet = get_convnet(feature_extractor_type, pretrained)
         self.fc = None
 
     @property
@@ -78,8 +79,8 @@ class BaseNet(nn.Module):
 
 class FinetuneIncrementalNet(BaseNet):
 
-    def __init__(self, convnet_type, pretrained, fc_with_ln=False):
-        super().__init__(convnet_type, pretrained)
+    def __init__(self, feature_extractor_type, pretrained, fc_with_ln=False):
+        super().__init__(feature_extractor_type, pretrained)
         self.old_fc = None
         self.fc_with_ln = fc_with_ln
 

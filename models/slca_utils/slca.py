@@ -16,7 +16,7 @@ class SLCA_Model(BaseLearner):
         super().__init__(device, args)
         self.device = device
         self.args = args
-        self._network = FinetuneIncrementalNet(args.convnet_type, pretrained=True)
+        self._network = FinetuneIncrementalNet(args.feature_extractor_type, pretrained=True)
         self.bcb_lrscale = 1.0 / 100
         self.fix_bcb = False
         self.save_before_ca = False
@@ -97,7 +97,6 @@ class SLCA_Model(BaseLearner):
         network_params = [{'params': param_list, 'lr': self.args.lr,
                            'weight_decay': self.args.optim_wd}]
         optimizer = optim.SGD(network_params, lr=self.args.lr, momentum=0.9, weight_decay=self.args.optim_wd)
-        # scheduler = optim.lr_scheduler.MultiStepLR(optimizer=optimizer, milestones=[4], gamma=lrate_decay)
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer=optimizer, T_max=run_epochs)
 
         status = self._network.training

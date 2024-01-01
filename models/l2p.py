@@ -1,7 +1,10 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
-# All rights reserved.
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
+"""
+L2P: Learning to Prompt for Continual Learning
+
+Note:
+    L2P USES A CUSTOM BACKBONE: `vit_base_patch16_224`.
+    The backbone is a ViT-B/16 pretrained on Imagenet 21k and finetuned on ImageNet 1k.
+"""
 
 import torch
 
@@ -60,6 +63,11 @@ class L2P(ContinualModel):
         """
         L2P re-defines the backbone model to include the prompt parameters. This is done *before* calling the super constructor, so that the backbone is already initialized when the super constructor is called.
         """
+        del backbone
+        print("-" * 20)
+        print(f"WARNING: L2P USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
+        print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
+        print("-" * 20)
 
         args.lr = args.lr * args.batch_size / 256.0
         backbone = L2PModel(args)

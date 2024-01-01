@@ -38,8 +38,7 @@ def get_parser() -> ArgumentParser:
                         help='Apply downscale and upscale to feature maps before save in buffer?')
     parser.add_argument('--min_resize_threshold', type=int, required=False, default=16,
                         help='Min size of feature maps to be resized?')
-    parser.add_argument('--virtual_batch_size', type=int, required=False,
-                        help='Virtual batch size')
+    parser.add_argument('--virtual_bs_iterations', type=int, default=1, help="virtual batch size iterations")
     return parser
 
 
@@ -56,10 +55,6 @@ class TwF(ContinualModel):
 
         self.buffer = Buffer(self.args.buffer_size)
         self.buf_transform = self.get_custom_double_transform(self.transform.transforms)
-        self.args.virtual_batch_size = self.args.virtual_batch_size if self.args.virtual_batch_size is not None else self.args.batch_size
-
-        assert self.args.virtual_batch_size % self.args.batch_size == 0, "virtual_batch_size must be a multiple of batch_size"
-        assert self.args.virtual_batch_size >= self.args.batch_size, "virtual_batch_size must be greater or equal to batch_size"
 
         if self.args.loadcheck is None:
             print("Warning: no checkpoint loaded!")
@@ -126,7 +121,6 @@ class TwF(ContinualModel):
         self.opt = self.get_optimizer()
 
     def begin_task(self, dataset):
-        self._it = 0
 
         if self.current_task == 0 or ("start_from" in self.args and self.args.start_from is not None and self.current_task == self.args.start_from):
             init_twf(self, dataset)
@@ -242,12 +236,12 @@ class TwF(ContinualModel):
         loss += self.args.der_alpha * loss_der
         loss += self.args.lambda_fp * loss_afd
 
-        if self._it == 0:
+        if self.task_iteration == 0:
             self.opt.zero_grad()
 
         torch.cuda.empty_cache()
         loss.backward()
-        if self._it > 0 and (self._it % (self.args.virtual_batch_size // self.args.batch_size) == 0 or (self.args.virtual_batch_size == self.args.batch_size)):
+        if self.task_iteration > 0 and self.task_iteration % self.args.virtual_bs_iterations == 0:
             self.opt.step()
             self.opt.zero_grad()
 
@@ -256,5 +250,4 @@ class TwF(ContinualModel):
                              logits=stream_logits.data,
                              attention_maps=stream_attention_maps)
 
-        self._it += 1
         return loss.item()

@@ -8,7 +8,7 @@ import pytest
 def test_l2p():
     sys.argv = ['mammoth',
                 '--model',
-                'l2p',
+                'coda-prompt',
                 '--dataset',
                 'seq-cifar100-224',
                 '--lr',
@@ -29,7 +29,7 @@ def test_l2p():
     # log all outputs to file
     if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
         os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_l2p.log'), 'w', encoding='utf-8')
+    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_coda.log'), 'w', encoding='utf-8')
     sys.stderr = sys.stdout
 
     main()

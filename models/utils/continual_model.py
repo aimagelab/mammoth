@@ -209,6 +209,21 @@ class ContinualModel(nn.Module):
         return self.net(x)
 
     def meta_observe(self, *args, **kwargs):
+        """
+        Wrapper for `observe` method.
+
+        Takes care of dropping unlabeled data if not supported by the model and of logging to wandb if installed.
+
+        Args:
+            inputs: batch of inputs
+            labels: batch of labels
+            not_aug_inputs: batch of inputs without augmentation
+            kwargs: some methods could require additional parameters
+
+        Returns:
+            the value of the loss function
+        """
+
         if 'cssl' not in self.COMPATIBILITY:  # drop unlabeled data if not supported
             labeled_mask = args[1] != -1
             if labeled_mask.sum() == 0:
@@ -220,9 +235,19 @@ class ContinualModel(nn.Module):
             self.autolog_wandb(pl.locals)
         else:
             ret = self.observe(*args, **kwargs)
+        self.task_iteration += 1
         return ret
 
     def meta_begin_task(self, dataset):
+        """
+        Wrapper for `begin_task` method.
+
+        Takes care of updating the internal counters.
+
+        Args:
+            dataset: the current task's dataset
+        """
+        self.task_iteration = 0
         self._n_classes_current_task = self._cpt if isinstance(self._cpt, int) else self._cpt[self._current_task]
         self._n_seen_classes = self._cpt * (self._current_task + 1) if isinstance(self._cpt, int) else sum(self._cpt[:self._current_task + 1])
         self._n_remaining_classes = self.N_CLASSES - self._n_seen_classes
@@ -230,6 +255,15 @@ class ContinualModel(nn.Module):
         self.begin_task(dataset)
 
     def meta_end_task(self, dataset):
+        """
+        Wrapper for `end_task` method.
+
+        Takes care of updating the internal counters.
+
+        Args:
+            dataset: the current task's dataset
+        """
+
         self.end_task(dataset)
         self._current_task += 1
 
