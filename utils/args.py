@@ -47,9 +47,9 @@ def add_experiment_args(parser: ArgumentParser) -> None:
 
     parser.add_argument('--lr_scheduler', type=str, help='Learning rate scheduler.')
     parser.add_argument('--lr_milestones', type=int, nargs='+', default=[],
-                        help='Learning rate scheduler milestones (used if `lr_scheduler=multistep`).')
+                        help='Learning rate scheduler milestones (used if `lr_scheduler=multisteplr`).')
     parser.add_argument('--sched_multistep_lr_gamma', type=float, default=0.1,
-                        help='Learning rate scheduler gamma (used if `lr_scheduler=multistep`).')
+                        help='Learning rate scheduler gamma (used if `lr_scheduler=multisteplr`).')
 
     parser.add_argument('--n_epochs', type=int,
                         help='Number of epochs.')
