@@ -1,3 +1,7 @@
+"""
+Base class for all models that use the Lipschitz regularization in LiDER (https://arxiv.org/pdf/2210.06443.pdf).
+"""
+
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm

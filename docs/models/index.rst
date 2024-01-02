@@ -6,7 +6,7 @@ Models
 A **model** is a class that contains a few requires methods and attributes to be used in the continual learning framework.
 To be compatible with the auto-detection mechanism (the **get_model** function below), a model must:
 
-* extend the base class **ContinualModel** in :ref:`continual_model`, which implements most of the required methods, leaving to the user the definition of the **observe** method (see in :ref:`training and testing`). In addition, the model must define the **NAME** and **COMPATIBILITY** attributes (see below).
+* extend the base class **ContinualModel** in :ref:`module-continual_model`, which implements most of the required methods, leaving to the user the definition of the **observe** method (see in :ref:`training and testing`). In addition, the model must define the **NAME** and **COMPATIBILITY** attributes (see below).
 
 * be defined in a file named **<model_name>.py** and placed in the **models** folder. 
 
@@ -54,7 +54,7 @@ The **forward** method is used to evaluate the model on the test set. By default
 Attributes and utility methods
 -------------------------------
 
-The base class **ContinualModel** includes the **NAME** and **COMPATIBILITY** attributes, which are used to identify the model and to check its compatibility with the chosen **setting** (see :ref:`module-datasets` for more details). The **NAME** attribute is a string that identifies the model, while the **COMPATIBILITY** attribute is a list of strings that identify the compatible settings. For example, the **DER** model (:ref:`module-der`) includes compatibility with ``['class-il', 'domain-il', 'task-il', 'general-continual']`` settings, and thus is compatible with all the datasets included in the framework. However, as it includes no compatibility with the ``'cssl'`` setting, it cannot take advantage of unlabeled samples (available if ``--label_perc`` is set to a value between ``0`` and ``1``).
+The base class **ContinualModel** (:ref:`module-continual_model`) includes the **NAME** and **COMPATIBILITY** attributes, which are used to identify the model and to check its compatibility with the chosen **setting** (see :ref:`module-datasets` for more details). The **NAME** attribute is a string that identifies the model, while the **COMPATIBILITY** attribute is a list of strings that identify the compatible settings. For example, the **DER** model (:ref:`module-der`) includes compatibility with ``['class-il', 'domain-il', 'task-il', 'general-continual']`` settings, and thus is compatible with all the datasets included in the framework. However, as it includes no compatibility with the ``'cssl'`` setting, it cannot take advantage of unlabeled samples (available if ``--label_perc`` is set to a value between ``0`` and ``1``).
 
 Backbone model
 ~~~~~~~~~~~~~~
@@ -117,7 +117,7 @@ The base class **ContinualModel** provides a few properties that are automatical
 Model parameters
 ~~~~~~~~~~~~~~~~~
 
-The **get_parser** method is used to define the model-specific hyper-parameters. It is defined as a static method that returns a `argparse.ArgumentParser <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser>`_ object. This method is called during the initialization of the model and it is used to parse the command line arguments. The **get_parser** method must have the following signature:
+The **get_parser** method is used to define the model-specific hyper-parameters. It is defined as a static method (see :ref:`module-continual_model`) that returns a `argparse.ArgumentParser <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser>`_ object. This method is called during the initialization of the model and it is used to parse the command line arguments. The **get_parser** method must have the following signature:
 
 .. code-block:: python
 
