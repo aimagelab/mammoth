@@ -6,7 +6,7 @@ import pytest
 
 
 @pytest.mark.parametrize('dataset', ['seq-cifar100-224', 'seq-imagenet-r'])
-def test_l2p(dataset):
+def test_coda(dataset):
     sys.argv = ['mammoth',
                 '--model',
                 'coda-prompt',
