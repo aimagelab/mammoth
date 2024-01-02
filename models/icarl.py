@@ -30,13 +30,12 @@ class ICarl(ContinualModel):
     COMPATIBILITY = ['class-il', 'task-il']
 
     def __init__(self, backbone, loss, args, transform):
-        super(ICarl, self).__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform)
         self.dataset = get_dataset(args)
 
         # Instantiate buffers
         self.buffer = Buffer(self.args.buffer_size)
-        self.eye = torch.eye(self.dataset.N_CLASSES_PER_TASK *
-                             self.dataset.N_TASKS).to(self.device)
+        self.eye = torch.eye(self.num_classes).to(self.device)
 
         self.class_means = None
         self.old_net = None
@@ -87,23 +86,21 @@ class ICarl(ContinualModel):
             inputs: the images to be fed to the network
             labels: the ground-truth labels
             task_idx: the task index
+            logits: the logits of the old network
 
         Returns:
             the differentiable loss value
         """
 
-        pc = task_idx * self.dataset.N_CLASSES_PER_TASK
-        ac = (task_idx + 1) * self.dataset.N_CLASSES_PER_TASK
-
-        outputs = self.net(inputs)[:, :ac]
+        outputs = self.net(inputs)[:, :self.n_seen_classes]
         if task_idx == 0:
             # Compute loss on the current task
-            targets = self.eye[labels][:, :ac]
+            targets = self.eye[labels][:, :self.n_seen_classes]
             loss = F.binary_cross_entropy_with_logits(outputs, targets)
             assert loss >= 0
         else:
-            targets = self.eye[labels][:, pc:ac]
-            comb_targets = torch.cat((logits[:, :pc], targets), dim=1)
+            targets = self.eye[labels][:, self.n_past_classes:self.n_seen_classes]
+            comb_targets = torch.cat((logits[:, :self.n_past_classes], targets), dim=1)
             loss = F.binary_cross_entropy_with_logits(outputs, comb_targets)
             assert loss >= 0
 
@@ -119,6 +116,7 @@ class ICarl(ContinualModel):
             fill_buffer(self.buffer, dataset, self.current_task, net=self.net, use_herding=True)
         self.class_means = None
 
+    @torch.no_grad()
     def compute_class_means(self) -> None:
         """
         Computes a vector representing mean features for each class.

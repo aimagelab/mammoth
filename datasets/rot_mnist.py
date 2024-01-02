@@ -7,9 +7,10 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 
 from backbone.MNISTMLP import MNISTMLP
-from datasets.perm_mnist import store_mnist_loaders
+from datasets.perm_mnist import MyMNIST, MNIST
 from datasets.transforms.rotation import Rotation
-from datasets.utils.continual_dataset import ContinualDataset
+from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
+from utils.conf import base_path
 
 
 class RotatedMNIST(ContinualDataset):
@@ -34,7 +35,13 @@ class RotatedMNIST(ContinualDataset):
 
     def get_data_loaders(self):
         transform = transforms.Compose((Rotation(), transforms.ToTensor()))
-        train, test = store_mnist_loaders(transform, self)
+
+        train_dataset = MyMNIST(base_path() + 'MNIST',
+                                train=True, download=True, transform=transform)
+        test_dataset = MNIST(base_path() + 'MNIST',
+                             train=False, download=True, transform=transform)
+
+        train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
 
     @staticmethod

@@ -30,7 +30,7 @@ class ProgressBar:
 
         Args:
             i: the current iteration
-            max_iter: the maximum number of iteration
+            max_iter: the maximum number of iteration. If None, the progress bar is not printed.
             epoch: the epoch
             task_number: the task index
             loss: the current value of the loss function
@@ -57,14 +57,14 @@ class ProgressBar:
             self.running_sum = self.running_sum + (time() - self.old_time) + 1e-8
             self.old_time = time()
         if i:  # not (i + 1) % 10 or (i + 1) == max_iter:
-            progress = min(float((i + 1) / max_iter), 1)
-            progress_bar = ('█' * int(50 * progress)) + ('┈' * (50 - int(50 * progress)))
+            progress = min(float((i + 1) / max_iter), 1) if max_iter else 0
+            progress_bar = ('█' * int(50 * progress)) + ('┈' * (50 - int(50 * progress))) if max_iter else '~N/A~'
             if self.joint:
                 print('\r[ {} ] Joint | epoch {}: |{}| {} ep/h | loss: {} |'.format(
                     datetime.now().strftime("%m-%d | %H:%M"),
                     epoch,
                     progress_bar,
-                    round(3600 / (self.running_sum / i * max_iter), 2),
+                    round(3600 / (self.running_sum / i * max_iter), 2) if max_iter else 'N/A',
                     round(loss, 8)
                 ), file=sys.stderr, end='', flush=True)
             else:
@@ -73,7 +73,7 @@ class ProgressBar:
                     task_number + 1 if isinstance(task_number, int) else task_number,
                     epoch,
                     progress_bar,
-                    round(3600 / (self.running_sum / i * max_iter), 2),
+                    round(3600 / (self.running_sum / i * max_iter), 2) if max_iter else 'N/A',
                     round(loss, 8)
                 ), file=sys.stderr, end='', flush=True)
 

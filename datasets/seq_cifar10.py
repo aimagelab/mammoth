@@ -16,7 +16,6 @@ from datasets.seq_tinyimagenet import base_path
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
-from datasets.utils.validation import get_train_val
 
 
 class TCIFAR10(CIFAR10):
@@ -106,12 +105,8 @@ class SequentialCIFAR10(ContinualDataset):
 
         train_dataset = MyCIFAR10(base_path() + 'CIFAR10', train=True,
                                   download=True, transform=transform)
-        if self.args.validation:
-            train_dataset, test_dataset = get_train_val(train_dataset,
-                                                        test_transform, self.NAME)
-        else:
-            test_dataset = TCIFAR10(base_path() + 'CIFAR10', train=False,
-                                    download=True, transform=test_transform)
+        test_dataset = TCIFAR10(base_path() + 'CIFAR10', train=False,
+                                download=True, transform=test_transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test

@@ -85,6 +85,8 @@ The base class **ContinualModel** provides a few properties that are automatical
 
     - **n_tasks**: the total number of tasks.
 
+    - **task_iteration**: the number of iterations performed during the current task. This attribute is automatically updated *after* each **observe** call and is reset at the beginning of each task (*before* the **begin_task**). Can be used to implement a virtual batch size (see :ref:`module-twf`).
+
     - **cpt**: the *raw* amount of classes for each task. This could be either an integer (i.e., the number of classes for each task is the same) or a list of integers (i.e., the number of classes for each task is different).
 
 .. admonition:: Transforms and dataset-related Attributes

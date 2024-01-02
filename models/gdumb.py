@@ -17,19 +17,19 @@ def get_parser() -> ArgumentParser:
     add_management_args(parser)
     add_rehearsal_args(parser)
     parser.add_argument('--maxlr', type=float, default=5e-2,
-                        help='Penalty weight.')
+                        help='Max learning rate.')
     parser.add_argument('--minlr', type=float, default=5e-4,
-                        help='Penalty weight.')
+                        help='Min learning rate.')
     parser.add_argument('--fitting_epochs', type=int, default=256,
-                        help='Penalty weight.')
-    parser.add_argument('--cutmix_alpha', type=float, default=None,
-                        help='Penalty weight.')
+                        help='Number of epochs to fit the buffer.')
+    parser.add_argument('--cutmix_alpha', type=float, default=1.0,
+                        help='Alpha parameter for cutmix')
     add_experiment_args(parser)
     return parser
 
 
-def fit_buffer(self, epochs):
-    optimizer = SGD(self.net.parameters(), lr=self.args.maxlr, momentum=self.args.optim_mom, weight_decay=self.args.optim_wd, nesterov=self.args.optim_nesterov)
+def fit_buffer(self: ContinualModel, epochs):
+    optimizer = SGD(self.get_parameters(), lr=self.args.maxlr, momentum=self.args.optim_mom, weight_decay=self.args.optim_wd, nesterov=self.args.optim_nesterov)
     scheduler = lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=1, T_mult=2, eta_min=self.args.minlr)
 
     for epoch in range(epochs):
@@ -45,7 +45,11 @@ def fit_buffer(self, epochs):
         all_inputs, all_labels = self.buffer.get_data(
             len(self.buffer.examples), transform=self.transform, device=self.device)
 
+        it = 0
         while len(all_inputs):
+            if it > self.get_debug_iters() and self.args.debug_mode:
+                break
+            it += 1
             optimizer.zero_grad()
             buf_inputs, buf_labels = all_inputs[:self.args.batch_size], all_labels[:self.args.batch_size]
             all_inputs, all_labels = all_inputs[self.args.batch_size:], all_labels[self.args.batch_size:]

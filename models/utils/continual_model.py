@@ -93,7 +93,7 @@ class ContinualModel(nn.Module):
     def __init__(self, backbone: nn.Module, loss: nn.Module,
                  args: Namespace, transform: nn.Module) -> None:
         super(ContinualModel, self).__init__()
-
+        print("Using {} as backbone".format(backbone.__class__.__name__))
         self.net = backbone
         self.loss = loss
         self.args = args
@@ -129,6 +129,13 @@ class ContinualModel(nn.Module):
         if self.args.label_perc != 1 and 'cssl' not in self.COMPATIBILITY:
             print('WARNING: label_perc is not explicitly supported by this model -> training may break')
 
+    def to(self, device):
+        """
+        Captures the device to be used for training.
+        """
+        self.device = device
+        return super().to(device)
+
     def load_buffer(self, buffer):
         """
         Default way to handle load buffer.
@@ -137,18 +144,24 @@ class ContinualModel(nn.Module):
             self.args.buffer_size, buffer.examples.shape[0])
         self.buffer = buffer
 
+    def get_parameters(self):
+        """
+        Returns the parameters of the model.
+        """
+        return self.net.parameters()
+
     def get_optimizer(self):
         # check if optimizer is in torch.optim
         supported_optims = {optim_name.lower(): optim_name for optim_name in dir(optim) if optim_name.lower() in self.AVAIL_OPTIMS}
         opt = None
         if self.args.optimizer.lower() in supported_optims:
             if self.args.optimizer.lower() == 'sgd':
-                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.net.parameters(), lr=self.args.lr,
+                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.get_parameters(), lr=self.args.lr,
                                                                                     weight_decay=self.args.optim_wd,
                                                                                     momentum=self.args.optim_mom,
                                                                                     nesterov=self.args.optim_nesterov == 1)
             elif self.args.optimizer.lower() == 'adam' or self.args.optimizer.lower() == 'adamw':
-                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.net.parameters(), lr=self.args.lr,
+                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.get_parameters(), lr=self.args.lr,
                                                                                     weight_decay=self.args.optim_wd)
 
         if opt is None:
@@ -196,6 +209,21 @@ class ContinualModel(nn.Module):
         return self.net(x)
 
     def meta_observe(self, *args, **kwargs):
+        """
+        Wrapper for `observe` method.
+
+        Takes care of dropping unlabeled data if not supported by the model and of logging to wandb if installed.
+
+        Args:
+            inputs: batch of inputs
+            labels: batch of labels
+            not_aug_inputs: batch of inputs without augmentation
+            kwargs: some methods could require additional parameters
+
+        Returns:
+            the value of the loss function
+        """
+
         if 'cssl' not in self.COMPATIBILITY:  # drop unlabeled data if not supported
             labeled_mask = args[1] != -1
             if labeled_mask.sum() == 0:
@@ -207,9 +235,19 @@ class ContinualModel(nn.Module):
             self.autolog_wandb(pl.locals)
         else:
             ret = self.observe(*args, **kwargs)
+        self.task_iteration += 1
         return ret
 
     def meta_begin_task(self, dataset):
+        """
+        Wrapper for `begin_task` method.
+
+        Takes care of updating the internal counters.
+
+        Args:
+            dataset: the current task's dataset
+        """
+        self.task_iteration = 0
         self._n_classes_current_task = self._cpt if isinstance(self._cpt, int) else self._cpt[self._current_task]
         self._n_seen_classes = self._cpt * (self._current_task + 1) if isinstance(self._cpt, int) else sum(self._cpt[:self._current_task + 1])
         self._n_remaining_classes = self.N_CLASSES - self._n_seen_classes
@@ -217,6 +255,15 @@ class ContinualModel(nn.Module):
         self.begin_task(dataset)
 
     def meta_end_task(self, dataset):
+        """
+        Wrapper for `end_task` method.
+
+        Takes care of updating the internal counters.
+
+        Args:
+            dataset: the current task's dataset
+        """
+
         self.end_task(dataset)
         self._current_task += 1
 

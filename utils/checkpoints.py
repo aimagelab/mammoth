@@ -2,6 +2,7 @@
 import random
 import string
 import torch
+from torch import distributed as dist
 import os
 
 from tqdm import tqdm
@@ -35,7 +36,10 @@ def _load_net(dict_keys, model: torch.nn.Module, args, ignore_classifier=True):
         if args.distributed != 'dp':
             dict_keys[k.replace('module.', '')] = dict_keys.pop(k)
         elif 'module' not in k:
-            dict_keys[k.replace('net.', 'net.module.')] = dict_keys.pop(k)
+            if 'net' in k:
+                dict_keys[k.replace('net.', 'net.module.')] = dict_keys.pop(k)
+            else:
+                dict_keys[f'module.{k}'] = dict_keys.pop(k)
 
     if not ignore_classifier:
         cl_weights = [dict_keys[k] for k in list(dict_keys.keys()) if 'classifier' in k]

@@ -5,7 +5,7 @@ from utils.main import main, parse_args
 import pytest
 
 
-@pytest.mark.parametrize('dataset', ['seq-cifar100-224'])
+@pytest.mark.parametrize('dataset', ['seq-cifar100-224', 'seq-imagenet-r'])
 def test_l2p(dataset):
     sys.argv = ['mammoth',
                 '--model',

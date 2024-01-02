@@ -13,6 +13,7 @@ from argparse import ArgumentParser
 from datasets import NAMES as DATASET_NAMES
 from models import get_all_models
 from models.utils.continual_model import ContinualModel
+from utils import custom_str_underscore
 
 
 def add_experiment_args(parser: ArgumentParser) -> None:
@@ -28,8 +29,8 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     parser.add_argument('--dataset', type=str, required=True,
                         choices=DATASET_NAMES,
                         help='Which dataset to perform experiments on.')
-    parser.add_argument('--model', type=str, required=True,
-                        help='Model name.', choices=get_all_models())
+    parser.add_argument('--model', type=custom_str_underscore, required=True,
+                        help='Model name.', choices=list(get_all_models().keys()))
 
     parser.add_argument('--lr', type=float, required=True,
                         help='Learning rate.')
@@ -43,6 +44,12 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                         help='optimizer momentum.')
     parser.add_argument('--optim_nesterov', type=int, default=0,
                         help='optimizer nesterov momentum.')
+
+    parser.add_argument('--lr_scheduler', type=str, help='Learning rate scheduler.')
+    parser.add_argument('--lr_milestones', type=int, nargs='+', default=[],
+                        help='Learning rate scheduler milestones (used if `lr_scheduler=multisteplr`).')
+    parser.add_argument('--sched_multistep_lr_gamma', type=float, default=0.1,
+                        help='Learning rate scheduler gamma (used if `lr_scheduler=multisteplr`).')
 
     parser.add_argument('--n_epochs', type=int,
                         help='Number of epochs.')
@@ -86,8 +93,7 @@ def add_management_args(parser: ArgumentParser) -> None:
     parser.add_argument('--disable_log', default=0, choices=[0, 1], type=int, help='Disable logging?')
     parser.add_argument('--num_workers', type=int, default=None, help='Number of workers for the dataloaders (default=infer from number of cpus).')
 
-    parser.add_argument('--validation', default=0, choices=[0, 1], type=int,
-                        help='Test on the validation set')
+    parser.add_argument('--validation', type=int, help='Percentage of validation set drawn from the training set.')
     parser.add_argument('--enable_other_metrics', default=0, choices=[0, 1], type=int,
                         help='Enable computing additional metrics: forward and backward transfer.')
     parser.add_argument('--debug_mode', type=int, default=0, choices=[0, 1], help='Run only a few forward steps per epoch')

@@ -1,17 +1,17 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
-# All rights reserved.
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
+"""
+L2P: Learning to Prompt for Continual Learning
+
+Note:
+    L2P USES A CUSTOM BACKBONE: `vit_base_patch16_224`.
+    The backbone is a ViT-B/16 pretrained on Imagenet 21k and finetuned on ImageNet 1k.
+"""
 
 import torch
 
-import models.l2p_utils.vit_prompt  # required to register the models
 from models.utils.continual_model import ContinualModel
 from utils.args import add_management_args, add_experiment_args, ArgumentParser
-from datasets import get_dataset
-import numpy as np
+from timm import create_model  # noqa
 from models.l2p_utils.l2p_model import L2PModel
-from utils import none_or_float
 
 
 def get_parser() -> ArgumentParser:
@@ -21,12 +21,11 @@ def get_parser() -> ArgumentParser:
 
     # Prompt parameters
     parser.add_argument('--prompt_pool', default=True, type=bool,)
-    parser.add_argument('--pool_size_l2p', default=10, type=int,)
-    parser.add_argument('--length', default=5, type=int, )
-    parser.add_argument('--top_k', default=5, type=int, )
-    parser.add_argument('--initializer', default='uniform', type=str,)
-    parser.add_argument('--prompt_key', default=True, type=bool,)
-    parser.add_argument('--prompt_key_init', default='uniform', type=str)
+    parser.add_argument('--pool_size_l2p', default=10, type=int, help='number of prompts (M in paper)')
+    parser.add_argument('--length', default=5, type=int, help='length of prompt (L_p in paper)')
+    parser.add_argument('--top_k', default=5, type=int, help='top k prompts to use (N in paper)')
+    parser.add_argument('--prompt_key', default=True, type=bool, help='Use learnable prompt key')
+    parser.add_argument('--prompt_key_init', default='uniform', type=str, help='initialization type for key\'s prompts')
     parser.add_argument('--use_prompt_mask', default=False, type=bool)
     parser.add_argument('--batchwise_prompt', default=True, type=bool)
     parser.add_argument('--embedding_key', default='cls', type=str)
@@ -52,8 +51,7 @@ def get_parser() -> ArgumentParser:
     parser.add_argument('--decay-rate', '--dr', type=float, default=0.1, metavar='RATE', help='LR decay rate (default: 0.1)')
     parser.add_argument('--unscale_lr', type=bool, default=True, help='scaling lr by batch size (default: True)')
 
-    parser.add_argument('--network', type=str, default='vit_base_patch16_224', help='Network to use')
-    parser.add_argument('--clip_grad', type=none_or_float, default=None, metavar='NORM', help='Clip gradient norm (default: None, no clipping)')
+    parser.add_argument('--clip_grad', type=float, default=1, help='Clip gradient norm')
     return parser
 
 
@@ -65,49 +63,50 @@ class L2P(ContinualModel):
         """
         L2P re-defines the backbone model to include the prompt parameters. This is done *before* calling the super constructor, so that the backbone is already initialized when the super constructor is called.
         """
+        del backbone
+        print("-" * 20)
+        print(f"WARNING: L2P USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
+        print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
+        print("-" * 20)
 
-        self.dataset = get_dataset(args)
-        assert self.dataset.SIZE is not None and self.dataset.SIZE[0] >= 224, 'L2P only supports 224x224 images or greater'
-        self.n_classes = self.dataset.N_CLASSES if hasattr(self.dataset, 'N_CLASSES') else self.dataset.N_CLASSES_PER_TASK * self.dataset.N_TASKS
-
-        backbone = L2PModel(args, self.n_classes)
+        args.lr = args.lr * args.batch_size / 256.0
+        backbone = L2PModel(args)
 
         super().__init__(backbone, loss, args, transform)
-        self.class_mask = torch.arange(self.n_classes, dtype=int) \
-            .reshape(self.dataset.N_TASKS, self.n_classes // self.dataset.N_TASKS).tolist()
 
     def begin_task(self, dataset):
         self.net.original_model.eval()
+
+        if hasattr(self, 'opt'):
+            self.opt.zero_grad(set_to_none=True)
+            del self.opt
+        self.opt = self.get_optimizer()
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         outputs = self.net(inputs, return_outputs=True)
         logits = outputs['logits']
 
         # here is the trick to mask out classes of non-current tasks
-        if self.class_mask is not None:
-            mask = self.class_mask[self.current_task]
-            not_mask = np.setdiff1d(np.arange(self.n_classes), mask)
-            not_mask = torch.tensor(not_mask, dtype=torch.int64).to(self.device)
-            logits = logits.index_fill(dim=1, index=not_mask, value=float('-inf'))
-
         offset_1, offset_2 = self._compute_offsets(self.current_task)
-        logits = logits[:, offset_1:offset_2]
+        logits[:, :offset_1] = -float('inf')
 
-        loss = self.loss(logits, labels - offset_1)
+        loss = self.loss(logits[:, :offset_2], labels)
         if self.args.pull_constraint and 'reduce_sim' in outputs:
             loss = loss - self.args.pull_constraint_coeff * outputs['reduce_sim']
 
         self.opt.zero_grad()
         loss.backward()
-        if self.args.clip_grad is not None:
-            torch.nn.utils.clip_grad_norm_(self.net.model.parameters(), self.args.clip_grad)
+        torch.nn.utils.clip_grad_norm_(self.get_parameters(), self.args.clip_grad)
         self.opt.step()
 
         return loss.item()
 
+    def get_parameters(self):
+        return [p for n, p in self.net.model.named_parameters() if 'prompt' in n or 'head' in n]
+
     def forward(self, x):
         if self.current_task > 0:
-            offset_1, offset_2 = self._compute_offsets(self.current_task - 1)
+            _, offset_2 = self._compute_offsets(self.current_task - 1)
         else:
             offset_2 = self.N_CLASSES
         return self.net(x)[:, :offset_2]

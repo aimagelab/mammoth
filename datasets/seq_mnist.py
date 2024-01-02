@@ -14,7 +14,6 @@ from torchvision.datasets import MNIST
 from backbone.MNISTMLP import MNISTMLP
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
-from datasets.utils.validation import get_train_val
 from utils.conf import base_path
 
 
@@ -82,12 +81,8 @@ class SequentialMNIST(ContinualDataset):
         transform = transforms.ToTensor()
         train_dataset = MyMNIST(base_path() + 'MNIST',
                                 train=True, download=True, transform=transform)
-        if self.args.validation:
-            train_dataset, test_dataset = get_train_val(train_dataset,
-                                                        transform, self.NAME)
-        else:
-            test_dataset = MNIST(base_path() + 'MNIST',
-                                 train=False, download=True, transform=transform)
+        test_dataset = MNIST(base_path() + 'MNIST',
+                             train=False, download=True, transform=transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test

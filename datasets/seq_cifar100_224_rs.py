@@ -9,7 +9,6 @@ from datasets.seq_cifar100 import TCIFAR100, MyCIFAR100
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
-from datasets.utils.validation import get_train_val
 from utils.conf import base_path
 
 
@@ -54,12 +53,8 @@ class SequentialCIFAR100224RS(ContinualDataset):
 
         train_dataset = MyCIFAR100(base_path() + 'CIFAR100', train=True,
                                    download=True, transform=transform)
-        if self.args.validation:
-            train_dataset, test_dataset = get_train_val(train_dataset,
-                                                        test_transform, self.NAME)
-        else:
-            test_dataset = TCIFAR100(base_path() + 'CIFAR100', train=False,
-                                     download=True, transform=test_transform)
+        test_dataset = TCIFAR100(base_path() + 'CIFAR100', train=False,
+                                 download=True, transform=test_transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
 

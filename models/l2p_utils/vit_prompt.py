@@ -28,17 +28,17 @@ import math
 import logging
 from functools import partial
 from collections import OrderedDict
-from typing import Optional
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
 
-from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, IMAGENET_INCEPTION_MEAN, IMAGENET_INCEPTION_STD
+from timm.data import IMAGENET_INCEPTION_MEAN, IMAGENET_INCEPTION_STD
 from timm.models.helpers import build_model_with_cfg, resolve_pretrained_cfg, named_apply, adapt_input_conv, checkpoint_seq
 from timm.models.layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_normal_
 from timm.models._registry import register_model
+from timm.models.vision_transformer import default_cfgs
 
 from models.l2p_utils.prompt import Prompt
 
@@ -54,142 +54,6 @@ def _cfg(url='', **kwargs):
         'first_conv': 'patch_embed.proj', 'classifier': 'head',
         **kwargs
     }
-
-
-default_cfgs = {
-    # patch models (weights from official Google JAX impl)
-    'vit_tiny_patch16_224': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/'
-            'Ti_16-i21k-300ep-lr_0.001-aug_none-wd_0.03-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.03-res_224.npz'),
-    'vit_tiny_patch16_384': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/'
-            'Ti_16-i21k-300ep-lr_0.001-aug_none-wd_0.03-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.03-res_384.npz',
-        input_size=(3, 384, 384), crop_pct=1.0),
-    'vit_small_patch32_224': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/'
-            'S_32-i21k-300ep-lr_0.001-aug_light1-wd_0.03-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.03-res_224.npz'),
-    'vit_small_patch32_384': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/'
-            'S_32-i21k-300ep-lr_0.001-aug_light1-wd_0.03-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.03-res_384.npz',
-        input_size=(3, 384, 384), crop_pct=1.0),
-    'vit_small_patch16_224': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/'
-            'S_16-i21k-300ep-lr_0.001-aug_light1-wd_0.03-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.03-res_224.npz'),
-    'vit_small_patch16_384': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/'
-            'S_16-i21k-300ep-lr_0.001-aug_light1-wd_0.03-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.03-res_384.npz',
-        input_size=(3, 384, 384), crop_pct=1.0),
-    'vit_base_patch32_224': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/'
-            'B_32-i21k-300ep-lr_0.001-aug_medium1-wd_0.03-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.03-res_224.npz'),
-    'vit_base_patch32_384': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/'
-            'B_32-i21k-300ep-lr_0.001-aug_light1-wd_0.1-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.03-res_384.npz',
-        input_size=(3, 384, 384), crop_pct=1.0),
-    # 'vit_base_patch16_224': _cfg(
-    #     url='https://storage.googleapis.com/vit_models/augreg/'
-    #         'B_16-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.01-res_224.npz'),
-    'vit_base_patch16_224': _cfg(
-        url='https://storage.googleapis.com/vit_models/imagenet21k/ViT-B_16.npz'),
-    'vit_base_patch16_384': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/'
-            'B_16-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.01-res_384.npz',
-        input_size=(3, 384, 384), crop_pct=1.0),
-    'vit_base_patch8_224': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/'
-            'B_8-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.0-sd_0.0--imagenet2012-steps_20k-lr_0.01-res_224.npz'),
-    'vit_large_patch32_224': _cfg(
-        url='',  # no official model weights for this combo, only for in21k
-    ),
-    'vit_large_patch32_384': _cfg(
-        url='https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-vitjx/jx_vit_large_p32_384-9b920ba8.pth',
-        input_size=(3, 384, 384), crop_pct=1.0),
-    'vit_large_patch16_224': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/'
-            'L_16-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.1-sd_0.1--imagenet2012-steps_20k-lr_0.01-res_224.npz'),
-    'vit_large_patch16_384': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/'
-            'L_16-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.1-sd_0.1--imagenet2012-steps_20k-lr_0.01-res_384.npz',
-        input_size=(3, 384, 384), crop_pct=1.0),
-
-    'vit_large_patch14_224': _cfg(url=''),
-    'vit_huge_patch14_224': _cfg(url=''),
-    'vit_giant_patch14_224': _cfg(url=''),
-    'vit_gigantic_patch14_224': _cfg(url=''),
-
-
-    # patch models, imagenet21k (weights from official Google JAX impl)
-    'vit_tiny_patch16_224_in21k': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/Ti_16-i21k-300ep-lr_0.001-aug_none-wd_0.03-do_0.0-sd_0.0.npz',
-        num_classes=21843),
-    'vit_small_patch32_224_in21k': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/S_32-i21k-300ep-lr_0.001-aug_light1-wd_0.03-do_0.0-sd_0.0.npz',
-        num_classes=21843),
-    'vit_small_patch16_224_in21k': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/S_16-i21k-300ep-lr_0.001-aug_light1-wd_0.03-do_0.0-sd_0.0.npz',
-        num_classes=21843),
-    'vit_base_patch32_224_in21k': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/B_32-i21k-300ep-lr_0.001-aug_medium1-wd_0.03-do_0.0-sd_0.0.npz',
-        num_classes=21843),
-    'vit_base_patch16_224_in21k': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/B_16-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.0-sd_0.0.npz',
-        num_classes=21843),
-    'vit_base_patch8_224_in21k': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/B_8-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.0-sd_0.0.npz',
-        num_classes=21843),
-    'vit_large_patch32_224_in21k': _cfg(
-        url='https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-vitjx/jx_vit_large_patch32_224_in21k-9046d2e7.pth',
-        num_classes=21843),
-    'vit_large_patch16_224_in21k': _cfg(
-        url='https://storage.googleapis.com/vit_models/augreg/L_16-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.1-sd_0.1.npz',
-        num_classes=21843),
-    'vit_huge_patch14_224_in21k': _cfg(
-        url='https://storage.googleapis.com/vit_models/imagenet21k/ViT-H_14.npz',
-        hf_hub_id='timm/vit_huge_patch14_224_in21k',
-        num_classes=21843),
-
-    # SAM trained models (https://arxiv.org/abs/2106.01548)
-    'vit_base_patch32_224_sam': _cfg(
-        url='https://storage.googleapis.com/vit_models/sam/ViT-B_32.npz'),
-    'vit_base_patch16_224_sam': _cfg(
-        url='https://storage.googleapis.com/vit_models/sam/ViT-B_16.npz'),
-
-    # DINO pretrained - https://arxiv.org/abs/2104.14294 (no classifier head, for fine-tune only)
-    'vit_small_patch16_224_dino': _cfg(
-        url='https://dl.fbaipublicfiles.com/dino/dino_deitsmall16_pretrain/dino_deitsmall16_pretrain.pth',
-        mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD, num_classes=0),
-    'vit_small_patch8_224_dino': _cfg(
-        url='https://dl.fbaipublicfiles.com/dino/dino_deitsmall8_pretrain/dino_deitsmall8_pretrain.pth',
-        mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD, num_classes=0),
-    'vit_base_patch16_224_dino': _cfg(
-        url='https://dl.fbaipublicfiles.com/dino/dino_vitbase16_pretrain/dino_vitbase16_pretrain.pth',
-        mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD, num_classes=0),
-    'vit_base_patch8_224_dino': _cfg(
-        url='https://dl.fbaipublicfiles.com/dino/dino_vitbase8_pretrain/dino_vitbase8_pretrain.pth',
-        mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD, num_classes=0),
-
-
-    # ViT ImageNet-21K-P pretraining by MILL
-    'vit_base_patch16_224_miil_in21k': _cfg(
-        url='https://miil-public-eu.oss-eu-central-1.aliyuncs.com/model-zoo/ImageNet_21K_P/models/timm/vit_base_patch16_224_in21k_miil.pth',
-        mean=(0., 0., 0.), std=(1., 1., 1.), crop_pct=0.875, interpolation='bilinear', num_classes=11221,
-    ),
-    'vit_base_patch16_224_miil': _cfg(
-        url='https://miil-public-eu.oss-eu-central-1.aliyuncs.com/model-zoo/ImageNet_21K_P/models/timm'
-            '/vit_base_patch16_224_1k_miil_84_4.pth',
-        mean=(0., 0., 0.), std=(1., 1., 1.), crop_pct=0.875, interpolation='bilinear',
-    ),
-
-    'vit_base_patch16_rpn_224': _cfg(
-        url='https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-tpu-weights/vit_base_patch16_rpn_224-sw-3b07e89d.pth'),
-
-    # experimental (may be removed)
-    'vit_base_patch32_plus_256': _cfg(url='', input_size=(3, 256, 256), crop_pct=0.95),
-    'vit_base_patch16_plus_240': _cfg(url='', input_size=(3, 240, 240), crop_pct=0.95),
-    'vit_small_patch16_36x1_224': _cfg(url=''),
-    'vit_small_patch16_18x2_224': _cfg(url=''),
-    'vit_base_patch16_18x2_224': _cfg(url=''),
-}
 
 
 class Attention(nn.Module):
@@ -336,7 +200,7 @@ class VisionTransformer(nn.Module):
             class_token=True, no_embed_class=False, fc_norm=None, drop_rate=0., attn_drop_rate=0., drop_path_rate=0.,
             weight_init='', embed_layer=PatchEmbed, norm_layer=None, act_layer=None, block_fn=Block,
             prompt_length=None, embedding_key='cls', prompt_init='uniform', prompt_pool=False, prompt_key=False, pool_size=None,
-            top_k=None, batchwise_prompt=False, prompt_key_init='uniform', head_type='token', use_prompt_mask=False,):
+            top_k=None, batchwise_prompt=False, prompt_key_init='uniform', head_type='token', use_prompt_mask=False, prompt_shuffle=False):
         """
         Args:
             img_size (int, tuple): input image size
@@ -392,11 +256,12 @@ class VisionTransformer(nn.Module):
         self.prompt_pool = prompt_pool
         self.head_type = head_type
         self.use_prompt_mask = use_prompt_mask
+        self.prompt_shuffle = prompt_shuffle
 
         if prompt_length is not None and pool_size is not None and prompt_pool:
             self.prompt = Prompt(length=prompt_length, embed_dim=embed_dim, embedding_key=embedding_key, prompt_init=prompt_init,
                                  prompt_pool=prompt_pool, prompt_key=prompt_key, pool_size=pool_size, top_k=top_k, batchwise_prompt=batchwise_prompt,
-                                 prompt_key_init=prompt_key_init,)
+                                 prompt_key_init=prompt_key_init, prompt_shuffle=self.prompt_shuffle)
 
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, depth)]  # stochastic depth decay rule
         self.blocks = nn.Sequential(*[
@@ -716,37 +581,30 @@ def _create_vision_transformer(variant, pretrained=False, **kwargs):
     if kwargs.get('features_only', None):
         raise RuntimeError('features_only not implemented for Vision Transformer models.')
 
-    # pretrained_cfg = resolve_pretrained_cfg(variant, pretrained_cfg=kwargs.pop('pretrained_cfg', None))
-    # model = build_model_with_cfg(
-    #     VisionTransformer, variant, pretrained,
-    #     pretrained_cfg=pretrained_cfg,
-    #     pretrained_filter_fn=checkpoint_filter_fn,
-    #     pretrained_custom_load='npz' in pretrained_cfg['url'],
-    #     **kwargs)
-    # return model
+    if 'flexi' in variant:
+        # FIXME Google FlexiViT pretrained models have a strong preference for bilinear patch / embed
+        # interpolation, other pretrained models resize better w/ anti-aliased bicubic interpolation.
+        _filter_fn = partial(checkpoint_filter_fn, interpolation='bilinear', antialias=False)
+    else:
+        _filter_fn = checkpoint_filter_fn
 
-    assert 'flexi' not in variant
+    pretrained_cfg = resolve_pretrained_cfg(variant, pretrained_cfg=kwargs.pop('pretrained_cfg', None))
+    pretrained_cfg.custom_load = True
+
     return build_model_with_cfg(
-        VisionTransformer, variant, pretrained,
-        pretrained_filter_fn=checkpoint_filter_fn,
+        VisionTransformer,
+        variant,
+        pretrained,
+        pretrained_cfg=pretrained_cfg,
+        pretrained_filter_fn=_filter_fn,
         **kwargs,
     )
 
 
-@register_model
 def vit_base_patch16_224_l2p(pretrained=False, **kwargs):
     """ ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
     """
     model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, **kwargs)
     model = _create_vision_transformer('vit_base_patch16_224', pretrained=pretrained, **model_kwargs)
-    return model
-
-
-@register_model
-def vit_small_patch16_224_l2p(pretrained=False, **kwargs):
-    """ ViT-Small (ViT-S/16)
-    """
-    model_kwargs = dict(patch_size=16, embed_dim=384, depth=12, num_heads=6)
-    model = _create_vision_transformer('vit_small_patch16_224', pretrained=pretrained, **dict(model_kwargs, **kwargs))
     return model

@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from argparse import Namespace
 from typing import Tuple
 
 import torch.nn.functional as F
@@ -15,7 +16,7 @@ from backbone.ResNet18 import resnet18
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
-from datasets.utils.validation import get_train_val
+# from models.utils.continual_model import ContinualModel
 from utils.conf import base_path
 
 
@@ -109,12 +110,8 @@ class SequentialCIFAR100(ContinualDataset):
 
         train_dataset = MyCIFAR100(base_path() + 'CIFAR100', train=True,
                                    download=True, transform=transform)
-        if self.args.validation:
-            train_dataset, test_dataset = get_train_val(train_dataset,
-                                                        test_transform, self.NAME)
-        else:
-            test_dataset = TCIFAR100(base_path() + 'CIFAR100', train=False,
-                                     download=True, transform=test_transform)
+        test_dataset = TCIFAR100(base_path() + 'CIFAR100', train=False,
+                                 download=True, transform=test_transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
 
@@ -154,7 +151,9 @@ class SequentialCIFAR100(ContinualDataset):
         return 32
 
     @staticmethod
-    def get_scheduler(model, args) -> torch.optim.lr_scheduler:
-        model.opt = torch.optim.SGD(model.net.parameters(), lr=args.lr, weight_decay=args.optim_wd, momentum=args.optim_mom)
-        scheduler = torch.optim.lr_scheduler.MultiStepLR(model.opt, [35, 45], gamma=0.1, verbose=False)
+    def get_scheduler(model, args: Namespace) -> torch.optim.lr_scheduler:
+        model.opt = model.get_optimizer()
+        scheduler = ContinualDataset.get_scheduler(model, args)
+        if scheduler is None:
+            scheduler = torch.optim.lr_scheduler.MultiStepLR(model.opt, [35, 45], gamma=0.1, verbose=False)
         return scheduler
