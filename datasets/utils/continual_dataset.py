@@ -140,16 +140,15 @@ class ContinualDataset:
             if args.lr_scheduler.lower() in supported_scheds:
                 if args.lr_scheduler.lower() == 'multisteplr':
                     sched = getattr(scheds, supported_scheds[args.lr_scheduler.lower()])(model.opt,
-                                                                                            milestones=args.lr_milestones,
-                                                                                            gamma=args.sched_multistep_lr_gamma)
+                                                                                         milestones=args.lr_milestones,
+                                                                                         gamma=args.sched_multistep_lr_gamma)
 
             if sched is None:
                 raise ValueError('Unknown scheduler: {}'.format(args.lr_scheduler))
             return sched
         return None
 
-    @staticmethod
-    def get_epochs():
+    def get_epochs(self):
         """Returns the number of epochs to be used for the current dataset."""
         raise NotImplementedError
 

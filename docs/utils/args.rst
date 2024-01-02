@@ -12,12 +12,12 @@ Arguments
 
             - Choices: seq-tinyimg, seq-tinyimg-r, perm-mnist, seq-cifar10, seq-cifar100-224, seq-cub200, rot-mnist, seq-cifar100, seq-cifar100-224-rs, seq-mnist, mnist-360
 
-**\-\-model** : <function custom_str_underscore at 0x14d19d24c2c0>
+**\-\-model** : <function custom_str_underscore at 0x7fe9f47a42c0>
             *Help*: Model name.
 
             - Default: None
 
-            - Choices: agem, agem-r, ewc-on, derpp-lider, gdumb-lider, slca, si, bic, er-ace, fdr, gdumb, gem, gss, joint-gcl, lwf, mer, rpc, twf, ccic, der, derpp, er, hal, icarl, l2p, lucir, lwf-mc, sgd, xder, xder-ce, xder-rpc, pnn, er-ace-lider, icarl-lider, coda-prompt
+            - Choices: agem, agem-r, ewc-on, derpp-lider, gdumb-lider, slca, dualprompt, si, bic, er-ace, fdr, gdumb, gem, gss, joint-gcl, lwf, mer, rpc, twf, ccic, der, derpp, er, hal, icarl, l2p, lucir, lwf-mc, sgd, xder, xder-ce, xder-rpc, pnn, er-ace-lider, icarl-lider, coda-prompt
 
 **\-\-lr** : <class 'float'>
             *Help*: Learning rate.

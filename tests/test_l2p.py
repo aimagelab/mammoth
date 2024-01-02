@@ -5,12 +5,13 @@ from utils.main import main, parse_args
 import pytest
 
 
-def test_l2p():
+@pytest.mark.parametrize('dataset', ['seq-cifar100-224', 'seq-imagenet-r'])
+def test_l2p(dataset):
     sys.argv = ['mammoth',
                 '--model',
                 'l2p',
                 '--dataset',
-                'seq-cifar100-224',
+                dataset,
                 '--lr',
                 '1e-4',
                 '--n_epochs',
@@ -29,7 +30,7 @@ def test_l2p():
     # log all outputs to file
     if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
         os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_l2p.log'), 'w', encoding='utf-8')
+    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_l2p.{dataset}.log'), 'w', encoding='utf-8')
     sys.stderr = sys.stdout
 
     main()
