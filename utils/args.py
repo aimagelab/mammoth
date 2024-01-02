@@ -10,7 +10,7 @@ if __name__ == '__main__':
     sys.path.append(mammoth_path)
 
 from argparse import ArgumentParser
-from datasets import NAMES as DATASET_NAMES
+from datasets import get_dataset_names
 from models import get_all_models
 from models.utils.continual_model import ContinualModel
 from utils import custom_str_underscore
@@ -27,7 +27,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
         None
     """
     parser.add_argument('--dataset', type=str, required=True,
-                        choices=DATASET_NAMES,
+                        choices=get_dataset_names(),
                         help='Which dataset to perform experiments on.')
     parser.add_argument('--model', type=custom_str_underscore, required=True,
                         help='Model name.', choices=list(get_all_models().keys()))
@@ -88,6 +88,8 @@ def add_management_args(parser: ArgumentParser) -> None:
                         help='The base path where to save datasets, logs, results.')
     parser.add_argument('--notes', type=str, default=None,
                         help='Notes for this run.')
+    parser.add_argument('--wandb_name', type=str, default=None,
+                        help='Wandb name for this run. Overrides the default name (`args.model`).')
 
     parser.add_argument('--non_verbose', default=0, choices=[0, 1], type=int, help='Make progress bars non verbose')
     parser.add_argument('--disable_log', default=0, choices=[0, 1], type=int, help='Disable logging?')

@@ -9,7 +9,7 @@ from datasets.utils.validation import ValidationDataset
 from torch.optim import SGD
 from torchvision import transforms
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, ArgumentParser
+from utils.args import ArgumentParser
 from utils.conf import create_seeded_dataloader
 from utils.status import progress_bar
 

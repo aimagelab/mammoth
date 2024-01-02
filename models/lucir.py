@@ -13,7 +13,7 @@ from datasets import get_dataset
 from torch import nn
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer, fill_buffer, icarl_replay
 from utils.conf import create_seeded_dataloader
@@ -43,30 +43,6 @@ def lucir_batch_hard_triplet_loss(labels, embeddings, k, margin, num_old_classes
         loss = torch.zeros(1).to(embeddings.device)
 
     return loss
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via Lucir.')
-
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-
-    parser.add_argument('--lamda_base', type=float, required=False, default=5.,
-                        help='Regularization weight for embedding cosine similarity.')
-    parser.add_argument('--lamda_mr', type=float, required=False, default=1.,
-                        help='Regularization weight for embedding cosine similarity.')
-    parser.add_argument('--k_mr', type=int, required=False, default=2,
-                        help='K for margin-ranking loss.')
-    parser.add_argument('--mr_margin', type=float, default=0.5,
-                        required=False, help='Margin for margin-ranking loss.')
-    parser.add_argument('--fitting_epochs', type=int, required=False, default=20,
-                        help='Number of epochs to finetune on coreset after each task.')
-    parser.add_argument('--lr_finetune', type=float, required=False, default=0.01,
-                        help='Learning Rate for finetuning.')
-    parser.add_argument('--imprint_weights', type=int, choices=[0, 1], required=False, default=1,
-                        help='Apply weight imprinting?')
-    return parser
 
 
 class CustomClassifier(nn.Module):
@@ -120,6 +96,27 @@ class CustomClassifier(nn.Module):
 class Lucir(ContinualModel):
     NAME = 'lucir'
     COMPATIBILITY = ['class-il', 'task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual Learning via Lucir.')
+        add_rehearsal_args(parser)
+
+        parser.add_argument('--lamda_base', type=float, required=False, default=5.,
+                            help='Regularization weight for embedding cosine similarity.')
+        parser.add_argument('--lamda_mr', type=float, required=False, default=1.,
+                            help='Regularization weight for embedding cosine similarity.')
+        parser.add_argument('--k_mr', type=int, required=False, default=2,
+                            help='K for margin-ranking loss.')
+        parser.add_argument('--mr_margin', type=float, default=0.5,
+                            required=False, help='Margin for margin-ranking loss.')
+        parser.add_argument('--fitting_epochs', type=int, required=False, default=20,
+                            help='Number of epochs to finetune on coreset after each task.')
+        parser.add_argument('--lr_finetune', type=float, required=False, default=0.01,
+                            help='Learning Rate for finetuning.')
+        parser.add_argument('--imprint_weights', type=int, choices=[0, 1], required=False, default=1,
+                            help='Apply weight imprinting?')
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         super(Lucir, self).__init__(backbone, loss, args, transform)

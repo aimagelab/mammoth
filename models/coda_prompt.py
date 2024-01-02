@@ -15,22 +15,19 @@ from models.coda_prompt_utils.model import Model
 from utils.schedulers import CosineSchedule
 
 
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via'
-                                        ' CODA-Prompt: COntinual Decomposed Attention-based Prompting')
-    add_management_args(parser)
-    add_experiment_args(parser)
-
-    parser.add_argument('--mu', type=float, default=0.0, help='weight of prompt loss')
-    parser.add_argument('--pool_size', type=int, default=100, help='pool size')
-    parser.add_argument('--prompt_len', type=int, default=8, help='prompt length')
-    parser.add_argument('--virtual_bs_iterations', type=int, default=1, help="virtual batch size iterations")
-    return parser
-
-
 class CodaPrompt(ContinualModel):
     NAME = 'coda_prompt'
     COMPATIBILITY = ['class-il', 'task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual Learning via'
+                                ' CODA-Prompt: COntinual Decomposed Attention-based Prompting')
+        parser.add_argument('--mu', type=float, default=0.0, help='weight of prompt loss')
+        parser.add_argument('--pool_size', type=int, default=100, help='pool size')
+        parser.add_argument('--prompt_len', type=int, default=8, help='prompt length')
+        parser.add_argument('--virtual_bs_iterations', type=int, default=1, help="virtual batch size iterations")
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         del backbone

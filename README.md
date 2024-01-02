@@ -11,6 +11,8 @@ Idelly, all the code necessary to run the experiments is included _in the reposi
 
 With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
 
+Join our Discord Server for all your Mammoth-related questions → ![Discord Shield](https://discordapp.com/api/guilds/1164956257392799860/widget.png?style=shield)
+
 ## **NEW**: WIKI
 
 We have created a [WIKI](https://aimagelab.github.io/mammoth/)! Check it out for more information on how to use Mammoth.
@@ -33,34 +35,33 @@ We have created a [WIKI](https://aimagelab.github.io/mammoth/)! Check it out for
 
 ## Models
 
-- LiDER (on DER++, iCaRL, GDumb, and ER-ACE): `derpp_lider`, `icarl_lider`, `gdumb_lider`, `er_ace_lider`.
-- eXtended-DER (X-DER): `xder` (full version), `xder_ce` (X-DER with CE), `xder_rpc` (X-DER with RPC).
+- Efficient Lifelong Learning with A-GEM (A-GEM, A-GEM-R - A-GEM with reservoir buffer): `agem`, `agem_r`
+- Bias Correction (BiC): `bic`.
+- Continual Contrastive Interpolation Consistency (CCIC) - _Requires_ `pip install kornia`: `ccic`.
+- CODA-Prompt: COntinual Decomposed Attention-based Prompting for Rehearsal-Free Continual Learning (CODA-Prompt) - _Requires_ `pip install timm==0.9.8`: `coda-prompt`.
 - Dark Experience Replay (DER): `der`.
 - Dark Experience Replay++ (DER++): `derpp`.
-- Learning a Unified Classifier Incrementally via Rebalancing (LUCIR): `lucir`.
-- Greedy Sampler and Dumb Learner (GDumb): `gdumb`.
-- Bias Correction (BiC): `bic`.
-- Regular Polytope Classifier (RPC): `rpc`.
-- Gradient Episodic Memory (GEM) - _Unavailable on windows_: `gem`.
-- A-GEM: `agem`.
-- A-GEM with Reservoir (A-GEM-R): `agem_r`.
+- DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning (DualPrompt) - _Requires_ `pip install timm==0.9.8`: `dualprompt`.
 - Experience Replay (ER): `er`.
-- Meta-Experience Replay (MER): `mer`.
+- online Elastic Weight Consolidation (oEWC): `ewc_on`.
 - Function Distance Regularization (FDR): `fdr`.
+- Greedy Sampler and Dumb Learner (GDumb): `gdumb`.
+- Gradient Episodic Memory (GEM) - _Unavailable on windows_: `gem`.
 - Greedy gradient-based Sample Selection (GSS): `gss`.
 - Hindsight Anchor Learning (HAL): `hal`.
 - Incremental Classifier and Representation Learning (iCaRL): `icarl`.
-- online Elastic Weight Consolidation (oEWC): `ewc_on`.
-- Synaptic Intelligence (SI): `si`.
-- Learning without Forgetting (LwF): `lwf`.
-- Progressive Neural Networks (PNN): `pnn`.
-- Learning to Prompt (L2P) - _Requires_ `pip install timm==0.9.8`: `l2p`.
-- DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning (DualPrompt) - _Requires_ ``pip install timm==0.9.8``: `dualprompt`.
-- CODA-Prompt: COntinual Decomposed Attention-based Prompting for Rehearsal-Free Continual Learning (CODA-Prompt) - _Requires_ ``pip install timm==0.9.8``: `coda-prompt`.
-- SLCA: Slow Learner with Classifier Alignment for Continual Learning on a Pre-trained Model (SLCA) - _Requires_ ``pip install timm==0.9.8``: `slca`.
-- Transfer without Forgetting (TwF): `twf`.
-- Continual Contrastive Interpolation Consistency (CCIC) - _Requires_ `pip install kornia`: `ccic`.
 - JointGCL: `joint_gcl` (only for General Continual).
+- Learning to Prompt (L2P) - _Requires_ `pip install timm==0.9.8`: `l2p`.
+- LiDER (on DER++, iCaRL, GDumb, and ER-ACE): `derpp_lider`, `icarl_lider`, `gdumb_lider`, `er_ace_lider`.
+- Learning a Unified Classifier Incrementally via Rebalancing (LUCIR): `lucir`.
+- Learning without Forgetting (LwF): `lwf`.
+- Meta-Experience Replay (MER): `mer`.
+- Progressive Neural Networks (PNN): `pnn`.
+- Regular Polytope Classifier (RPC): `rpc`.
+- Synaptic Intelligence (SI): `si`.
+- SLCA: Slow Learner with Classifier Alignment for Continual Learning on a Pre-trained Model (SLCA) - _Requires_ `pip install timm==0.9.8`: `slca`.
+- Transfer without Forgetting (TwF): `twf`.
+- eXtended-DER (X-DER): `xder` (full version), `xder_ce` (X-DER with CE), `xder_rpc` (X-DER with RPC).
 
 ## Datasets
 
@@ -80,6 +81,7 @@ We have created a [WIKI](https://aimagelab.github.io/mammoth/)! Check it out for
 - Rotated MNIST (_Domain-IL_): `rot-mnist`.
 - MNIST-360 (_General Continual Learning_): `mnist-360`.
 - Sequential CUB-200 (_Class-Il / Task-IL_): `seq-cub200`.
+- Sequential ImageNet-R (_Class-Il / Task-IL_): `seq-imagenet-r`.
 
 ## Pretrained backbones
 
@@ -134,15 +136,13 @@ We have created a [WIKI](https://aimagelab.github.io/mammoth/)! Check it out for
 - Continual Normalization: Rethinking Batch Normalization for Online Continual Learning (**ICLR2022**) [[paper](https://arxiv.org/abs/2203.16102)] [[code](https://github.com/phquang/Continual-Normalization)]
 - NISPA: Neuro-Inspired Stability-Plasticity Adaptation for Continual Learning in Sparse Networks (**ICML2022**) [[paper](https://arxiv.org/abs/2206.09117)]
 - Learning from Students: Online Contrastive Distillation Network for General Continual Learning (**IJCAI2022**) [[paper](https://www.ijcai.org/proceedings/2022/0446.pdf)] [[code](https://github.com/lijincm/OCD-Net)]
+- Learning Fast, Learning Slow: A General Continual Learning Method based on Complementary Learning System (**ICLR2022**) [[paper](https://arxiv.org/pdf/2201.12604.pdf)] [[code](https://github.com/NeurAI-Lab/CLS-ER)]
 
 ## Update Roadmap
 
 In the near future, we plan to incorporate the following improvements into this master repository:
 
 - ER+Tricks (_Rethinking Experience Replay: a Bag of Tricks for Continual Learning_)
-- CCIC & CSSL Baselines (_Continual semi-supervised learning through contrastive interpolation consistency_)
-- LiDER (_On the Effectiveness of Lipschitz-Driven Rehearsal in Continual Learning_)
-- Additional X-DER datasets (_Class-Incremental Continual Learning into the eXtended DER-verse_)
 
 Pull requests welcome! [Get in touch](mailto:matteo.boschini@unimore.it)
 

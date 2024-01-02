@@ -15,6 +15,7 @@ from datasets.utils.continual_dataset import ContinualDataset
 from datasets.utils.gcl_dataset import GCLDataset
 from models.utils.continual_model import ContinualModel
 
+from utils import random_id
 from utils.checkpoints import mammoth_load_checkpoint
 from utils.loggers import *
 from utils.status import ProgressBar
@@ -97,6 +98,22 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
     return accs, accs_mask_classes
 
 
+def initialize_wandb(args: Namespace) -> None:
+    """
+    Initializes wandb, if installed.
+
+    Args:
+        args: the arguments of the current execution
+    """
+    assert wandb is not None, "Wandb not installed, please install it or run without wandb"
+    run_name = args.wandb_name if args.wandb_name is not None else args.model
+
+    run_id = random_id(5)
+    name = f'{run_name}_{run_id}'
+    wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args), name=name)
+    args.wandb_url = wandb.run.get_url()
+
+
 def train(model: ContinualModel, dataset: ContinualDataset,
           args: Namespace) -> None:
     """
@@ -110,9 +127,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     print(args)
 
     if not args.nowand:
-        assert wandb is not None, "Wandb not installed, please install it or run without wandb"
-        wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args))
-        args.wandb_url = wandb.run.get_url()
+        initialize_wandb(args)
 
     model.net.to(model.device)
     results, results_mask_classes = [], []

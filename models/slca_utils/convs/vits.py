@@ -26,7 +26,6 @@ import math
 import logging
 from functools import partial
 from collections import OrderedDict
-from copy import deepcopy
 
 import torch
 import torch.nn as nn
@@ -35,7 +34,6 @@ import torch.nn.functional as F
 from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD, IMAGENET_INCEPTION_MEAN, IMAGENET_INCEPTION_STD
 from timm.models.helpers import build_model_with_cfg, named_apply, adapt_input_conv, resolve_pretrained_cfg
 from timm.models.layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_normal_
-from timm.models.registry import register_model
 
 _logger = logging.getLogger(__name__)
 
@@ -659,7 +657,6 @@ def _create_vision_transformer(variant, pretrained=False, **kwargs):
     )
 
 
-@register_model
 def vit_base_patch16_224_in21k(pretrained=False, adapter=False, **kwargs):
     """ ViT-Base model (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     ImageNet-21k weights @ 224x224, source https://github.com/google-research/vision_transformer.
@@ -674,7 +671,6 @@ def vit_base_patch16_224_in21k(pretrained=False, adapter=False, **kwargs):
     return model
 
 
-@register_model
 def vit_base_patch16_224_mocov3(pretrained=False, adapter=False, **kwargs):
     """ ViT-Base model (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).
     ImageNet-21k weights @ 224x224, source https://github.com/google-research/vision_transformer.

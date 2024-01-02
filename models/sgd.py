@@ -8,17 +8,7 @@ This module implements the simplest form of incremental training, i.e., finetuni
 # LICENSE file in the root directory of this source tree.
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, ArgumentParser
-
-
-def get_parser() -> ArgumentParser:
-    """
-    Returns an ArgumentParser object with predefined arguments for the Sgd model.
-    """
-    parser = ArgumentParser(description='Finetuning baseline - simple incremental training.')
-    add_management_args(parser)  # this is required
-    add_experiment_args(parser)  # this is required
-    return parser
+from utils.args import ArgumentParser
 
 
 class Sgd(ContinualModel):
@@ -28,6 +18,11 @@ class Sgd(ContinualModel):
 
     NAME = 'sgd'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Finetuning baseline - simple incremental training.')
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         super(Sgd, self).__init__(backbone, loss, args, transform)

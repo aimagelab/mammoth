@@ -21,20 +21,8 @@ except BaseException:
     raise ImportError
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.buffer import Buffer, fill_buffer
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Gradient Episodic Memory.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-
-    parser.add_argument('--gamma', type=float, default=0.5,
-                        help='Margin parameter for GEM.')
-    return parser
 
 
 def store_grad(params, grads, grad_dims):
@@ -100,6 +88,15 @@ def project2cone2(gradient, memories, margin=0.5, eps=1e-3):
 class Gem(ContinualModel):
     NAME = 'gem'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual learning via Gradient Episodic Memory.')
+        add_rehearsal_args(parser)
+
+        parser.add_argument('--gamma', type=float, default=0.5,
+                            help='Margin parameter for GEM.')
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         assert quadprog is not None, 'GEM requires quadprog (linux only)'

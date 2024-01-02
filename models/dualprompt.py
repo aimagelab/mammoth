@@ -10,64 +10,62 @@ import torch
 from models.dualprompt_utils.model import Model
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, ArgumentParser
+from utils.args import ArgumentParser
 
 from datasets import get_dataset
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning')
-    add_management_args(parser)
-    add_experiment_args(parser)
-
-    parser.add_argument('--train_mask', default=True, type=bool, help='if using the class mask at training')
-    parser.add_argument('--pretrained', default=True, help='Load pretrained model or not')
-    parser.add_argument('--drop', type=float, default=0.0, metavar='PCT', help='Dropout rate (default: 0.)')
-    parser.add_argument('--drop-path', type=float, default=0.0, metavar='PCT', help='Drop path rate (default: 0.)')
-
-    # Optimizer parameters
-    parser.add_argument('--clip_grad', type=float, default=1.0, metavar='NORM', help='Clip gradient norm (default: None, no clipping)')
-
-    # G-Prompt parameters
-    parser.add_argument('--use_g_prompt', default=True, type=bool, help='if using G-Prompt')
-    parser.add_argument('--g_prompt_length', default=5, type=int, help='length of G-Prompt')
-    parser.add_argument('--g_prompt_layer_idx', default=[0, 1], type=int, nargs="+", help='the layer index of the G-Prompt')
-    parser.add_argument('--use_prefix_tune_for_g_prompt', default=True, type=bool, help='if using the prefix tune for G-Prompt')
-
-    # E-Prompt parameters
-    parser.add_argument('--use_e_prompt', default=True, type=bool, help='if using the E-Prompt')
-    parser.add_argument('--e_prompt_layer_idx', default=[2, 3, 4], type=int, nargs="+", help='the layer index of the E-Prompt')
-    parser.add_argument('--use_prefix_tune_for_e_prompt', default=True, type=bool, help='if using the prefix tune for E-Prompt')
-
-    # Use prompt pool in L2P to implement E-Prompt
-    parser.add_argument('--prompt_pool', default=True, type=bool,)
-    parser.add_argument('--size', default=10, type=int,)
-    parser.add_argument('--length', default=5, type=int, )
-    parser.add_argument('--top_k', default=1, type=int, )
-    parser.add_argument('--initializer', default='uniform', type=str,)
-    parser.add_argument('--prompt_key', default=True, type=bool,)
-    parser.add_argument('--prompt_key_init', default='uniform', type=str)
-    parser.add_argument('--use_prompt_mask', default=True, type=bool)
-    parser.add_argument('--mask_first_epoch', default=False, type=bool)
-    parser.add_argument('--shared_prompt_pool', default=True, type=bool)
-    parser.add_argument('--shared_prompt_key', default=False, type=bool)
-    parser.add_argument('--batchwise_prompt', default=True, type=bool)
-    parser.add_argument('--embedding_key', default='cls', type=str)
-    parser.add_argument('--predefined_key', default='', type=str)
-    parser.add_argument('--pull_constraint', default=True)
-    parser.add_argument('--pull_constraint_coeff', default=1.0, type=float)
-    parser.add_argument('--same_key_value', default=False, type=bool)
-
-    # ViT parameters
-    parser.add_argument('--global_pool', default='token', choices=['token', 'avg'], type=str, help='type of global pooling for final sequence')
-    parser.add_argument('--head_type', default='token', choices=['token', 'gap', 'prompt', 'token+prompt'], type=str, help='input type of classification head')
-    parser.add_argument('--freeze', default=['blocks', 'patch_embed', 'cls_token', 'norm', 'pos_embed'], nargs='*', type=list, help='freeze part in backbone model')
-    return parser
 
 
 class DualPrompt(ContinualModel):
     NAME = 'dualprompt'
     COMPATIBILITY = ['class-il', 'task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning')
+
+        parser.add_argument('--train_mask', default=True, type=bool, help='if using the class mask at training')
+        parser.add_argument('--pretrained', default=True, help='Load pretrained model or not')
+        parser.add_argument('--drop', type=float, default=0.0, metavar='PCT', help='Dropout rate (default: 0.)')
+        parser.add_argument('--drop-path', type=float, default=0.0, metavar='PCT', help='Drop path rate (default: 0.)')
+
+        # Optimizer parameters
+        parser.add_argument('--clip_grad', type=float, default=1.0, metavar='NORM', help='Clip gradient norm (default: None, no clipping)')
+
+        # G-Prompt parameters
+        parser.add_argument('--use_g_prompt', default=True, type=bool, help='if using G-Prompt')
+        parser.add_argument('--g_prompt_length', default=5, type=int, help='length of G-Prompt')
+        parser.add_argument('--g_prompt_layer_idx', default=[0, 1], type=int, nargs="+", help='the layer index of the G-Prompt')
+        parser.add_argument('--use_prefix_tune_for_g_prompt', default=True, type=bool, help='if using the prefix tune for G-Prompt')
+
+        # E-Prompt parameters
+        parser.add_argument('--use_e_prompt', default=True, type=bool, help='if using the E-Prompt')
+        parser.add_argument('--e_prompt_layer_idx', default=[2, 3, 4], type=int, nargs="+", help='the layer index of the E-Prompt')
+        parser.add_argument('--use_prefix_tune_for_e_prompt', default=True, type=bool, help='if using the prefix tune for E-Prompt')
+
+        # Use prompt pool in L2P to implement E-Prompt
+        parser.add_argument('--prompt_pool', default=True, type=bool,)
+        parser.add_argument('--size', default=10, type=int,)
+        parser.add_argument('--length', default=5, type=int, )
+        parser.add_argument('--top_k', default=1, type=int, )
+        parser.add_argument('--initializer', default='uniform', type=str,)
+        parser.add_argument('--prompt_key', default=True, type=bool,)
+        parser.add_argument('--prompt_key_init', default='uniform', type=str)
+        parser.add_argument('--use_prompt_mask', default=True, type=bool)
+        parser.add_argument('--mask_first_epoch', default=False, type=bool)
+        parser.add_argument('--shared_prompt_pool', default=True, type=bool)
+        parser.add_argument('--shared_prompt_key', default=False, type=bool)
+        parser.add_argument('--batchwise_prompt', default=True, type=bool)
+        parser.add_argument('--embedding_key', default='cls', type=str)
+        parser.add_argument('--predefined_key', default='', type=str)
+        parser.add_argument('--pull_constraint', default=True)
+        parser.add_argument('--pull_constraint_coeff', default=1.0, type=float)
+        parser.add_argument('--same_key_value', default=False, type=bool)
+
+        # ViT parameters
+        parser.add_argument('--global_pool', default='token', choices=['token', 'avg'], type=str, help='type of global pooling for final sequence')
+        parser.add_argument('--head_type', default='token', choices=['token', 'gap', 'prompt', 'token+prompt'], type=str, help='input type of classification head')
+        parser.add_argument('--freeze', default=['blocks', 'patch_embed', 'cls_token', 'norm', 'pos_embed'], nargs='*', type=list, help='freeze part in backbone model')
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         del backbone

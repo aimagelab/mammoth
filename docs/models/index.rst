@@ -10,7 +10,7 @@ To be compatible with the auto-detection mechanism (the **get_model** function b
 
 * be defined in a file named **<model_name>.py** and placed in the **models** folder. 
 
-The model-specific hyper-parameters of the model can be set in the **get_parser** function (see in :ref:`Model parameters`). 
+The model-specific hyper-parameters of the model can be set in the **get_parser** static method (see in :ref:`Model parameters`). 
 
 .. note::
     The name of the file will be used to identify the model. For example, if the model is defined in a file named **my_model.py**, the name of the model will be **my_model** and will be called with the command line option **--model my_model**.
@@ -21,7 +21,7 @@ The model-specific hyper-parameters of the model can be set in the **get_parser*
 Training and testing
 --------------------
 
-The **observe** method is the only method that must be implemented by the user. It is called at each training iteration and it is used to update the model parameters according to the current training batch. The method must have the following signature:
+The **observe** method is the only method that **must** be implemented by the user. It is called at each training iteration and it is used to update the model parameters according to the current training batch. The method must have the following signature:
 
 .. code-block:: python
 
@@ -117,16 +117,15 @@ The base class **ContinualModel** provides a few properties that are automatical
 Model parameters
 ~~~~~~~~~~~~~~~~~
 
-The **get_parser** function is used to define the model-specific hyper-parameters. It must always include the parameters defined in **add_management_args** and **add_experiment_args** (see in :ref:`args` for more details). In addition, it can include any other parameter. For example, the following code defines the hyper-parameters of the **MyModel** model:
+The **get_parser** method is used to define the model-specific hyper-parameters. It is defined as a static method that returns a `argparse.ArgumentParser <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser>`_ object. This method is called during the initialization of the model and it is used to parse the command line arguments. The **get_parser** method must have the following signature:
 
 .. code-block:: python
-    from utils.args import add_management_args, add_experiment_args
 
+    @staticmethod
     def get_parser() -> argparse.ArgumentParser:
-        parser = argparse.ArgumentParser('MyModel parameters')
 
-        add_management_args(parser) # these are always required
-        add_experiment_args(parser)
+        # Create the parser
+        parser = argparse.ArgumentParser('MyModel parameters')
 
         # Add the model-specific hyper-parameters
         parser.add_argument('--my_param', type=int, default=1, help='My parameter')

@@ -17,34 +17,30 @@ from utils.conf import get_device
 from models.slca_utils.slca import SLCA_Model
 
 
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via'
-                                        ' Slow Learner with Classifier Alignment')
-    add_management_args(parser)
-    add_experiment_args(parser)
-
-    parser.add_argument('--prefix', type=str, default='reproduce')
-    parser.add_argument('--memory_size', type=int, default=0)
-    parser.add_argument('--memory_per_class', type=int, default=0)
-    parser.add_argument('--fixed_memory', type=int, choices=[0, 1], default=0)
-    parser.add_argument('--shuffle', type=int, choices=[0, 1], default=1)
-    parser.add_argument(
-        '--feature_extractor_type',
-        type=str,
-        default='vit-b-p16',
-        help='the type of feature extractor to use. `vit-b-p16` is the default: '
-        'ViT-B/16 pretrained on Imagenet 21k (**NO** finetuning on ImageNet 1k)')
-    parser.add_argument('--ca_epochs', type=int, default=5, help='number of epochs for classifier alignment')
-    parser.add_argument('--ca_with_logit_norm', type=float, default=0.1)
-    parser.add_argument('--milestones', type=str, default='40')
-    parser.add_argument('--lr_decay', type=float, default=0.1)
-    parser.add_argument('--virtual_bs_iterations', type=int, default=1, help="virtual batch size iterations")
-    return parser
-
-
 class SLCA(ContinualModel):
     NAME = 'slca'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual Learning via Slow Learner with Classifier Alignment')
+        parser.add_argument('--prefix', type=str, default='reproduce')
+        parser.add_argument('--memory_size', type=int, default=0)
+        parser.add_argument('--memory_per_class', type=int, default=0)
+        parser.add_argument('--fixed_memory', type=int, choices=[0, 1], default=0)
+        parser.add_argument('--shuffle', type=int, choices=[0, 1], default=1)
+        parser.add_argument(
+            '--feature_extractor_type',
+            type=str,
+            default='vit-b-p16',
+            help='the type of feature extractor to use. `vit-b-p16` is the default: '
+            'ViT-B/16 pretrained on Imagenet 21k (**NO** finetuning on ImageNet 1k)')
+        parser.add_argument('--ca_epochs', type=int, default=5, help='number of epochs for classifier alignment')
+        parser.add_argument('--ca_with_logit_norm', type=float, default=0.1)
+        parser.add_argument('--milestones', type=str, default='40')
+        parser.add_argument('--lr_decay', type=float, default=0.1)
+        parser.add_argument('--virtual_bs_iterations', type=int, default=1, help="virtual batch size iterations")
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         self.device = get_device()

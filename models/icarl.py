@@ -10,24 +10,20 @@ import torch.nn.functional as F
 from datasets import get_dataset
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer, fill_buffer, icarl_replay
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via iCaRL.')
-
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-
-    return parser
 
 
 class ICarl(ContinualModel):
     NAME = 'icarl'
     COMPATIBILITY = ['class-il', 'task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual Learning via iCaRL.')
+        add_rehearsal_args(parser)
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         super().__init__(backbone, loss, args, transform)

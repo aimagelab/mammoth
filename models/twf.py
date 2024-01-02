@@ -16,36 +16,33 @@ def batch_iterate(size: int, batch_size: int):
         yield torch.LongTensor(list(range(i * batch_size, (i + 1) * batch_size)))
 
 
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(
-        description='Double-branch distillation + inter-branch skip attention')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-
-    # Griddable parameters
-    parser.add_argument('--der_alpha', type=float, required=True,
-                        help='Distillation alpha hyperparameter for student stream (`alpha` in the paper).')
-    parser.add_argument('--der_beta', type=float, required=True,
-                        help='Distillation beta hyperparameter (`beta` in the paper).')
-    parser.add_argument('--lambda_fp', type=float, required=True,
-                        help='weight of feature propagation loss replay')
-    parser.add_argument('--lambda_diverse_loss', type=float, required=False, default=0,
-                        help='Diverse loss hyperparameter.')
-    parser.add_argument('--lambda_fp_replay', type=float, required=False, default=0,
-                        help='weight of feature propagation loss replay')
-    parser.add_argument('--resize_maps', type=int, required=False, choices=[0, 1], default=0,
-                        help='Apply downscale and upscale to feature maps before save in buffer?')
-    parser.add_argument('--min_resize_threshold', type=int, required=False, default=16,
-                        help='Min size of feature maps to be resized?')
-    parser.add_argument('--virtual_bs_iterations', type=int, default=1, help="virtual batch size iterations")
-    return parser
-
-
 class TwF(ContinualModel):
 
     NAME = 'twf'
     COMPATIBILITY = ['class-il', 'task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Transfer without Forgetting: double-branch distillation + inter-branch skip attention')
+
+        add_rehearsal_args(parser)
+        # Griddable parameters
+        parser.add_argument('--der_alpha', type=float, required=True,
+                            help='Distillation alpha hyperparameter for student stream (`alpha` in the paper).')
+        parser.add_argument('--der_beta', type=float, required=True,
+                            help='Distillation beta hyperparameter (`beta` in the paper).')
+        parser.add_argument('--lambda_fp', type=float, required=True,
+                            help='weight of feature propagation loss replay')
+        parser.add_argument('--lambda_diverse_loss', type=float, required=False, default=0,
+                            help='Diverse loss hyperparameter.')
+        parser.add_argument('--lambda_fp_replay', type=float, required=False, default=0,
+                            help='weight of feature propagation loss replay')
+        parser.add_argument('--resize_maps', type=int, required=False, choices=[0, 1], default=0,
+                            help='Apply downscale and upscale to feature maps before save in buffer?')
+        parser.add_argument('--min_resize_threshold', type=int, required=False, default=16,
+                            help='Min size of feature maps to be resized?')
+        parser.add_argument('--virtual_bs_iterations', type=int, default=1, help="virtual batch size iterations")
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         assert "resnet" in str(type(backbone)).lower(), "Only resnet is supported for TwF"

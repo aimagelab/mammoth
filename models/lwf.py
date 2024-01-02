@@ -7,19 +7,7 @@ import torch
 from torch.optim import SGD
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, ArgumentParser
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Learning without Forgetting.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    parser.add_argument('--alpha', type=float, default=0.5,
-                        help='Penalty weight.')
-    parser.add_argument('--softmax_temp', type=float, default=2,
-                        help='Temperature of the softmax function.')
-    return parser
+from utils.args import ArgumentParser
 
 
 def smooth(logits, temp, dim):
@@ -34,6 +22,16 @@ def modified_kl_div(old, new):
 class Lwf(ContinualModel):
     NAME = 'lwf'
     COMPATIBILITY = ['class-il', 'task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual learning via'
+                                ' Learning without Forgetting.')
+        parser.add_argument('--alpha', type=float, default=0.5,
+                            help='Penalty weight.')
+        parser.add_argument('--softmax_temp', type=float, default=2,
+                            help='Temperature of the softmax function.')
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         super(Lwf, self).__init__(backbone, loss, args, transform)

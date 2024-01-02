@@ -34,6 +34,7 @@ sys.path.append(mammoth_path + '/backbone')
 sys.path.append(mammoth_path + '/models')
 
 from utils import create_if_not_exists, custom_str_underscore
+from utils.args import add_management_args, add_experiment_args
 from utils.conf import base_path
 from utils.distributed import make_dp
 from utils.best_args import best_args
@@ -55,8 +56,8 @@ def parse_args():
     Returns:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    from models import get_all_models
-    from datasets import NAMES as DATASET_NAMES, get_dataset_class
+    from models import get_all_models, get_model_class
+    from datasets import get_dataset_names, get_dataset_class
 
     parser = ArgumentParser(description='mammoth', allow_abbrev=False, add_help=False)
     parser.add_argument('--model', type=custom_str_underscore, help='Model name.', choices=list(get_all_models().keys()))
@@ -75,7 +76,7 @@ def parse_args():
 
     if args.load_best_args:
         parser.add_argument('--dataset', type=str, required=True,
-                            choices=DATASET_NAMES,
+                            choices=get_dataset_names(),
                             help='Which dataset to perform experiments on.')
         if hasattr(mod, 'Buffer'):
             parser.add_argument('--buffer_size', type=int, required=True,
@@ -89,16 +90,19 @@ def parse_args():
             best = best[args.buffer_size]
         else:
             best = best[-1]
-        get_parser = getattr(mod, 'get_parser')
-        parser = get_parser()
+
+        parser = get_model_class(args).get_parser()
+        add_management_args(parser)
+        add_experiment_args(parser)
         to_parse = sys.argv[1:] + ['--' + k + '=' + str(v) for k, v in best.items()]
         to_parse.remove('--load_best_args')
         args = parser.parse_args(to_parse)
         if args.model == 'joint' and args.dataset == 'mnist-360':
             args.model = 'joint_gcl'
     else:
-        get_parser = getattr(mod, 'get_parser')
-        parser = get_parser()
+        parser = get_model_class(args).get_parser()
+        add_management_args(parser)
+        add_experiment_args(parser)
         args = parser.parse_args()
 
     tmp_dset_class = get_dataset_class(args)
@@ -135,6 +139,7 @@ def parse_args():
     assert 0 < args.label_perc <= 1, "label_perc must be in (0, 1]"
 
     return args
+
 
 def main(args=None):
     from models import get_model
