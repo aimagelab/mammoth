@@ -55,6 +55,9 @@ We have created a [WIKI](https://aimagelab.github.io/mammoth/)! Check it out for
 - Learning without Forgetting (LwF): `lwf`.
 - Progressive Neural Networks (PNN): `pnn`.
 - Learning to Prompt (L2P) - _Requires_ `pip install timm==0.9.8`: `l2p`.
+- DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning (DualPrompt) - _Requires_ ``pip install timm==0.9.8``: `dualprompt`.
+- CODA-Prompt: COntinual Decomposed Attention-based Prompting for Rehearsal-Free Continual Learning (CODA-Prompt) - _Requires_ ``pip install timm==0.9.8``: `coda-prompt`.
+- SLCA: Slow Learner with Classifier Alignment for Continual Learning on a Pre-trained Model (SLCA) - _Requires_ ``pip install timm==0.9.8``: `slca`.
 - Transfer without Forgetting (TwF): `twf`.
 - Continual Contrastive Interpolation Consistency (CCIC) - _Requires_ `pip install kornia`: `ccic`.
 - JointGCL: `joint_gcl` (only for General Continual).

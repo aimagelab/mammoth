@@ -62,6 +62,7 @@ Setup
 Models
 ------
 
+- LiDER (on DER++, iCaRL, GDumb, and ER-ACE)
 - eXtended-DER (X-DER)
 - Dark Experience Replay (DER)
 - Dark Experience Replay++ (DER++)
@@ -82,7 +83,10 @@ Models
 - Synaptic Intelligence (SI)
 - Learning without Forgetting (LwF)
 - Progressive Neural Networks (PNN)
-- Learning to Prompt (L2P) - *Requires* ``pip install timm==0.8.10.dev0``
+- Learning to Prompt (L2P) - *Requires* ``pip install timm==0.9.8``
+- DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning (DualPrompt) - *Requires* ``pip install timm==0.9.8``
+- CODA-Prompt: COntinual Decomposed Attention-based Prompting for Rehearsal-Free Continual Learning (CODA-Prompt) - *Requires* ``pip install timm==0.9.8``
+- SLCA: Slow Learner with Classifier Alignment for Continual Learning on a Pre-trained Model (SLCA) - *Requires* ``pip install timm==0.9.8``
 - Transfer without Forgetting (TwF)
 - Continual Contrastive Interpolation Consistency (CCIC) - *Requires* ``pip install kornia``
 

@@ -10,14 +10,14 @@ Arguments
 
             - Default: None
 
-            - Choices: mnist-360, perm-mnist, rot-mnist, seq-cifar10, seq-cifar100, seq-cifar100-224, seq-cifar100-224-rs, seq-cub200, seq-mnist, seq-tinyimg, seq-tinyimg-r
+            - Choices: seq-tinyimg, seq-tinyimg-r, perm-mnist, seq-cifar10, seq-cifar100-224, seq-cub200, rot-mnist, seq-cifar100, seq-cifar100-224-rs, seq-mnist, mnist-360
 
-**\-\-model** : <class 'str'>
+**\-\-model** : <function custom_str_underscore at 0x14d19d24c2c0>
             *Help*: Model name.
 
             - Default: None
 
-            - Choices: agem, agem_r, bic, ccic, der, derpp, er, er_ace, ewc_on, fdr, gdumb, gem, gss, hal, icarl, joint_gcl, l2p, lucir, lwf, lwf_mc, mer, pnn, rpc, sgd, si, twf, xder, xder_ce, xder_rpc
+            - Choices: agem, agem-r, ewc-on, derpp-lider, gdumb-lider, slca, si, bic, er-ace, fdr, gdumb, gem, gss, joint-gcl, lwf, mer, rpc, twf, ccic, der, derpp, er, hal, icarl, l2p, lucir, lwf-mc, sgd, xder, xder-ce, xder-rpc, pnn, er-ace-lider, icarl-lider, coda-prompt
 
 **\-\-lr** : <class 'float'>
             *Help*: Learning rate.
@@ -51,6 +51,27 @@ Arguments
             *Help*: optimizer nesterov momentum.
 
             - Default: 0
+
+            - Choices: 
+
+**\-\-lr_scheduler** : <class 'str'>
+            *Help*: Learning rate scheduler.
+
+            - Default: None
+
+            - Choices: 
+
+**\-\-lr_milestones** : <class 'int'>
+            *Help*: Learning rate scheduler milestones (used if `lr_scheduler=multisteplr`).
+
+            - Default: []
+
+            - Choices: 
+
+**\-\-sched_multistep_lr_gamma** : <class 'float'>
+            *Help*: Learning rate scheduler gamma (used if `lr_scheduler=multisteplr`).
+
+            - Default: 0.1
 
             - Choices: 
 
@@ -176,11 +197,11 @@ Arguments
             - Choices: 
 
 **\-\-validation** : <class 'int'>
-            *Help*: Test on the validation set
+            *Help*: Percentage of validation set drawn from the training set.
 
-            - Default: 0
+            - Default: None
 
-            - Choices: 0, 1
+            - Choices: 
 
 **\-\-enable_other_metrics** : <class 'int'>
             *Help*: Enable computing additional metrics: forward and backward transfer.
