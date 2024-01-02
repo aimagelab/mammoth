@@ -9,17 +9,9 @@ import torch.optim as optim
 from datasets import get_dataset
 from torch.optim import SGD
 
-from utils.args import add_management_args, add_experiment_args, ArgumentParser
+from utils.args import ArgumentParser
 from utils.conf import get_device
 from models.utils.continual_model import ContinualModel
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via'
-                                        ' Progressive Neural Networks.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    return parser
 
 
 def get_backbone(bone, old_cols=None, x_shape=None):
@@ -39,6 +31,11 @@ def get_backbone(bone, old_cols=None, x_shape=None):
 class Pnn(ContinualModel):
     NAME = 'pnn'
     COMPATIBILITY = ['task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Progressive Neural Networks')
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         self.nets = [get_backbone(backbone).to(get_device())]

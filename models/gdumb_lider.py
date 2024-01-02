@@ -91,6 +91,22 @@ class GDumbLider(LiderOptimizer):
     NAME = 'gdumb_lider'
     COMPATIBILITY = ['class-il', 'task-il']
 
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='GDumb learns an empty model only on the buffer.'
+                                            'Treated with LiDER!')
+        add_rehearsal_args(parser)
+        add_lipschitz_args(parser)
+        parser.add_argument('--maxlr', type=float, default=5e-2,
+                            help='Max learning rate.')
+        parser.add_argument('--minlr', type=float, default=5e-4,
+                            help='Min learning rate.')
+        parser.add_argument('--fitting_epochs', type=int, default=256,
+                            help='Number of epochs to fit the buffer.')
+        parser.add_argument('--cutmix_alpha', type=float, default=1.0,
+                            help='Alpha parameter for cutmix')
+        return parser
+
     def __init__(self, backbone, loss, args, transform):
         super().__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)

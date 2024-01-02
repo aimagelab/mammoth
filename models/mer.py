@@ -6,40 +6,32 @@
 import torch
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.buffer import Buffer
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via'
-                                        ' Meta-Experience Replay.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    # remove batch_size from parser
-    for i in range(len(parser._actions)):
-        if parser._actions[i].dest == 'batch_size':
-            del parser._actions[i]
-            break
-
-    parser.add_argument('--beta', type=float, required=True,
-                        help='Within-batch update beta parameter.')
-    parser.add_argument('--gamma', type=float, required=True,
-                        help='Across-batch update gamma parameter.')
-    parser.add_argument('--batch_num', type=int, required=True,
-                        help='Number of batches extracted from the buffer.')
-
-    return parser
 
 
 class Mer(ContinualModel):
     NAME = 'mer'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual Learning via'
+                                ' Meta-Experience Replay.')
+        add_rehearsal_args(parser)
+
+        parser.add_argument('--beta', type=float, required=True,
+                            help='Within-batch update beta parameter.')
+        parser.add_argument('--gamma', type=float, required=True,
+                            help='Across-batch update gamma parameter.')
+        parser.add_argument('--batch_num', type=int, required=True,
+                            help='Number of batches extracted from the buffer.')
+        return parser
+
     def __init__(self, backbone, loss, args, transform):
+        args.batch_size = 1
         super(Mer, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)
-        assert args.batch_size == 1, 'Mer only works with batch_size=1'
 
     def draw_batches(self, inp, lab):
         batches = []

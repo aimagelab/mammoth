@@ -3,8 +3,9 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from abc import abstractmethod
 import sys
-from argparse import Namespace
+from argparse import ArgumentParser, Namespace
 from contextlib import suppress
 from typing import List
 
@@ -15,7 +16,7 @@ from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
 
 from utils.conf import get_device
-from utils.kornia_utils import KorniaAugNoGrad, to_kornia_transform
+from utils.kornia_utils import to_kornia_transform
 from utils.magic import persistent_locals
 from torchvision import transforms
 
@@ -30,6 +31,19 @@ class ContinualModel(nn.Module):
     NAME: str
     COMPATIBILITY: List[str]
     AVAIL_OPTIMS = ['sgd', 'adam', 'adamw']
+
+    @staticmethod
+    def get_parser() -> Namespace:
+        """
+        Returns the parser of the model.
+
+        Additional model-specific hyper-parameters can be added by overriding this method.
+
+        Returns:
+            the parser of the model
+        """
+        parser = ArgumentParser(description='Base CL model')
+        return parser
 
     @property
     def current_task(self):
@@ -267,6 +281,7 @@ class ContinualModel(nn.Module):
         self.end_task(dataset)
         self._current_task += 1
 
+    @abstractmethod
     def observe(self, inputs: torch.Tensor, labels: torch.Tensor,
                 not_aug_inputs: torch.Tensor, epoch: int = None) -> float:
         """

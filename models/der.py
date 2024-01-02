@@ -10,20 +10,18 @@ from utils.args import ArgumentParser, add_experiment_args, add_management_args,
 from utils.buffer import Buffer
 
 
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Dark Experience Replay.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    parser.add_argument('--alpha', type=float, required=True,
-                        help='Penalty weight.')
-    return parser
-
-
 class Der(ContinualModel):
     NAME = 'der'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual learning via'
+                                ' Dark Experience Replay.')
+        add_rehearsal_args(parser)
+        parser.add_argument('--alpha', type=float, required=True,
+                            help='Penalty weight.')
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         super(Der, self).__init__(backbone, loss, args, transform)

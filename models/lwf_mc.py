@@ -26,6 +26,13 @@ class LwFMC(ContinualModel):
     NAME = 'lwf_mc'
     COMPATIBILITY = ['class-il', 'task-il']
 
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Learning without Forgetting - Multi-Class.')
+        parser.add_argument('--wd_reg', type=float, default=0.0,
+                            help='L2 regularization applied to the parameters.')
+        return parser
+
     def __init__(self, backbone, loss, args, transform):
         super(LwFMC, self).__init__(backbone, loss, args, transform)
         self.dataset = get_dataset(args)

@@ -15,31 +15,29 @@ import torch
 import torch.nn.functional as F
 
 
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Semi-Supervised Learning via'
-                                        ' Continual Contrastive Interpolation Consistency.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    parser.add_argument('--alpha', type=float, default=0.5,
-                        help='Unsupervised loss weight.')
-    parser.add_argument('--knn_k', type=int, default=3,
-                        help='k of kNN.')
-    parser.add_argument('--memory_penalty', type=float,
-                        default=1.0, help='Unsupervised penalty weight.')
-    parser.add_argument('--k_aug', type=int, default=3,
-                        help='Number of augumentation to compute label predictions.')
-    parser.add_argument('--mixmatch_alpha', type=float, default=0.5,
-                        help='Regularization weight.')
-    parser.add_argument('--sharp_temp', default=0.5,
-                        type=float, help='Temperature for sharpening.')
-    parser.add_argument('--mixup_alpha', default=0.75, type=float)
-    return parser
-
-
 class Ccic(ContinualModel):
     NAME = 'ccic'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'cssl']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual Semi-Supervised Learning via'
+                                ' Continual Contrastive Interpolation Consistency.')
+        add_rehearsal_args(parser)
+        parser.add_argument('--alpha', type=float, default=0.5,
+                            help='Unsupervised loss weight.')
+        parser.add_argument('--knn_k', type=int, default=3,
+                            help='k of kNN.')
+        parser.add_argument('--memory_penalty', type=float,
+                            default=1.0, help='Unsupervised penalty weight.')
+        parser.add_argument('--k_aug', type=int, default=3,
+                            help='Number of augumentation to compute label predictions.')
+        parser.add_argument('--mixmatch_alpha', type=float, default=0.5,
+                            help='Regularization weight.')
+        parser.add_argument('--sharp_temp', default=0.5,
+                            type=float, help='Temperature for sharpening.')
+        parser.add_argument('--mixup_alpha', default=0.75, type=float)
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         super(Ccic, self).__init__(backbone, loss, args, transform)

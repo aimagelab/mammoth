@@ -16,27 +16,24 @@ Example usage:
 import torch
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.buffer import Buffer
-
-
-def get_parser() -> ArgumentParser:
-    """
-    Returns an ArgumentParser object with predefined arguments for the Er model.
-
-    Besides the required `add_management_args` and `add_experiment_args`, this model requires the `add_rehearsal_args` to include the buffer-related arguments.
-    """
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Experience Replay.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    return parser
 
 
 class Er(ContinualModel):
     NAME = 'er'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        """
+        Returns an ArgumentParser object with predefined arguments for the Er model.
+
+        Besides the required `add_management_args` and `add_experiment_args`, this model requires the `add_rehearsal_args` to include the buffer-related arguments.
+        """
+        parser = ArgumentParser(description='Continual learning via Experience Replay.')
+        add_rehearsal_args(parser)
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         """

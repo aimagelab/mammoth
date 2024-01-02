@@ -5,26 +5,23 @@ import torch
 from models.utils.lider_model import LiderOptimizer, add_lipschitz_args
 
 
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Dark Experience Replay++.'
-                                        'Treated with LiDER!')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    add_lipschitz_args(parser)
-
-    parser.add_argument('--alpha', type=float, required=True,
-                        help='Penalty weight.')
-    parser.add_argument('--beta', type=float, required=True,
-                        help='Penalty weight.')
-
-    return parser
-
-
 class DerppLider(LiderOptimizer):
     NAME = 'derpp_lider'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual learning via'
+                                ' Dark Experience Replay++.'
+                                'Treated with LiDER!')
+        add_rehearsal_args(parser)
+        add_lipschitz_args(parser)
+
+        parser.add_argument('--alpha', type=float, required=True,
+                            help='Penalty weight.')
+        parser.add_argument('--beta', type=float, required=True,
+                            help='Penalty weight.')
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         super().__init__(backbone, loss, args, transform)
