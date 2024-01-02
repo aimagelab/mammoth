@@ -4,40 +4,36 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-# from utils.spkdloss import SPKDLoss
-from datasets import get_dataset
 from torch.nn import functional as F
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' eXtended Dark Experience Replay with cross-entropy on future heads.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    parser.add_argument('--alpha', type=float, required=True, help='Penalty weight.')
-    parser.add_argument('--beta', type=float, required=True, help='Penalty weight.')
-
-    parser.add_argument('--gamma', type=float, default=0.85)
-    parser.add_argument('--eta', type=float, default=0.1)
-    parser.add_argument('--m', type=float, default=0.3)
-
-    return parser
 
 
 class XDerCE(ContinualModel):
     NAME = 'xder_ce'
     COMPATIBILITY = ['class-il', 'task-il']
 
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual learning via'
+                                ' eXtended Dark Experience Replay with cross-entropy on future heads.')
+
+        add_rehearsal_args(parser)
+        parser.add_argument('--alpha', type=float, required=True, help='Penalty weight.')
+        parser.add_argument('--beta', type=float, required=True, help='Penalty weight.')
+
+        parser.add_argument('--gamma', type=float, default=0.85)
+        parser.add_argument('--eta', type=float, default=0.1)
+        parser.add_argument('--m', type=float, default=0.3)
+
+        return parser
+
     def __init__(self, backbone, loss, args, transform):
         super(XDerCE, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)
-        self.n_tasks = get_dataset(args).N_TASKS
         self.update_counter = torch.zeros(self.args.buffer_size)
 
         if not hasattr(self.args, 'start_from'):
@@ -73,9 +69,9 @@ class XDerCE(ContinualModel):
 
             # Add new task data
             examples_last_task = self.buffer.buffer_size - self.buffer.num_seen_examples
-            examples_per_class = examples_last_task // self.cpt
-            ce = torch.tensor([examples_per_class] * self.cpt).int()
-            ce[torch.randperm(self.cpt)[:examples_last_task - (examples_per_class * self.cpt)]] += 1
+            examples_per_class = examples_last_task // self.n_classes_current_task
+            ce = torch.tensor([examples_per_class] * self.n_classes_current_task).int()
+            ce[torch.randperm(self.n_classes_current_task)[:examples_last_task - (examples_per_class * self.n_classes_current_task)]] += 1
 
             with torch.no_grad():
                 with bn_track_stats(self, False):
@@ -94,9 +90,9 @@ class XDerCE(ContinualModel):
 
                             flags = torch.zeros(len(inputs)).bool()
                             for j in range(len(flags)):
-                                if ce[labels[j] % self.cpt] > 0:
+                                if ce[labels[j] % self.n_classes_current_task] > 0:
                                     flags[j] = True
-                                    ce[labels[j] % self.cpt] -= 1
+                                    ce[labels[j] % self.n_classes_current_task] -= 1
 
                             self.buffer.add_data(examples=not_aug_inputs[flags],
                                                  labels=labels[flags],
@@ -113,7 +109,7 @@ class XDerCE(ContinualModel):
                         buf_inputs = buf_inputs[self.args.batch_size:]
                     buf_outputs = torch.cat(buf_outputs)
 
-                    chosen = ((buf_labels // self.cpt) < self.current_task).to(self.buffer.device)
+                    chosen = ((buf_labels // self.n_classes_current_task) < self.current_task).to(self.buffer.device)
 
                     if chosen.any():
                         to_transplant = self.update_logits(buf_logits[chosen], buf_outputs[chosen], buf_labels[chosen], self.current_task)
@@ -125,16 +121,18 @@ class XDerCE(ContinualModel):
         self.train(tng)
 
     def update_logits(self, old, new, gt, task_start, n_tasks=1):
+        offset_1, _ = self.dataset.get_offsets(task_start)
+        offset_2, _ = self.dataset.get_offsets(task_start + n_tasks)
 
-        transplant = new[:, task_start * self.cpt:(task_start + n_tasks) * self.cpt]
+        transplant = new[:, offset_1:offset_2]
 
         gt_values = old[torch.arange(len(gt)), gt]
         max_values = transplant.max(1).values
         coeff = self.args.gamma * gt_values / max_values
-        coeff = coeff.unsqueeze(1).repeat(1, self.cpt * n_tasks)
-        mask = (max_values > gt_values).unsqueeze(1).repeat(1, self.cpt * n_tasks)
+        coeff = coeff.unsqueeze(1).repeat(1, offset_2 - offset_1)
+        mask = (max_values > gt_values).unsqueeze(1).repeat(1, offset_2 - offset_1)
         transplant[mask] *= coeff[mask]
-        old[:, task_start * self.cpt:(task_start + n_tasks) * self.cpt] = transplant
+        old[:, offset_1:offset_2] = transplant
 
         return old
 
@@ -145,7 +143,7 @@ class XDerCE(ContinualModel):
         outputs = self.net(inputs).float()
 
         # Present head
-        loss_stream = self.loss(outputs[:, self.current_task * self.cpt:], labels % self.cpt)
+        loss_stream = self.loss(outputs[:, self.n_past_classes:], labels % self.n_classes_current_task)
 
         loss_der, loss_derpp = torch.tensor(0.), torch.tensor(0.)
         if not self.buffer.is_empty():
@@ -163,7 +161,8 @@ class XDerCE(ContinualModel):
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
             buf_outputs2 = self.net(buf_inputs2).float()
 
-            buf_ce = self.loss(buf_outputs2[:, :(self.current_task + (1 if self.current_task == 0 else 0)) * self.cpt], buf_labels2)
+            _, offset = self.dataset.get_offsets(self.current_task + (1 if self.current_task == 0 else 0))
+            buf_ce = self.loss(buf_outputs2[:, :offset], buf_labels2)
             loss_derpp = self.args.beta * buf_ce
 
             # Merge Batches & Remove Duplicates
@@ -185,7 +184,7 @@ class XDerCE(ContinualModel):
 
             # Update Future Past Logits
             with torch.no_grad():
-                chosen = ((buf_labels // self.cpt) < self.current_task).to(self.buffer.device)
+                chosen = ((buf_labels // self.n_classes_current_task) < self.current_task).to(self.buffer.device)
                 self.update_counter[buf_idx[chosen]] += 1
                 c = chosen.clone()
                 chosen[c] = torch.rand_like(chosen[c].float()) * self.update_counter[buf_idx[c]] < 1
@@ -199,10 +198,10 @@ class XDerCE(ContinualModel):
         # Past Logits Constraint
         loss_constr_past = torch.tensor(0.).type(loss_stream.dtype)
         if self.current_task > 0:
-            chead = F.softmax(outputs[:, :(self.current_task + 1) * self.cpt], 1)
+            chead = F.softmax(outputs[:, :self.n_seen_classes], 1)
 
-            good_head = chead[:, self.current_task * self.cpt:(self.current_task + 1) * self.cpt]
-            bad_head = chead[:, :self.cpt * self.current_task]
+            good_head = chead[:, self.n_past_classes:self.n_seen_classes]
+            bad_head = chead[:, :self.n_past_classes]
 
             loss_constr = bad_head.max(1)[0].detach() + self.args.m - good_head.max(1)[0]
 
@@ -214,13 +213,13 @@ class XDerCE(ContinualModel):
         # Future Logits Constraint
         loss_constr_futu = torch.tensor(0.)
         if self.current_task < self.n_tasks - 1:
-            bad_head = outputs[:, (self.current_task + 1) * self.cpt:]
-            good_head = outputs[:, self.current_task * self.cpt:(self.current_task + 1) * self.cpt]
+            bad_head = outputs[:, self.n_seen_classes:]
+            good_head = outputs[:, self.n_past_classes:self.n_seen_classes]
 
             if not self.buffer.is_empty():
-                buf_tlgt = buf_labels // self.cpt
-                bad_head = torch.cat([bad_head, buf_outputs[:, (self.current_task + 1) * self.cpt:]])
-                good_head = torch.cat([good_head, torch.stack(buf_outputs.split(self.cpt, 1), 1)[torch.arange(len(buf_tlgt)), buf_tlgt]])
+                buf_tlgt = buf_labels // self.n_classes_current_task
+                bad_head = torch.cat([bad_head, buf_outputs[:, self.n_seen_classes:]])
+                good_head = torch.cat([good_head, torch.stack(buf_outputs.split(self.n_classes_current_task, 1), 1)[torch.arange(len(buf_tlgt)), buf_tlgt]])
 
             loss_constr = bad_head.max(1)[0] + self.args.m - good_head.max(1)[0]
 

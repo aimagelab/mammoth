@@ -16,6 +16,8 @@ Idelly, all the code necessary to run the experiments is included *in the reposi
 
 With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
 
+**NEW**: Join our Discord Server for all your Mammoth-related questions → ![Discord Shield](https://discordapp.com/api/guilds/1164956257392799860/widget.png?style=shield)
+
 .. list-table::
    :widths: 15 15 15 15 15 15
    :class: centered
@@ -62,29 +64,33 @@ Setup
 Models
 ------
 
-- eXtended-DER (X-DER)
+- Efficient Lifelong Learning with A-GEM: (A-GEM), and A-GEM with Reservoir buffer (A-GEM-R)
+- Bias Correction (BiC)
+- Continual Contrastive Interpolation Consistency (CCIC) - *Requires* ``pip install kornia``
+- CODA-Prompt: COntinual Decomposed Attention-based Prompting for Rehearsal-Free Continual Learning (CODA-Prompt) - *Requires* ``pip install timm==0.9.8``
 - Dark Experience Replay (DER)
 - Dark Experience Replay++ (DER++)
-- Learning a Unified Classifier Incrementally via Rebalancing (LUCIR)
-- Greedy Sampler and Dumb Learner (GDumb)
-- Bias Correction (BiC)
-- Regular Polytope Classifier (RPC)
-- Gradient Episodic Memory (GEM) - *Unavailable on windows*
-- A-GEM
-- A-GEM with Reservoir (A-GEM-R)
+- DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning (DualPrompt) - *Requires* ``pip install timm==0.9.8``
 - Experience Replay (ER)
-- Meta-Experience Replay (MER)
+- online Elastic Weight Consolidation (oEWC)
 - Function Distance Regularization (FDR)
+- Greedy Sampler and Dumb Learner (GDumb)
+- Gradient Episodic Memory (GEM) - *Unavailable on windows*
 - Greedy gradient-based Sample Selection (GSS)
 - Hindsight Anchor Learning (HAL)
 - Incremental Classifier and Representation Learning (iCaRL)
-- online Elastic Weight Consolidation (oEWC)
-- Synaptic Intelligence (SI)
+- Joint for `General Continual`` setting (JointGCL)
+- Learning to Prompt (L2P) - *Requires* ``pip install timm==0.9.8``
+- LiDER (on DER++, iCaRL, GDumb, and ER-ACE)
+- Learning a Unified Classifier Incrementally via Rebalancing (LUCIR)
 - Learning without Forgetting (LwF)
+- Meta-Experience Replay (MER)
 - Progressive Neural Networks (PNN)
-- Learning to Prompt (L2P) - *Requires* ``pip install timm==0.8.10.dev0``
+- Regular Polytope Classifier (RPC)
+- Synaptic Intelligence (SI)
+- SLCA: Slow Learner with Classifier Alignment for Continual Learning on a Pre-trained Model (SLCA) - *Requires* ``pip install timm==0.9.8``
 - Transfer without Forgetting (TwF)
-- Continual Contrastive Interpolation Consistency (CCIC) - *Requires* ``pip install kornia``
+- eXtended-DER (X-DER)
 
 Datasets
 --------
@@ -104,6 +110,7 @@ Datasets
 - Rotated MNIST (*Domain-IL*)
 - MNIST-360 (*General Continual Learning*)
 - Sequential CUB-200 (*Class-Il / Task-IL*)
+- Sequential ImageNet-R (*Class-Il / Task-IL*)
 
 Pretrained backbones
 --------------------
@@ -163,6 +170,7 @@ Other Awesome CL works using Mammoth
 - `Continual Normalization: Rethinking Batch Normalization for Online Continual Learning (ICLR2022) <https://arxiv.org/abs/2203.16102>`_ (`code <https://github.com/phquang/Continual-Normalization>`_)
 - `NISPA: Neuro-Inspired Stability-Plasticity Adaptation for Continual Learning in Sparse Networks (ICML2022) <https://arxiv.org/abs/2206.09117>`_
 - `Learning from Students: Online Contrastive Distillation Network for General Continual Learning (IJCAI2022) <https://www.ijcai.org/proceedings/2022/0446.pdf>`_ (`code <https://github.com/lijincm/OCD-Net>`_)
+- `Learning Fast, Learning Slow: A General Continual Learning Method based on Complementary Learning System (ICLR2022) <https://arxiv.org/pdf/2201.12604.pdf>`_ (`code <https://github.com/NeurAI-Lab/CLS-ER>`_)
 
 Update Roadmap
 --------------
@@ -170,9 +178,6 @@ Update Roadmap
 In the near future, we plan to incorporate the following improvements into this master repository:
 
 - ER+Tricks (*Rethinking Experience Replay: a Bag of Tricks for Continual Learning*)
-- CCIC & CSSL Baselines (*Continual semi-supervised learning through contrastive interpolation consistency*)
-- LiDER (*On the Effectiveness of Lipschitz-Driven Rehearsal in Continual Learning*)
-- Additional X-DER datasets (*Class-Incremental Continual Learning into the eXtended DER-verse*)
 
 Pull requests welcome! `Get in touch <mailto:matteo.boschini@unimore.it>`_
 

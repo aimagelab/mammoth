@@ -6,11 +6,11 @@ Models
 A **model** is a class that contains a few requires methods and attributes to be used in the continual learning framework.
 To be compatible with the auto-detection mechanism (the **get_model** function below), a model must:
 
-* extend the base class **ContinualModel** in :ref:`continual_model`, which implements most of the required methods, leaving to the user the definition of the **observe** method (see in :ref:`training and testing`). In addition, the model must define the **NAME** and **COMPATIBILITY** attributes (see below).
+* extend the base class **ContinualModel** in :ref:`module-continual_model`, which implements most of the required methods, leaving to the user the definition of the **observe** method (see in :ref:`training and testing`). In addition, the model must define the **NAME** and **COMPATIBILITY** attributes (see below).
 
 * be defined in a file named **<model_name>.py** and placed in the **models** folder. 
 
-The model-specific hyper-parameters of the model can be set in the **get_parser** function (see in :ref:`Model parameters`). 
+The model-specific hyper-parameters of the model can be set in the **get_parser** static method (see in :ref:`Model parameters`). 
 
 .. note::
     The name of the file will be used to identify the model. For example, if the model is defined in a file named **my_model.py**, the name of the model will be **my_model** and will be called with the command line option **--model my_model**.
@@ -21,7 +21,7 @@ The model-specific hyper-parameters of the model can be set in the **get_parser*
 Training and testing
 --------------------
 
-The **observe** method is the only method that must be implemented by the user. It is called at each training iteration and it is used to update the model parameters according to the current training batch. The method must have the following signature:
+The **observe** method is the only method that **must** be implemented by the user. It is called at each training iteration and it is used to update the model parameters according to the current training batch. The method must have the following signature:
 
 .. code-block:: python
 
@@ -54,7 +54,7 @@ The **forward** method is used to evaluate the model on the test set. By default
 Attributes and utility methods
 -------------------------------
 
-The base class **ContinualModel** includes the **NAME** and **COMPATIBILITY** attributes, which are used to identify the model and to check its compatibility with the chosen **setting** (see :ref:`module-datasets` for more details). The **NAME** attribute is a string that identifies the model, while the **COMPATIBILITY** attribute is a list of strings that identify the compatible settings. For example, the **DER** model (:ref:`module-der`) includes compatibility with ``['class-il', 'domain-il', 'task-il', 'general-continual']`` settings, and thus is compatible with all the datasets included in the framework. However, as it includes no compatibility with the ``'cssl'`` setting, it cannot take advantage of unlabeled samples (available if ``--label_perc`` is set to a value between ``0`` and ``1``).
+The base class **ContinualModel** (:ref:`module-continual_model`) includes the **NAME** and **COMPATIBILITY** attributes, which are used to identify the model and to check its compatibility with the chosen **setting** (see :ref:`module-datasets` for more details). The **NAME** attribute is a string that identifies the model, while the **COMPATIBILITY** attribute is a list of strings that identify the compatible settings. For example, the **DER** model (:ref:`module-der`) includes compatibility with ``['class-il', 'domain-il', 'task-il', 'general-continual']`` settings, and thus is compatible with all the datasets included in the framework. However, as it includes no compatibility with the ``'cssl'`` setting, it cannot take advantage of unlabeled samples (available if ``--label_perc`` is set to a value between ``0`` and ``1``).
 
 Backbone model
 ~~~~~~~~~~~~~~
@@ -84,6 +84,8 @@ The base class **ContinualModel** provides a few properties that are automatical
     - **n_classes**: the total number of classes in the dataset (past, current, and remaining).
 
     - **n_tasks**: the total number of tasks.
+
+    - **task_iteration**: the number of iterations performed during the current task. This attribute is automatically updated *after* each **observe** call and is reset at the beginning of each task (*before* the **begin_task**). Can be used to implement a virtual batch size (see :ref:`module-twf`).
 
     - **cpt**: the *raw* amount of classes for each task. This could be either an integer (i.e., the number of classes for each task is the same) or a list of integers (i.e., the number of classes for each task is different).
 
@@ -115,16 +117,15 @@ The base class **ContinualModel** provides a few properties that are automatical
 Model parameters
 ~~~~~~~~~~~~~~~~~
 
-The **get_parser** function is used to define the model-specific hyper-parameters. It must always include the parameters defined in **add_management_args** and **add_experiment_args** (see in :ref:`args` for more details). In addition, it can include any other parameter. For example, the following code defines the hyper-parameters of the **MyModel** model:
+The **get_parser** method is used to define the model-specific hyper-parameters. It is defined as a static method (see :ref:`module-continual_model`) that returns a `argparse.ArgumentParser <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser>`_ object. This method is called during the initialization of the model and it is used to parse the command line arguments. The **get_parser** method must have the following signature:
 
 .. code-block:: python
-    from utils.args import add_management_args, add_experiment_args
 
+    @staticmethod
     def get_parser() -> argparse.ArgumentParser:
-        parser = argparse.ArgumentParser('MyModel parameters')
 
-        add_management_args(parser) # these are always required
-        add_experiment_args(parser)
+        # Create the parser
+        parser = argparse.ArgumentParser('MyModel parameters')
 
         # Add the model-specific hyper-parameters
         parser.add_argument('--my_param', type=int, default=1, help='My parameter')

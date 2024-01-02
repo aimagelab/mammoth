@@ -11,26 +11,23 @@ from datasets import get_dataset
 from torch.optim import SGD
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.ring_buffer import RingBuffer as Buffer
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Hindsight Anchor Learning.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-
-    parser.add_argument('--hal_lambda', type=float, default=0.1)
-    parser.add_argument('--beta', type=float, default=0.5)
-    parser.add_argument('--gamma', type=float, default=0.1)
-
-    return parser
 
 
 class HAL(ContinualModel):
     NAME = 'hal'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Hindsight Anchor Learning.')
+        add_rehearsal_args(parser)
+
+        parser.add_argument('--hal_lambda', type=float, default=0.1)
+        parser.add_argument('--beta', type=float, default=0.5)
+        parser.add_argument('--gamma', type=float, default=0.1)
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         super().__init__(backbone, loss, args, transform)

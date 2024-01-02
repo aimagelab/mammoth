@@ -7,25 +7,22 @@ import torch
 import torch.nn as nn
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, ArgumentParser
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning Through'
-                                        ' Synaptic Intelligence.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    parser.add_argument('--c', type=float, required=True,
-                        help='surrogate loss weight parameter c')
-    parser.add_argument('--xi', type=float, required=True,
-                        help='xi parameter for EWC online')
-
-    return parser
+from utils.args import ArgumentParser
 
 
 class SI(ContinualModel):
     NAME = 'si'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual Learning Through'
+                                ' Synaptic Intelligence.')
+        parser.add_argument('--c', type=float, required=True,
+                            help='surrogate loss weight parameter c')
+        parser.add_argument('--xi', type=float, required=True,
+                            help='xi parameter for EWC online')
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         super(SI, self).__init__(backbone, loss, args, transform)
@@ -58,7 +55,7 @@ class SI(ContinualModel):
         penalty = self.penalty()
         loss = self.loss(outputs, labels) + self.args.c * penalty
         loss.backward()
-        nn.utils.clip_grad.clip_grad_value_(self.net.parameters(), 1)
+        nn.utils.clip_grad.clip_grad_value_(self.get_parameters(), 1)
         self.opt.step()
 
         self.small_omega += self.args.lr * self.net.get_grads().data ** 2

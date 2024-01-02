@@ -6,29 +6,27 @@
 from torch.nn import functional as F
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.buffer import Buffer
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Dark Experience Replay++.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    parser.add_argument('--alpha', type=float, required=True,
-                        help='Penalty weight.')
-    parser.add_argument('--beta', type=float, required=True,
-                        help='Penalty weight.')
-    return parser
 
 
 class Derpp(ContinualModel):
     NAME = 'derpp'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual learning via'
+                                ' Dark Experience Replay++.')
+        add_rehearsal_args(parser)
+        parser.add_argument('--alpha', type=float, required=True,
+                            help='Penalty weight.')
+        parser.add_argument('--beta', type=float, required=True,
+                            help='Penalty weight.')
+        return parser
+
     def __init__(self, backbone, loss, args, transform):
-        super(Derpp, self).__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform)
 
         self.buffer = Buffer(self.args.buffer_size)
 
@@ -36,11 +34,10 @@ class Derpp(ContinualModel):
 
         self.opt.zero_grad()
 
-        tot_loss = 0
-
         outputs = self.net(inputs)
+
         loss = self.loss(outputs, labels)
-        tot_loss += loss.item()
+        tot_loss = loss.item()
         loss.backward()
 
         if not self.buffer.is_empty():

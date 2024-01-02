@@ -12,8 +12,10 @@ from typing import Tuple
 import torch
 from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
+from datasets.utils.gcl_dataset import GCLDataset
 from models.utils.continual_model import ContinualModel
 
+from utils import random_id
 from utils.checkpoints import mammoth_load_checkpoint
 from utils.loggers import *
 from utils.status import ProgressBar
@@ -62,12 +64,18 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
         if last and k < len(dataset.test_loaders) - 1:
             continue
         correct, correct_mask_classes, total = 0.0, 0.0, 0.0
-        for i, data in enumerate(test_loader):
+        test_iter = iter(test_loader)
+        i = 0
+        while True:
+            try:
+                data = next(test_iter)
+            except StopIteration:
+                break
             if model.args.debug_mode and i > model.get_debug_iters():
                 break
             inputs, labels = data
             inputs, labels = inputs.to(model.device), labels.to(model.device)
-            if 'class-il' not in model.COMPATIBILITY:
+            if 'class-il' not in model.COMPATIBILITY and 'general-continual' not in model.COMPATIBILITY:
                 outputs = model(inputs, k)
             else:
                 outputs = model(inputs)
@@ -75,6 +83,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
             _, pred = torch.max(outputs[:, :n_classes].data, 1)
             correct += torch.sum(pred == labels).item()
             total += labels.shape[0]
+            i += 1
 
             if dataset.SETTING == 'class-il':
                 mask_classes(outputs, dataset, k)
@@ -82,11 +91,27 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False) -> Tu
                 correct_mask_classes += torch.sum(pred == labels).item()
 
         accs.append(correct / total * 100
-                    if 'class-il' in model.COMPATIBILITY else 0)
+                    if 'class-il' in model.COMPATIBILITY or 'general-continual' in model.COMPATIBILITY else 0)
         accs_mask_classes.append(correct_mask_classes / total * 100)
 
     model.net.train(status)
     return accs, accs_mask_classes
+
+
+def initialize_wandb(args: Namespace) -> None:
+    """
+    Initializes wandb, if installed.
+
+    Args:
+        args: the arguments of the current execution
+    """
+    assert wandb is not None, "Wandb not installed, please install it or run without wandb"
+    run_name = args.wandb_name if args.wandb_name is not None else args.model
+
+    run_id = random_id(5)
+    name = f'{run_name}_{run_id}'
+    wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args), name=name)
+    args.wandb_url = wandb.run.get_url()
 
 
 def train(model: ContinualModel, dataset: ContinualDataset,
@@ -102,9 +127,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     print(args)
 
     if not args.nowand:
-        assert wandb is not None, "Wandb not installed, please install it or run without wandb"
-        wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args))
-        args.wandb_url = wandb.run.get_url()
+        initialize_wandb(args)
 
     model.net.to(model.device)
     results, results_mask_classes = [], []
@@ -140,6 +163,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     print(file=sys.stderr)
     start_task = 0 if args.start_from is None else args.start_from
     end_task = dataset.N_TASKS if args.stop_after is None else args.stop_after
+
+    torch.cuda.empty_cache()
     for t in range(start_task, end_task):
         model.net.train()
         train_loader, test_loader = dataset.get_data_loaders()
@@ -155,9 +180,15 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             scheduler = dataset.get_scheduler(model, args) if not hasattr(model, 'scheduler') else model.scheduler
             for epoch in range(model.args.n_epochs):
                 train_iter = iter(train_loader)
-                data_len = len(train_loader)
-                for i in range(data_len):
-                    data = next(train_iter)
+                data_len = None
+                if not isinstance(dataset, GCLDataset):
+                    data_len = len(train_loader)
+                i = 0
+                while True:
+                    try:
+                        data = next(train_iter)
+                    except StopIteration:
+                        break
                     if args.debug_mode and i > model.get_debug_iters():
                         break
                     if hasattr(dataset.train_loader.dataset, 'logits'):
@@ -174,6 +205,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                         loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch)
                     assert not math.isnan(loss)
                     progress_bar.prog(i, data_len, epoch, t, loss)
+                    i += 1
 
                 if scheduler is not None:
                     scheduler.step()
@@ -205,6 +237,16 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             # Saving model checkpoint
             checkpoint_name = f'checkpoints/{args.ckpt_name}_joint.pt' if args.joint else f'checkpoints/{args.ckpt_name}_{t}.pt'
             torch.save(save_obj, checkpoint_name)
+
+    if args.validation:
+        del dataset
+        args.validation = None
+
+        final_dataset = get_dataset(args)
+        for _ in range(final_dataset.N_TASKS):
+            final_dataset.get_data_loaders()
+        accs = evaluate(model, final_dataset)
+        log_accs(args, logger, accs, t, final_dataset.SETTING, prefix="FINAL")
 
     if not args.disable_log and args.enable_other_metrics:
         logger.add_bwt(results, results_mask_classes)

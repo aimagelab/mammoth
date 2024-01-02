@@ -1,10 +1,31 @@
+"""
+This is the base class for all models. It provides some useful methods and defines the interface of the models.
+
+The `observe` method is the most important one: it is called at each training iteration and it is responsible for computing the loss and updating the model's parameters.
+
+The `begin_task` and `end_task` methods are called before and after each task, respectively.
+
+The `get_parser` method returns the parser of the model. Additional model-specific hyper-parameters can be added by overriding this method.
+
+The `get_debug_iters` method returns the number of iterations to be used for debugging. Default: 3.
+
+The `get_optimizer` method returns the optimizer to be used for training. Default: SGD.
+
+The `load_buffer` method is called when a buffer is loaded. Default: do nothing.
+
+The `meta_observe`, `meta_begin_task` and `meta_end_task` methods are wrappers for `observe`, `begin_task` and `end_task` methods, respectively. They take care of updating the internal counters and of logging to wandb if installed.
+
+The `autolog_wandb` method is used to automatically log to wandb all variables starting with "_wandb_" or "loss" in the observe function. It is called by `meta_observe` if wandb is installed. It can be overridden to add custom logging.
+"""
+
 # Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from abc import abstractmethod
 import sys
-from argparse import Namespace
+from argparse import ArgumentParser, Namespace
 from contextlib import suppress
 from typing import List
 
@@ -15,7 +36,7 @@ from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
 
 from utils.conf import get_device
-from utils.kornia_utils import KorniaAugNoGrad, to_kornia_transform
+from utils.kornia_utils import to_kornia_transform
 from utils.magic import persistent_locals
 from torchvision import transforms
 
@@ -30,6 +51,19 @@ class ContinualModel(nn.Module):
     NAME: str
     COMPATIBILITY: List[str]
     AVAIL_OPTIMS = ['sgd', 'adam', 'adamw']
+
+    @staticmethod
+    def get_parser() -> Namespace:
+        """
+        Returns the parser of the model.
+
+        Additional model-specific hyper-parameters can be added by overriding this method.
+
+        Returns:
+            the parser of the model
+        """
+        parser = ArgumentParser(description='Base CL model')
+        return parser
 
     @property
     def current_task(self):
@@ -93,7 +127,7 @@ class ContinualModel(nn.Module):
     def __init__(self, backbone: nn.Module, loss: nn.Module,
                  args: Namespace, transform: nn.Module) -> None:
         super(ContinualModel, self).__init__()
-
+        print("Using {} as backbone".format(backbone.__class__.__name__))
         self.net = backbone
         self.loss = loss
         self.args = args
@@ -129,6 +163,13 @@ class ContinualModel(nn.Module):
         if self.args.label_perc != 1 and 'cssl' not in self.COMPATIBILITY:
             print('WARNING: label_perc is not explicitly supported by this model -> training may break')
 
+    def to(self, device):
+        """
+        Captures the device to be used for training.
+        """
+        self.device = device
+        return super().to(device)
+
     def load_buffer(self, buffer):
         """
         Default way to handle load buffer.
@@ -137,18 +178,24 @@ class ContinualModel(nn.Module):
             self.args.buffer_size, buffer.examples.shape[0])
         self.buffer = buffer
 
+    def get_parameters(self):
+        """
+        Returns the parameters of the model.
+        """
+        return self.net.parameters()
+
     def get_optimizer(self):
         # check if optimizer is in torch.optim
         supported_optims = {optim_name.lower(): optim_name for optim_name in dir(optim) if optim_name.lower() in self.AVAIL_OPTIMS}
         opt = None
         if self.args.optimizer.lower() in supported_optims:
             if self.args.optimizer.lower() == 'sgd':
-                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.net.parameters(), lr=self.args.lr,
+                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.get_parameters(), lr=self.args.lr,
                                                                                     weight_decay=self.args.optim_wd,
                                                                                     momentum=self.args.optim_mom,
                                                                                     nesterov=self.args.optim_nesterov == 1)
             elif self.args.optimizer.lower() == 'adam' or self.args.optimizer.lower() == 'adamw':
-                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.net.parameters(), lr=self.args.lr,
+                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.get_parameters(), lr=self.args.lr,
                                                                                     weight_decay=self.args.optim_wd)
 
         if opt is None:
@@ -196,6 +243,21 @@ class ContinualModel(nn.Module):
         return self.net(x)
 
     def meta_observe(self, *args, **kwargs):
+        """
+        Wrapper for `observe` method.
+
+        Takes care of dropping unlabeled data if not supported by the model and of logging to wandb if installed.
+
+        Args:
+            inputs: batch of inputs
+            labels: batch of labels
+            not_aug_inputs: batch of inputs without augmentation
+            kwargs: some methods could require additional parameters
+
+        Returns:
+            the value of the loss function
+        """
+
         if 'cssl' not in self.COMPATIBILITY:  # drop unlabeled data if not supported
             labeled_mask = args[1] != -1
             if labeled_mask.sum() == 0:
@@ -207,9 +269,19 @@ class ContinualModel(nn.Module):
             self.autolog_wandb(pl.locals)
         else:
             ret = self.observe(*args, **kwargs)
+        self.task_iteration += 1
         return ret
 
     def meta_begin_task(self, dataset):
+        """
+        Wrapper for `begin_task` method.
+
+        Takes care of updating the internal counters.
+
+        Args:
+            dataset: the current task's dataset
+        """
+        self.task_iteration = 0
         self._n_classes_current_task = self._cpt if isinstance(self._cpt, int) else self._cpt[self._current_task]
         self._n_seen_classes = self._cpt * (self._current_task + 1) if isinstance(self._cpt, int) else sum(self._cpt[:self._current_task + 1])
         self._n_remaining_classes = self.N_CLASSES - self._n_seen_classes
@@ -217,9 +289,19 @@ class ContinualModel(nn.Module):
         self.begin_task(dataset)
 
     def meta_end_task(self, dataset):
+        """
+        Wrapper for `end_task` method.
+
+        Takes care of updating the internal counters.
+
+        Args:
+            dataset: the current task's dataset
+        """
+
         self.end_task(dataset)
         self._current_task += 1
 
+    @abstractmethod
     def observe(self, inputs: torch.Tensor, labels: torch.Tensor,
                 not_aug_inputs: torch.Tensor, epoch: int = None) -> float:
         """

@@ -3,10 +3,10 @@ name: documentation
 on:
   pull_request:
     branches:
-    - release/wiki
+      - release/wiki
   push:
     branches:
-    - release/wiki
+      - release/wiki
 
 permissions:
   contents: write
@@ -18,10 +18,11 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v3
         with:
-          python-version: '3.10'
+          python-version: "3.10"
       - name: Install dependencies
         run: |
           pip install -r docs/requirements.txt -r requirements.txt
+          pip install quadprog==0.1.11
       - name: Sphinx build
         run: |
           sphinx-build -j auto docs _build

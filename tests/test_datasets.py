@@ -7,7 +7,7 @@ import pytest
 
 @pytest.mark.parametrize('dataset', ['seq-mnist', 'seq-cifar10', 'seq-cifar100', 'seq-tinyimg',
                                      'rot-mnist', 'perm-mnist', 'mnist-360', 'seq-cifar100-224',
-                                     'seq-cifar100-224-rs', 'seq-tinyimg-r', 'seq-cub200'])
+                                     'seq-cifar100-224-rs', 'seq-tinyimg-r', 'seq-cub200', 'seq-imagenet-r'])
 def test_datasets(dataset):
     sys.argv = ['mammoth',
                 '--model',

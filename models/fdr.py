@@ -6,24 +6,22 @@
 import torch
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.buffer import Buffer
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Function Distance Regularization.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    parser.add_argument('--alpha', type=float, required=True,
-                        help='Penalty weight.')
-    return parser
 
 
 class Fdr(ContinualModel):
     NAME = 'fdr'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual learning via'
+                                ' Function Distance Regularization.')
+        add_rehearsal_args(parser)
+        parser.add_argument('--alpha', type=float, required=True,
+                            help='Penalty weight.')
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         super(Fdr, self).__init__(backbone, loss, args, transform)
