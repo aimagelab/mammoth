@@ -37,7 +37,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx_toolbox',
               'sphinx.ext.autosectionlabel']
 
-github_username = 'grupposimo'
+github_username = 'aimagelab'
 github_repository = 'mammoth'
 
 intersphinx_mapping = {
