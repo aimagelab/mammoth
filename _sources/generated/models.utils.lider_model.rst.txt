@@ -1,0 +1,45 @@
+.. _module-lider_model:
+lider_model
+============
+
+.. currentmodule:: models.utils.lider_model
+
+.. automodule:: models.utils.lider_model
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: LiderOptimizer
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: add_lipschitz_args
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: add_lipschitz_args
+   
+   
+
+   
+   
+   
+
+
+

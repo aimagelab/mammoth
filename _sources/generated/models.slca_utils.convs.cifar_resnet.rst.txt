@@ -1,0 +1,95 @@
+.. _module-cifar_resnet:
+cifar_resnet
+=============
+
+.. currentmodule:: models.slca_utils.convs.cifar_resnet
+
+.. automodule:: models.slca_utils.convs.cifar_resnet
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: CifarResNet
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: DownsampleA
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: DownsampleB
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: DownsampleC
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: DownsampleD
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: ResNetBasicblock
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: resnet110
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resnet20
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resnet20mnist
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resnet32
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resnet32mnist
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resnet44
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resnet56
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: resnet110
+   .. autofunction:: resnet20
+   .. autofunction:: resnet20mnist
+   .. autofunction:: resnet32
+   .. autofunction:: resnet32mnist
+   .. autofunction:: resnet44
+   .. autofunction:: resnet56
+   
+   
+
+   
+   
+   
+
+
+

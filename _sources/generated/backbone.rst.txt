@@ -1,0 +1,39 @@
+﻿.. include:: ../backbone/index.rst   
+
+Module attributes and functions
+-------------------------------
+
+.. automodule:: backbone
+   :members:
+   :undoc-members:
+
+
+
+
+.. autosummary::
+   :recursive:
+   :toctree:
+   :hidden:
+   :template: custom-module-template.rst
+   
+   backbone.utils
+   backbone.EfficientNet
+   backbone.MNISTMLP
+   backbone.MNISTMLP_PNN
+   backbone.ResNet18
+   backbone.ResNet18_PNN
+   backbone.ResNet50
+
+.. toctree::
+   :hidden:
+   
+   Utils <backbone.utils.rst>
+   EfficientNet <backbone.EfficientNet.rst>
+   MNISTMLP <backbone.MNISTMLP.rst>
+   MNISTMLP_PNN <backbone.MNISTMLP_PNN.rst>
+   ResNet18 <backbone.ResNet18.rst>
+   ResNet18_PNN <backbone.ResNet18_PNN.rst>
+   ResNet50 <backbone.ResNet50.rst>
+
+
+

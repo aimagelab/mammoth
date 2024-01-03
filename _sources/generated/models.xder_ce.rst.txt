@@ -1,0 +1,34 @@
+.. _module-xder_ce:
+xder_ce
+========
+
+.. currentmodule:: models.xder_ce
+
+.. automodule:: models.xder_ce
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: XDerCE
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

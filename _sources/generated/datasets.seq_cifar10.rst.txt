@@ -1,0 +1,42 @@
+.. _module-seq_cifar10:
+seq_cifar10
+============
+
+.. currentmodule:: datasets.seq_cifar10
+
+.. automodule:: datasets.seq_cifar10
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: MyCIFAR10
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: SequentialCIFAR10
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: TCIFAR10
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

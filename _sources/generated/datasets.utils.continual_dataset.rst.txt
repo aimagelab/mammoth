@@ -1,0 +1,45 @@
+.. _module-continual_dataset:
+continual_dataset
+==================
+
+.. currentmodule:: datasets.utils.continual_dataset
+
+.. automodule:: datasets.utils.continual_dataset
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: ContinualDataset
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: store_masked_loaders
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: store_masked_loaders
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,42 @@
+.. _module-seq_cub200:
+seq_cub200
+===========
+
+.. currentmodule:: datasets.seq_cub200
+
+.. automodule:: datasets.seq_cub200
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: CUB200
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: MyCUB200
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: SequentialCUB200
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

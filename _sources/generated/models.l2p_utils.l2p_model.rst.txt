@@ -1,0 +1,34 @@
+.. _module-l2p_model:
+l2p_model
+==========
+
+.. currentmodule:: models.l2p_utils.l2p_model
+
+.. automodule:: models.l2p_utils.l2p_model
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: L2PModel
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

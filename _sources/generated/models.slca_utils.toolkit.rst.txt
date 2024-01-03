@@ -1,0 +1,62 @@
+.. _module-toolkit:
+toolkit
+========
+
+.. currentmodule:: models.slca_utils.toolkit
+
+.. automodule:: models.slca_utils.toolkit
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: accuracy
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: count_parameters
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: makedirs
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: split_images_labels
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: target2onehot
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: tensor2numpy
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: accuracy
+   .. autofunction:: count_parameters
+   .. autofunction:: makedirs
+   .. autofunction:: split_images_labels
+   .. autofunction:: target2onehot
+   .. autofunction:: tensor2numpy
+   
+   
+
+   
+   
+   
+
+
+

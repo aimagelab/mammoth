@@ -1,0 +1,41 @@
+.. _module-Deprecated:
+Deprecated
+===========
+
+.. currentmodule:: models.deprecated
+
+.. automodule:: models.deprecated
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+
+.. autosummary::
+   :recursive:
+   :toctree:
+   :hidden:
+   :template: custom-module-template.rst
+   
+   models.deprecated.joint
+
+.. toctree::
+   :hidden:
+
+   models.deprecated.joint
+
+

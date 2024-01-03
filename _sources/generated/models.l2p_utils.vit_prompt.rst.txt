@@ -1,0 +1,95 @@
+.. _module-vit_prompt:
+vit_prompt
+===========
+
+.. currentmodule:: models.l2p_utils.vit_prompt
+
+.. automodule:: models.l2p_utils.vit_prompt
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Attention
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: Block
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: LayerScale
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: ParallelBlock
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: ResPostBlock
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: VisionTransformer
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: checkpoint_filter_fn
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: get_init_weights_vit
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: init_weights_vit_jax
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: init_weights_vit_moco
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: init_weights_vit_timm
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resize_pos_embed
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: vit_base_patch16_224_l2p
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: checkpoint_filter_fn
+   .. autofunction:: get_init_weights_vit
+   .. autofunction:: init_weights_vit_jax
+   .. autofunction:: init_weights_vit_moco
+   .. autofunction:: init_weights_vit_timm
+   .. autofunction:: resize_pos_embed
+   .. autofunction:: vit_base_patch16_224_l2p
+   
+   
+
+   
+   
+   
+
+
+

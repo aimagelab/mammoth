@@ -1,0 +1,42 @@
+.. _module-rotation:
+rotation
+=========
+
+.. currentmodule:: datasets.transforms.rotation
+
+.. automodule:: datasets.transforms.rotation
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: FixedRotation
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: IncrementalRotation
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: Rotation
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

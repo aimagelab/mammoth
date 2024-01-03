@@ -1,0 +1,34 @@
+.. _module-ccic:
+ccic
+=====
+
+.. currentmodule:: models.ccic
+
+.. automodule:: models.ccic
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Ccic
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

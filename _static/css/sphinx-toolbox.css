@@ -1,0 +1,74 @@
+p.source-link {
+	margin-bottom: 0
+}
+
+p.source-link + hr.docutils {
+	margin-top: 10px
+}
+
+p.sphinx-toolbox-extensions, div.sphinx-toolbox-extensions.highlight-python, div.sphinx-toolbox-extensions.highlight-python div.highlight {
+	margin-bottom: 10px
+}
+
+div.rest-example.docutils.container {
+	padding-left: 5px;
+	border-style: dotted;
+	border-width: 1px;
+	border-color: darkgray
+}
+
+div[id*="installation"] .sphinx-tabs-tab {
+	color: #2980b9
+}
+
+button.sphinx-tabs-tab, div.sphinx-tabs-panel {
+	outline: None !important
+}
+
+.table-wrapper td p img.sphinx_toolbox_shield {
+	vertical-align: middle
+}
+
+span.regex_literal {
+	color: dimgrey
+}
+
+span.regex_at {
+	color: orangered
+}
+
+span.regex_repeat_brace {
+	color: orangered
+}
+
+span.regex_branch {
+	color: orangered
+}
+
+span.regex_subpattern {
+	color: dodgerblue
+}
+
+span.regex_in {
+	color: darkorange
+}
+
+span.regex_category {
+	color: darkseagreen
+}
+
+span.regex_repeat {
+	color: orangered
+}
+
+span.regex_any {
+	color: orangered
+}
+
+code.regex {
+	font-size: 80%
+}
+
+span.regex {
+	font-weight: bold
+}

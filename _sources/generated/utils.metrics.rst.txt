@@ -1,0 +1,47 @@
+.. _module-metrics:
+metrics
+========
+
+.. currentmodule:: utils.metrics
+
+.. automodule:: utils.metrics
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: backward_transfer
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: forgetting
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: forward_transfer
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: backward_transfer
+   .. autofunction:: forgetting
+   .. autofunction:: forward_transfer
+   
+   
+
+   
+   
+   
+
+
+

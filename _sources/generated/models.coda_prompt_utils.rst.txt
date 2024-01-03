@@ -1,0 +1,43 @@
+.. _module-Coda_prompt_utils:
+Coda_prompt_utils
+==================
+
+.. currentmodule:: models.coda_prompt_utils
+
+.. automodule:: models.coda_prompt_utils
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+
+.. autosummary::
+   :recursive:
+   :toctree:
+   :hidden:
+   :template: custom-module-template.rst
+   
+   models.coda_prompt_utils.model
+   models.coda_prompt_utils.vit
+
+.. toctree::
+   :hidden:
+
+   models.coda_prompt_utils.model
+   models.coda_prompt_utils.vit
+
+

@@ -1,0 +1,41 @@
+.. _module-Deprecated:
+Deprecated
+===========
+
+.. currentmodule:: datasets.deprecated
+
+.. automodule:: datasets.deprecated
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+
+.. autosummary::
+   :recursive:
+   :toctree:
+   :hidden:
+   :template: custom-module-template.rst
+   
+   datasets.deprecated.old_mnist_360
+
+.. toctree::
+   :hidden:
+
+   datasets.deprecated.old_mnist_360
+
+

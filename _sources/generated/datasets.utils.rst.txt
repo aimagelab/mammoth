@@ -1,0 +1,45 @@
+.. _module-Utils:
+Utils
+======
+
+.. currentmodule:: datasets.utils
+
+.. automodule:: datasets.utils
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+
+.. autosummary::
+   :recursive:
+   :toctree:
+   :hidden:
+   :template: custom-module-template.rst
+   
+   datasets.utils.continual_dataset
+   datasets.utils.gcl_dataset
+   datasets.utils.validation
+
+.. toctree::
+   :hidden:
+
+   datasets.utils.continual_dataset
+   datasets.utils.gcl_dataset
+   datasets.utils.validation
+
+

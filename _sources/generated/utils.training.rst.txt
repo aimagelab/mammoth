@@ -1,0 +1,52 @@
+.. _module-training:
+training
+=========
+
+.. currentmodule:: utils.training
+
+.. automodule:: utils.training
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: evaluate
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: initialize_wandb
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: mask_classes
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: train
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: evaluate
+   .. autofunction:: initialize_wandb
+   .. autofunction:: mask_classes
+   .. autofunction:: train
+   
+   
+
+   
+   
+   
+
+
+

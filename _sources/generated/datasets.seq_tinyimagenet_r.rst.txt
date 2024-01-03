@@ -1,0 +1,34 @@
+.. _module-seq_tinyimagenet_r:
+seq_tinyimagenet_r
+===================
+
+.. currentmodule:: datasets.seq_tinyimagenet_r
+
+.. automodule:: datasets.seq_tinyimagenet_r
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: SequentialTinyImagenet32R
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

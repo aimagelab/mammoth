@@ -1,0 +1,129 @@
+.. _module-EfficientNet:
+EfficientNet
+=============
+
+.. currentmodule:: backbone.EfficientNet
+
+.. automodule:: backbone.EfficientNet
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: BlockDecoder
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: Conv2dDynamicSamePadding
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: Conv2dStaticSamePadding
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: EfficientNet
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: MBConvBlock
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: MemoryEfficientSwish
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: SwishImplementation
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: calculate_output_image_size
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: drop_connect
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: efficientnet
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: efficientnet_params
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: efficientnet_tf
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: get_model_params
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: get_model_params_tf
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: get_same_padding_conv2d
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: get_width_and_height_from_size
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: load_pretrained_weights
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: mammoth_efficientnet
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: round_filters
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: round_repeats
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: calculate_output_image_size
+   .. autofunction:: drop_connect
+   .. autofunction:: efficientnet
+   .. autofunction:: efficientnet_params
+   .. autofunction:: efficientnet_tf
+   .. autofunction:: get_model_params
+   .. autofunction:: get_model_params_tf
+   .. autofunction:: get_same_padding_conv2d
+   .. autofunction:: get_width_and_height_from_size
+   .. autofunction:: load_pretrained_weights
+   .. autofunction:: mammoth_efficientnet
+   .. autofunction:: round_filters
+   .. autofunction:: round_repeats
+   
+   
+
+   
+   
+   
+
+
+

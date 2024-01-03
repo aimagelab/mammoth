@@ -1,0 +1,38 @@
+.. _module-seq_mnist:
+seq_mnist
+==========
+
+.. currentmodule:: datasets.seq_mnist
+
+.. automodule:: datasets.seq_mnist
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: MyMNIST
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: SequentialMNIST
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

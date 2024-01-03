@@ -1,0 +1,45 @@
+.. _module-agem:
+agem
+=====
+
+.. currentmodule:: models.agem
+
+.. automodule:: models.agem
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: AGem
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: project
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: project
+   
+   
+
+   
+   
+   
+
+
+

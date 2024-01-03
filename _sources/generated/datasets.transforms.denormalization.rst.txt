@@ -1,0 +1,34 @@
+.. _module-denormalization:
+denormalization
+================
+
+.. currentmodule:: datasets.transforms.denormalization
+
+.. automodule:: datasets.transforms.denormalization
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: DeNormalize
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,45 @@
+.. _module-validation:
+validation
+===========
+
+.. currentmodule:: datasets.utils.validation
+
+.. automodule:: datasets.utils.validation
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: ValidationDataset
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: get_train_val
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: get_train_val
+   
+   
+
+   
+   
+   
+
+
+

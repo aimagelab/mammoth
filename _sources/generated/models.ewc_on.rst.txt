@@ -1,0 +1,34 @@
+.. _module-ewc_on:
+ewc_on
+=======
+
+.. currentmodule:: models.ewc_on
+
+.. automodule:: models.ewc_on
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: EwcOn
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

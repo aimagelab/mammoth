@@ -1,0 +1,49 @@
+.. _module-ResNet18_PNN:
+ResNet18_PNN
+=============
+
+.. currentmodule:: backbone.ResNet18_PNN
+
+.. automodule:: backbone.ResNet18_PNN
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: BasicBlockPnn
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: ResNetPNN
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: resnet18_pnn
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: resnet18_pnn
+   
+   
+
+   
+   
+   
+
+
+

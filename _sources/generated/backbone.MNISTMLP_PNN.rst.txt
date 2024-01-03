@@ -1,0 +1,34 @@
+.. _module-MNISTMLP_PNN:
+MNISTMLP_PNN
+=============
+
+.. currentmodule:: backbone.MNISTMLP_PNN
+
+.. automodule:: backbone.MNISTMLP_PNN
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: MNISTMLP_PNN
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

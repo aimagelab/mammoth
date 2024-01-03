@@ -1,0 +1,54 @@
+.. _module-ResNet18:
+ResNet18
+=========
+
+.. currentmodule:: backbone.ResNet18
+
+.. automodule:: backbone.ResNet18
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: BasicBlock
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: ResNet
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: conv3x3
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resnet18
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: conv3x3
+   .. autofunction:: resnet18
+   
+   
+
+   
+   
+   
+
+
+

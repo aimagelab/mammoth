@@ -1,0 +1,38 @@
+.. _module-perm_mnist:
+perm_mnist
+===========
+
+.. currentmodule:: datasets.perm_mnist
+
+.. automodule:: datasets.perm_mnist
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: MyMNIST
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: PermutedMNIST
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

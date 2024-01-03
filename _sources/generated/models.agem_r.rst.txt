@@ -1,0 +1,34 @@
+.. _module-agem_r:
+agem_r
+=======
+
+.. currentmodule:: models.agem_r
+
+.. automodule:: models.agem_r
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: AGemr
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

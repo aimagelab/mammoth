@@ -1,0 +1,37 @@
+.. _module-mixup:
+mixup
+======
+
+.. currentmodule:: utils.mixup
+
+.. automodule:: utils.mixup
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: mixup
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: mixup
+   
+   
+
+   
+   
+   
+
+
+

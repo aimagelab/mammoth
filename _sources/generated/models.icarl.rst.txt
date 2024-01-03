@@ -1,0 +1,34 @@
+.. _module-icarl:
+icarl
+======
+
+.. currentmodule:: models.icarl
+
+.. automodule:: models.icarl
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: ICarl
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,34 @@
+.. _module-schedulers:
+schedulers
+===========
+
+.. currentmodule:: utils.schedulers
+
+.. automodule:: utils.schedulers
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: CosineSchedule
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

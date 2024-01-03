@@ -1,0 +1,71 @@
+﻿.. include:: ../utils/index.rst   
+
+Module attributes and functions
+-------------------------------
+
+.. automodule:: utils
+   :members:
+   :undoc-members:
+
+
+
+
+.. autosummary::
+   :recursive:
+   :toctree:
+   :hidden:
+   :template: custom-module-template.rst
+   
+   utils.args
+   utils.augmentations
+   utils.batch_norm
+   utils.best_args
+   utils.buffer
+   utils.checkpoints
+   utils.conditional_bn
+   utils.conf
+   utils.distributed
+   utils.gss_buffer
+   utils.kornia_utils
+   utils.loggers
+   utils.magic
+   utils.main
+   utils.metrics
+   utils.mixup
+   utils.prompt_templates
+   utils.ring_buffer
+   utils.schedulers
+   utils.simclrloss
+   utils.status
+   utils.training
+   utils.triplet
+
+.. toctree::
+   :hidden:
+   
+   args <utils.args.rst>
+   augmentations <utils.augmentations.rst>
+   batch_norm <utils.batch_norm.rst>
+   best_args <utils.best_args.rst>
+   buffer <utils.buffer.rst>
+   checkpoints <utils.checkpoints.rst>
+   conditional_bn <utils.conditional_bn.rst>
+   conf <utils.conf.rst>
+   distributed <utils.distributed.rst>
+   gss_buffer <utils.gss_buffer.rst>
+   kornia_utils <utils.kornia_utils.rst>
+   loggers <utils.loggers.rst>
+   magic <utils.magic.rst>
+   main <utils.main.rst>
+   metrics <utils.metrics.rst>
+   mixup <utils.mixup.rst>
+   prompt_templates <utils.prompt_templates.rst>
+   ring_buffer <utils.ring_buffer.rst>
+   schedulers <utils.schedulers.rst>
+   simclrloss <utils.simclrloss.rst>
+   status <utils.status.rst>
+   training <utils.training.rst>
+   triplet <utils.triplet.rst>
+
+
+

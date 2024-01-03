@@ -1,0 +1,34 @@
+.. _module-fdr:
+fdr
+====
+
+.. currentmodule:: models.fdr
+
+.. automodule:: models.fdr
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Fdr
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

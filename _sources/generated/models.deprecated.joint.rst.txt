@@ -1,0 +1,45 @@
+.. _module-joint:
+joint
+======
+
+.. currentmodule:: models.deprecated.joint
+
+.. automodule:: models.deprecated.joint
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Joint
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: get_parser
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: get_parser
+   
+   
+
+   
+   
+   
+
+
+

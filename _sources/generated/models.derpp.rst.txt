@@ -1,0 +1,34 @@
+.. _module-derpp:
+derpp
+======
+
+.. currentmodule:: models.derpp
+
+.. automodule:: models.derpp
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Derpp
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

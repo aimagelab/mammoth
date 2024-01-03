@@ -1,0 +1,45 @@
+.. _module-xder_rpc:
+xder_rpc
+=========
+
+.. currentmodule:: models.xder_rpc
+
+.. automodule:: models.xder_rpc
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: XDerRPC
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: dsimplex
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: dsimplex
+   
+   
+
+   
+   
+   
+
+
+

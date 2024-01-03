@@ -1,0 +1,34 @@
+.. _module-attention:
+attention
+==========
+
+.. currentmodule:: models.dualprompt_utils.attention
+
+.. automodule:: models.dualprompt_utils.attention
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: PreT_Attention
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,45 @@
+.. _module-rpc:
+rpc
+====
+
+.. currentmodule:: models.rpc
+
+.. automodule:: models.rpc
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: RPC
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: dsimplex
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: dsimplex
+   
+   
+
+   
+   
+   
+
+
+

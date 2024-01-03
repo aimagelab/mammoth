@@ -1,0 +1,42 @@
+.. _module-triplet:
+triplet
+========
+
+.. currentmodule:: utils.triplet
+
+.. automodule:: utils.triplet
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: batch_hard_triplet_loss
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: negative_only_triplet_loss
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: batch_hard_triplet_loss
+   .. autofunction:: negative_only_triplet_loss
+   
+   
+
+   
+   
+   
+
+
+

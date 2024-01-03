@@ -1,0 +1,55 @@
+.. _module-gem:
+gem
+====
+
+.. currentmodule:: models.gem
+
+.. automodule:: models.gem
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Gem
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: overwrite_grad
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: project2cone2
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: store_grad
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: overwrite_grad
+   .. autofunction:: project2cone2
+   .. autofunction:: store_grad
+   
+   
+
+   
+   
+   
+
+
+

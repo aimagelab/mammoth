@@ -1,0 +1,34 @@
+.. _module-der:
+der
+====
+
+.. currentmodule:: models.der
+
+.. automodule:: models.der
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Der
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

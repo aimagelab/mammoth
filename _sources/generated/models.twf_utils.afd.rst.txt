@@ -1,0 +1,93 @@
+.. _module-afd:
+afd
+====
+
+.. currentmodule:: models.twf_utils.afd
+
+.. automodule:: models.twf_utils.afd
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: BinaryGumbelSoftmax
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: ChannelAttn
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: ConditionalLinear
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: DiverseLoss
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: DoubleAttn
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: HardAttentionSoftmax
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: MultiTaskAFDAlternative
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: Normalize
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: SoftAttentionSoftmax
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: SpatialAttn
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: StudentTransform
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: TeacherForcingLoss
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: TeacherTransform
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: get_rnd_weight
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: get_rnd_weight
+   
+   
+
+   
+   
+   
+
+
+

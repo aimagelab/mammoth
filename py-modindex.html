@@ -1,0 +1,1155 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" />
+
+    <link rel="shortcut icon" href="_static/logo.png"/><!-- Generated with Sphinx 7.2.6 and Furo 2023.09.10 --><title>Python Module Index - Mammoth</title>
+<link rel="stylesheet" type="text/css" href="_static/pygments.css?v=649a27d8" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-toolbox-code.css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/sphinx-toolbox.css" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css?v=a5c4661c" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx_toolbox_installation.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f0f0f0;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">Mammoth</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  
+  <span class="sidebar-brand-text">Mammoth</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/index.html">First steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/checkpoints.html">Load and save checkpoints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/distributed_training.html">Distributed training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/scripts.html">Scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/parseval.html">Parseval</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="generated/models.html">Models</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Models</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="generated/models.coda_prompt_utils.html">Coda Prompt Utils</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Coda Prompt Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.coda_prompt_utils.model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.coda_prompt_utils.vit.html">vit</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="generated/models.deprecated.html">Deprecated</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of Deprecated</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.deprecated.joint.html">joint</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="generated/models.dualprompt_utils.html">Dualprompt Utils</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Dualprompt Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.dualprompt_utils.attention.html">attention</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.dualprompt_utils.model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.dualprompt_utils.prompt.html">prompt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.dualprompt_utils.vision_transformer.html">vision_transformer</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="generated/models.l2p_utils.html">L2p Utils</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of L2p Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.l2p_utils.l2p_model.html">l2p_model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.l2p_utils.prompt.html">prompt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.l2p_utils.vit_prompt.html">vit_prompt</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="generated/models.slca_utils.html">Slca Utils</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of Slca Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="generated/models.slca_utils.convs.html">Convs</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle navigation of Convs</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="generated/models.slca_utils.convs.cifar_resnet.html">cifar_resnet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/models.slca_utils.convs.linears.html">linears</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/models.slca_utils.convs.resnet.html">resnet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="generated/models.slca_utils.convs.vits.html">vits</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.slca_utils.inc_net.html">inc_net</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.slca_utils.toolkit.html">toolkit</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="generated/models.twf_utils.html">Twf Utils</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of Twf Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.twf_utils.afd.html">afd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.twf_utils.utils.html">utils</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="generated/models.utils.html">Utils</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.utils.continual_model.html">continual_model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/models.utils.lider_model.html">lider_model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.agem.html">agem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.agem_r.html">agem_r</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.bic.html">bic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.ccic.html">ccic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.coda_prompt.html">coda_prompt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.der.html">der</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.derpp.html">derpp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.derpp_lider.html">derpp_lider</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.dualprompt.html">dualprompt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.er.html">er</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.er_ace.html">er_ace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.er_ace_lider.html">er_ace_lider</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.ewc_on.html">ewc_on</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.fdr.html">fdr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.gdumb.html">gdumb</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.gdumb_lider.html">gdumb_lider</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.gem.html">gem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.gss.html">gss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.hal.html">hal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.icarl.html">icarl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.icarl_lider.html">icarl_lider</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.joint_gcl.html">joint_gcl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.l2p.html">l2p</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.lucir.html">lucir</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.lwf.html">lwf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.lwf_mc.html">lwf_mc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.mer.html">mer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.pnn.html">pnn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.rpc.html">rpc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.sgd.html">sgd</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.si.html">si</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.twf.html">twf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.xder.html">xder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.xder_ce.html">xder_ce</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/models.xder_rpc.html">xder_rpc</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="generated/datasets.html">Datasets</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of Datasets</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="generated/datasets.deprecated.html">Deprecated</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle navigation of Deprecated</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/datasets.deprecated.old_mnist_360.html">old_mnist_360</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="generated/datasets.imagenet_r_utils.html">Imagenet R Utils</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="generated/datasets.transforms.html">Transforms</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><div class="visually-hidden">Toggle navigation of Transforms</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/datasets.transforms.denormalization.html">denormalization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/datasets.transforms.permutation.html">permutation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/datasets.transforms.rotation.html">rotation</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="generated/datasets.utils.html">Utils</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle navigation of Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/datasets.utils.continual_dataset.html">continual_dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/datasets.utils.gcl_dataset.html">gcl_dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/datasets.utils.validation.html">validation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="generated/datasets.mnist_360.html">mnist_360</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/datasets.perm_mnist.html">perm_mnist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/datasets.rot_mnist.html">rot_mnist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/datasets.seq_cifar10.html">seq_cifar10</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/datasets.seq_cifar100.html">seq_cifar100</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/datasets.seq_cifar100_224.html">seq_cifar100_224</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/datasets.seq_cifar100_224_rs.html">seq_cifar100_224_rs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/datasets.seq_cub200.html">seq_cub200</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/datasets.seq_imagenet_r.html">seq_imagenet_r</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/datasets.seq_mnist.html">seq_mnist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/datasets.seq_tinyimagenet.html">seq_tinyimagenet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/datasets.seq_tinyimagenet_r.html">seq_tinyimagenet_r</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="generated/backbone.html">Backbones</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of Backbones</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="generated/backbone.utils.html">Utils</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/backbone.utils.modules.html">modules</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="generated/backbone.EfficientNet.html">EfficientNet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/backbone.MNISTMLP.html">MNISTMLP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/backbone.MNISTMLP_PNN.html">MNISTMLP_PNN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/backbone.ResNet18.html">ResNet18</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/backbone.ResNet18_PNN.html">ResNet18_PNN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/backbone.ResNet50.html">ResNet50</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="generated/utils.html">Utils</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><div class="visually-hidden">Toggle navigation of Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.args.html">args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.augmentations.html">augmentations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.batch_norm.html">batch_norm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.best_args.html">best_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.buffer.html">buffer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.checkpoints.html">checkpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.conditional_bn.html">conditional_bn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.conf.html">conf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.distributed.html">distributed</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.gss_buffer.html">gss_buffer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.kornia_utils.html">kornia_utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.loggers.html">loggers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.magic.html">magic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.main.html">main</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.metrics.html">metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.mixup.html">mixup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.prompt_templates.html">prompt_templates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.ring_buffer.html">ring_buffer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.schedulers.html">schedulers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.simclrloss.html">simclrloss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.status.html">status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.training.html">training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated/utils.triplet.html">triplet</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          
+<section class="domainindex-section">
+  <h1>Python Module Index</h1>
+  <div class="domainindex-jumpbox"><a href="#cap-b"><strong>b</strong></a> | <a href="#cap-d"><strong>d</strong></a> | <a href="#cap-m"><strong>m</strong></a> | <a href="#cap-u"><strong>u</strong></a></div>
+</section>
+<table class="domainindex-table">
+  <tr class="pcap">
+    <td></td><td>&#160;</td><td></td>
+  </tr>
+  <tr class="cap" id="cap-b">
+    <td></td><td><strong>b</strong></td><td></td>
+  </tr>
+  <tr>
+    <td><img src="_static/minus.png" class="toggler"
+              id="toggle-1" style="display: none" alt="-" /></td>
+    <td>
+        <a href="generated/backbone.html#module-backbone"><code class="xref">backbone</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-1">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/backbone.EfficientNet.html#module-backbone.EfficientNet"><code class="xref">backbone.EfficientNet</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-1">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/backbone.MNISTMLP.html#module-backbone.MNISTMLP"><code class="xref">backbone.MNISTMLP</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-1">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/backbone.MNISTMLP_PNN.html#module-backbone.MNISTMLP_PNN"><code class="xref">backbone.MNISTMLP_PNN</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-1">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/backbone.ResNet18.html#module-backbone.ResNet18"><code class="xref">backbone.ResNet18</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-1">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/backbone.ResNet18_PNN.html#module-backbone.ResNet18_PNN"><code class="xref">backbone.ResNet18_PNN</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-1">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/backbone.ResNet50.html#module-backbone.ResNet50"><code class="xref">backbone.ResNet50</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-1">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/backbone.utils.html#module-backbone.utils"><code class="xref">backbone.utils</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-1">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/backbone.utils.modules.html#module-backbone.utils.modules"><code class="xref">backbone.utils.modules</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="pcap">
+    <td></td><td>&#160;</td><td></td>
+  </tr>
+  <tr class="cap" id="cap-d">
+    <td></td><td><strong>d</strong></td><td></td>
+  </tr>
+  <tr>
+    <td><img src="_static/minus.png" class="toggler"
+              id="toggle-2" style="display: none" alt="-" /></td>
+    <td>
+        <a href="generated/datasets.html#module-0"><code class="xref">datasets</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.deprecated.html#module-datasets.deprecated"><code class="xref">datasets.deprecated</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.deprecated.old_mnist_360.html#module-datasets.deprecated.old_mnist_360"><code class="xref">datasets.deprecated.old_mnist_360</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.imagenet_r_utils.html#module-datasets.imagenet_r_utils"><code class="xref">datasets.imagenet_r_utils</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.mnist_360.html#module-datasets.mnist_360"><code class="xref">datasets.mnist_360</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.perm_mnist.html#module-datasets.perm_mnist"><code class="xref">datasets.perm_mnist</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.rot_mnist.html#module-datasets.rot_mnist"><code class="xref">datasets.rot_mnist</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.seq_cifar10.html#module-datasets.seq_cifar10"><code class="xref">datasets.seq_cifar10</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.seq_cifar100.html#module-datasets.seq_cifar100"><code class="xref">datasets.seq_cifar100</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.seq_cifar100_224.html#module-datasets.seq_cifar100_224"><code class="xref">datasets.seq_cifar100_224</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.seq_cifar100_224_rs.html#module-datasets.seq_cifar100_224_rs"><code class="xref">datasets.seq_cifar100_224_rs</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.seq_cub200.html#module-datasets.seq_cub200"><code class="xref">datasets.seq_cub200</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.seq_imagenet_r.html#module-datasets.seq_imagenet_r"><code class="xref">datasets.seq_imagenet_r</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.seq_mnist.html#module-datasets.seq_mnist"><code class="xref">datasets.seq_mnist</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.seq_tinyimagenet.html#module-datasets.seq_tinyimagenet"><code class="xref">datasets.seq_tinyimagenet</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.seq_tinyimagenet_r.html#module-datasets.seq_tinyimagenet_r"><code class="xref">datasets.seq_tinyimagenet_r</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.transforms.html#module-datasets.transforms"><code class="xref">datasets.transforms</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.transforms.denormalization.html#module-datasets.transforms.denormalization"><code class="xref">datasets.transforms.denormalization</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.transforms.permutation.html#module-datasets.transforms.permutation"><code class="xref">datasets.transforms.permutation</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.transforms.rotation.html#module-datasets.transforms.rotation"><code class="xref">datasets.transforms.rotation</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.utils.html#module-datasets.utils"><code class="xref">datasets.utils</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.utils.continual_dataset.html#module-datasets.utils.continual_dataset"><code class="xref">datasets.utils.continual_dataset</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.utils.gcl_dataset.html#module-datasets.utils.gcl_dataset"><code class="xref">datasets.utils.gcl_dataset</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-2">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/datasets.utils.validation.html#module-datasets.utils.validation"><code class="xref">datasets.utils.validation</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="pcap">
+    <td></td><td>&#160;</td><td></td>
+  </tr>
+  <tr class="cap" id="cap-m">
+    <td></td><td><strong>m</strong></td><td></td>
+  </tr>
+  <tr>
+    <td><img src="_static/minus.png" class="toggler"
+              id="toggle-3" style="display: none" alt="-" /></td>
+    <td>
+        <a href="generated/models.html#module-0"><code class="xref">models</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.agem.html#module-models.agem"><code class="xref">models.agem</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.agem_r.html#module-models.agem_r"><code class="xref">models.agem_r</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.bic.html#module-models.bic"><code class="xref">models.bic</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.ccic.html#module-models.ccic"><code class="xref">models.ccic</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.coda_prompt.html#module-models.coda_prompt"><code class="xref">models.coda_prompt</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.coda_prompt_utils.html#module-models.coda_prompt_utils"><code class="xref">models.coda_prompt_utils</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.coda_prompt_utils.model.html#module-models.coda_prompt_utils.model"><code class="xref">models.coda_prompt_utils.model</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.coda_prompt_utils.vit.html#module-models.coda_prompt_utils.vit"><code class="xref">models.coda_prompt_utils.vit</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.deprecated.html#module-models.deprecated"><code class="xref">models.deprecated</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.deprecated.joint.html#module-models.deprecated.joint"><code class="xref">models.deprecated.joint</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.der.html#module-models.der"><code class="xref">models.der</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.derpp.html#module-models.derpp"><code class="xref">models.derpp</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.derpp_lider.html#module-models.derpp_lider"><code class="xref">models.derpp_lider</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.dualprompt.html#module-models.dualprompt"><code class="xref">models.dualprompt</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.dualprompt_utils.html#module-models.dualprompt_utils"><code class="xref">models.dualprompt_utils</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.dualprompt_utils.attention.html#module-models.dualprompt_utils.attention"><code class="xref">models.dualprompt_utils.attention</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.dualprompt_utils.model.html#module-models.dualprompt_utils.model"><code class="xref">models.dualprompt_utils.model</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.dualprompt_utils.prompt.html#module-models.dualprompt_utils.prompt"><code class="xref">models.dualprompt_utils.prompt</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.dualprompt_utils.vision_transformer.html#module-models.dualprompt_utils.vision_transformer"><code class="xref">models.dualprompt_utils.vision_transformer</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.er.html#module-models.er"><code class="xref">models.er</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.er_ace.html#module-models.er_ace"><code class="xref">models.er_ace</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.er_ace_lider.html#module-models.er_ace_lider"><code class="xref">models.er_ace_lider</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.ewc_on.html#module-models.ewc_on"><code class="xref">models.ewc_on</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.fdr.html#module-models.fdr"><code class="xref">models.fdr</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.gdumb.html#module-models.gdumb"><code class="xref">models.gdumb</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.gdumb_lider.html#module-models.gdumb_lider"><code class="xref">models.gdumb_lider</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.gem.html#module-models.gem"><code class="xref">models.gem</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.gss.html#module-models.gss"><code class="xref">models.gss</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.hal.html#module-models.hal"><code class="xref">models.hal</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.icarl.html#module-models.icarl"><code class="xref">models.icarl</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.icarl_lider.html#module-models.icarl_lider"><code class="xref">models.icarl_lider</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.joint_gcl.html#module-models.joint_gcl"><code class="xref">models.joint_gcl</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.l2p.html#module-models.l2p"><code class="xref">models.l2p</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.l2p_utils.html#module-models.l2p_utils"><code class="xref">models.l2p_utils</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.l2p_utils.l2p_model.html#module-models.l2p_utils.l2p_model"><code class="xref">models.l2p_utils.l2p_model</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.l2p_utils.prompt.html#module-models.l2p_utils.prompt"><code class="xref">models.l2p_utils.prompt</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.l2p_utils.vit_prompt.html#module-models.l2p_utils.vit_prompt"><code class="xref">models.l2p_utils.vit_prompt</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.lucir.html#module-models.lucir"><code class="xref">models.lucir</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.lwf.html#module-models.lwf"><code class="xref">models.lwf</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.lwf_mc.html#module-models.lwf_mc"><code class="xref">models.lwf_mc</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.mer.html#module-models.mer"><code class="xref">models.mer</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.pnn.html#module-models.pnn"><code class="xref">models.pnn</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.rpc.html#module-models.rpc"><code class="xref">models.rpc</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.sgd.html#module-models.sgd"><code class="xref">models.sgd</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.si.html#module-models.si"><code class="xref">models.si</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.slca_utils.html#module-models.slca_utils"><code class="xref">models.slca_utils</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.slca_utils.convs.html#module-models.slca_utils.convs"><code class="xref">models.slca_utils.convs</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.slca_utils.convs.cifar_resnet.html#module-models.slca_utils.convs.cifar_resnet"><code class="xref">models.slca_utils.convs.cifar_resnet</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.slca_utils.convs.linears.html#module-models.slca_utils.convs.linears"><code class="xref">models.slca_utils.convs.linears</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.slca_utils.convs.resnet.html#module-models.slca_utils.convs.resnet"><code class="xref">models.slca_utils.convs.resnet</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.slca_utils.convs.vits.html#module-models.slca_utils.convs.vits"><code class="xref">models.slca_utils.convs.vits</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.slca_utils.inc_net.html#module-models.slca_utils.inc_net"><code class="xref">models.slca_utils.inc_net</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.slca_utils.toolkit.html#module-models.slca_utils.toolkit"><code class="xref">models.slca_utils.toolkit</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.twf.html#module-models.twf"><code class="xref">models.twf</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.twf_utils.html#module-models.twf_utils"><code class="xref">models.twf_utils</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.twf_utils.afd.html#module-models.twf_utils.afd"><code class="xref">models.twf_utils.afd</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.twf_utils.utils.html#module-models.twf_utils.utils"><code class="xref">models.twf_utils.utils</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.utils.html#module-models.utils"><code class="xref">models.utils</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.utils.continual_model.html#module-models.utils.continual_model"><code class="xref">models.utils.continual_model</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.utils.lider_model.html#module-models.utils.lider_model"><code class="xref">models.utils.lider_model</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.xder.html#module-models.xder"><code class="xref">models.xder</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.xder_ce.html#module-models.xder_ce"><code class="xref">models.xder_ce</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-3">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/models.xder_rpc.html#module-models.xder_rpc"><code class="xref">models.xder_rpc</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="pcap">
+    <td></td><td>&#160;</td><td></td>
+  </tr>
+  <tr class="cap" id="cap-u">
+    <td></td><td><strong>u</strong></td><td></td>
+  </tr>
+  <tr>
+    <td><img src="_static/minus.png" class="toggler"
+              id="toggle-4" style="display: none" alt="-" /></td>
+    <td>
+        <a href="generated/utils.html#module-0"><code class="xref">utils</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.args.html#module-utils.args"><code class="xref">utils.args</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.augmentations.html#module-utils.augmentations"><code class="xref">utils.augmentations</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.batch_norm.html#module-utils.batch_norm"><code class="xref">utils.batch_norm</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.best_args.html#module-utils.best_args"><code class="xref">utils.best_args</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.buffer.html#module-utils.buffer"><code class="xref">utils.buffer</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.checkpoints.html#module-utils.checkpoints"><code class="xref">utils.checkpoints</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.conditional_bn.html#module-utils.conditional_bn"><code class="xref">utils.conditional_bn</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.conf.html#module-utils.conf"><code class="xref">utils.conf</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.distributed.html#module-utils.distributed"><code class="xref">utils.distributed</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.gss_buffer.html#module-utils.gss_buffer"><code class="xref">utils.gss_buffer</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.kornia_utils.html#module-utils.kornia_utils"><code class="xref">utils.kornia_utils</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.loggers.html#module-utils.loggers"><code class="xref">utils.loggers</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.magic.html#module-utils.magic"><code class="xref">utils.magic</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.main.html#module-utils.main"><code class="xref">utils.main</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.metrics.html#module-utils.metrics"><code class="xref">utils.metrics</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.mixup.html#module-utils.mixup"><code class="xref">utils.mixup</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.prompt_templates.html#module-utils.prompt_templates"><code class="xref">utils.prompt_templates</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.ring_buffer.html#module-utils.ring_buffer"><code class="xref">utils.ring_buffer</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.schedulers.html#module-utils.schedulers"><code class="xref">utils.schedulers</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.simclrloss.html#module-utils.simclrloss"><code class="xref">utils.simclrloss</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.status.html#module-utils.status"><code class="xref">utils.status</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.training.html#module-utils.training"><code class="xref">utils.training</code></a></td><td>
+    <em></em></td>
+  </tr>
+  <tr class="cg-4">
+    <td></td>
+    <td>&#160;&#160;&#160;
+        <a href="generated/utils.triplet.html#module-utils.triplet"><code class="xref">utils.triplet</code></a></td><td>
+    <em></em></td>
+  </tr>
+</table>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, Pietro Buzzega, Matteo Boschini, Lorenzo Bonicelli, Aniello Panariello, Davide Abati, Angelo Porrello, Simone Calderara
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=888ff710"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=32e29ea5"></script>
+    <script src="_static/tabs.js?v=3030b3cb"></script>
+    <script src="_static/sphinx_toolbox_installation.js"></script>
+    </body>
+</html>

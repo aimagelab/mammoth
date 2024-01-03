@@ -1,0 +1,62 @@
+.. _module-conf:
+conf
+=====
+
+.. currentmodule:: utils.conf
+
+.. automodule:: utils.conf
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: base_path
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: create_seeded_dataloader
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: get_device
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: set_random_seed
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: set_random_seed_worker
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: warn_once
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: base_path
+   .. autofunction:: create_seeded_dataloader
+   .. autofunction:: get_device
+   .. autofunction:: set_random_seed
+   .. autofunction:: set_random_seed_worker
+   .. autofunction:: warn_once
+   
+   
+
+   
+   
+   
+
+
+

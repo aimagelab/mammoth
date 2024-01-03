@@ -1,0 +1,34 @@
+.. _module-mer:
+mer
+====
+
+.. currentmodule:: models.mer
+
+.. automodule:: models.mer
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Mer
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

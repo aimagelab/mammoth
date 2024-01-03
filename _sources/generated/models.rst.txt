@@ -1,0 +1,111 @@
+﻿.. include:: ../models/index.rst   
+
+Module attributes and functions
+-------------------------------
+
+.. automodule:: models
+   :members:
+   :undoc-members:
+
+
+
+
+.. autosummary::
+   :recursive:
+   :toctree:
+   :hidden:
+   :template: custom-module-template.rst
+   
+   models.coda_prompt_utils
+   models.deprecated
+   models.dualprompt_utils
+   models.l2p_utils
+   models.slca_utils
+   models.twf_utils
+   models.utils
+   models.agem
+   models.agem_r
+   models.bic
+   models.ccic
+   models.coda_prompt
+   models.der
+   models.derpp
+   models.derpp_lider
+   models.dualprompt
+   models.er
+   models.er_ace
+   models.er_ace_lider
+   models.ewc_on
+   models.fdr
+   models.gdumb
+   models.gdumb_lider
+   models.gem
+   models.gss
+   models.hal
+   models.icarl
+   models.icarl_lider
+   models.joint_gcl
+   models.l2p
+   models.lucir
+   models.lwf
+   models.lwf_mc
+   models.mer
+   models.pnn
+   models.rpc
+   models.sgd
+   models.si
+   models.slca
+   models.twf
+   models.xder
+   models.xder_ce
+   models.xder_rpc
+
+.. toctree::
+   :hidden:
+   
+   Coda Prompt Utils <models.coda_prompt_utils.rst>
+   Deprecated <models.deprecated.rst>
+   Dualprompt Utils <models.dualprompt_utils.rst>
+   L2p Utils <models.l2p_utils.rst>
+   Slca Utils <models.slca_utils.rst>
+   Twf Utils <models.twf_utils.rst>
+   Utils <models.utils.rst>
+   agem <models.agem.rst>
+   agem_r <models.agem_r.rst>
+   bic <models.bic.rst>
+   ccic <models.ccic.rst>
+   coda_prompt <models.coda_prompt.rst>
+   der <models.der.rst>
+   derpp <models.derpp.rst>
+   derpp_lider <models.derpp_lider.rst>
+   dualprompt <models.dualprompt.rst>
+   er <models.er.rst>
+   er_ace <models.er_ace.rst>
+   er_ace_lider <models.er_ace_lider.rst>
+   ewc_on <models.ewc_on.rst>
+   fdr <models.fdr.rst>
+   gdumb <models.gdumb.rst>
+   gdumb_lider <models.gdumb_lider.rst>
+   gem <models.gem.rst>
+   gss <models.gss.rst>
+   hal <models.hal.rst>
+   icarl <models.icarl.rst>
+   icarl_lider <models.icarl_lider.rst>
+   joint_gcl <models.joint_gcl.rst>
+   l2p <models.l2p.rst>
+   lucir <models.lucir.rst>
+   lwf <models.lwf.rst>
+   lwf_mc <models.lwf_mc.rst>
+   mer <models.mer.rst>
+   pnn <models.pnn.rst>
+   rpc <models.rpc.rst>
+   sgd <models.sgd.rst>
+   si <models.si.rst>
+   slca <models.slca.rst>
+   twf <models.twf.rst>
+   xder <models.xder.rst>
+   xder_ce <models.xder_ce.rst>
+   xder_rpc <models.xder_rpc.rst>
+
+
+

@@ -1,0 +1,34 @@
+.. _module-prompt:
+prompt
+=======
+
+.. currentmodule:: models.l2p_utils.prompt
+
+.. automodule:: models.l2p_utils.prompt
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Prompt
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

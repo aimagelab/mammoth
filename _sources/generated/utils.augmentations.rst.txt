@@ -1,0 +1,95 @@
+.. _module-augmentations:
+augmentations
+==============
+
+.. currentmodule:: utils.augmentations
+
+.. automodule:: utils.augmentations
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: CustomRandomCrop
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: CustomRandomHorizontalFlip
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: DoubleCompose
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: DoubleTransform
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: soft_aug
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: strong_aug
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: apply_transform
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: cutmix_data
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: normalize
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: rand_bbox
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: random_crop
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: random_flip
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: random_grayscale
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: apply_transform
+   .. autofunction:: cutmix_data
+   .. autofunction:: normalize
+   .. autofunction:: rand_bbox
+   .. autofunction:: random_crop
+   .. autofunction:: random_flip
+   .. autofunction:: random_grayscale
+   
+   
+
+   
+   
+   
+
+
+

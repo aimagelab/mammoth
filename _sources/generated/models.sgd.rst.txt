@@ -1,0 +1,34 @@
+.. _module-sgd:
+sgd
+====
+
+.. currentmodule:: models.sgd
+
+.. automodule:: models.sgd
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Sgd
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

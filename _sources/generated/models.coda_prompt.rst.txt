@@ -1,0 +1,34 @@
+.. _module-coda_prompt:
+coda_prompt
+============
+
+.. currentmodule:: models.coda_prompt
+
+.. automodule:: models.coda_prompt
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: CodaPrompt
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,57 @@
+﻿.. include:: ../datasets/index.rst   
+
+Module attributes and functions
+-------------------------------
+
+.. automodule:: datasets
+   :members:
+   :undoc-members:
+
+
+
+
+.. autosummary::
+   :recursive:
+   :toctree:
+   :hidden:
+   :template: custom-module-template.rst
+   
+   datasets.deprecated
+   datasets.imagenet_r_utils
+   datasets.transforms
+   datasets.utils
+   datasets.mnist_360
+   datasets.perm_mnist
+   datasets.rot_mnist
+   datasets.seq_cifar10
+   datasets.seq_cifar100
+   datasets.seq_cifar100_224
+   datasets.seq_cifar100_224_rs
+   datasets.seq_cub200
+   datasets.seq_imagenet_r
+   datasets.seq_mnist
+   datasets.seq_tinyimagenet
+   datasets.seq_tinyimagenet_r
+
+.. toctree::
+   :hidden:
+   
+   Deprecated <datasets.deprecated.rst>
+   Imagenet R Utils <datasets.imagenet_r_utils.rst>
+   Transforms <datasets.transforms.rst>
+   Utils <datasets.utils.rst>
+   mnist_360 <datasets.mnist_360.rst>
+   perm_mnist <datasets.perm_mnist.rst>
+   rot_mnist <datasets.rot_mnist.rst>
+   seq_cifar10 <datasets.seq_cifar10.rst>
+   seq_cifar100 <datasets.seq_cifar100.rst>
+   seq_cifar100_224 <datasets.seq_cifar100_224.rst>
+   seq_cifar100_224_rs <datasets.seq_cifar100_224_rs.rst>
+   seq_cub200 <datasets.seq_cub200.rst>
+   seq_imagenet_r <datasets.seq_imagenet_r.rst>
+   seq_mnist <datasets.seq_mnist.rst>
+   seq_tinyimagenet <datasets.seq_tinyimagenet.rst>
+   seq_tinyimagenet_r <datasets.seq_tinyimagenet_r.rst>
+
+
+

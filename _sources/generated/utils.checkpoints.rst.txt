@@ -1,0 +1,37 @@
+.. _module-checkpoints:
+checkpoints
+============
+
+.. currentmodule:: utils.checkpoints
+
+.. automodule:: utils.checkpoints
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: mammoth_load_checkpoint
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: mammoth_load_checkpoint
+   
+   
+
+   
+   
+   
+
+
+

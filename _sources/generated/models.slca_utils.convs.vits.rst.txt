@@ -1,0 +1,68 @@
+.. _module-vits:
+vits
+=====
+
+.. currentmodule:: models.slca_utils.convs.vits
+
+.. automodule:: models.slca_utils.convs.vits
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Attention
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: Block
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: VisionTransformer
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: checkpoint_filter_fn
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resize_pos_embed
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: vit_base_patch16_224_in21k
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: vit_base_patch16_224_mocov3
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: checkpoint_filter_fn
+   .. autofunction:: resize_pos_embed
+   .. autofunction:: vit_base_patch16_224_in21k
+   .. autofunction:: vit_base_patch16_224_mocov3
+   
+   
+
+   
+   
+   
+
+
+

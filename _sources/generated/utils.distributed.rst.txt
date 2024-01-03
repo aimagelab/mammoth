@@ -1,0 +1,60 @@
+.. _module-distributed:
+distributed
+============
+
+.. currentmodule:: utils.distributed
+
+.. automodule:: utils.distributed
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: CustomDP
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: make_ddp
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: make_dp
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: setup
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: wait_for_master
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: make_ddp
+   .. autofunction:: make_dp
+   .. autofunction:: setup
+   .. autofunction:: wait_for_master
+   
+   
+
+   
+   
+   
+
+
+

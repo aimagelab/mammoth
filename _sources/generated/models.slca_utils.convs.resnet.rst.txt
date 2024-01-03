@@ -1,0 +1,103 @@
+.. _module-resnet:
+resnet
+=======
+
+.. currentmodule:: models.slca_utils.convs.resnet
+
+.. automodule:: models.slca_utils.convs.resnet
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: BasicBlock
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: Bottleneck
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: ResNet
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: conv1x1
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: conv3x3
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resnet101
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resnet152
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resnet18
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resnet34
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resnet50
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resnext101_32x8d
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: resnext50_32x4d
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: wide_resnet101_2
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: wide_resnet50_2
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: conv1x1
+   .. autofunction:: conv3x3
+   .. autofunction:: resnet101
+   .. autofunction:: resnet152
+   .. autofunction:: resnet18
+   .. autofunction:: resnet34
+   .. autofunction:: resnet50
+   .. autofunction:: resnext101_32x8d
+   .. autofunction:: resnext50_32x4d
+   .. autofunction:: wide_resnet101_2
+   .. autofunction:: wide_resnet50_2
+   
+   
+
+   
+   
+   
+
+
+

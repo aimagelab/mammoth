@@ -1,0 +1,38 @@
+.. _module-permutation:
+permutation
+============
+
+.. currentmodule:: datasets.transforms.permutation
+
+.. automodule:: datasets.transforms.permutation
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: FixedPermutation
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: Permutation
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

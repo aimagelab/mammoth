@@ -1,0 +1,50 @@
+.. _module-gdumb_lider:
+gdumb_lider
+============
+
+.. currentmodule:: models.gdumb_lider
+
+.. automodule:: models.gdumb_lider
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: GDumbLider
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: fit_buffer
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: get_parser
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: fit_buffer
+   .. autofunction:: get_parser
+   
+   
+
+   
+   
+   
+
+
+

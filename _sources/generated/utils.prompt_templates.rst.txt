@@ -1,0 +1,26 @@
+.. _module-prompt_templates:
+prompt_templates
+=================
+
+.. currentmodule:: utils.prompt_templates
+
+.. automodule:: utils.prompt_templates
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

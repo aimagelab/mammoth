@@ -1,0 +1,46 @@
+.. _module-vit:
+vit
+====
+
+.. currentmodule:: models.coda_prompt_utils.vit
+
+.. automodule:: models.coda_prompt_utils.vit
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Attention
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: Block
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: Mlp
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: VisionTransformer
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

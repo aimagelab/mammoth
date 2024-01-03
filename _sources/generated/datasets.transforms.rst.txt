@@ -1,0 +1,45 @@
+.. _module-Transforms:
+Transforms
+===========
+
+.. currentmodule:: datasets.transforms
+
+.. automodule:: datasets.transforms
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+
+.. autosummary::
+   :recursive:
+   :toctree:
+   :hidden:
+   :template: custom-module-template.rst
+   
+   datasets.transforms.denormalization
+   datasets.transforms.permutation
+   datasets.transforms.rotation
+
+.. toctree::
+   :hidden:
+
+   datasets.transforms.denormalization
+   datasets.transforms.permutation
+   datasets.transforms.rotation
+
+

@@ -1,0 +1,34 @@
+.. _module-hal:
+hal
+====
+
+.. currentmodule:: models.hal
+
+.. automodule:: models.hal
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: HAL
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

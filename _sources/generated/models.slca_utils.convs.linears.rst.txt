@@ -1,0 +1,34 @@
+.. _module-linears:
+linears
+========
+
+.. currentmodule:: models.slca_utils.convs.linears
+
+.. automodule:: models.slca_utils.convs.linears
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: SimpleContinualLinear
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

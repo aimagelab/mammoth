@@ -1,0 +1,34 @@
+.. _module-bic:
+bic
+====
+
+.. currentmodule:: models.bic
+
+.. automodule:: models.bic
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: BiC
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

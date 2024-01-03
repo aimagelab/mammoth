@@ -1,0 +1,43 @@
+.. _module-Utils:
+Utils
+======
+
+.. currentmodule:: models.utils
+
+.. automodule:: models.utils
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+
+.. autosummary::
+   :recursive:
+   :toctree:
+   :hidden:
+   :template: custom-module-template.rst
+   
+   models.utils.continual_model
+   models.utils.lider_model
+
+.. toctree::
+   :hidden:
+
+   models.utils.continual_model
+   models.utils.lider_model
+
+

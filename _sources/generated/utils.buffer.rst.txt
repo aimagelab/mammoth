@@ -1,0 +1,55 @@
+.. _module-buffer:
+buffer
+=======
+
+.. currentmodule:: utils.buffer
+
+.. automodule:: utils.buffer
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Buffer
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: fill_buffer
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: icarl_replay
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: reservoir
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: fill_buffer
+   .. autofunction:: icarl_replay
+   .. autofunction:: reservoir
+   
+   
+
+   
+   
+   
+
+
+

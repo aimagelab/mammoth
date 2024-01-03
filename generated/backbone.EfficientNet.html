@@ -1,0 +1,1036 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="MNISTMLP" href="backbone.MNISTMLP.html" /><link rel="prev" title="modules" href="backbone.utils.modules.html" />
+
+    <link rel="shortcut icon" href="../_static/logo.png"/><!-- Generated with Sphinx 7.2.6 and Furo 2023.09.10 -->
+        <title>EfficientNet - Mammoth</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=649a27d8" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-toolbox-code.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/sphinx-toolbox.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/tabs.css?v=a5c4661c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx_toolbox_installation.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=36a5483c" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f0f0f0;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">Mammoth</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  
+  <span class="sidebar-brand-text">Mammoth</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/index.html">First steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/checkpoints.html">Load and save checkpoints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/distributed_training.html">Distributed training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/scripts.html">Scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/parseval.html">Parseval</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 has-children"><a class="reference internal" href="models.html">Models</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Models</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="models.coda_prompt_utils.html">Coda Prompt Utils</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Coda Prompt Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.coda_prompt_utils.model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.coda_prompt_utils.vit.html">vit</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="models.deprecated.html">Deprecated</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of Deprecated</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.deprecated.joint.html">joint</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="models.dualprompt_utils.html">Dualprompt Utils</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Dualprompt Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.dualprompt_utils.attention.html">attention</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.dualprompt_utils.model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.dualprompt_utils.prompt.html">prompt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.dualprompt_utils.vision_transformer.html">vision_transformer</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="models.l2p_utils.html">L2p Utils</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of L2p Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.l2p_utils.l2p_model.html">l2p_model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.l2p_utils.prompt.html">prompt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.l2p_utils.vit_prompt.html">vit_prompt</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="models.slca_utils.html">Slca Utils</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of Slca Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="models.slca_utils.convs.html">Convs</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle navigation of Convs</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="models.slca_utils.convs.cifar_resnet.html">cifar_resnet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.slca_utils.convs.linears.html">linears</a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.slca_utils.convs.resnet.html">resnet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="models.slca_utils.convs.vits.html">vits</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="models.slca_utils.inc_net.html">inc_net</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.slca_utils.toolkit.html">toolkit</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="models.twf_utils.html">Twf Utils</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of Twf Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.twf_utils.afd.html">afd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.twf_utils.utils.html">utils</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="models.utils.html">Utils</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="models.utils.continual_model.html">continual_model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="models.utils.lider_model.html">lider_model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="models.agem.html">agem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.agem_r.html">agem_r</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.bic.html">bic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.ccic.html">ccic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.coda_prompt.html">coda_prompt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.der.html">der</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.derpp.html">derpp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.derpp_lider.html">derpp_lider</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.dualprompt.html">dualprompt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.er.html">er</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.er_ace.html">er_ace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.er_ace_lider.html">er_ace_lider</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.ewc_on.html">ewc_on</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.fdr.html">fdr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.gdumb.html">gdumb</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.gdumb_lider.html">gdumb_lider</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.gem.html">gem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.gss.html">gss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.hal.html">hal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.icarl.html">icarl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.icarl_lider.html">icarl_lider</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.joint_gcl.html">joint_gcl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.l2p.html">l2p</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.lucir.html">lucir</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.lwf.html">lwf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.lwf_mc.html">lwf_mc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.mer.html">mer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.pnn.html">pnn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.rpc.html">rpc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.sgd.html">sgd</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.si.html">si</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.twf.html">twf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.xder.html">xder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.xder_ce.html">xder_ce</a></li>
+<li class="toctree-l2"><a class="reference internal" href="models.xder_rpc.html">xder_rpc</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="datasets.html">Datasets</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of Datasets</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="datasets.deprecated.html">Deprecated</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle navigation of Deprecated</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="datasets.deprecated.old_mnist_360.html">old_mnist_360</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.imagenet_r_utils.html">Imagenet R Utils</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="datasets.transforms.html">Transforms</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><div class="visually-hidden">Toggle navigation of Transforms</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="datasets.transforms.denormalization.html">denormalization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="datasets.transforms.permutation.html">permutation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="datasets.transforms.rotation.html">rotation</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="datasets.utils.html">Utils</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle navigation of Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="datasets.utils.continual_dataset.html">continual_dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="datasets.utils.gcl_dataset.html">gcl_dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="datasets.utils.validation.html">validation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.mnist_360.html">mnist_360</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.perm_mnist.html">perm_mnist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.rot_mnist.html">rot_mnist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.seq_cifar10.html">seq_cifar10</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.seq_cifar100.html">seq_cifar100</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.seq_cifar100_224.html">seq_cifar100_224</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.seq_cifar100_224_rs.html">seq_cifar100_224_rs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.seq_cub200.html">seq_cub200</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.seq_imagenet_r.html">seq_imagenet_r</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.seq_mnist.html">seq_mnist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.seq_tinyimagenet.html">seq_tinyimagenet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.seq_tinyimagenet_r.html">seq_tinyimagenet_r</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current has-children"><a class="reference internal" href="backbone.html">Backbones</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of Backbones</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="backbone.utils.html">Utils</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="backbone.utils.modules.html">modules</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current current-page"><a class="current reference internal" href="#">EfficientNet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="backbone.MNISTMLP.html">MNISTMLP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="backbone.MNISTMLP_PNN.html">MNISTMLP_PNN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="backbone.ResNet18.html">ResNet18</a></li>
+<li class="toctree-l2"><a class="reference internal" href="backbone.ResNet18_PNN.html">ResNet18_PNN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="backbone.ResNet50.html">ResNet50</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="utils.html">Utils</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><div class="visually-hidden">Toggle navigation of Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="utils.args.html">args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.augmentations.html">augmentations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.batch_norm.html">batch_norm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.best_args.html">best_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.buffer.html">buffer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.checkpoints.html">checkpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.conditional_bn.html">conditional_bn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.conf.html">conf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.distributed.html">distributed</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.gss_buffer.html">gss_buffer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.kornia_utils.html">kornia_utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.loggers.html">loggers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.magic.html">magic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.main.html">main</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.metrics.html">metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.mixup.html">mixup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.prompt_templates.html">prompt_templates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.ring_buffer.html">ring_buffer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.schedulers.html">schedulers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.simclrloss.html">simclrloss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.status.html">status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.training.html">training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.triplet.html">triplet</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <section id="module-backbone.EfficientNet">
+<span id="efficientnet"></span><span id="module-efficientnet"></span><h1>EfficientNet<a class="headerlink" href="#module-backbone.EfficientNet" title="Link to this heading">#</a></h1>
+<p class="rubric">Classes</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="backbone.EfficientNet.BlockDecoder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">BlockDecoder</span></span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#BlockDecoder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.BlockDecoder" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.12)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Block Decoder for readability,
+straight from the official TensorFlow repository.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.BlockDecoder.decode">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">decode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string_list</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#BlockDecoder.decode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.BlockDecoder.decode" title="Link to this definition">#</a></dt>
+<dd><p>Decode a list of string notations to specify blocks inside the network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>string_list</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a><em>]</em>) – A list of strings, each string is a notation of block.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of BlockArgs namedtuples of block args.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>blocks_args</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.BlockDecoder.encode">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">encode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blocks_args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#BlockDecoder.encode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.BlockDecoder.encode" title="Link to this definition">#</a></dt>
+<dd><p>Encode a list of BlockArgs to a list of strings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>blocks_args</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em>[</em><em>namedtuples</em><em>]</em>) – A list of BlockArgs namedtuples of block args.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of strings, each string is a notation of block.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>block_strings</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="backbone.EfficientNet.Conv2dDynamicSamePadding">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">Conv2dDynamicSamePadding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dilation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#Conv2dDynamicSamePadding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.Conv2dDynamicSamePadding" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://pytorch.org/docs/master/generated/torch.nn.Conv2d.html#torch.nn.Conv2d" title="(in PyTorch vmaster (2.1.0a0+gitbe0b12e ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Conv2d</span></code></a></p>
+<p>2D Convolutions like TensorFlow, for a dynamic image size.
+The padding is operated in forward function by calculating dynamically.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.Conv2dDynamicSamePadding.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#Conv2dDynamicSamePadding.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.Conv2dDynamicSamePadding.forward" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="backbone.EfficientNet.Conv2dStaticSamePadding">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">Conv2dStaticSamePadding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#Conv2dStaticSamePadding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.Conv2dStaticSamePadding" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://pytorch.org/docs/master/generated/torch.nn.Conv2d.html#torch.nn.Conv2d" title="(in PyTorch vmaster (2.1.0a0+gitbe0b12e ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Conv2d</span></code></a></p>
+<p>2D Convolutions like TensorFlow’s ‘SAME’ mode, with the given input image size.
+The padding mudule is calculated in construction function, then used in forward.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.Conv2dStaticSamePadding.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#Conv2dStaticSamePadding.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.Conv2dStaticSamePadding.forward" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="backbone.EfficientNet.EfficientNet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">EfficientNet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blocks_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hookme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#EfficientNet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.EfficientNet" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="backbone.html#backbone.MammothBackbone" title="backbone.MammothBackbone"><code class="xref py py-class docutils literal notranslate"><span class="pre">MammothBackbone</span></code></a></p>
+<dl class="simple">
+<dt>EfficientNet model.</dt><dd><p>Most easily loaded with the .from_name or .from_pretrained methods.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>blocks_args</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a><em>[</em><em>namedtuple</em><em>]</em>) – A list of BlockArgs to construct blocks.</p></li>
+<li><p><strong>global_params</strong> (<em>namedtuple</em>) – A set of GlobalParams shared between blocks.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>[1] <a class="reference external" href="https://arxiv.org/abs/1905.11946">https://arxiv.org/abs/1905.11946</a> (EfficientNet)</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">efficientnet.model</span> <span class="kn">import</span> <span class="n">EfficientNet</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">inputs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">EfficientNet</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s1">&#39;efficientnet-b0&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.EfficientNet.activations_hook">
+<span class="sig-name descname"><span class="pre">activations_hook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grad</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#EfficientNet.activations_hook"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.EfficientNet.activations_hook" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.EfficientNet.extract_endpoints">
+<span class="sig-name descname"><span class="pre">extract_endpoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#EfficientNet.extract_endpoints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.EfficientNet.extract_endpoints" title="Link to this definition">#</a></dt>
+<dd><p>Use convolution layer to extract features
+from reduction levels i in [1, 2, 3, 4, 5].</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>inputs</strong> (<em>tensor</em>) – Input tensor.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Dictionary of last intermediate features
+with reduction levels i in [1, 2, 3, 4, 5].
+.. rubric:: Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">efficientnet.model</span> <span class="kn">import</span> <span class="n">EfficientNet</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">inputs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">model</span> <span class="o">=</span> <span class="n">EfficientNet</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s1">&#39;efficientnet-b0&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">endpoints</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">extract_endpoints</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">endpoints</span><span class="p">[</span><span class="s1">&#39;reduction_1&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># torch.Size([1, 16, 112, 112])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">endpoints</span><span class="p">[</span><span class="s1">&#39;reduction_2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># torch.Size([1, 24, 56, 56])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">endpoints</span><span class="p">[</span><span class="s1">&#39;reduction_3&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># torch.Size([1, 40, 28, 28])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">endpoints</span><span class="p">[</span><span class="s1">&#39;reduction_4&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># torch.Size([1, 112, 14, 14])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">endpoints</span><span class="p">[</span><span class="s1">&#39;reduction_5&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># torch.Size([1, 320, 7, 7])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">endpoints</span><span class="p">[</span><span class="s1">&#39;reduction_6&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># torch.Size([1, 1280, 7, 7])</span>
+</pre></div>
+</div>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.EfficientNet.extract_features">
+<span class="sig-name descname"><span class="pre">extract_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#EfficientNet.extract_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.EfficientNet.extract_features" title="Link to this definition">#</a></dt>
+<dd><p>use convolution layer to extract feature .</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>inputs</strong> (<em>tensor</em>) – Input tensor.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Output of the final convolution
+layer in the efficientnet model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.EfficientNet.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">returnt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'out'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#EfficientNet.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.EfficientNet.forward" title="Link to this definition">#</a></dt>
+<dd><dl class="simple">
+<dt>EfficientNet’s forward function.</dt><dd><p>Calls extract_features to extract features, applies final linear layer, and returns logits.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>inputs</strong> (<em>tensor</em>) – Input tensor.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Output of this model after processing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.EfficientNet.from_name">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">override_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#EfficientNet.from_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.EfficientNet.from_name" title="Link to this definition">#</a></dt>
+<dd><p>Create an efficientnet model according to name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – Name for efficientnet.</p></li>
+<li><p><strong>in_channels</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – Input data’s channel number.</p></li>
+<li><p><strong>override_params</strong> (<em>other key word params</em>) – <p>Params to override model’s global_params.
+Optional key:</p>
+<blockquote>
+<div><p>’width_coefficient’, ‘depth_coefficient’,
+‘image_size’, ‘dropout_rate’,
+‘num_classes’, ‘batch_norm_momentum’,
+‘batch_norm_epsilon’, ‘drop_connect_rate’,
+‘depth_divisor’, ‘min_depth’</p>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An efficientnet model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.EfficientNet.from_pretrained">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_pretrained</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">advprop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">override_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#EfficientNet.from_pretrained"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.EfficientNet.from_pretrained" title="Link to this definition">#</a></dt>
+<dd><p>Create an efficientnet model according to name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – Name for efficientnet.</p></li>
+<li><p><strong>weights_path</strong> (<em>None</em><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – str: path to pretrained weights file on the local disk.
+None: use pretrained weights downloaded from the Internet.</p></li>
+<li><p><strong>advprop</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>) – Whether to load pretrained weights
+trained with advprop (valid when weights_path is None).</p></li>
+<li><p><strong>in_channels</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – Input data’s channel number.</p></li>
+<li><p><strong>num_classes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – Number of categories for classification.
+It controls the output size for final linear layer.</p></li>
+<li><p><strong>override_params</strong> (<em>other key word params</em>) – <p>Params to override model’s global_params.
+Optional key:</p>
+<blockquote>
+<div><p>’width_coefficient’, ‘depth_coefficient’,
+‘image_size’, ‘dropout_rate’,
+‘batch_norm_momentum’,
+‘batch_norm_epsilon’, ‘drop_connect_rate’,
+‘depth_divisor’, ‘min_depth’</p>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A pretrained efficientnet model.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.EfficientNet.get_image_size">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_image_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#EfficientNet.get_image_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.EfficientNet.get_image_size" title="Link to this definition">#</a></dt>
+<dd><p>Get the input image size for a given efficientnet model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – Name for efficientnet.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Input image size (resolution).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.EfficientNet.set_swish">
+<span class="sig-name descname"><span class="pre">set_swish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memory_efficient</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#EfficientNet.set_swish"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.EfficientNet.set_swish" title="Link to this definition">#</a></dt>
+<dd><p>Sets swish function as memory efficient (for training) or standard (for export).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>memory_efficient</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>) – Whether to use memory-efficient version of swish.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="backbone.EfficientNet.MBConvBlock">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">MBConvBlock</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_params</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#MBConvBlock"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.MBConvBlock" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://pytorch.org/docs/master/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch vmaster (2.1.0a0+gitbe0b12e ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
+<p>Mobile Inverted Residual Bottleneck Block.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>block_args</strong> (<em>namedtuple</em>) – BlockArgs, defined in utils.py.</p></li>
+<li><p><strong>global_params</strong> (<em>namedtuple</em>) – GlobalParam, defined in utils.py.</p></li>
+<li><p><strong>image_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a>) – [image_height, image_width].</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>[1] <a class="reference external" href="https://arxiv.org/abs/1704.04861">https://arxiv.org/abs/1704.04861</a> (MobileNet v1)
+[2] <a class="reference external" href="https://arxiv.org/abs/1801.04381">https://arxiv.org/abs/1801.04381</a> (MobileNet v2)
+[3] <a class="reference external" href="https://arxiv.org/abs/1905.02244">https://arxiv.org/abs/1905.02244</a> (MobileNet v3)</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.MBConvBlock.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_connect_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#MBConvBlock.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.MBConvBlock.forward" title="Link to this definition">#</a></dt>
+<dd><p>MBConvBlock’s forward function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inputs</strong> (<em>tensor</em>) – Input tensor.</p></li>
+<li><p><strong>drop_connect_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>) – Drop connect rate (float, between 0 and 1).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Output of this block after processing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.MBConvBlock.set_swish">
+<span class="sig-name descname"><span class="pre">set_swish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">memory_efficient</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#MBConvBlock.set_swish"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.MBConvBlock.set_swish" title="Link to this definition">#</a></dt>
+<dd><p>Sets swish function as memory efficient (for training) or standard (for export).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>memory_efficient</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>) – Whether to use memory-efficient version of swish.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="backbone.EfficientNet.MemoryEfficientSwish">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">MemoryEfficientSwish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#MemoryEfficientSwish"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.MemoryEfficientSwish" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://pytorch.org/docs/master/generated/torch.nn.Module.html#torch.nn.Module" title="(in PyTorch vmaster (2.1.0a0+gitbe0b12e ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code></a></p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.MemoryEfficientSwish.forward">
+<span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#MemoryEfficientSwish.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.MemoryEfficientSwish.forward" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="backbone.EfficientNet.SwishImplementation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">SwishImplementation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#SwishImplementation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.SwishImplementation" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://pytorch.org/docs/master/autograd.html#torch.autograd.Function" title="(in PyTorch vmaster (2.1.0a0+gitbe0b12e ))"><code class="xref py py-class docutils literal notranslate"><span class="pre">Function</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.SwishImplementation.backward">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">backward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad_output</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#SwishImplementation.backward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.SwishImplementation.backward" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="backbone.EfficientNet.SwishImplementation.forward">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#SwishImplementation.forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.SwishImplementation.forward" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<p class="rubric">Functions</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="backbone.EfficientNet.calculate_output_image_size">
+<span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">calculate_output_image_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_image_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#calculate_output_image_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.calculate_output_image_size" title="Link to this definition">#</a></dt>
+<dd><dl class="simple">
+<dt>Calculates the output image size when using Conv2dSamePadding with a stride.</dt><dd><p>Necessary for static padding. Thanks to mannatsingh for pointing this out.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_image_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a>) – Size of input image.</p></li>
+<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.12)"><em>list</em></a>) – Conv2d operation’s stride.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list [H,W].</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>output_image_size</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="backbone.EfficientNet.drop_connect">
+<span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">drop_connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">training</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#drop_connect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.drop_connect" title="Link to this definition">#</a></dt>
+<dd><p>Drop connect.
+:param input (tensor: BCWH): Input of this structure.
+:param p (float: 0.0~1.0): Probability of drop connection.
+:param training: The running mode.
+:type training: bool</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Output after drop connection.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>output</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="backbone.EfficientNet.efficientnet">
+<span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">efficientnet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">width_coefficient</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_coefficient</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">drop_connect_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_classes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_top</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#efficientnet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.efficientnet" title="Link to this definition">#</a></dt>
+<dd><p>Create BlockArgs and GlobalParams for efficientnet model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>width_coefficient</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – </p></li>
+<li><p><strong>depth_coefficient</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – </p></li>
+<li><p><strong>image_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – </p></li>
+<li><p><strong>dropout_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – </p></li>
+<li><p><strong>drop_connect_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – </p></li>
+<li><p><strong>num_classes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – </p></li>
+<li><p><strong>suggests.</strong> (<em>Meaning as the name</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>blocks_args, global_params.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="backbone.EfficientNet.efficientnet_params">
+<span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">efficientnet_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#efficientnet_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.efficientnet_params" title="Link to this definition">#</a></dt>
+<dd><p>Get efficientnet params based on model name.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="backbone.EfficientNet.efficientnet_tf">
+<span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">efficientnet_tf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">width_coefficient</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth_coefficient</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">survival_prob</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.8</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#efficientnet_tf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.efficientnet_tf" title="Link to this definition">#</a></dt>
+<dd><p>Creates a efficientnet model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="backbone.EfficientNet.get_model_params">
+<span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">get_model_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">override_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#get_model_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.get_model_params" title="Link to this definition">#</a></dt>
+<dd><p>Get the block args and global params for a given model name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.12)"><em>str</em></a>) – Model’s name.</p></li>
+<li><p><strong>override_params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.12)"><em>dict</em></a>) – A dict to modify global_params.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>blocks_args, global_params</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="backbone.EfficientNet.get_model_params_tf">
+<span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">get_model_params_tf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">override_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#get_model_params_tf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.get_model_params_tf" title="Link to this definition">#</a></dt>
+<dd><p>Get the block args and global params for a given model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="backbone.EfficientNet.get_same_padding_conv2d">
+<span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">get_same_padding_conv2d</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">image_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#get_same_padding_conv2d"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.get_same_padding_conv2d" title="Link to this definition">#</a></dt>
+<dd><dl class="simple">
+<dt>Chooses static padding if you have specified an image size, and dynamic padding otherwise.</dt><dd><p>Static padding is necessary for ONNX exporting of models.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>image_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.12)"><em>tuple</em></a>) – Size of the image.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Conv2dDynamicSamePadding or Conv2dStaticSamePadding.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="backbone.EfficientNet.get_width_and_height_from_size">
+<span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">get_width_and_height_from_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#get_width_and_height_from_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.get_width_and_height_from_size" title="Link to this definition">#</a></dt>
+<dd><p>Obtain height and width from x.
+:param x: Data size.
+:type x: int, tuple or list</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A tuple or list (H,W).</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>size</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="backbone.EfficientNet.load_pretrained_weights">
+<span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">load_pretrained_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">load_fc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#load_pretrained_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.load_pretrained_weights" title="Link to this definition">#</a></dt>
+<dd><p>Loads pretrained weights from weights path or download using url.
+:param model: The whole model of efficientnet.
+:type model: Module
+:param model_name: Model name of efficientnet.
+:type model_name: str
+:param weights_path: str: path to pretrained weights file on the local disk.</p>
+<blockquote>
+<div><p>None: use pretrained weights downloaded from the Internet.</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>load_fc</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>) – Whether to load pretrained weights for fc layer at the end of the model.</p></li>
+<li><p><strong>advprop</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.12)"><em>bool</em></a>) – Whether to load pretrained weights
+trained with advprop (valid when weights_path is None).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="backbone.EfficientNet.mammoth_efficientnet">
+<span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">mammoth_efficientnet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nclasses</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pretrained</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#mammoth_efficientnet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.mammoth_efficientnet" title="Link to this definition">#</a></dt>
+<dd><p>Instantiates a ResNet18 network.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nclasses</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – number of output classes</p></li>
+<li><p><strong>nf</strong> – number of filters</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>ResNet network</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="backbone.EfficientNet.round_filters">
+<span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">round_filters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#round_filters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.round_filters" title="Link to this definition">#</a></dt>
+<dd><dl class="simple">
+<dt>Calculate and round number of filters based on width multiplier.</dt><dd><p>Use width_coefficient, depth_divisor and min_depth of global_params.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – Filters number to be calculated.</p></li>
+<li><p><strong>global_params</strong> (<em>namedtuple</em>) – Global params of the model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>New filters number after calculating.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>new_filters</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="backbone.EfficientNet.round_repeats">
+<span class="sig-prename descclassname"><span class="pre">backbone.EfficientNet.</span></span><span class="sig-name descname"><span class="pre">round_repeats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repeats</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">global_params</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/backbone/EfficientNet.html#round_repeats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#backbone.EfficientNet.round_repeats" title="Link to this definition">#</a></dt>
+<dd><dl class="simple">
+<dt>Calculate module’s repeat number of a block based on depth multiplier.</dt><dd><p>Use depth_coefficient of global_params.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>repeats</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – num_repeat to be calculated.</p></li>
+<li><p><strong>global_params</strong> (<em>namedtuple</em>) – Global params of the model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>New repeat number after calculating.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>new repeat</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="backbone.MNISTMLP.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">MNISTMLP</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="backbone.utils.modules.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">modules</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, Pietro Buzzega, Matteo Boschini, Lorenzo Bonicelli, Aniello Panariello, Davide Abati, Angelo Porrello, Simone Calderara
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">EfficientNet</a><ul>
+<li><a class="reference internal" href="#backbone.EfficientNet.BlockDecoder"><code class="docutils literal notranslate"><span class="pre">BlockDecoder</span></code></a><ul>
+<li><a class="reference internal" href="#backbone.EfficientNet.BlockDecoder.decode"><code class="docutils literal notranslate"><span class="pre">BlockDecoder.decode()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.BlockDecoder.encode"><code class="docutils literal notranslate"><span class="pre">BlockDecoder.encode()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#backbone.EfficientNet.Conv2dDynamicSamePadding"><code class="docutils literal notranslate"><span class="pre">Conv2dDynamicSamePadding</span></code></a><ul>
+<li><a class="reference internal" href="#backbone.EfficientNet.Conv2dDynamicSamePadding.forward"><code class="docutils literal notranslate"><span class="pre">Conv2dDynamicSamePadding.forward()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#backbone.EfficientNet.Conv2dStaticSamePadding"><code class="docutils literal notranslate"><span class="pre">Conv2dStaticSamePadding</span></code></a><ul>
+<li><a class="reference internal" href="#backbone.EfficientNet.Conv2dStaticSamePadding.forward"><code class="docutils literal notranslate"><span class="pre">Conv2dStaticSamePadding.forward()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#backbone.EfficientNet.EfficientNet"><code class="docutils literal notranslate"><span class="pre">EfficientNet</span></code></a><ul>
+<li><a class="reference internal" href="#backbone.EfficientNet.EfficientNet.activations_hook"><code class="docutils literal notranslate"><span class="pre">EfficientNet.activations_hook()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.EfficientNet.extract_endpoints"><code class="docutils literal notranslate"><span class="pre">EfficientNet.extract_endpoints()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.EfficientNet.extract_features"><code class="docutils literal notranslate"><span class="pre">EfficientNet.extract_features()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.EfficientNet.forward"><code class="docutils literal notranslate"><span class="pre">EfficientNet.forward()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.EfficientNet.from_name"><code class="docutils literal notranslate"><span class="pre">EfficientNet.from_name()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.EfficientNet.from_pretrained"><code class="docutils literal notranslate"><span class="pre">EfficientNet.from_pretrained()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.EfficientNet.get_image_size"><code class="docutils literal notranslate"><span class="pre">EfficientNet.get_image_size()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.EfficientNet.set_swish"><code class="docutils literal notranslate"><span class="pre">EfficientNet.set_swish()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#backbone.EfficientNet.MBConvBlock"><code class="docutils literal notranslate"><span class="pre">MBConvBlock</span></code></a><ul>
+<li><a class="reference internal" href="#backbone.EfficientNet.MBConvBlock.forward"><code class="docutils literal notranslate"><span class="pre">MBConvBlock.forward()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.MBConvBlock.set_swish"><code class="docutils literal notranslate"><span class="pre">MBConvBlock.set_swish()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#backbone.EfficientNet.MemoryEfficientSwish"><code class="docutils literal notranslate"><span class="pre">MemoryEfficientSwish</span></code></a><ul>
+<li><a class="reference internal" href="#backbone.EfficientNet.MemoryEfficientSwish.forward"><code class="docutils literal notranslate"><span class="pre">MemoryEfficientSwish.forward()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#backbone.EfficientNet.SwishImplementation"><code class="docutils literal notranslate"><span class="pre">SwishImplementation</span></code></a><ul>
+<li><a class="reference internal" href="#backbone.EfficientNet.SwishImplementation.backward"><code class="docutils literal notranslate"><span class="pre">SwishImplementation.backward()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.SwishImplementation.forward"><code class="docutils literal notranslate"><span class="pre">SwishImplementation.forward()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#backbone.EfficientNet.calculate_output_image_size"><code class="docutils literal notranslate"><span class="pre">calculate_output_image_size()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.drop_connect"><code class="docutils literal notranslate"><span class="pre">drop_connect()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.efficientnet"><code class="docutils literal notranslate"><span class="pre">efficientnet()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.efficientnet_params"><code class="docutils literal notranslate"><span class="pre">efficientnet_params()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.efficientnet_tf"><code class="docutils literal notranslate"><span class="pre">efficientnet_tf()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.get_model_params"><code class="docutils literal notranslate"><span class="pre">get_model_params()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.get_model_params_tf"><code class="docutils literal notranslate"><span class="pre">get_model_params_tf()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.get_same_padding_conv2d"><code class="docutils literal notranslate"><span class="pre">get_same_padding_conv2d()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.get_width_and_height_from_size"><code class="docutils literal notranslate"><span class="pre">get_width_and_height_from_size()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.load_pretrained_weights"><code class="docutils literal notranslate"><span class="pre">load_pretrained_weights()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.mammoth_efficientnet"><code class="docutils literal notranslate"><span class="pre">mammoth_efficientnet()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.round_filters"><code class="docutils literal notranslate"><span class="pre">round_filters()</span></code></a></li>
+<li><a class="reference internal" href="#backbone.EfficientNet.round_repeats"><code class="docutils literal notranslate"><span class="pre">round_repeats()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../_static/doctools.js?v=888ff710"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/scripts/furo.js?v=32e29ea5"></script>
+    <script src="../_static/sphinx_toolbox_installation.js"></script>
+    </body>
+</html>

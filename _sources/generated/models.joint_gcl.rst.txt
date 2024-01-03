@@ -1,0 +1,34 @@
+.. _module-joint_gcl:
+joint_gcl
+==========
+
+.. currentmodule:: models.joint_gcl
+
+.. automodule:: models.joint_gcl
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: JointGCL
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

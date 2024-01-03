@@ -1,0 +1,50 @@
+.. _module-lwf:
+lwf
+====
+
+.. currentmodule:: models.lwf
+
+.. automodule:: models.lwf
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Lwf
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: modified_kl_div
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: smooth
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: modified_kl_div
+   .. autofunction:: smooth
+   
+   
+
+   
+   
+   
+
+
+

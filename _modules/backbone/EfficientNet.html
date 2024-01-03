@@ -1,0 +1,1477 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../../">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
+
+    <link rel="shortcut icon" href="../../_static/logo.png"/><!-- Generated with Sphinx 7.2.6 and Furo 2023.09.10 -->
+        <title>backbone.EfficientNet - Mammoth</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=649a27d8" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=135e06be" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-toolbox-code.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/sphinx-toolbox.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/tabs.css?v=a5c4661c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx_toolbox_installation.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f0f0f0;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">Mammoth</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  
+  <span class="sidebar-brand-text">Mammoth</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting started:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/index.html">First steps</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/checkpoints.html">Load and save checkpoints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/distributed_training.html">Distributed training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/scripts.html">Scripts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/parseval.html">Parseval</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../generated/models.html">Models</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Models</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../generated/models.coda_prompt_utils.html">Coda Prompt Utils</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of Coda Prompt Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.coda_prompt_utils.model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.coda_prompt_utils.vit.html">vit</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../generated/models.deprecated.html">Deprecated</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle navigation of Deprecated</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.deprecated.joint.html">joint</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../generated/models.dualprompt_utils.html">Dualprompt Utils</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle navigation of Dualprompt Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.dualprompt_utils.attention.html">attention</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.dualprompt_utils.model.html">model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.dualprompt_utils.prompt.html">prompt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.dualprompt_utils.vision_transformer.html">vision_transformer</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../generated/models.l2p_utils.html">L2p Utils</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" role="switch" type="checkbox"/><label for="toctree-checkbox-5"><div class="visually-hidden">Toggle navigation of L2p Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.l2p_utils.l2p_model.html">l2p_model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.l2p_utils.prompt.html">prompt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.l2p_utils.vit_prompt.html">vit_prompt</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../generated/models.slca_utils.html">Slca Utils</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" role="switch" type="checkbox"/><label for="toctree-checkbox-6"><div class="visually-hidden">Toggle navigation of Slca Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../generated/models.slca_utils.convs.html">Convs</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" role="switch" type="checkbox"/><label for="toctree-checkbox-7"><div class="visually-hidden">Toggle navigation of Convs</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../generated/models.slca_utils.convs.cifar_resnet.html">cifar_resnet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../generated/models.slca_utils.convs.linears.html">linears</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../generated/models.slca_utils.convs.resnet.html">resnet</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../generated/models.slca_utils.convs.vits.html">vits</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.slca_utils.inc_net.html">inc_net</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.slca_utils.toolkit.html">toolkit</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../generated/models.twf_utils.html">Twf Utils</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" role="switch" type="checkbox"/><label for="toctree-checkbox-8"><div class="visually-hidden">Toggle navigation of Twf Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.twf_utils.afd.html">afd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.twf_utils.utils.html">utils</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../generated/models.utils.html">Utils</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" role="switch" type="checkbox"/><label for="toctree-checkbox-9"><div class="visually-hidden">Toggle navigation of Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.utils.continual_model.html">continual_model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/models.utils.lider_model.html">lider_model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.agem.html">agem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.agem_r.html">agem_r</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.bic.html">bic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.ccic.html">ccic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.coda_prompt.html">coda_prompt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.der.html">der</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.derpp.html">derpp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.derpp_lider.html">derpp_lider</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.dualprompt.html">dualprompt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.er.html">er</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.er_ace.html">er_ace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.er_ace_lider.html">er_ace_lider</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.ewc_on.html">ewc_on</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.fdr.html">fdr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.gdumb.html">gdumb</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.gdumb_lider.html">gdumb_lider</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.gem.html">gem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.gss.html">gss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.hal.html">hal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.icarl.html">icarl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.icarl_lider.html">icarl_lider</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.joint_gcl.html">joint_gcl</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.l2p.html">l2p</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.lucir.html">lucir</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.lwf.html">lwf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.lwf_mc.html">lwf_mc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.mer.html">mer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.pnn.html">pnn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.rpc.html">rpc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.sgd.html">sgd</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.si.html">si</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.twf.html">twf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.xder.html">xder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.xder_ce.html">xder_ce</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/models.xder_rpc.html">xder_rpc</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../generated/datasets.html">Datasets</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" role="switch" type="checkbox"/><label for="toctree-checkbox-10"><div class="visually-hidden">Toggle navigation of Datasets</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../generated/datasets.deprecated.html">Deprecated</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" role="switch" type="checkbox"/><label for="toctree-checkbox-11"><div class="visually-hidden">Toggle navigation of Deprecated</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/datasets.deprecated.old_mnist_360.html">old_mnist_360</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/datasets.imagenet_r_utils.html">Imagenet R Utils</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../generated/datasets.transforms.html">Transforms</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" role="switch" type="checkbox"/><label for="toctree-checkbox-12"><div class="visually-hidden">Toggle navigation of Transforms</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/datasets.transforms.denormalization.html">denormalization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/datasets.transforms.permutation.html">permutation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/datasets.transforms.rotation.html">rotation</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../generated/datasets.utils.html">Utils</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" role="switch" type="checkbox"/><label for="toctree-checkbox-13"><div class="visually-hidden">Toggle navigation of Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/datasets.utils.continual_dataset.html">continual_dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/datasets.utils.gcl_dataset.html">gcl_dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/datasets.utils.validation.html">validation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/datasets.mnist_360.html">mnist_360</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/datasets.perm_mnist.html">perm_mnist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/datasets.rot_mnist.html">rot_mnist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/datasets.seq_cifar10.html">seq_cifar10</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/datasets.seq_cifar100.html">seq_cifar100</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/datasets.seq_cifar100_224.html">seq_cifar100_224</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/datasets.seq_cifar100_224_rs.html">seq_cifar100_224_rs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/datasets.seq_cub200.html">seq_cub200</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/datasets.seq_imagenet_r.html">seq_imagenet_r</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/datasets.seq_mnist.html">seq_mnist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/datasets.seq_tinyimagenet.html">seq_tinyimagenet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/datasets.seq_tinyimagenet_r.html">seq_tinyimagenet_r</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../generated/backbone.html">Backbones</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" role="switch" type="checkbox"/><label for="toctree-checkbox-14"><div class="visually-hidden">Toggle navigation of Backbones</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../generated/backbone.utils.html">Utils</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" role="switch" type="checkbox"/><label for="toctree-checkbox-15"><div class="visually-hidden">Toggle navigation of Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../generated/backbone.utils.modules.html">modules</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/backbone.EfficientNet.html">EfficientNet</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/backbone.MNISTMLP.html">MNISTMLP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/backbone.MNISTMLP_PNN.html">MNISTMLP_PNN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/backbone.ResNet18.html">ResNet18</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/backbone.ResNet18_PNN.html">ResNet18_PNN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/backbone.ResNet50.html">ResNet50</a></li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../generated/utils.html">Utils</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" role="switch" type="checkbox"/><label for="toctree-checkbox-16"><div class="visually-hidden">Toggle navigation of Utils</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.args.html">args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.augmentations.html">augmentations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.batch_norm.html">batch_norm</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.best_args.html">best_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.buffer.html">buffer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.checkpoints.html">checkpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.conditional_bn.html">conditional_bn</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.conf.html">conf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.distributed.html">distributed</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.gss_buffer.html">gss_buffer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.kornia_utils.html">kornia_utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.loggers.html">loggers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.magic.html">magic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.main.html">main</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.metrics.html">metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.mixup.html">mixup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.prompt_templates.html">prompt_templates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.ring_buffer.html">ring_buffer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.schedulers.html">schedulers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.simclrloss.html">simclrloss</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.status.html">status</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.training.html">training</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../generated/utils.triplet.html">triplet</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          <h1>Source code for backbone.EfficientNet</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Author: lukemelas (github username)</span>
+<span class="c1"># Github repo: https://github.com/lukemelas/EfficientNet-PyTorch</span>
+<span class="c1"># With adjustments and added comments by workingcoder (github username).</span>
+
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">functional</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">from</span> <span class="nn">torch.utils</span> <span class="kn">import</span> <span class="n">model_zoo</span>
+
+<span class="kn">from</span> <span class="nn">backbone</span> <span class="kn">import</span> <span class="n">MammothBackbone</span>
+
+<span class="n">url_map</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;efficientnet-b0&#39;</span><span class="p">:</span> <span class="s1">&#39;https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b0-355c32eb.pth&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;efficientnet-b1&#39;</span><span class="p">:</span> <span class="s1">&#39;https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b1-f1951068.pth&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;efficientnet-b2&#39;</span><span class="p">:</span> <span class="s1">&#39;https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b2-8bb594d6.pth&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;efficientnet-b3&#39;</span><span class="p">:</span> <span class="s1">&#39;https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b3-5fb5a3c3.pth&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;efficientnet-b4&#39;</span><span class="p">:</span> <span class="s1">&#39;https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b4-6ed6700e.pth&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;efficientnet-b5&#39;</span><span class="p">:</span> <span class="s1">&#39;https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b5-b6417697.pth&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;efficientnet-b6&#39;</span><span class="p">:</span> <span class="s1">&#39;https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b6-c76e70fd.pth&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;efficientnet-b7&#39;</span><span class="p">:</span> <span class="s1">&#39;https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b7-dcc49843.pth&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="load_pretrained_weights">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.load_pretrained_weights">[docs]</a>
+<span class="k">def</span> <span class="nf">load_pretrained_weights</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">weights_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">load_fc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Loads pretrained weights from weights path or download using url.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        model (Module): The whole model of efficientnet.</span>
+<span class="sd">        model_name (str): Model name of efficientnet.</span>
+<span class="sd">        weights_path (None or str):</span>
+<span class="sd">            str: path to pretrained weights file on the local disk.</span>
+<span class="sd">            None: use pretrained weights downloaded from the Internet.</span>
+<span class="sd">        load_fc (bool): Whether to load pretrained weights for fc layer at the end of the model.</span>
+<span class="sd">        advprop (bool): Whether to load pretrained weights</span>
+<span class="sd">                        trained with advprop (valid when weights_path is None).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">weights_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">state_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">weights_path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># AutoAugment or Advprop (different preprocessing)</span>
+        <span class="n">url_map_</span> <span class="o">=</span> <span class="n">url_map</span>
+        <span class="n">state_dict</span> <span class="o">=</span> <span class="n">model_zoo</span><span class="o">.</span><span class="n">load_url</span><span class="p">(</span><span class="n">url_map_</span><span class="p">[</span><span class="n">model_name</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">load_fc</span><span class="p">:</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="ow">not</span> <span class="n">ret</span><span class="o">.</span><span class="n">missing_keys</span><span class="p">,</span> <span class="s1">&#39;Missing keys when loading pretrained weights: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">missing_keys</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">state_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;_fc.weight&#39;</span><span class="p">)</span>
+        <span class="n">state_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;_fc.bias&#39;</span><span class="p">)</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">state_dict</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># TODO fix _fc is now classifier</span>
+        <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">missing_keys</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="p">[</span><span class="s1">&#39;_fc.weight&#39;</span><span class="p">,</span> <span class="s1">&#39;_fc.bias&#39;</span><span class="p">]),</span> <span class="s1">&#39;Missing keys when loading pretrained weights: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">missing_keys</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="ow">not</span> <span class="n">ret</span><span class="o">.</span><span class="n">unexpected_keys</span><span class="p">,</span> <span class="s1">&#39;Missing keys when loading pretrained weights: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">unexpected_keys</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Loaded pretrained weights for </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model_name</span><span class="p">))</span></div>
+
+
+
+<span class="n">_DEFAULT_BLOCKS_ARGS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;r1_k3_s11_e1_i32_o16_se0.25&#39;</span><span class="p">,</span> <span class="s1">&#39;r2_k3_s22_e6_i16_o24_se0.25&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;r2_k5_s22_e6_i24_o40_se0.25&#39;</span><span class="p">,</span> <span class="s1">&#39;r3_k3_s22_e6_i40_o80_se0.25&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;r3_k5_s11_e6_i80_o112_se0.25&#39;</span><span class="p">,</span> <span class="s1">&#39;r4_k5_s22_e6_i112_o192_se0.25&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;r1_k3_s11_e6_i192_o320_se0.25&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="get_width_and_height_from_size">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.get_width_and_height_from_size">[docs]</a>
+<span class="k">def</span> <span class="nf">get_width_and_height_from_size</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Obtain height and width from x.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        x (int, tuple or list): Data size.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        size: A tuple or list (H,W).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">x</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">x</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="calculate_output_image_size">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.calculate_output_image_size">[docs]</a>
+<span class="k">def</span> <span class="nf">calculate_output_image_size</span><span class="p">(</span><span class="n">input_image_size</span><span class="p">,</span> <span class="n">stride</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculates the output image size when using Conv2dSamePadding with a stride.</span>
+<span class="sd">       Necessary for static padding. Thanks to mannatsingh for pointing this out.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        input_image_size (int, tuple or list): Size of input image.</span>
+<span class="sd">        stride (int, tuple or list): Conv2d operation&#39;s stride.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        output_image_size: A list [H,W].</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">input_image_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">image_height</span><span class="p">,</span> <span class="n">image_width</span> <span class="o">=</span> <span class="n">get_width_and_height_from_size</span><span class="p">(</span><span class="n">input_image_size</span><span class="p">)</span>
+    <span class="n">stride</span> <span class="o">=</span> <span class="n">stride</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stride</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">image_height</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">image_height</span> <span class="o">/</span> <span class="n">stride</span><span class="p">))</span>
+    <span class="n">image_width</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">image_width</span> <span class="o">/</span> <span class="n">stride</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">image_height</span><span class="p">,</span> <span class="n">image_width</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="drop_connect">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.drop_connect">[docs]</a>
+<span class="k">def</span> <span class="nf">drop_connect</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">training</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Drop connect.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        input (tensor: BCWH): Input of this structure.</span>
+<span class="sd">        p (float: 0.0~1.0): Probability of drop connection.</span>
+<span class="sd">        training (bool): The running mode.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        output: Output after drop connection.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">p</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;p must be in range of [0,1]&#39;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">training</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">inputs</span>
+
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">keep_prob</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">p</span>
+
+    <span class="c1"># generate binary_tensor mask according to probability (p for 0, 1-p for 1)</span>
+    <span class="n">random_tensor</span> <span class="o">=</span> <span class="n">keep_prob</span>
+    <span class="n">random_tensor</span> <span class="o">+=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">([</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">inputs</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">inputs</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">binary_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">random_tensor</span><span class="p">)</span>
+
+    <span class="n">output</span> <span class="o">=</span> <span class="n">inputs</span> <span class="o">/</span> <span class="n">keep_prob</span> <span class="o">*</span> <span class="n">binary_tensor</span>
+    <span class="k">return</span> <span class="n">output</span></div>
+
+
+
+<div class="viewcode-block" id="round_repeats">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.round_repeats">[docs]</a>
+<span class="k">def</span> <span class="nf">round_repeats</span><span class="p">(</span><span class="n">repeats</span><span class="p">,</span> <span class="n">global_params</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate module&#39;s repeat number of a block based on depth multiplier.</span>
+<span class="sd">       Use depth_coefficient of global_params.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        repeats (int): num_repeat to be calculated.</span>
+<span class="sd">        global_params (namedtuple): Global params of the model.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        new repeat: New repeat number after calculating.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">multiplier</span> <span class="o">=</span> <span class="n">global_params</span><span class="o">.</span><span class="n">depth_coefficient</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">multiplier</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">repeats</span>
+    <span class="c1"># follow the formula transferred from official TensorFlow implementation</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">multiplier</span> <span class="o">*</span> <span class="n">repeats</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="round_filters">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.round_filters">[docs]</a>
+<span class="k">def</span> <span class="nf">round_filters</span><span class="p">(</span><span class="n">filters</span><span class="p">,</span> <span class="n">global_params</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate and round number of filters based on width multiplier.</span>
+<span class="sd">       Use width_coefficient, depth_divisor and min_depth of global_params.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        filters (int): Filters number to be calculated.</span>
+<span class="sd">        global_params (namedtuple): Global params of the model.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        new_filters: New filters number after calculating.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">multiplier</span> <span class="o">=</span> <span class="n">global_params</span><span class="o">.</span><span class="n">width_coefficient</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">multiplier</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">filters</span>
+        
+    <span class="n">divisor</span> <span class="o">=</span> <span class="n">global_params</span><span class="o">.</span><span class="n">depth_divisor</span>
+    <span class="n">min_depth</span> <span class="o">=</span> <span class="n">global_params</span><span class="o">.</span><span class="n">min_depth</span>
+    <span class="n">filters</span> <span class="o">*=</span> <span class="n">multiplier</span>
+    <span class="n">min_depth</span> <span class="o">=</span> <span class="n">min_depth</span> <span class="ow">or</span> <span class="n">divisor</span>  <span class="c1"># pay attention to this line when using min_depth</span>
+    <span class="c1"># follow the formula transferred from official TensorFlow implementation</span>
+    <span class="n">new_filters</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">min_depth</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">filters</span> <span class="o">+</span> <span class="n">divisor</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">//</span> <span class="n">divisor</span> <span class="o">*</span> <span class="n">divisor</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">new_filters</span> <span class="o">&lt;</span> <span class="mf">0.9</span> <span class="o">*</span> <span class="n">filters</span><span class="p">:</span>  <span class="c1"># prevent rounding by more than 10%</span>
+        <span class="n">new_filters</span> <span class="o">+=</span> <span class="n">divisor</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">new_filters</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Conv2dDynamicSamePadding">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.Conv2dDynamicSamePadding">[docs]</a>
+<span class="k">class</span> <span class="nc">Conv2dDynamicSamePadding</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;2D Convolutions like TensorFlow, for a dynamic image size.</span>
+<span class="sd">       The padding is operated in forward function by calculating dynamically.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Tips for &#39;SAME&#39; mode padding.</span>
+    <span class="c1">#     Given the following:</span>
+    <span class="c1">#         i: width or height</span>
+    <span class="c1">#         s: stride</span>
+    <span class="c1">#         k: kernel size</span>
+    <span class="c1">#         d: dilation</span>
+    <span class="c1">#         p: padding</span>
+    <span class="c1">#     Output after Conv2d:</span>
+    <span class="c1">#         o = floor((i+p-((k-1)*d+1))/s+1)</span>
+    <span class="c1"># If o equals i, i = floor((i+p-((k-1)*d+1))/s+1),</span>
+    <span class="c1"># =&gt; p = (i-1)*s+((k-1)*d+1)-i</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">dilation</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">stride</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dilation</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">bias</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="mi">2</span>
+
+<div class="viewcode-block" id="Conv2dDynamicSamePadding.forward">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.Conv2dDynamicSamePadding.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">ih</span><span class="p">,</span> <span class="n">iw</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">()[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+        <span class="n">kh</span><span class="p">,</span> <span class="n">kw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">size</span><span class="p">()[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+        <span class="n">sh</span><span class="p">,</span> <span class="n">sw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span>
+        <span class="n">oh</span><span class="p">,</span> <span class="n">ow</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">ih</span> <span class="o">/</span> <span class="n">sh</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">iw</span> <span class="o">/</span> <span class="n">sw</span><span class="p">)</span>  <span class="c1"># change the output size according to stride ! ! !</span>
+        <span class="n">pad_h</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="n">oh</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">kh</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dilation</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">ih</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">pad_w</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="n">ow</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">kw</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dilation</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">iw</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pad_h</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">pad_w</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">[</span><span class="n">pad_w</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pad_w</span> <span class="o">-</span> <span class="n">pad_w</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pad_h</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pad_h</span> <span class="o">-</span> <span class="n">pad_h</span> <span class="o">//</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">padding</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dilation</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Conv2dStaticSamePadding">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.Conv2dStaticSamePadding">[docs]</a>
+<span class="k">class</span> <span class="nc">Conv2dStaticSamePadding</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;2D Convolutions like TensorFlow&#39;s &#39;SAME&#39; mode, with the given input image size.</span>
+<span class="sd">       The padding mudule is calculated in construction function, then used in forward.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># With the same calculation as Conv2dDynamicSamePadding</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">stride</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">*</span> <span class="mi">2</span>
+
+        <span class="c1"># Calculate padding based on image size and save it</span>
+        <span class="k">assert</span> <span class="n">image_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">ih</span><span class="p">,</span> <span class="n">iw</span> <span class="o">=</span> <span class="p">(</span><span class="n">image_size</span><span class="p">,</span> <span class="n">image_size</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">image_size</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="n">image_size</span>
+        <span class="n">kh</span><span class="p">,</span> <span class="n">kw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">size</span><span class="p">()[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+        <span class="n">sh</span><span class="p">,</span> <span class="n">sw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span>
+        <span class="n">oh</span><span class="p">,</span> <span class="n">ow</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">ih</span> <span class="o">/</span> <span class="n">sh</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">iw</span> <span class="o">/</span> <span class="n">sw</span><span class="p">)</span>
+        <span class="n">pad_h</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="n">oh</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">kh</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dilation</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">ih</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">pad_w</span> <span class="o">=</span> <span class="nb">max</span><span class="p">((</span><span class="n">ow</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">kw</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dilation</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">iw</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pad_h</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">pad_w</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">static_padding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ZeroPad2d</span><span class="p">((</span><span class="n">pad_w</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pad_w</span> <span class="o">-</span> <span class="n">pad_w</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span>
+                                                <span class="n">pad_h</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pad_h</span> <span class="o">-</span> <span class="n">pad_h</span> <span class="o">//</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">static_padding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Identity</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Conv2dStaticSamePadding.forward">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.Conv2dStaticSamePadding.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">static_padding</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stride</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">padding</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dilation</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="get_same_padding_conv2d">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.get_same_padding_conv2d">[docs]</a>
+<span class="k">def</span> <span class="nf">get_same_padding_conv2d</span><span class="p">(</span><span class="n">image_size</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Chooses static padding if you have specified an image size, and dynamic padding otherwise.</span>
+<span class="sd">       Static padding is necessary for ONNX exporting of models.</span>
+<span class="sd">    Args:</span>
+<span class="sd">        image_size (int or tuple): Size of the image.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Conv2dDynamicSamePadding or Conv2dStaticSamePadding.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">image_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Conv2dDynamicSamePadding</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">Conv2dStaticSamePadding</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="n">image_size</span><span class="p">)</span></div>
+
+
+<span class="n">GlobalParams</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;GlobalParams&#39;</span><span class="p">,</span> <span class="p">[</span>
+    <span class="s1">&#39;batch_norm_momentum&#39;</span><span class="p">,</span> <span class="s1">&#39;batch_norm_epsilon&#39;</span><span class="p">,</span> <span class="s1">&#39;dropout_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;data_format&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;num_classes&#39;</span><span class="p">,</span> <span class="s1">&#39;width_coefficient&#39;</span><span class="p">,</span> <span class="s1">&#39;depth_coefficient&#39;</span><span class="p">,</span> <span class="s1">&#39;depth_divisor&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;min_depth&#39;</span><span class="p">,</span> <span class="s1">&#39;survival_prob&#39;</span><span class="p">,</span> <span class="s1">&#39;relu_fn&#39;</span><span class="p">,</span> <span class="s1">&#39;batch_norm&#39;</span><span class="p">,</span> <span class="s1">&#39;use_se&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;local_pooling&#39;</span><span class="p">,</span> <span class="s1">&#39;condconv_num_experts&#39;</span><span class="p">,</span> <span class="s1">&#39;clip_projection_output&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;blocks_args&#39;</span><span class="p">,</span> <span class="s1">&#39;image_size&#39;</span><span class="p">,</span> <span class="s1">&#39;drop_connect_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;include_top&#39;</span>
+<span class="p">])</span>
+
+<span class="n">BlockArgs</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;BlockArgs&#39;</span><span class="p">,</span> <span class="p">[</span>
+    <span class="s1">&#39;kernel_size&#39;</span><span class="p">,</span> <span class="s1">&#39;num_repeat&#39;</span><span class="p">,</span> <span class="s1">&#39;input_filters&#39;</span><span class="p">,</span> <span class="s1">&#39;output_filters&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;expand_ratio&#39;</span><span class="p">,</span> <span class="s1">&#39;id_skip&#39;</span><span class="p">,</span> <span class="s1">&#39;strides&#39;</span><span class="p">,</span> <span class="s1">&#39;se_ratio&#39;</span><span class="p">,</span> <span class="s1">&#39;conv_type&#39;</span><span class="p">,</span> <span class="s1">&#39;fused_conv&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;super_pixel&#39;</span><span class="p">,</span> <span class="s1">&#39;condconv&#39;</span><span class="p">,</span> <span class="s1">&#39;stride&#39;</span>
+<span class="p">])</span>
+
+<span class="c1"># Set GlobalParams and BlockArgs&#39;s defaults</span>
+<span class="n">GlobalParams</span><span class="o">.</span><span class="fm">__new__</span><span class="o">.</span><span class="vm">__defaults__</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,)</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">GlobalParams</span><span class="o">.</span><span class="n">_fields</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="kc">True</span><span class="p">,)</span>  <span class="c1"># include top</span>
+<span class="n">BlockArgs</span><span class="o">.</span><span class="fm">__new__</span><span class="o">.</span><span class="vm">__defaults__</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">BlockArgs</span><span class="o">.</span><span class="n">_fields</span><span class="p">)</span>
+
+<span class="c1"># Swish activation function</span>
+<span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">nn</span><span class="p">,</span> <span class="s1">&#39;SiLU&#39;</span><span class="p">):</span>
+    <span class="n">Swish</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">SiLU</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="c1"># For compatibility with old PyTorch versions</span>
+    <span class="k">class</span> <span class="nc">Swish</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">x</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="c1"># A memory-efficient implementation of Swish function</span>
+
+
+<div class="viewcode-block" id="SwishImplementation">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.SwishImplementation">[docs]</a>
+<span class="k">class</span> <span class="nc">SwishImplementation</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">autograd</span><span class="o">.</span><span class="n">Function</span><span class="p">):</span>
+<div class="viewcode-block" id="SwishImplementation.forward">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.SwishImplementation.forward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">save_for_backward</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="SwishImplementation.backward">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.SwishImplementation.backward">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">backward</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">grad_output</span><span class="p">):</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">saved_tensors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">sigmoid_i</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">grad_output</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigmoid_i</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">sigmoid_i</span><span class="p">)))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MemoryEfficientSwish">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.MemoryEfficientSwish">[docs]</a>
+<span class="k">class</span> <span class="nc">MemoryEfficientSwish</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<div class="viewcode-block" id="MemoryEfficientSwish.forward">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.MemoryEfficientSwish.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SwishImplementation</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="BlockDecoder">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.BlockDecoder">[docs]</a>
+<span class="k">class</span> <span class="nc">BlockDecoder</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Block Decoder for readability,</span>
+<span class="sd">       straight from the official TensorFlow repository.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_decode_block_string</span><span class="p">(</span><span class="n">block_string</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a block through a string notation of arguments.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            block_string (str): A string notation of arguments.</span>
+<span class="sd">                                Examples: &#39;r1_k3_s11_e1_i32_o16_se0.25_noskip&#39;.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            BlockArgs: The namedtuple defined at the top of this file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block_string</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+
+        <span class="n">ops</span> <span class="o">=</span> <span class="n">block_string</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">ops</span><span class="p">:</span>
+            <span class="n">splits</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\d.*)&#39;</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">splits</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">splits</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+                <span class="n">options</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+        <span class="c1"># Check stride</span>
+        <span class="k">assert</span> <span class="p">((</span><span class="s1">&#39;s&#39;</span> <span class="ow">in</span> <span class="n">options</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">or</span>
+                <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">options</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]))</span>
+
+        <span class="k">return</span> <span class="n">BlockArgs</span><span class="p">(</span>
+            <span class="n">num_repeat</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">]),</span>
+            <span class="n">kernel_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;k&#39;</span><span class="p">]),</span>
+            <span class="n">stride</span><span class="o">=</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;s&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])],</span>
+            <span class="n">expand_ratio</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;e&#39;</span><span class="p">]),</span>
+            <span class="n">input_filters</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;i&#39;</span><span class="p">]),</span>
+            <span class="n">output_filters</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;o&#39;</span><span class="p">]),</span>
+            <span class="n">se_ratio</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s1">&#39;se&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="s1">&#39;se&#39;</span> <span class="ow">in</span> <span class="n">options</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">id_skip</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;noskip&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">block_string</span><span class="p">))</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_encode_block_string</span><span class="p">(</span><span class="n">block</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encode a block to a string.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            block (namedtuple): A BlockArgs type argument.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            block_string: A String form of BlockArgs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;r</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">block</span><span class="o">.</span><span class="n">num_repeat</span><span class="p">,</span>
+            <span class="s1">&#39;k</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">block</span><span class="o">.</span><span class="n">kernel_size</span><span class="p">,</span>
+            <span class="s1">&#39;s</span><span class="si">%d%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">block</span><span class="o">.</span><span class="n">strides</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="s1">&#39;e</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">block</span><span class="o">.</span><span class="n">expand_ratio</span><span class="p">,</span>
+            <span class="s1">&#39;i</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">block</span><span class="o">.</span><span class="n">input_filters</span><span class="p">,</span>
+            <span class="s1">&#39;o</span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">block</span><span class="o">.</span><span class="n">output_filters</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">block</span><span class="o">.</span><span class="n">se_ratio</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;se</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">block</span><span class="o">.</span><span class="n">se_ratio</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">id_skip</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;noskip&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BlockDecoder.decode">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.BlockDecoder.decode">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">decode</span><span class="p">(</span><span class="n">string_list</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decode a list of string notations to specify blocks inside the network.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            string_list (list[str]): A list of strings, each string is a notation of block.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            blocks_args: A list of BlockArgs namedtuples of block args.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">string_list</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+        <span class="n">blocks_args</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">block_string</span> <span class="ow">in</span> <span class="n">string_list</span><span class="p">:</span>
+            <span class="n">blocks_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">BlockDecoder</span><span class="o">.</span><span class="n">_decode_block_string</span><span class="p">(</span><span class="n">block_string</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">blocks_args</span></div>
+
+
+<div class="viewcode-block" id="BlockDecoder.encode">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.BlockDecoder.encode">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">blocks_args</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encode a list of BlockArgs to a list of strings.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            blocks_args (list[namedtuples]): A list of BlockArgs namedtuples of block args.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            block_strings: A list of strings, each string is a notation of block.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">block_strings</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">blocks_args</span><span class="p">:</span>
+            <span class="n">block_strings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">BlockDecoder</span><span class="o">.</span><span class="n">_encode_block_string</span><span class="p">(</span><span class="n">block</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">block_strings</span></div>
+</div>
+
+
+
+<span class="k">def</span> <span class="nf">efficientnet_params</span><span class="p">(</span><span class="n">model_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Map EfficientNet model name to parameter coefficients.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model_name (str): Model name to be queried.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        params_dict[model_name]: A (width,depth,res,dropout) tuple.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">params_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="c1"># Coefficients:   width,depth,res,dropout</span>
+        <span class="s1">&#39;efficientnet-b0&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b1&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="mi">240</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b2&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">,</span> <span class="mi">260</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b3&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.2</span><span class="p">,</span> <span class="mf">1.4</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b4&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.4</span><span class="p">,</span> <span class="mf">1.8</span><span class="p">,</span> <span class="mi">380</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b5&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.6</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="mi">456</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b6&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.8</span><span class="p">,</span> <span class="mf">2.6</span><span class="p">,</span> <span class="mi">528</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b7&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.1</span><span class="p">,</span> <span class="mi">600</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b8&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">2.2</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">,</span> <span class="mi">672</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-l2&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">4.3</span><span class="p">,</span> <span class="mf">5.3</span><span class="p">,</span> <span class="mi">800</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">params_dict</span><span class="p">[</span><span class="n">model_name</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="efficientnet">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.efficientnet">[docs]</a>
+<span class="k">def</span> <span class="nf">efficientnet</span><span class="p">(</span><span class="n">width_coefficient</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">depth_coefficient</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">dropout_rate</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">drop_connect_rate</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">include_top</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create BlockArgs and GlobalParams for efficientnet model.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        width_coefficient (float)</span>
+<span class="sd">        depth_coefficient (float)</span>
+<span class="sd">        image_size (int)</span>
+<span class="sd">        dropout_rate (float)</span>
+<span class="sd">        drop_connect_rate (float)</span>
+<span class="sd">        num_classes (int)</span>
+
+<span class="sd">        Meaning as the name suggests.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        blocks_args, global_params.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Blocks args for the whole model(efficientnet-b0 by default)</span>
+    <span class="c1"># It will be modified in the construction of EfficientNet Class according to model</span>
+    <span class="n">blocks_args</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;r1_k3_s11_e1_i32_o16_se0.25&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;r2_k3_s22_e6_i16_o24_se0.25&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;r2_k5_s22_e6_i24_o40_se0.25&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;r3_k3_s22_e6_i40_o80_se0.25&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;r3_k5_s11_e6_i80_o112_se0.25&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;r4_k5_s22_e6_i112_o192_se0.25&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;r1_k3_s11_e6_i192_o320_se0.25&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">blocks_args</span> <span class="o">=</span> <span class="n">BlockDecoder</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">blocks_args</span><span class="p">)</span>
+
+    <span class="n">global_params</span> <span class="o">=</span> <span class="n">GlobalParams</span><span class="p">(</span>
+        <span class="n">width_coefficient</span><span class="o">=</span><span class="n">width_coefficient</span><span class="p">,</span>
+        <span class="n">depth_coefficient</span><span class="o">=</span><span class="n">depth_coefficient</span><span class="p">,</span>
+        <span class="n">image_size</span><span class="o">=</span><span class="n">image_size</span><span class="p">,</span>
+        <span class="n">dropout_rate</span><span class="o">=</span><span class="n">dropout_rate</span><span class="p">,</span>
+
+        <span class="n">num_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">,</span>
+        <span class="n">batch_norm_momentum</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span>
+        <span class="n">batch_norm_epsilon</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+        <span class="n">drop_connect_rate</span><span class="o">=</span><span class="n">drop_connect_rate</span><span class="p">,</span>
+        <span class="n">depth_divisor</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">min_depth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">include_top</span><span class="o">=</span><span class="n">include_top</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">blocks_args</span><span class="p">,</span> <span class="n">global_params</span></div>
+
+
+
+<div class="viewcode-block" id="efficientnet_tf">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.efficientnet_tf">[docs]</a>
+<span class="k">def</span> <span class="nf">efficientnet_tf</span><span class="p">(</span><span class="n">width_coefficient</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">depth_coefficient</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">dropout_rate</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+                    <span class="n">survival_prob</span><span class="o">=</span><span class="mf">0.8</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a efficientnet model.&quot;&quot;&quot;</span>
+    <span class="n">global_params</span> <span class="o">=</span> <span class="n">GlobalParams</span><span class="p">(</span>
+        <span class="n">blocks_args</span><span class="o">=</span><span class="n">_DEFAULT_BLOCKS_ARGS</span><span class="p">,</span>
+        <span class="n">batch_norm_momentum</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span>
+        <span class="n">batch_norm_epsilon</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+        <span class="n">dropout_rate</span><span class="o">=</span><span class="n">dropout_rate</span><span class="p">,</span>
+        <span class="n">survival_prob</span><span class="o">=</span><span class="n">survival_prob</span><span class="p">,</span>
+        <span class="n">data_format</span><span class="o">=</span><span class="s1">&#39;channels_last&#39;</span><span class="p">,</span>
+        <span class="n">num_classes</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+        <span class="n">width_coefficient</span><span class="o">=</span><span class="n">width_coefficient</span><span class="p">,</span>
+        <span class="n">depth_coefficient</span><span class="o">=</span><span class="n">depth_coefficient</span><span class="p">,</span>
+        <span class="n">depth_divisor</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">min_depth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">use_se</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">clip_projection_output</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">global_params</span></div>
+
+
+
+<div class="viewcode-block" id="get_model_params_tf">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.get_model_params_tf">[docs]</a>
+<span class="k">def</span> <span class="nf">get_model_params_tf</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">override_params</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the block args and global params for a given model.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;efficientnet&#39;</span><span class="p">):</span>
+        <span class="n">width_coefficient</span><span class="p">,</span> <span class="n">depth_coefficient</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">dropout_rate</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">efficientnet_params</span><span class="p">(</span><span class="n">model_name</span><span class="p">))</span>
+        <span class="n">global_params</span> <span class="o">=</span> <span class="n">efficientnet</span><span class="p">(</span>
+            <span class="n">width_coefficient</span><span class="p">,</span> <span class="n">depth_coefficient</span><span class="p">,</span> <span class="n">dropout_rate</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;model name is not pre-defined: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">model_name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">override_params</span><span class="p">:</span>
+        <span class="c1"># ValueError will be raised here if override_params has fields not included</span>
+        <span class="c1"># in global_params.</span>
+        <span class="n">global_params</span> <span class="o">=</span> <span class="n">global_params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="o">**</span><span class="n">override_params</span><span class="p">)</span>
+
+    <span class="n">decoder</span> <span class="o">=</span> <span class="n">BlockDecoder</span><span class="p">()</span>
+    <span class="n">blocks_args</span> <span class="o">=</span> <span class="n">decoder</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">global_params</span><span class="o">.</span><span class="n">blocks_args</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;EFFNET LOGGING: global_params= </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">global_params</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">blocks_args</span><span class="p">,</span> <span class="n">global_params</span></div>
+
+
+
+<div class="viewcode-block" id="get_model_params">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.get_model_params">[docs]</a>
+<span class="k">def</span> <span class="nf">get_model_params</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">override_params</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the block args and global params for a given model name.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model_name (str): Model&#39;s name.</span>
+<span class="sd">        override_params (dict): A dict to modify global_params.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        blocks_args, global_params</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">model_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;efficientnet&#39;</span><span class="p">):</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">efficientnet_params</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+        <span class="c1"># note: all models have drop connect rate = 0.2</span>
+        <span class="n">blocks_args</span><span class="p">,</span> <span class="n">global_params</span> <span class="o">=</span> <span class="n">efficientnet</span><span class="p">(</span>
+            <span class="n">width_coefficient</span><span class="o">=</span><span class="n">w</span><span class="p">,</span> <span class="n">depth_coefficient</span><span class="o">=</span><span class="n">d</span><span class="p">,</span> <span class="n">dropout_rate</span><span class="o">=</span><span class="n">p</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;model name is not pre-defined: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model_name</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">override_params</span><span class="p">:</span>
+        <span class="c1"># ValueError will be raised here if override_params has fields not included in global_params.</span>
+        <span class="n">global_params</span> <span class="o">=</span> <span class="n">global_params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="o">**</span><span class="n">override_params</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">blocks_args</span><span class="p">,</span> <span class="n">global_params</span></div>
+
+
+
+<div class="viewcode-block" id="efficientnet_params">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.efficientnet_params">[docs]</a>
+<span class="k">def</span> <span class="nf">efficientnet_params</span><span class="p">(</span><span class="n">model_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get efficientnet params based on model name.&quot;&quot;&quot;</span>
+    <span class="n">params_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="c1"># (width_coefficient, depth_coefficient, resolution, dropout_rate)</span>
+        <span class="s1">&#39;efficientnet-b0&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b1&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="mi">240</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b2&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.1</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">,</span> <span class="mi">260</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b3&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.2</span><span class="p">,</span> <span class="mf">1.4</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b4&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.4</span><span class="p">,</span> <span class="mf">1.8</span><span class="p">,</span> <span class="mi">380</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b5&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.6</span><span class="p">,</span> <span class="mf">2.2</span><span class="p">,</span> <span class="mi">456</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b6&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">1.8</span><span class="p">,</span> <span class="mf">2.6</span><span class="p">,</span> <span class="mi">528</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b7&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.1</span><span class="p">,</span> <span class="mi">600</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-b8&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">2.2</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">,</span> <span class="mi">672</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+        <span class="s1">&#39;efficientnet-l2&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">4.3</span><span class="p">,</span> <span class="mf">5.3</span><span class="p">,</span> <span class="mi">800</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">params_dict</span><span class="p">[</span><span class="n">model_name</span><span class="p">]</span></div>
+
+
+
+<span class="n">VALID_MODELS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s1">&#39;efficientnet-b0&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet-b1&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet-b2&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet-b3&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;efficientnet-b4&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet-b5&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet-b6&#39;</span><span class="p">,</span> <span class="s1">&#39;efficientnet-b7&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;efficientnet-b8&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="MBConvBlock">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.MBConvBlock">[docs]</a>
+<span class="k">class</span> <span class="nc">MBConvBlock</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mobile Inverted Residual Bottleneck Block.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        block_args (namedtuple): BlockArgs, defined in utils.py.</span>
+<span class="sd">        global_params (namedtuple): GlobalParam, defined in utils.py.</span>
+<span class="sd">        image_size (tuple or list): [image_height, image_width].</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        [1] https://arxiv.org/abs/1704.04861 (MobileNet v1)</span>
+<span class="sd">        [2] https://arxiv.org/abs/1801.04381 (MobileNet v2)</span>
+<span class="sd">        [3] https://arxiv.org/abs/1905.02244 (MobileNet v3)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block_args</span><span class="p">,</span> <span class="n">global_params</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span> <span class="o">=</span> <span class="n">block_args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bn_mom</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">global_params</span><span class="o">.</span><span class="n">batch_norm_momentum</span>  <span class="c1"># pytorch&#39;s difference from tensorflow</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bn_eps</span> <span class="o">=</span> <span class="n">global_params</span><span class="o">.</span><span class="n">batch_norm_epsilon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">has_se</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">se_ratio</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">se_ratio</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id_skip</span> <span class="o">=</span> <span class="n">block_args</span><span class="o">.</span><span class="n">id_skip</span>  <span class="c1"># whether to use skip connection and drop connect</span>
+
+        <span class="c1"># Expansion phase (Inverted Bottleneck)</span>
+        <span class="n">inp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">input_filters</span>  <span class="c1"># number of input channels</span>
+        <span class="n">oup</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">input_filters</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">expand_ratio</span>  <span class="c1"># number of output channels</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">expand_ratio</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">Conv2d</span> <span class="o">=</span> <span class="n">get_same_padding_conv2d</span><span class="p">(</span><span class="n">image_size</span><span class="o">=</span><span class="n">image_size</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_expand_conv</span> <span class="o">=</span> <span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="n">inp</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="n">oup</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_bn0</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">num_features</span><span class="o">=</span><span class="n">oup</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_bn_mom</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_bn_eps</span><span class="p">)</span>
+            <span class="c1"># image_size = calculate_output_image_size(image_size, 1) &lt;-- this wouldn&#39;t modify image_size</span>
+
+        <span class="c1"># Depthwise convolution phase</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">kernel_size</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">stride</span>
+        <span class="n">Conv2d</span> <span class="o">=</span> <span class="n">get_same_padding_conv2d</span><span class="p">(</span><span class="n">image_size</span><span class="o">=</span><span class="n">image_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_depthwise_conv</span> <span class="o">=</span> <span class="n">Conv2d</span><span class="p">(</span>
+            <span class="n">in_channels</span><span class="o">=</span><span class="n">oup</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="n">oup</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="n">oup</span><span class="p">,</span>  <span class="c1"># groups makes it depthwise</span>
+            <span class="n">kernel_size</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bn1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">num_features</span><span class="o">=</span><span class="n">oup</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_bn_mom</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_bn_eps</span><span class="p">)</span>
+        <span class="n">image_size</span> <span class="o">=</span> <span class="n">calculate_output_image_size</span><span class="p">(</span><span class="n">image_size</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+
+        <span class="c1"># Squeeze and Excitation layer, if desired</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_se</span><span class="p">:</span>
+            <span class="n">Conv2d</span> <span class="o">=</span> <span class="n">get_same_padding_conv2d</span><span class="p">(</span><span class="n">image_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">num_squeezed_channels</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">input_filters</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">se_ratio</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_se_reduce</span> <span class="o">=</span> <span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="n">oup</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="n">num_squeezed_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_se_expand</span> <span class="o">=</span> <span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="n">num_squeezed_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="n">oup</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Pointwise convolution phase</span>
+        <span class="n">final_oup</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">output_filters</span>
+        <span class="n">Conv2d</span> <span class="o">=</span> <span class="n">get_same_padding_conv2d</span><span class="p">(</span><span class="n">image_size</span><span class="o">=</span><span class="n">image_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_project_conv</span> <span class="o">=</span> <span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="n">oup</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="n">final_oup</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bn2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">num_features</span><span class="o">=</span><span class="n">final_oup</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_bn_mom</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_bn_eps</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_swish</span> <span class="o">=</span> <span class="n">MemoryEfficientSwish</span><span class="p">()</span>
+
+<div class="viewcode-block" id="MBConvBlock.forward">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.MBConvBlock.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">drop_connect_rate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;MBConvBlock&#39;s forward function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            inputs (tensor): Input tensor.</span>
+<span class="sd">            drop_connect_rate (bool): Drop connect rate (float, between 0 and 1).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Output of this block after processing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Expansion and Depthwise Convolution</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">inputs</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">expand_ratio</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_conv</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bn0</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_swish</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_depthwise_conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bn1</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_swish</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="c1"># Squeeze and Excitation</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_se</span><span class="p">:</span>
+            <span class="n">x_squeezed</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">adaptive_avg_pool2d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">x_squeezed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_se_reduce</span><span class="p">(</span><span class="n">x_squeezed</span><span class="p">)</span>
+            <span class="n">x_squeezed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_swish</span><span class="p">(</span><span class="n">x_squeezed</span><span class="p">)</span>
+            <span class="n">x_squeezed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_se_expand</span><span class="p">(</span><span class="n">x_squeezed</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">x_squeezed</span><span class="p">)</span> <span class="o">*</span> <span class="n">x</span>
+
+        <span class="c1"># Pointwise Convolution</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_conv</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bn2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="c1"># Skip connection and drop connect</span>
+        <span class="n">input_filters</span><span class="p">,</span> <span class="n">output_filters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">input_filters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">output_filters</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_skip</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block_args</span><span class="o">.</span><span class="n">stride</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">input_filters</span> <span class="o">==</span> <span class="n">output_filters</span><span class="p">:</span>
+            <span class="c1"># The combination of skip connection and drop connect brings about stochastic depth.</span>
+            <span class="k">if</span> <span class="n">drop_connect_rate</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">drop_connect</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">drop_connect_rate</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">inputs</span>  <span class="c1"># skip connection</span>
+        <span class="k">return</span> <span class="n">x</span></div>
+
+
+<div class="viewcode-block" id="MBConvBlock.set_swish">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.MBConvBlock.set_swish">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_swish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memory_efficient</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets swish function as memory efficient (for training) or standard (for export).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            memory_efficient (bool): Whether to use memory-efficient version of swish.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_swish</span> <span class="o">=</span> <span class="n">MemoryEfficientSwish</span><span class="p">()</span> <span class="k">if</span> <span class="n">memory_efficient</span> <span class="k">else</span> <span class="n">Swish</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="EfficientNet">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.EfficientNet">[docs]</a>
+<span class="k">class</span> <span class="nc">EfficientNet</span><span class="p">(</span><span class="n">MammothBackbone</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;EfficientNet model.</span>
+<span class="sd">       Most easily loaded with the .from_name or .from_pretrained methods.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        blocks_args (list[namedtuple]): A list of BlockArgs to construct blocks.</span>
+<span class="sd">        global_params (namedtuple): A set of GlobalParams shared between blocks.</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        [1] https://arxiv.org/abs/1905.11946 (EfficientNet)</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; import torch</span>
+<span class="sd">        &gt;&gt;&gt; from efficientnet.model import EfficientNet</span>
+<span class="sd">        &gt;&gt;&gt; inputs = torch.rand(1, 3, 224, 224)</span>
+<span class="sd">        &gt;&gt;&gt; model = EfficientNet.from_pretrained(&#39;efficientnet-b0&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; model.eval()</span>
+<span class="sd">        &gt;&gt;&gt; outputs = model(inputs)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">blocks_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">global_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hookme</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">blocks_args</span><span class="p">,</span> <span class="nb">list</span><span class="p">),</span> <span class="s1">&#39;blocks_args should be a list&#39;</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">blocks_args</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;block args must be greater than 0&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span> <span class="o">=</span> <span class="n">global_params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hookme</span> <span class="o">=</span> <span class="n">hookme</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_blocks_args</span> <span class="o">=</span> <span class="n">blocks_args</span>
+
+        <span class="c1"># Batch norm parameters</span>
+        <span class="n">bn_mom</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="o">.</span><span class="n">batch_norm_momentum</span>
+        <span class="n">bn_eps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="o">.</span><span class="n">batch_norm_epsilon</span>
+
+        <span class="c1"># Get stem static or dynamic convolution depending on image size</span>
+        <span class="n">image_size</span> <span class="o">=</span> <span class="n">global_params</span><span class="o">.</span><span class="n">image_size</span>
+        <span class="n">Conv2d</span> <span class="o">=</span> <span class="n">get_same_padding_conv2d</span><span class="p">(</span><span class="n">image_size</span><span class="o">=</span><span class="n">image_size</span><span class="p">)</span>
+
+        <span class="c1"># Stem</span>
+        <span class="n">in_channels</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># rgb</span>
+        <span class="n">out_channels</span> <span class="o">=</span> <span class="n">round_filters</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="p">)</span>  <span class="c1"># number of output channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_conv_stem</span> <span class="o">=</span> <span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bn0</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">num_features</span><span class="o">=</span><span class="n">out_channels</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="n">bn_mom</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">bn_eps</span><span class="p">)</span>
+        <span class="n">image_size</span> <span class="o">=</span> <span class="n">calculate_output_image_size</span><span class="p">(</span><span class="n">image_size</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Build blocks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_blocks</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">([])</span>
+        <span class="k">for</span> <span class="n">block_args</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blocks_args</span><span class="p">:</span>
+
+            <span class="c1"># Update block input and output filters based on depth multiplier.</span>
+            <span class="n">block_args</span> <span class="o">=</span> <span class="n">block_args</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
+                <span class="n">input_filters</span><span class="o">=</span><span class="n">round_filters</span><span class="p">(</span><span class="n">block_args</span><span class="o">.</span><span class="n">input_filters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="p">),</span>
+                <span class="n">output_filters</span><span class="o">=</span><span class="n">round_filters</span><span class="p">(</span><span class="n">block_args</span><span class="o">.</span><span class="n">output_filters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="p">),</span>
+                <span class="n">num_repeat</span><span class="o">=</span><span class="n">round_repeats</span><span class="p">(</span><span class="n">block_args</span><span class="o">.</span><span class="n">num_repeat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="c1"># The first block needs to take care of stride and filter size increase.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MBConvBlock</span><span class="p">(</span><span class="n">block_args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="n">image_size</span><span class="p">))</span>
+            <span class="n">image_size</span> <span class="o">=</span> <span class="n">calculate_output_image_size</span><span class="p">(</span><span class="n">image_size</span><span class="p">,</span> <span class="n">block_args</span><span class="o">.</span><span class="n">stride</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">block_args</span><span class="o">.</span><span class="n">num_repeat</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># modify block_args to keep same output size</span>
+                <span class="n">block_args</span> <span class="o">=</span> <span class="n">block_args</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">input_filters</span><span class="o">=</span><span class="n">block_args</span><span class="o">.</span><span class="n">output_filters</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">block_args</span><span class="o">.</span><span class="n">num_repeat</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MBConvBlock</span><span class="p">(</span><span class="n">block_args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="p">,</span> <span class="n">image_size</span><span class="o">=</span><span class="n">image_size</span><span class="p">))</span>
+                <span class="c1"># image_size = calculate_output_image_size(image_size, block_args.stride)  # stride = 1</span>
+
+        <span class="c1"># Head</span>
+        <span class="n">in_channels</span> <span class="o">=</span> <span class="n">block_args</span><span class="o">.</span><span class="n">output_filters</span>  <span class="c1"># output of final block</span>
+        <span class="n">out_channels</span> <span class="o">=</span> <span class="n">round_filters</span><span class="p">(</span><span class="mi">1280</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="p">)</span>
+        <span class="n">Conv2d</span> <span class="o">=</span> <span class="n">get_same_padding_conv2d</span><span class="p">(</span><span class="n">image_size</span><span class="o">=</span><span class="n">image_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_conv_head</span> <span class="o">=</span> <span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bn1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">num_features</span><span class="o">=</span><span class="n">out_channels</span><span class="p">,</span> <span class="n">momentum</span><span class="o">=</span><span class="n">bn_mom</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="n">bn_eps</span><span class="p">)</span>
+
+        <span class="c1"># Final linear layer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_avg_pooling</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">AdaptiveAvgPool2d</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="o">.</span><span class="n">include_top</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="o">.</span><span class="n">dropout_rate</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">out_channels</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="o">.</span><span class="n">num_classes</span><span class="p">)</span>
+
+        <span class="c1"># set activation to memory efficient swish by default</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_swish</span> <span class="o">=</span> <span class="n">MemoryEfficientSwish</span><span class="p">()</span>
+
+<div class="viewcode-block" id="EfficientNet.set_swish">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.EfficientNet.set_swish">[docs]</a>
+    <span class="k">def</span> <span class="nf">set_swish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">memory_efficient</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sets swish function as memory efficient (for training) or standard (for export).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            memory_efficient (bool): Whether to use memory-efficient version of swish.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_swish</span> <span class="o">=</span> <span class="n">MemoryEfficientSwish</span><span class="p">()</span> <span class="k">if</span> <span class="n">memory_efficient</span> <span class="k">else</span> <span class="n">Swish</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blocks</span><span class="p">:</span>
+            <span class="n">block</span><span class="o">.</span><span class="n">set_swish</span><span class="p">(</span><span class="n">memory_efficient</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EfficientNet.extract_endpoints">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.EfficientNet.extract_endpoints">[docs]</a>
+    <span class="k">def</span> <span class="nf">extract_endpoints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Use convolution layer to extract features</span>
+<span class="sd">        from reduction levels i in [1, 2, 3, 4, 5].</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            inputs (tensor): Input tensor.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary of last intermediate features</span>
+<span class="sd">            with reduction levels i in [1, 2, 3, 4, 5].</span>
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; import torch</span>
+<span class="sd">                &gt;&gt;&gt; from efficientnet.model import EfficientNet</span>
+<span class="sd">                &gt;&gt;&gt; inputs = torch.rand(1, 3, 224, 224)</span>
+<span class="sd">                &gt;&gt;&gt; model = EfficientNet.from_pretrained(&#39;efficientnet-b0&#39;)</span>
+<span class="sd">                &gt;&gt;&gt; endpoints = model.extract_endpoints(inputs)</span>
+<span class="sd">                &gt;&gt;&gt; print(endpoints[&#39;reduction_1&#39;].shape)  # torch.Size([1, 16, 112, 112])</span>
+<span class="sd">                &gt;&gt;&gt; print(endpoints[&#39;reduction_2&#39;].shape)  # torch.Size([1, 24, 56, 56])</span>
+<span class="sd">                &gt;&gt;&gt; print(endpoints[&#39;reduction_3&#39;].shape)  # torch.Size([1, 40, 28, 28])</span>
+<span class="sd">                &gt;&gt;&gt; print(endpoints[&#39;reduction_4&#39;].shape)  # torch.Size([1, 112, 14, 14])</span>
+<span class="sd">                &gt;&gt;&gt; print(endpoints[&#39;reduction_5&#39;].shape)  # torch.Size([1, 320, 7, 7])</span>
+<span class="sd">                &gt;&gt;&gt; print(endpoints[&#39;reduction_6&#39;].shape)  # torch.Size([1, 1280, 7, 7])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">endpoints</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Stem</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_swish</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bn0</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conv_stem</span><span class="p">(</span><span class="n">inputs</span><span class="p">)))</span>
+        <span class="n">prev_x</span> <span class="o">=</span> <span class="n">x</span>
+
+        <span class="c1"># Blocks</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">block</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_blocks</span><span class="p">):</span>
+            <span class="n">drop_connect_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="o">.</span><span class="n">drop_connect_rate</span>
+            <span class="k">if</span> <span class="n">drop_connect_rate</span><span class="p">:</span>
+                <span class="n">drop_connect_rate</span> <span class="o">*=</span> <span class="nb">float</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_blocks</span><span class="p">)</span>  <span class="c1"># scale drop connect_rate</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">drop_connect_rate</span><span class="o">=</span><span class="n">drop_connect_rate</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">prev_x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+                <span class="n">endpoints</span><span class="p">[</span><span class="s1">&#39;reduction_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">endpoints</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">prev_x</span>
+            <span class="k">elif</span> <span class="n">idx</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_blocks</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">endpoints</span><span class="p">[</span><span class="s1">&#39;reduction_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">endpoints</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">x</span>
+            <span class="n">prev_x</span> <span class="o">=</span> <span class="n">x</span>
+
+        <span class="c1"># Head</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_swish</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bn1</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conv_head</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span>
+        <span class="n">endpoints</span><span class="p">[</span><span class="s1">&#39;reduction_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">endpoints</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">x</span>
+
+        <span class="k">return</span> <span class="n">endpoints</span></div>
+
+
+<div class="viewcode-block" id="EfficientNet.extract_features">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.EfficientNet.extract_features">[docs]</a>
+    <span class="k">def</span> <span class="nf">extract_features</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;use convolution layer to extract feature .</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            inputs (tensor): Input tensor.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Output of the final convolution</span>
+<span class="sd">            layer in the efficientnet model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Stem</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_swish</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bn0</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conv_stem</span><span class="p">(</span><span class="n">inputs</span><span class="p">)))</span>
+
+        <span class="c1"># Blocks</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">block</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_blocks</span><span class="p">):</span>
+            <span class="n">drop_connect_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="o">.</span><span class="n">drop_connect_rate</span>
+            <span class="k">if</span> <span class="n">drop_connect_rate</span><span class="p">:</span>
+                <span class="n">drop_connect_rate</span> <span class="o">*=</span> <span class="nb">float</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_blocks</span><span class="p">)</span>  <span class="c1"># scale drop connect_rate</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">drop_connect_rate</span><span class="o">=</span><span class="n">drop_connect_rate</span><span class="p">)</span>
+
+        <span class="c1"># Head</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_swish</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bn1</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_conv_head</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span>
+
+        <span class="k">return</span> <span class="n">x</span></div>
+
+
+<div class="viewcode-block" id="EfficientNet.activations_hook">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.EfficientNet.activations_hook">[docs]</a>
+    <span class="k">def</span> <span class="nf">activations_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grad</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gradients</span> <span class="o">=</span> <span class="n">grad</span></div>
+
+
+<div class="viewcode-block" id="EfficientNet.forward">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.EfficientNet.forward">[docs]</a>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">returnt</span><span class="o">=</span><span class="s1">&#39;out&#39;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;EfficientNet&#39;s forward function.</span>
+<span class="sd">           Calls extract_features to extract features, applies final linear layer, and returns logits.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            inputs (tensor): Input tensor.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Output of this model after processing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Convolution layers</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_features</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+
+        <span class="c1"># Pooling and final linear layer</span>
+        <span class="n">feats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_avg_pooling</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">start_dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">returnt</span> <span class="o">==</span> <span class="s1">&#39;features&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">feats</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="o">.</span><span class="n">include_top</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dropout</span><span class="p">(</span><span class="n">feats</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">returnt</span> <span class="o">==</span> <span class="s1">&#39;out&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span>
+        <span class="k">elif</span> <span class="n">returnt</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">feats</span><span class="p">)</span>
+
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Unknown return type&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EfficientNet.from_name">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.EfficientNet.from_name">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">in_channels</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="o">**</span><span class="n">override_params</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an efficientnet model according to name.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model_name (str): Name for efficientnet.</span>
+<span class="sd">            in_channels (int): Input data&#39;s channel number.</span>
+<span class="sd">            override_params (other key word params):</span>
+<span class="sd">                Params to override model&#39;s global_params.</span>
+<span class="sd">                Optional key:</span>
+<span class="sd">                    &#39;width_coefficient&#39;, &#39;depth_coefficient&#39;,</span>
+<span class="sd">                    &#39;image_size&#39;, &#39;dropout_rate&#39;,</span>
+<span class="sd">                    &#39;num_classes&#39;, &#39;batch_norm_momentum&#39;,</span>
+<span class="sd">                    &#39;batch_norm_epsilon&#39;, &#39;drop_connect_rate&#39;,</span>
+<span class="sd">                    &#39;depth_divisor&#39;, &#39;min_depth&#39;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            An efficientnet model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_check_model_name_is_valid</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+        <span class="n">blocks_args</span><span class="p">,</span> <span class="n">global_params</span> <span class="o">=</span> <span class="n">get_model_params</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">override_params</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">blocks_args</span><span class="p">,</span> <span class="n">global_params</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_change_in_channels</span><span class="p">(</span><span class="n">in_channels</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="EfficientNet.from_pretrained">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.EfficientNet.from_pretrained">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_pretrained</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">weights_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">advprop</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="n">in_channels</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="o">**</span><span class="n">override_params</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an efficientnet model according to name.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model_name (str): Name for efficientnet.</span>
+<span class="sd">            weights_path (None or str):</span>
+<span class="sd">                str: path to pretrained weights file on the local disk.</span>
+<span class="sd">                None: use pretrained weights downloaded from the Internet.</span>
+<span class="sd">            advprop (bool):</span>
+<span class="sd">                Whether to load pretrained weights</span>
+<span class="sd">                trained with advprop (valid when weights_path is None).</span>
+<span class="sd">            in_channels (int): Input data&#39;s channel number.</span>
+<span class="sd">            num_classes (int):</span>
+<span class="sd">                Number of categories for classification.</span>
+<span class="sd">                It controls the output size for final linear layer.</span>
+<span class="sd">            override_params (other key word params):</span>
+<span class="sd">                Params to override model&#39;s global_params.</span>
+<span class="sd">                Optional key:</span>
+<span class="sd">                    &#39;width_coefficient&#39;, &#39;depth_coefficient&#39;,</span>
+<span class="sd">                    &#39;image_size&#39;, &#39;dropout_rate&#39;,</span>
+<span class="sd">                    &#39;batch_norm_momentum&#39;,</span>
+<span class="sd">                    &#39;batch_norm_epsilon&#39;, &#39;drop_connect_rate&#39;,</span>
+<span class="sd">                    &#39;depth_divisor&#39;, &#39;min_depth&#39;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A pretrained efficientnet model.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">,</span> <span class="o">**</span><span class="n">override_params</span><span class="p">)</span>
+        <span class="n">load_pretrained_weights</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">weights_path</span><span class="o">=</span><span class="n">weights_path</span><span class="p">,</span>
+                                <span class="n">load_fc</span><span class="o">=</span><span class="p">(</span><span class="n">num_classes</span> <span class="o">==</span> <span class="mi">1000</span><span class="p">),</span> <span class="n">advprop</span><span class="o">=</span><span class="n">advprop</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">_change_in_channels</span><span class="p">(</span><span class="n">in_channels</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">model</span></div>
+
+
+<div class="viewcode-block" id="EfficientNet.get_image_size">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.EfficientNet.get_image_size">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_image_size</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the input image size for a given efficientnet model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model_name (str): Name for efficientnet.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Input image size (resolution).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_check_model_name_is_valid</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">efficientnet_params</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_check_model_name_is_valid</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates model name.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            model_name (str): Name for efficientnet.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: Is a valid name or not.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">model_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_MODELS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;model_name should be one of: &#39;</span> <span class="o">+</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">VALID_MODELS</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_change_in_channels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Adjust model&#39;s first convolution layer to in_channels, if in_channels not equals 3.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            in_channels (int): Input data&#39;s channel number.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">in_channels</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">Conv2d</span> <span class="o">=</span> <span class="n">get_same_padding_conv2d</span><span class="p">(</span><span class="n">image_size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="o">.</span><span class="n">image_size</span><span class="p">)</span>
+            <span class="n">out_channels</span> <span class="o">=</span> <span class="n">round_filters</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_params</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conv_stem</span> <span class="o">=</span> <span class="n">Conv2d</span><span class="p">(</span><span class="n">in_channels</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="mammoth_efficientnet">
+<a class="viewcode-back" href="../../generated/backbone.EfficientNet.html#backbone.EfficientNet.mammoth_efficientnet">[docs]</a>
+<span class="k">def</span> <span class="nf">mammoth_efficientnet</span><span class="p">(</span><span class="n">nclasses</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pretrained</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Instantiates a ResNet18 network.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        nclasses: number of output classes</span>
+<span class="sd">        nf: number of filters</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ResNet network</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pretrained</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">EfficientNet</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="n">nclasses</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">EfficientNet</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="n">nclasses</span><span class="p">)</span></div>
+
+</pre></div>
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2024, Pietro Buzzega, Matteo Boschini, Lorenzo Bonicelli, Aniello Panariello, Davide Abati, Angelo Porrello, Simone Calderara
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/furo.js?v=32e29ea5"></script>
+    <script src="../../_static/tabs.js?v=3030b3cb"></script>
+    <script src="../../_static/sphinx_toolbox_installation.js"></script>
+    </body>
+</html>

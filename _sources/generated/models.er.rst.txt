@@ -1,0 +1,34 @@
+.. _module-er:
+er
+===
+
+.. currentmodule:: models.er
+
+.. automodule:: models.er
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Er
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

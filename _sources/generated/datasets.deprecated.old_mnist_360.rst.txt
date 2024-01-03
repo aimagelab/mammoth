@@ -1,0 +1,34 @@
+.. _module-old_mnist_360:
+old_mnist_360
+==============
+
+.. currentmodule:: datasets.deprecated.old_mnist_360
+
+.. automodule:: datasets.deprecated.old_mnist_360
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: MNIST360
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

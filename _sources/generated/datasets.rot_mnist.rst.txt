@@ -1,0 +1,34 @@
+.. _module-rot_mnist:
+rot_mnist
+==========
+
+.. currentmodule:: datasets.rot_mnist
+
+.. automodule:: datasets.rot_mnist
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: RotatedMNIST
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

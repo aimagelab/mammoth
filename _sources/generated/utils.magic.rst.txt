@@ -1,0 +1,34 @@
+.. _module-magic:
+magic
+======
+
+.. currentmodule:: utils.magic
+
+.. automodule:: utils.magic
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: persistent_locals
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

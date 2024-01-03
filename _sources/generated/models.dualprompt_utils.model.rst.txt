@@ -1,0 +1,34 @@
+.. _module-model:
+model
+======
+
+.. currentmodule:: models.dualprompt_utils.model
+
+.. automodule:: models.dualprompt_utils.model
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Model
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

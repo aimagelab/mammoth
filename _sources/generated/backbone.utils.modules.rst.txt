@@ -1,0 +1,38 @@
+.. _module-modules:
+modules
+========
+
+.. currentmodule:: backbone.utils.modules
+
+.. automodule:: backbone.utils.modules
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: AlphaModule
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: ListModule
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

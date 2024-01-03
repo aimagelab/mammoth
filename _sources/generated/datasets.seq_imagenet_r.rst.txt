@@ -1,0 +1,38 @@
+.. _module-seq_imagenet_r:
+seq_imagenet_r
+===============
+
+.. currentmodule:: datasets.seq_imagenet_r
+
+.. automodule:: datasets.seq_imagenet_r
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: MyImagenetR
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: SequentialImagenetR
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

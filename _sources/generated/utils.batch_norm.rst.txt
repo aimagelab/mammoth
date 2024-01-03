@@ -1,0 +1,34 @@
+.. _module-batch_norm:
+batch_norm
+===========
+
+.. currentmodule:: utils.batch_norm
+
+.. automodule:: utils.batch_norm
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: bn_track_stats
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

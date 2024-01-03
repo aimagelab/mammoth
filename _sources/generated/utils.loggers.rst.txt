@@ -1,0 +1,50 @@
+.. _module-loggers:
+loggers
+========
+
+.. currentmodule:: utils.loggers
+
+.. automodule:: utils.loggers
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: Logger
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: log_accs
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: print_mean_accuracy
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: log_accs
+   .. autofunction:: print_mean_accuracy
+   
+   
+
+   
+   
+   
+
+
+

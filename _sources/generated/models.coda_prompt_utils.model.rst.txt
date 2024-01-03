@@ -1,0 +1,54 @@
+.. _module-model:
+model
+======
+
+.. currentmodule:: models.coda_prompt_utils.model
+
+.. automodule:: models.coda_prompt_utils.model
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: CodaPrompt
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: Model
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: ortho_penalty
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autofunction:: tensor_prompt
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: ortho_penalty
+   .. autofunction:: tensor_prompt
+   
+   
+
+   
+   
+   
+
+
+

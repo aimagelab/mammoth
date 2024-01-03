@@ -1,0 +1,49 @@
+.. _module-lucir:
+lucir
+======
+
+.. currentmodule:: models.lucir
+
+.. automodule:: models.lucir
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: CustomClassifier
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: Lucir
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: lucir_batch_hard_triplet_loss
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: lucir_batch_hard_triplet_loss
+   
+   
+
+   
+   
+   
+
+
+

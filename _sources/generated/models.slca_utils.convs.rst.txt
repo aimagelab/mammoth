@@ -1,0 +1,47 @@
+.. _module-Convs:
+Convs
+======
+
+.. currentmodule:: models.slca_utils.convs
+
+.. automodule:: models.slca_utils.convs
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+
+.. autosummary::
+   :recursive:
+   :toctree:
+   :hidden:
+   :template: custom-module-template.rst
+   
+   models.slca_utils.convs.cifar_resnet
+   models.slca_utils.convs.linears
+   models.slca_utils.convs.resnet
+   models.slca_utils.convs.vits
+
+.. toctree::
+   :hidden:
+
+   models.slca_utils.convs.cifar_resnet
+   models.slca_utils.convs.linears
+   models.slca_utils.convs.resnet
+   models.slca_utils.convs.vits
+
+

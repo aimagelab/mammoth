@@ -1,0 +1,42 @@
+.. _module-seq_cifar100:
+seq_cifar100
+=============
+
+.. currentmodule:: datasets.seq_cifar100
+
+.. automodule:: datasets.seq_cifar100
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: MyCIFAR100
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: SequentialCIFAR100
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   .. autoclass:: TCIFAR100
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

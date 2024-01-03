@@ -1,0 +1,45 @@
+.. _module-gdumb:
+gdumb
+======
+
+.. currentmodule:: models.gdumb
+
+.. automodule:: models.gdumb
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: GDumb
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: fit_buffer
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: fit_buffer
+   
+   
+
+   
+   
+   
+
+
+

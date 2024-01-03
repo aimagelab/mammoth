@@ -1,0 +1,45 @@
+.. _module-twf:
+twf
+====
+
+.. currentmodule:: models.twf
+
+.. automodule:: models.twf
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   
+   .. autoclass:: TwF
+      :members:
+      :undoc-members:
+      :show-inheritance:
+   
+   
+
+   
+   
+   .. rubric:: Functions
+      
+   
+   .. autofunction:: batch_iterate
+      :members:
+      :undoc-members:
+      :show-inheritance:
+      
+   
+   .. autofunction:: batch_iterate
+   
+   
+
+   
+   
+   
+
+
+
