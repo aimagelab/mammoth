@@ -9,17 +9,9 @@ import torch.optim as optim
 from datasets import get_dataset
 from torch.optim import SGD
 
-from utils.args import add_management_args, add_experiment_args, ArgumentParser
+from utils.args import ArgumentParser
 from utils.conf import get_device
 from models.utils.continual_model import ContinualModel
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via'
-                                        ' Progressive Neural Networks.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    return parser
 
 
 def get_backbone(bone, old_cols=None, x_shape=None):
@@ -40,6 +32,11 @@ class Pnn(ContinualModel):
     NAME = 'pnn'
     COMPATIBILITY = ['task-il']
 
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Progressive Neural Networks')
+        return parser
+
     def __init__(self, backbone, loss, args, transform):
         self.nets = [get_backbone(backbone).to(get_device())]
         backbone = self.nets[-1]
@@ -53,6 +50,7 @@ class Pnn(ContinualModel):
         if self.x_shape is None:
             self.x_shape = x.shape
 
+        start_idx, end_idx = self.dataset.get_offsets(task_label)
         if self.task_idx == 0:
             out = self.net(x)
         else:
@@ -60,6 +58,11 @@ class Pnn(ContinualModel):
             out = self.nets[task_label](x)
             if self.task_idx != task_label:
                 self.nets[task_label].cpu()
+
+        # mask out previous tasks - Task-IL forward
+        if start_idx > 0:
+            out[:, :start_idx] = -torch.inf
+        out[:, end_idx:] = -torch.inf
         return out
 
     def end_task(self, dataset):
@@ -73,6 +76,8 @@ class Pnn(ContinualModel):
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         if self.x_shape is None:
             self.x_shape = inputs.shape
+
+        self.net.to(self.device)
 
         self.opt.zero_grad()
         outputs = self.net(inputs)

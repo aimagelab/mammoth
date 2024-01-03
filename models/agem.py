@@ -8,16 +8,8 @@ import torch
 
 from models.gem import overwrite_grad, store_grad
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.buffer import Buffer
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via A-GEM.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    return parser
 
 
 def project(gxy: torch.Tensor, ger: torch.Tensor) -> torch.Tensor:
@@ -28,6 +20,12 @@ def project(gxy: torch.Tensor, ger: torch.Tensor) -> torch.Tensor:
 class AGem(ContinualModel):
     NAME = 'agem'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual learning via A-GEM.')
+        add_rehearsal_args(parser)
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         super(AGem, self).__init__(backbone, loss, args, transform)

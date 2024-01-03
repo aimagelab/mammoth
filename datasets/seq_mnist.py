@@ -5,15 +5,15 @@
 
 from typing import Tuple
 
+import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from backbone.MNISTMLP import MNISTMLP
 from PIL import Image
 from torchvision.datasets import MNIST
 
+from backbone.MNISTMLP import MNISTMLP
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
-from datasets.utils.validation import get_train_val
 from utils.conf import base_path
 
 
@@ -31,8 +31,12 @@ class MyMNIST(MNIST):
     def __getitem__(self, index: int) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
-        :param index: index of the element to be returned
-        :returns: tuple: (image, target) where target is index of the target class.
+
+        Args:
+            index: index of the element to be returned
+
+        Returns:
+            tuple: (image, target) where target is index of the target class.
         """
         img, target = self.data[index], self.targets[index]
 
@@ -54,6 +58,16 @@ class MyMNIST(MNIST):
 
 
 class SequentialMNIST(ContinualDataset):
+    """The Sequential MNIST dataset.
+
+    Args:
+        NAME (str): name of the dataset.
+        SETTING (str): setting of the dataset.
+        N_CLASSES_PER_TASK (int): number of classes per task.
+        N_TASKS (int): number of tasks.
+        N_CLASSES (int): number of classes.
+        SIZE (tuple): size of the images.
+    """
 
     NAME = 'seq-mnist'
     SETTING = 'class-il'
@@ -63,16 +77,12 @@ class SequentialMNIST(ContinualDataset):
     SIZE = (28, 28)
     TRANSFORM = None
 
-    def get_data_loaders(self):
+    def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = transforms.ToTensor()
         train_dataset = MyMNIST(base_path() + 'MNIST',
                                 train=True, download=True, transform=transform)
-        if self.args.validation:
-            train_dataset, test_dataset = get_train_val(train_dataset,
-                                                        transform, self.NAME)
-        else:
-            test_dataset = MNIST(base_path() + 'MNIST',
-                                 train=False, download=True, transform=transform)
+        test_dataset = MNIST(base_path() + 'MNIST',
+                             train=False, download=True, transform=transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test

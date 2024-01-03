@@ -2,6 +2,7 @@
 import random
 import string
 import torch
+from torch import distributed as dist
 import os
 
 from tqdm import tqdm
@@ -35,7 +36,10 @@ def _load_net(dict_keys, model: torch.nn.Module, args, ignore_classifier=True):
         if args.distributed != 'dp':
             dict_keys[k.replace('module.', '')] = dict_keys.pop(k)
         elif 'module' not in k:
-            dict_keys[k.replace('net.', 'net.module.')] = dict_keys.pop(k)
+            if 'net' in k:
+                dict_keys[k.replace('net.', 'net.module.')] = dict_keys.pop(k)
+            else:
+                dict_keys[f'module.{k}'] = dict_keys.pop(k)
 
     if not ignore_classifier:
         cl_weights = [dict_keys[k] for k in list(dict_keys.keys()) if 'classifier' in k]
@@ -104,16 +108,31 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
     - Handles DataParallel and DistributedDataParallel checkpoints.
     - Handles checkpoints from previous versions of the code.
     - Handles head initialization for LUCIR.
-    :param args: the model with the checkpoint loaded.
+
+    Args:
+        args: the model with the checkpoint loaded.
+        model: the model to be loaded.
+        ignore_classifier: whether to ignore the classifier weights.
+
+    Returns:
+        the model with the checkpoint loaded.
     """
     # check if checkpoint is a URL
     if args.loadcheck.startswith('http'):
         if 'sharepoint' in args.loadcheck:
-            from onedrivedownloader import download
+            try:
+                from onedrivedownloader import download
+            except ImportError:
+                raise ImportError('OneDriveDownloader is required to download from Sharepoint. Please install it with "pip install onedrivedownloader"')
+
             print('Downloading checkpoint using OneDriveDownloader...')
             args.loadcheck = download(args.loadcheck, filename='checkpoints/', unzip=True, unzip_path='checkpoints/', clean=True)
         elif 'drive.google.com' in args.loadcheck:
-            from google_drive_downloader import GoogleDriveDownloader as gdd
+            try:
+                from google_drive_downloader import GoogleDriveDownloader as gdd
+            except ImportError:
+                raise ImportError('GoogleDriveDownloader is required to download from Google Drive. Please install it with "pip install googledrivedownloader"')
+
             print('Downloading checkpoint using GoogleDriveDownloader...')
             # get random filename
             filename = _get_random_filename()

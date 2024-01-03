@@ -1,3 +1,7 @@
+"""
+This module contains utility functions for configuration settings.
+"""
+
 # Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
@@ -13,7 +17,9 @@ import numpy as np
 def warn_once(*msg):
     """
     Prints a warning message only once.
-    :param msg: the message to be printed
+
+    Args:
+        msg: the message to be printed
     """
     msg = ' '.join([str(m) for m in msg])
     if not hasattr(warn_once, 'warned'):
@@ -42,11 +48,13 @@ def get_device() -> torch.device:
                 return torch.device("mps")
         except BaseException:
             print("WARNING: Something went wrong with MPS. Using CPU.")
-            return torch.device("cpu")
+
+        return torch.device("cpu")
 
     # Permanently store the chosen device
     if not hasattr(get_device, 'device'):
         get_device.device = _get_device()
+        print(f'Using device {get_device.device}')
 
     return get_device.device
 
@@ -54,7 +62,12 @@ def get_device() -> torch.device:
 def base_path(override=None) -> str:
     """
     Returns the base bath where to log accuracies and tensorboard data.
-    :param override: the path to override the default one
+
+    Args:
+        override: the path to override the default one. Once set, it is stored and used for all the next calls.
+
+    Returns:
+        the base path (default: `./data/`)
     """
     if override is not None:
         if not os.path.exists(override):
@@ -71,7 +84,9 @@ def base_path(override=None) -> str:
 def set_random_seed(seed: int) -> None:
     """
     Sets the seeds at a certain value.
-    :param seed: the value to be set
+
+    Args:
+        seed: the value to be set
     """
     random.seed(seed)
     np.random.seed(seed)
@@ -82,13 +97,28 @@ def set_random_seed(seed: int) -> None:
         print('Could not set cuda seed.')
 
 
-def set_random_seed_worker(worker_id):
+def set_random_seed_worker(worker_id) -> None:
+    """
+    Sets the seeds for a worker of a dataloader.
+    """
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
 
 
-def create_seeded_dataloader(args, dataset, **dataloader_args):
+def create_seeded_dataloader(args, dataset, **dataloader_args) -> torch.utils.data.DataLoader:
+    """
+    Creates a dataloader object from a dataset, setting the seeds for the workers (if `--seed` is set).
+
+    Args:
+        args: the arguments of the program
+        dataset: the dataset to be loaded
+        dataloader_args: external arguments of the dataloader
+
+    Returns:
+        the dataloader object
+    """
+
     n_cpus = 4 if not hasattr(os, 'sched_getaffinity') else len(os.sched_getaffinity(0))
     num_workers = n_cpus if args.num_workers is None else args.num_workers
     dataloader_args['num_workers'] = num_workers if 'num_workers' not in dataloader_args else dataloader_args['num_workers']

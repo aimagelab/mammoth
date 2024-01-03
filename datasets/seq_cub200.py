@@ -1,19 +1,20 @@
-from torch.utils.data.dataset import Dataset
-import torchvision.transforms as transforms
-from backbone.ResNet50 import resnet50
-import torch.nn.functional as F
+import os
+from typing import Tuple
+
 import numpy as np
+import torch
+import torch.nn.functional as F
+import torchvision.transforms as transforms
+from PIL import Image
+from torch.utils.data.dataset import Dataset
+
+
+from backbone.ResNet50 import resnet50
+from datasets.transforms.denormalization import DeNormalize
+from datasets.utils.continual_dataset import (ContinualDataset,
+                                              store_masked_loaders)
 from utils import smart_joint
 from utils.conf import base_path
-from PIL import Image
-from datasets.utils.validation import get_train_val
-from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
-from typing import Tuple
-from datasets.transforms.denormalization import DeNormalize
-import os
-from torchvision.transforms import functional as TF
-import torch
-from torch import nn
 
 
 class MyCUB200(Dataset):
@@ -54,8 +55,12 @@ class MyCUB200(Dataset):
     def __getitem__(self, index: int) -> Tuple[type(Image), int, type(Image)]:
         """
         Gets the requested element from the dataset.
-        :param index: index of the element to be returned
-        :returns: tuple: (image, target) where target is index of the target class.
+
+        Args:
+            index: index of the element to be returned
+
+        Returns:
+            tuple: (image, target) where target is index of the target class.
         """
         img, target = self.data[index], self.targets[index]
 
@@ -84,6 +89,8 @@ class MyCUB200(Dataset):
 
 
 class CUB200(MyCUB200):
+    """Base CUB200 dataset."""
+
     def __init__(self, root, train=True, transform=None, target_transform=None, download=False) -> None:
         super().__init__(root, train=train, transform=transform,
                          target_transform=target_transform, download=download)
@@ -91,8 +98,12 @@ class CUB200(MyCUB200):
     def __getitem__(self, index: int, ret_segmask=False) -> Tuple[type(Image), int, type(Image)]:
         """
         Gets the requested element from the dataset.
-        :param index: index of the element to be returned
-        :returns: tuple: (image, target) where target is index of the target class.
+
+        Args:
+            index: index of the element to be returned
+
+        Returns:
+            tuple: (image, target) where target is index of the target class.
         """
         img, target = self.data[index], self.targets[index]
 
@@ -117,6 +128,19 @@ class CUB200(MyCUB200):
 
 
 class SequentialCUB200(ContinualDataset):
+    """Sequential CUB200 Dataset.
+
+    Args:
+        NAME (str): name of the dataset.
+        SETTING (str): setting of the dataset.
+        N_CLASSES_PER_TASK (int): number of classes per task.
+        N_TASKS (int): number of tasks.
+        SIZE (tuple): size of the images.
+        MEAN (tuple): mean of the dataset.
+        STD (tuple): standard deviation of the dataset.
+        TRANSFORM (torchvision.transforms): transformation to apply to the data.
+        TEST_TRANSFORM (torchvision.transforms): transformation to apply to the test data.
+    """
     NAME = 'seq-cub200'
     SETTING = 'class-il'
     N_CLASSES_PER_TASK = 20
@@ -131,7 +155,7 @@ class SequentialCUB200(ContinualDataset):
         transforms.Normalize(MEAN, STD)])
     TEST_TRANSFORM = MyCUB200.TEST_TRANSFORM
 
-    def get_data_loaders(self, test_only=False):
+    def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = self.TRANSFORM
 
         test_transform = transforms.Compose(
@@ -139,12 +163,8 @@ class SequentialCUB200(ContinualDataset):
 
         train_dataset = MyCUB200(base_path() + 'CUB200', train=True,
                                  download=True, transform=transform)
-        if self.args.validation:
-            train_dataset, test_dataset = get_train_val(train_dataset,
-                                                        test_transform, self.NAME)
-        else:
-            test_dataset = CUB200(base_path() + 'CUB200', train=False,
-                                  download=True, transform=test_transform)
+        test_dataset = CUB200(base_path() + 'CUB200', train=False,
+                                download=True, transform=test_transform)
 
         train, test = store_masked_loaders(
             train_dataset, test_dataset, self)
@@ -179,7 +199,7 @@ class SequentialCUB200(ContinualDataset):
 
     @staticmethod
     def get_batch_size():
-        return 128
+        return 16
 
     @staticmethod
     def get_epochs():

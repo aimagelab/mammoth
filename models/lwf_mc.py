@@ -26,6 +26,13 @@ class LwFMC(ContinualModel):
     NAME = 'lwf_mc'
     COMPATIBILITY = ['class-il', 'task-il']
 
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Learning without Forgetting - Multi-Class.')
+        parser.add_argument('--wd_reg', type=float, default=0.0,
+                            help='L2 regularization applied to the parameters.')
+        return parser
+
     def __init__(self, backbone, loss, args, transform):
         super(LwFMC, self).__init__(backbone, loss, args, transform)
         self.dataset = get_dataset(args)
@@ -53,10 +60,14 @@ class LwFMC(ContinualModel):
                  task_idx: int, logits: torch.Tensor) -> torch.Tensor:
         """
         Computes the loss tensor.
-        :param inputs: the images to be fed to the network
-        :param labels: the ground-truth labels
-        :param task_idx: the task index
-        :return: the differentiable loss value
+
+        Args:
+            inputs: the images to be fed to the network
+            labels: the ground-truth labels
+            task_idx: the task index
+
+        Returns:
+            the differentiable loss value
         """
 
         pc = task_idx * self.dataset.N_CLASSES_PER_TASK

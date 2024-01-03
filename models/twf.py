@@ -16,37 +16,33 @@ def batch_iterate(size: int, batch_size: int):
         yield torch.LongTensor(list(range(i * batch_size, (i + 1) * batch_size)))
 
 
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(
-        description='Double-branch distillation + inter-branch skip attention')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-
-    # Griddable parameters
-    parser.add_argument('--der_alpha', type=float, required=True,
-                        help='Distillation alpha hyperparameter for student stream (`alpha` in the paper).')
-    parser.add_argument('--der_beta', type=float, required=True,
-                        help='Distillation beta hyperparameter (`beta` in the paper).')
-    parser.add_argument('--lambda_fp', type=float, required=True,
-                        help='weight of feature propagation loss replay')
-    parser.add_argument('--lambda_diverse_loss', type=float, required=False, default=0,
-                        help='Diverse loss hyperparameter.')
-    parser.add_argument('--lambda_fp_replay', type=float, required=False, default=0,
-                        help='weight of feature propagation loss replay')
-    parser.add_argument('--resize_maps', type=int, required=False, choices=[0, 1], default=0,
-                        help='Apply downscale and upscale to feature maps before save in buffer?')
-    parser.add_argument('--min_resize_threshold', type=int, required=False, default=16,
-                        help='Min size of feature maps to be resized?')
-    parser.add_argument('--virtual_batch_size', type=int, required=False,
-                        help='Virtual batch size')
-    return parser
-
-
 class TwF(ContinualModel):
 
     NAME = 'twf'
     COMPATIBILITY = ['class-il', 'task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Transfer without Forgetting: double-branch distillation + inter-branch skip attention')
+
+        add_rehearsal_args(parser)
+        # Griddable parameters
+        parser.add_argument('--der_alpha', type=float, required=True,
+                            help='Distillation alpha hyperparameter for student stream (`alpha` in the paper).')
+        parser.add_argument('--der_beta', type=float, required=True,
+                            help='Distillation beta hyperparameter (`beta` in the paper).')
+        parser.add_argument('--lambda_fp', type=float, required=True,
+                            help='weight of feature propagation loss replay')
+        parser.add_argument('--lambda_diverse_loss', type=float, required=False, default=0,
+                            help='Diverse loss hyperparameter.')
+        parser.add_argument('--lambda_fp_replay', type=float, required=False, default=0,
+                            help='weight of feature propagation loss replay')
+        parser.add_argument('--resize_maps', type=int, required=False, choices=[0, 1], default=0,
+                            help='Apply downscale and upscale to feature maps before save in buffer?')
+        parser.add_argument('--min_resize_threshold', type=int, required=False, default=16,
+                            help='Min size of feature maps to be resized?')
+        parser.add_argument('--virtual_bs_iterations', type=int, default=1, help="virtual batch size iterations")
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         assert "resnet" in str(type(backbone)).lower(), "Only resnet is supported for TwF"
@@ -56,10 +52,6 @@ class TwF(ContinualModel):
 
         self.buffer = Buffer(self.args.buffer_size)
         self.buf_transform = self.get_custom_double_transform(self.transform.transforms)
-        self.args.virtual_batch_size = self.args.virtual_batch_size if self.args.virtual_batch_size is not None else self.args.batch_size
-
-        assert self.args.virtual_batch_size % self.args.batch_size == 0, "virtual_batch_size must be a multiple of batch_size"
-        assert self.args.virtual_batch_size >= self.args.batch_size, "virtual_batch_size must be greater or equal to batch_size"
 
         if self.args.loadcheck is None:
             print("Warning: no checkpoint loaded!")
@@ -86,7 +78,12 @@ class TwF(ContinualModel):
         return DoubleCompose(tfs)
 
     def end_task(self, dataset):
+        self.opt.zero_grad(set_to_none=True)
+        delattr(self, 'opt')
+
         self.net.eval()
+
+        torch.cuda.empty_cache()
 
         with torch.no_grad():
             # loop over buffer, recompute attention maps and save them
@@ -104,6 +101,9 @@ class TwF(ContinualModel):
                 buf_labels = buf_labels[buf_mask]
                 buf_inputs = apply_transform(buf_inputs, self.normalization_transform).to(self.device)
 
+                if len(buf_inputs) < torch.cuda.device_count():
+                    continue
+
                 _, buf_partial_features = self.net(buf_inputs, returnt='full')
                 pret_buf_partial_features = self.teacher(buf_inputs)
 
@@ -114,10 +114,10 @@ class TwF(ContinualModel):
                     self.buffer.attention_maps[idx] = [
                         at[idx % len(at)].to(self.device) for at in attention_masks]
 
-        self.net.train()  # TODO: check
+        self.net.train()
+        self.opt = self.get_optimizer()
 
     def begin_task(self, dataset):
-        self._it = 0
 
         if self.current_task == 0 or ("start_from" in self.args and self.args.start_from is not None and self.current_task == self.args.start_from):
             init_twf(self, dataset)
@@ -137,6 +137,8 @@ class TwF(ContinualModel):
 
         loss = 0
         attention_maps = []
+
+        torch.cuda.empty_cache()
 
         for i, (net_feat, pret_feat) in enumerate(zip(net_partial_features, pret_partial_features)):
             assert net_feat.shape == pret_feat.shape, f"{net_feat.shape} - {pret_feat.shape}"
@@ -165,25 +167,30 @@ class TwF(ContinualModel):
         return loss / (i + 1), attention_maps
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
+        B = len(inputs)
+        if len(inputs) < torch.cuda.device_count():
+            return 0
+
         labels = labels.long()
 
         B = len(inputs)
         all_labels = labels
 
-        if len(self.buffer) > 0:
-            # sample from buffer
-            buf_choices, buf_inputs, buf_labels, buf_logits = self.buffer.get_data(
-                self.args.minibatch_size, transform=None, return_index=True)
-            buf_attention_maps = [self.buffer.attention_maps[c]
-                                  for c in buf_choices]
-            d = [self.buf_transform(ee, attn_map) for ee, attn_map in zip(buf_inputs, buf_attention_maps)]
-            buf_inputs, buf_attention_maps = torch.stack(
-                [v[0] for v in d]).to(self.device), [[o.to(self.device) for o in v[1]] for v in d]
-            buf_logits = buf_logits.to(self.device)
-            buf_labels = buf_labels.to(self.device)
+        with torch.no_grad():
+            if len(self.buffer) > 0:
+                # sample from buffer
+                buf_choices, buf_inputs, buf_labels, buf_logits = self.buffer.get_data(
+                    self.args.minibatch_size, transform=None, return_index=True)
+                buf_attention_maps = [self.buffer.attention_maps[c]
+                                      for c in buf_choices]
+                d = [self.buf_transform(ee, attn_map) for ee, attn_map in zip(buf_inputs, buf_attention_maps)]
+                buf_inputs, buf_attention_maps = torch.stack(
+                    [v[0] for v in d]).to(self.device), [[o.to(self.device) for o in v[1]] for v in d]
+                buf_logits = buf_logits.to(self.device)
+                buf_labels = buf_labels.to(self.device)
 
-            inputs = torch.cat([inputs, buf_inputs])
-            all_labels = torch.cat([labels, buf_labels])
+                inputs = torch.cat([inputs, buf_inputs])
+                all_labels = torch.cat([labels, buf_labels])
 
         all_logits, all_partial_features = self.net(inputs, returnt='full')
         with torch.no_grad():
@@ -194,12 +201,13 @@ class TwF(ContinualModel):
         stream_pret_partial_features = [p[:B] for p in all_pret_partial_features]
 
         loss = self.loss(
-            stream_logits[:, self.current_task * self.n_classes_current_task:(self.current_task + 1) * self.n_classes_current_task], labels % self.n_classes_current_task)
+            stream_logits[:, self.n_past_classes:self.n_seen_classes], labels % self.n_classes_current_task)
 
         loss_er = torch.tensor(0.)
         loss_der = torch.tensor(0.)
         loss_afd = torch.tensor(0.)
 
+        torch.cuda.empty_cache()
         if len(self.buffer) == 0:
             loss_afd, stream_attention_maps = self.partial_distill_loss(
                 stream_partial_features[-len(stream_pret_partial_features):], stream_pret_partial_features, labels)
@@ -217,7 +225,7 @@ class TwF(ContinualModel):
 
             stream_attention_maps = [ap[:B] for ap in all_attention_maps]
 
-            loss_er = self.loss(buf_outputs[:, :(self.current_task + 1) * self.n_classes_current_task], buf_labels)
+            loss_er = self.loss(buf_outputs[:, :self.n_seen_classes], buf_labels)
 
             loss_der = F.mse_loss(buf_outputs, buf_logits)
 
@@ -225,10 +233,12 @@ class TwF(ContinualModel):
         loss += self.args.der_alpha * loss_der
         loss += self.args.lambda_fp * loss_afd
 
-        if self._it == 0:
+        if self.task_iteration == 0:
             self.opt.zero_grad()
+
+        torch.cuda.empty_cache()
         loss.backward()
-        if self._it > 0 and (self._it % (self.args.virtual_batch_size // self.args.batch_size) == 0 or (self.args.virtual_batch_size == self.args.batch_size)):
+        if self.task_iteration > 0 and self.task_iteration % self.args.virtual_bs_iterations == 0:
             self.opt.step()
             self.opt.zero_grad()
 
@@ -237,5 +247,4 @@ class TwF(ContinualModel):
                              logits=stream_logits.data,
                              attention_maps=stream_attention_maps)
 
-        self._it += 1
         return loss.item()

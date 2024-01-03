@@ -23,9 +23,13 @@ except ImportError:
 def evaluate(model: ContinualModel, dataset) -> float:
     """
     Evaluates the final accuracy of the model.
-    :param model: the model to be evaluated
-    :param dataset: the GCL dataset at hand
-    :return: a float value that indicates the accuracy
+
+    Args:
+        model: the model to be evaluated
+        dataset: the GCL dataset at hand
+
+    Returns:
+        a float value that indicates the accuracy
     """
     model.net.eval()
     correct, total = 0, 0
@@ -44,9 +48,9 @@ def evaluate(model: ContinualModel, dataset) -> float:
 def train(args: Namespace):
     """
     The training process, including evaluations and loggers.
-    :param model: the module to be trained
-    :param dataset: the continual dataset at hand
-    :param args: the arguments of the current execution
+
+    Args:
+        args: the arguments loaded from the command line
     """
 
     dataset = get_dataset(args)

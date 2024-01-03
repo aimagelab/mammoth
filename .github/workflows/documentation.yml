@@ -1,0 +1,36 @@
+name: documentation
+
+on:
+  pull_request:
+    branches:
+      - release/wiki
+  push:
+    branches:
+      - release/wiki
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: |
+          pip install -r docs/requirements.txt -r requirements.txt
+          pip install quadprog==0.1.11
+      - name: Sphinx build
+        run: |
+          sphinx-build -j auto docs _build
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/release/wiki' }}
+        with:
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: _build
+          force_orphan: true

@@ -155,9 +155,7 @@ def round_filters(filters, global_params):
     multiplier = global_params.width_coefficient
     if not multiplier:
         return filters
-    # TODO: modify the params names.
-    #       maybe the names (width_divisor,min_width)
-    #       are more suitable than (depth_divisor,min_depth).
+        
     divisor = global_params.depth_divisor
     min_depth = global_params.min_depth
     filters *= multiplier
@@ -246,13 +244,6 @@ def get_same_padding_conv2d(image_size=None):
     else:
         return partial(Conv2dStaticSamePadding, image_size=image_size)
 
-# Parameters for the entire model (stem, all blocks, and head)
-# GlobalParams = collections.namedtuple('GlobalParams', [
-#     'width_coefficient', 'depth_coefficient', 'image_size', 'dropout_rate',
-#     'num_classes', 'batch_norm_momentum', 'batch_norm_epsilon',
-#     'drop_connect_rate', 'depth_divisor', 'min_depth', 'include_top'])
-
-
 GlobalParams = collections.namedtuple('GlobalParams', [
     'batch_norm_momentum', 'batch_norm_epsilon', 'dropout_rate', 'data_format',
     'num_classes', 'width_coefficient', 'depth_coefficient', 'depth_divisor',
@@ -260,11 +251,6 @@ GlobalParams = collections.namedtuple('GlobalParams', [
     'local_pooling', 'condconv_num_experts', 'clip_projection_output',
     'blocks_args', 'image_size', 'drop_connect_rate', 'include_top'
 ])
-
-# Parameters for an individual model block
-# BlockArgs = collections.namedtuple('BlockArgs', [
-#     'num_repeat', 'kernel_size', 'stride', 'expand_ratio',
-#     'input_filters', 'output_filters', 'se_ratio', 'id_skip'])
 
 BlockArgs = collections.namedtuple('BlockArgs', [
     'kernel_size', 'num_repeat', 'input_filters', 'output_filters',
@@ -965,47 +951,17 @@ class EfficientNet(MammothBackbone):
             out_channels = round_filters(32, self._global_params)
             self._conv_stem = Conv2d(in_channels, out_channels, kernel_size=3, stride=2, bias=False)
 
-    # TODO se va piallare
-    # def get_params(self, discard_classifier=False) -> torch.Tensor:
-    #     """
-    #     Returns all the parameters concatenated in a single tensor.
-    #     :return: parameters tensor (??)
-    #     """
-    #     params = []
-    #     for pp in list(self.parameters() if not discard_classifier else self._features.parameters()):
-    #         params.append(pp.view(-1))
-    #     return torch.cat(params)
-
-    # def set_params(self, new_params: torch.Tensor) -> None:
-    #     """
-    #     Sets the parameters to a given value.
-    #     :param new_params: concatenated values to be set (??)
-    #     """
-    #     assert new_params.size() == self.get_params().size()
-    #     progress = 0
-    #     for pp in list(self.parameters()):
-    #         cand_params = new_params[progress: progress +
-    #             torch.tensor(pp.size()).prod()].view(pp.size())
-    #         progress += torch.tensor(pp.size()).prod()
-    #         pp.data = cand_params
-
-    # def get_grads(self, discard_classifier=False) -> torch.Tensor:
-    #     """
-    #     Returns all the gradients concatenated in a single tensor.
-    #     :return: gradients tensor (??)
-    #     """
-    #     grads = []
-    #     for pp in list(self.parameters() if not discard_classifier else self._features.parameters()):
-    #         grads.append(pp.grad.view(-1))
-    #     return torch.cat(grads)
-
 
 def mammoth_efficientnet(nclasses: int, model_name: str, pretrained=False):
     """
     Instantiates a ResNet18 network.
-    :param nclasses: number of output classes
-    :param nf: number of filters
-    :return: ResNet network
+
+    Args:
+        nclasses: number of output classes
+        nf: number of filters
+
+    Returns:
+        ResNet network
     """
     print(model_name)
     if not pretrained:

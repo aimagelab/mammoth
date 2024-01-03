@@ -1,3 +1,7 @@
+"""
+This module contains a version of the reservoir buffer that uses a ring buffer strategy instead of reservoir.
+"""
+
 # Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
@@ -31,10 +35,12 @@ class RingBuffer:
                      logits: torch.Tensor, task_labels: torch.Tensor) -> None:
         """
         Initializes just the required tensors.
-        :param examples: tensor containing the images
-        :param labels: tensor containing the labels
-        :param logits: tensor containing the outputs of the network
-        :param task_labels: tensor containing the task labels
+
+        Args:
+            examples: tensor containing the images
+            labels: tensor containing the labels
+            logits: tensor containing the outputs of the network
+            task_labels: tensor containing the task labels
         """
         for attr_str in self.attributes:
             attr = eval(attr_str)
@@ -48,11 +54,12 @@ class RingBuffer:
     def add_data(self, examples, labels=None, logits=None, task_labels=None):
         """
         Adds the data to the memory buffer according to the reservoir strategy.
-        :param examples: tensor containing the images
-        :param labels: tensor containing the labels
-        :param logits: tensor containing the outputs of the network
-        :param task_labels: tensor containing the task labels
-        :return:
+
+        Args:
+            examples: tensor containing the images
+            labels: tensor containing the labels
+            logits: tensor containing the outputs of the network
+            task_labels: tensor containing the task labels
         """
         if not hasattr(self, 'examples'):
             self.init_tensors(examples, labels, logits, task_labels)
@@ -73,9 +80,13 @@ class RingBuffer:
     def get_data(self, size: int, transform: transforms = None, device=None) -> Tuple:
         """
         Random samples a batch of size items.
-        :param size: the number of requested items
-        :param transform: the transformation to be applied (data augmentation)
-        :return:
+
+        Args:
+            size: the number of requested items
+            transform: the transformation to be applied (data augmentation)
+
+        Returns:
+            a tuple with the requested items
         """
         target_device = self.device if device is None else device
         populated_portion_length = self.filled_space.sum().item()
@@ -107,9 +118,13 @@ class RingBuffer:
     def get_all_data(self, transform: transforms = None, device=None) -> Tuple:
         """
         Return all the items in the memory buffer.
-        :param transform: the transformation to be applied (data augmentation)
-        :param device: the device to be used
-        :return: a tuple with all the items in the memory buffer
+
+        Args:
+            transform: the transformation to be applied (data augmentation)
+            device: the device to be used
+
+        Returns:
+            a tuple with all the items in the memory buffer
         """
         target_device = self.device if device is None else device
         if transform is None:

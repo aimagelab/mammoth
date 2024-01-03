@@ -9,42 +9,41 @@ from datasets import get_dataset
 from torch.nn import functional as F
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.augmentations import strong_aug
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer
 from utils.simclrloss import SupConLoss
 
 
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' eXtended Dark Experience Replay.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    parser.add_argument('--alpha', type=float, required=True, help='Penalty weight.')
-    parser.add_argument('--beta', type=float, required=True, help='Penalty weight.')
-
-    parser.add_argument('--gamma', type=float, default=0.85)
-    parser.add_argument('--lambd', type=float, default=0.1)
-    parser.add_argument('--eta', type=float, default=0.1)
-    parser.add_argument('--m', type=float, default=0.3)
-
-    parser.add_argument('--simclr_temp', type=float, default=5)
-    parser.add_argument('--simclr_batch_size', type=int, default=64)
-    parser.add_argument('--simclr_num_aug', type=int, default=2)
-
-    return parser
-
-
 class XDer(ContinualModel):
     NAME = 'xder'
     COMPATIBILITY = ['class-il', 'task-il']
 
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual learning via'
+                                            ' eXtended Dark Experience Replay.')
+
+        add_rehearsal_args(parser)
+        parser.add_argument('--alpha', type=float, required=True, help='Penalty weight.')
+        parser.add_argument('--beta', type=float, required=True, help='Penalty weight.')
+
+        parser.add_argument('--gamma', type=float, default=0.85)
+        parser.add_argument('--lambd', type=float, default=0.1)
+        parser.add_argument('--eta', type=float, default=0.1)
+        parser.add_argument('--m', type=float, default=0.3)
+
+        parser.add_argument('--simclr_temp', type=float, default=5)
+        parser.add_argument('--simclr_batch_size', type=int, default=64)
+        parser.add_argument('--simclr_num_aug', type=int, default=2)
+
+        return parser
+
     def __init__(self, backbone, loss, args, transform):
         super(XDer, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)
-        self.update_counter = torch.zeros(self.args.buffer_size).to(self.device)
+        self.update_counter = torch.zeros(self.args.buffer_size)
 
         denorm = get_dataset(args).get_denormalization_transform()
         self.dataset_mean, self.dataset_std = denorm.mean, denorm.std
@@ -182,7 +181,7 @@ class XDer(ContinualModel):
             eyey = torch.eye(self.buffer.buffer_size).to(buf_idx.device)[buf_idx]
             umask = (eyey * eyey.cumsum(0)).sum(1) < 2
 
-            buf_idx = buf_idx[umask]
+            buf_idx = buf_idx[umask].to(self.buffer.device)
             buf_inputs = buf_inputs[umask]
             buf_labels = buf_labels[umask]
             buf_logits = buf_logits[umask]

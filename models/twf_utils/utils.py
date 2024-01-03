@@ -8,13 +8,25 @@ from models.twf_utils.afd import MultiTaskAFDAlternative
 
 @torch.no_grad()
 def init_twf(model, dataset):
-    model.teacher = deepcopy(model.net.eval())
+    model.teacher = dataset.get_backbone()
+    if isinstance(model.net, torch.nn.DataParallel):
+        st = deepcopy(model.net.module.state_dict())
+    else:
+        st = deepcopy(model.net.state_dict())
+
+    for k in list(st.keys()):
+        if 'classifier' in k:
+            st.pop(k)
+    unknown, missing = model.teacher.load_state_dict(st, strict=False)
+    assert len(missing) == 0
+    assert len([x for x in unknown if 'classifier' not in x]) == 0
     model.teacher.to(model.device)
 
     model.net.set_return_prerelu(True)
     model.teacher.set_return_prerelu(True)
 
     # Set new forward for teacher
+    @torch.no_grad()
     def _teacher_forward(self, x):
         ret = []
         x = x.to(self.device)
@@ -36,8 +48,12 @@ def init_twf(model, dataset):
 
         return ret
 
-    model.teacher.forward = types.MethodType(
-        _teacher_forward, model.teacher)
+    if isinstance(model.teacher, torch.nn.DataParallel):
+        model.teacher.module.forward = types.MethodType(
+            _teacher_forward, model.teacher.module)
+    else:
+        model.teacher.forward = types.MethodType(
+            _teacher_forward, model.teacher)
 
     # # Initialize classifier
     # model.net.classifier = torch.nn.Linear(

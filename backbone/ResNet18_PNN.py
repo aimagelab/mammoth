@@ -22,8 +22,12 @@ class BasicBlockPnn(BasicBlock):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Compute a forward pass.
-        :param x: input tensor (batch_size, input_size)
-        :return: output tensor (10)
+
+        Args:
+            x: input tensor (batch_size, input_size)
+
+        Returns:
+            output tensor (10)
         """
         out = relu(self.bn1(self.conv1(x)))
         out = self.bn2(self.conv2(out))
@@ -41,10 +45,12 @@ class ResNetPNN(ResNet):
                  x_shape: torch.Size = None):
         """
         Instantiates the layers of the network.
-        :param block: the basic ResNet block
-        :param num_blocks: the number of blocks per layer
-        :param num_classes: the number of output classes
-        :param nf: the number of filters
+
+        Args:
+            block: the basic ResNet block
+            num_blocks: the number of blocks per layer
+            num_classes: the number of output classes
+            nf: the number of filters
         """
         super(ResNetPNN, self).__init__(block, num_blocks, num_classes, nf)
         if old_cols is None:
@@ -52,7 +58,7 @@ class ResNetPNN(ResNet):
 
         self.old_cols = old_cols
         self.x_shape = x_shape
-        self.linear = self.classifier
+
         if len(old_cols) == 0:
             return
 
@@ -96,11 +102,15 @@ class ResNetPNN(ResNet):
                     num_blocks: int, stride: int) -> nn.Module:
         """
         Instantiates a ResNet layer.
-        :param block: ResNet basic block
-        :param planes: channels across the network
-        :param num_blocks: number of blocks
-        :param stride: stride
-        :return: ResNet layer
+
+        Args:
+            block: ResNet basic block
+            planes: channels across the network
+            num_blocks: number of blocks
+            stride: stride
+
+        Returns:
+            ResNet layer
         """
         strides = [stride] + [1] * (num_blocks - 1)
         layers = []
@@ -114,8 +124,12 @@ class ResNetPNN(ResNet):
     def forward(self, x: torch.Tensor, returnt='out') -> torch.Tensor:
         """
         Compute a forward pass.
-        :param x: input tensor (batch_size, *input_shape)
-        :return: output tensor (output_classes)
+
+        Args:
+            x: input tensor (batch_size, *input_shape)
+
+        Returns:
+            output tensor (output_classes)
         """
         if self.x_shape is None:
             self.x_shape = x.shape
@@ -144,7 +158,7 @@ class ResNetPNN(ResNet):
             y = self.adaptor4(y)
             y = y.view(out.size(0), -1)
             y = self.lateral_classifier(y)
-            out = self.linear(out) + y
+            out = self.classifier(out) + y
 
         if returnt == 'out':
             return out
@@ -156,9 +170,13 @@ def resnet18_pnn(nclasses: int, nf: int = 64,
                  old_cols: List[nn.Module] = None, x_shape: torch.Size = None):
     """
     Instantiates a ResNet18 network.
-    :param nclasses: number of output classes
-    :param nf: number of filters
-    :return: ResNet network
+
+    Args:
+        nclasses: number of output classes
+        nf: number of filters
+
+    Returns:
+        ResNet network
     """
     if old_cols is None:
         old_cols = []

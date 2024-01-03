@@ -1,23 +1,23 @@
-# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
-# All rights reserved.
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
+"""
+This module contains the implementation of the Joint CL model.
+"""
 
 import math
-
 import numpy as np
 import torch
 from datasets.utils.validation import ValidationDataset
 from torch.optim import SGD
 from torchvision import transforms
-
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, ArgumentParser
+from utils.args import ArgumentParser
 from utils.conf import create_seeded_dataloader
 from utils.status import progress_bar
 
 
 def get_parser() -> ArgumentParser:
+    """
+    Returns the ArgumentParser object for the joint model.
+    """
     parser = ArgumentParser(description='Joint training: a strong, simple baseline.')
     add_management_args(parser)
     add_experiment_args(parser)
@@ -25,16 +25,28 @@ def get_parser() -> ArgumentParser:
 
 
 class Joint(ContinualModel):
+    """
+    The Joint CL model. The model is deprecated, use the option `--joint=1` instead combined with the SGD model.
+
+    Attributes:
+        NAME (str): joint.
+        COMPATIBILITY (list): the joint model is compabible with class-il, domain-il and task-il scenarios. For a joint model for the general-continual scenario, see the joint_gcl model.
+    """
+
     NAME = 'joint'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
     def __init__(self, backbone, loss, args, transform):
+
         super(Joint, self).__init__(backbone, loss, args, transform)
         self.old_data = []
         self.old_labels = []
         self.current_task = 0
 
     def end_task(self, dataset):
+        """
+        This version of joint training simply saves all data from previous tasks and then trains on all data at the end of the last one.
+        """
         if dataset.SETTING != 'domain-il':
             self.old_data.append(dataset.train_loader.dataset.data)
             self.old_labels.append(torch.tensor(dataset.train_loader.dataset.targets))
@@ -110,4 +122,7 @@ class Joint(ContinualModel):
                     scheduler.step()
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
+        """
+        This version of joint training does nothing during incremental CL training.
+        """
         return 0

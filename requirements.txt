@@ -3,5 +3,6 @@ numpy
 torchvision
 kornia>=0.7.0
 Pillow
-timm==0.8.10.dev0
+timm==0.9.8
 tqdm
+onedrivedownloader

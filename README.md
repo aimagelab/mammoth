@@ -6,7 +6,16 @@
 
 Official repository of [Class-Incremental Continual Learning into the eXtended DER-verse](https://arxiv.org/abs/2201.00766) and [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html)
 
-**NEW** Join our Discord Server for all your Mammoth-related questions → ![Discord Shield](https://discordapp.com/api/guilds/1164956257392799860/widget.png?style=shield)
+Mammoth is a framework for continual learning research. It is designed to be modular, easy to extend, and - most importantly - _easy to debug_.
+Idelly, all the code necessary to run the experiments is included _in the repository_, without needing to check out other repositories or install additional packages.
+
+With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
+
+Join our Discord Server for all your Mammoth-related questions → ![Discord Shield](https://discordapp.com/api/guilds/1164956257392799860/widget.png?style=shield)
+
+## **NEW**: WIKI
+
+We have created a [WIKI](https://aimagelab.github.io/mammoth/)! Check it out for more information on how to use Mammoth.
 
 <p align="center">
   <img width="112" height="112" src="seq_mnist.gif" alt="Sequential MNIST">
@@ -26,48 +35,53 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 
 ## Models
 
-- eXtended-DER (X-DER)
-- Dark Experience Replay (DER)
-- Dark Experience Replay++ (DER++)
-- Learning a Unified Classifier Incrementally via Rebalancing (LUCIR)
-- Greedy Sampler and Dumb Learner (GDumb)
-- Bias Correction (BiC)
-- Regular Polytope Classifier (RPC)
-- Gradient Episodic Memory (GEM) - _Unavailable on windows_
-- A-GEM
-- A-GEM with Reservoir (A-GEM-R)
-- Experience Replay (ER)
-- Meta-Experience Replay (MER)
-- Function Distance Regularization (FDR)
-- Greedy gradient-based Sample Selection (GSS)
-- Hindsight Anchor Learning (HAL)
-- Incremental Classifier and Representation Learning (iCaRL)
-- online Elastic Weight Consolidation (oEWC)
-- Synaptic Intelligence (SI)
-- Learning without Forgetting (LwF)
-- Progressive Neural Networks (PNN)
-- Learning to Prompt (L2P) - _Requires_ `pip install timm==0.8.10.dev0`
-- Transfer without Forgetting (TwF)
-- Continual Contrastive Interpolation Consistency (CCIC) - _Requires_ `pip install kornia`
-
+- Efficient Lifelong Learning with A-GEM (A-GEM, A-GEM-R - A-GEM with reservoir buffer): `agem`, `agem_r`
+- Bias Correction (BiC): `bic`.
+- Continual Contrastive Interpolation Consistency (CCIC) - _Requires_ `pip install kornia`: `ccic`.
+- CODA-Prompt: COntinual Decomposed Attention-based Prompting for Rehearsal-Free Continual Learning (CODA-Prompt) - _Requires_ `pip install timm==0.9.8`: `coda-prompt`.
+- Dark Experience Replay (DER): `der`.
+- Dark Experience Replay++ (DER++): `derpp`.
+- DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning (DualPrompt) - _Requires_ `pip install timm==0.9.8`: `dualprompt`.
+- Experience Replay (ER): `er`.
+- online Elastic Weight Consolidation (oEWC): `ewc_on`.
+- Function Distance Regularization (FDR): `fdr`.
+- Greedy Sampler and Dumb Learner (GDumb): `gdumb`.
+- Gradient Episodic Memory (GEM) - _Unavailable on windows_: `gem`.
+- Greedy gradient-based Sample Selection (GSS): `gss`.
+- Hindsight Anchor Learning (HAL): `hal`.
+- Incremental Classifier and Representation Learning (iCaRL): `icarl`.
+- JointGCL: `joint_gcl` (only for General Continual).
+- Learning to Prompt (L2P) - _Requires_ `pip install timm==0.9.8`: `l2p`.
+- LiDER (on DER++, iCaRL, GDumb, and ER-ACE): `derpp_lider`, `icarl_lider`, `gdumb_lider`, `er_ace_lider`.
+- Learning a Unified Classifier Incrementally via Rebalancing (LUCIR): `lucir`.
+- Learning without Forgetting (LwF): `lwf`.
+- Meta-Experience Replay (MER): `mer`.
+- Progressive Neural Networks (PNN): `pnn`.
+- Regular Polytope Classifier (RPC): `rpc`.
+- Synaptic Intelligence (SI): `si`.
+- SLCA: Slow Learner with Classifier Alignment for Continual Learning on a Pre-trained Model (SLCA) - _Requires_ `pip install timm==0.9.8`: `slca`.
+- Transfer without Forgetting (TwF): `twf`.
+- eXtended-DER (X-DER): `xder` (full version), `xder_ce` (X-DER with CE), `xder_rpc` (X-DER with RPC).
 
 ## Datasets
 
-**NOTE**: Datasets are automatically downloaded in the `data/`. 
+**NOTE**: Datasets are automatically downloaded in the `data/`.
+
 - This can be changes by changing the `base_path` function in `utils/conf.py`.
 - The `data/` folder is not tracked by git and is craeted automatically if missing.
 
-- Sequential MNIST (_Class-Il / Task-IL_)
-- Sequential CIFAR-10 (_Class-Il / Task-IL_)
-- Sequential Tiny ImageNet (_Class-Il / Task-IL_)
-- Sequential Tiny ImageNet resized 32x32 (_Class-Il / Task-IL_)
-- Sequential CIFAR-100 (_Class-Il / Task-IL_)
-- Sequential CIFAR-100 resized 224x224 (ViT version) (_Class-Il / Task-IL_)
-- Sequential CIFAR-100 resized 224x224 (ResNet50 version) (_Class-Il / Task-IL_)
-- Permuted MNIST (_Domain-IL_)
-- Rotated MNIST (_Domain-IL_)
-- MNIST-360 (_General Continual Learning_)
-- Sequential CUB-200 (_Class-Il / Task-IL_)
+- Sequential MNIST (_Class-Il / Task-IL_): `seq-mnist`.
+- Sequential CIFAR-10 (_Class-Il / Task-IL_): `seq-cifar10`.
+- Sequential Tiny ImageNet (_Class-Il / Task-IL_): `seq-tinyimg`.
+- Sequential Tiny ImageNet resized 32x32 (_Class-Il / Task-IL_): `seq-tinyimg-r`.
+- Sequential CIFAR-100 (_Class-Il / Task-IL_): `seq-cifar100`.
+- Sequential CIFAR-100 resized 224x224 (ViT version) (_Class-Il / Task-IL_): `seq-cifar100-224`.
+- Sequential CIFAR-100 resized 224x224 (ResNet50 version) (_Class-Il / Task-IL_): `seq-cifar100-224-rs`.
+- Permuted MNIST (_Domain-IL_): `perm-mnist`.
+- Rotated MNIST (_Domain-IL_): `rot-mnist`.
+- MNIST-360 (_General Continual Learning_): `mnist-360`.
+- Sequential CUB-200 (_Class-Il / Task-IL_): `seq-cub200`.
+- Sequential ImageNet-R (_Class-Il / Task-IL_): `seq-imagenet-r`.
 
 ## Pretrained backbones
 
@@ -122,15 +136,13 @@ Official repository of [Class-Incremental Continual Learning into the eXtended D
 - Continual Normalization: Rethinking Batch Normalization for Online Continual Learning (**ICLR2022**) [[paper](https://arxiv.org/abs/2203.16102)] [[code](https://github.com/phquang/Continual-Normalization)]
 - NISPA: Neuro-Inspired Stability-Plasticity Adaptation for Continual Learning in Sparse Networks (**ICML2022**) [[paper](https://arxiv.org/abs/2206.09117)]
 - Learning from Students: Online Contrastive Distillation Network for General Continual Learning (**IJCAI2022**) [[paper](https://www.ijcai.org/proceedings/2022/0446.pdf)] [[code](https://github.com/lijincm/OCD-Net)]
+- Learning Fast, Learning Slow: A General Continual Learning Method based on Complementary Learning System (**ICLR2022**) [[paper](https://arxiv.org/pdf/2201.12604.pdf)] [[code](https://github.com/NeurAI-Lab/CLS-ER)]
 
 ## Update Roadmap
 
 In the near future, we plan to incorporate the following improvements into this master repository:
 
 - ER+Tricks (_Rethinking Experience Replay: a Bag of Tricks for Continual Learning_)
-- CCIC & CSSL Baselines (_Continual semi-supervised learning through contrastive interpolation consistency_)
-- LiDER (_On the Effectiveness of Lipschitz-Driven Rehearsal in Continual Learning_)
-- Additional X-DER datasets (_Class-Incremental Continual Learning into the eXtended DER-verse_)
 
 Pull requests welcome! [Get in touch](mailto:matteo.boschini@unimore.it)
 
@@ -144,4 +156,7 @@ Please use `autopep8` with parameters:
 
 ## Previous versions
 
-If you're interested in a version of this repo that only includes the code for [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html), please use our [neurips2020 tag](https://github.com/aimagelab/mammoth/releases/tag/neurips2020).
+If you're interested in a version of this repo that only includes the original code for [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html) or [Class-Incremental Continual Learning into the eXtended DER-verse](https://arxiv.org/abs/2201.00766>), please use the following tags:
+
+- [neurips2020](https://github.com/aimagelab/mammoth/releases/tag/neurips2020) for DER (NeurIPS 2020).
+- [tpami2023](https://github.com/aimagelab/mammoth/releases/tag/tpami2023) for X-DER (TPAMI 2022).

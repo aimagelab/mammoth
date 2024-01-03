@@ -3,6 +3,26 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+"""
+This module contains the best hyperparameters on a small selection of datasets and models.
+
+The hyperparameters are organized in a dictionary with the following structure:
+      {
+            'dataset_name': {
+                  'model_name': {
+                        'buffer_size': {
+                              'hyperparameter_name': hyperparameter_value
+                        }
+                  }
+            }
+      }
+
+Todolist:
+      * Add more hyperparameters
+      * Add more datasets
+      * Add more models
+"""
+
 best_args = {
     'perm-mnist': {
         'sgd': {-1: {'lr': 0.2, 'batch_size': 128, 'n_epochs': 1}},

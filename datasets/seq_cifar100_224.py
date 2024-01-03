@@ -1,24 +1,35 @@
 
 
-import torch
-from torchvision.datasets import CIFAR100
-import torchvision.transforms as transforms
-# from backbone.ResNet18 import resnet18_twf1
-import torch.nn.functional as F
-import numpy as np
-from utils.conf import base_path
-from PIL import Image
-from datasets.utils.validation import get_train_val
-from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
 from typing import Tuple
-from datasets.transforms.denormalization import DeNormalize
-import torchvision
-import torch.nn as nn
-from datasets.seq_cifar100 import MyCIFAR100, TCIFAR100
+
+import torch
+import torch.nn.functional as F
+import torchvision.transforms as transforms
 from timm import create_model
+
+from datasets.seq_cifar100 import TCIFAR100, MyCIFAR100
+from datasets.transforms.denormalization import DeNormalize
+from datasets.utils.continual_dataset import (ContinualDataset,
+                                              store_masked_loaders)
+from utils.conf import base_path
 
 
 class SequentialCIFAR100224(ContinualDataset):
+    """
+    The Sequential CIFAR100 dataset with 224x224 resolution with ViT-B/16.
+
+    Args:
+        NAME (str): name of the dataset.
+        SETTING (str): setting of the dataset.
+        N_CLASSES_PER_TASK (int): number of classes per task.
+        N_TASKS (int): number of tasks.
+        N_CLASSES (int): number of classes.
+        SIZE (tuple): size of the images.
+        MEAN (tuple): mean of the dataset.
+        STD (tuple): standard deviation of the dataset.
+        TRANSFORM (torchvision.transforms): transformation to apply to the data.
+        TEST_TRANSFORM (torchvision.transforms): transformation to apply to the test data.
+    """
 
     NAME = 'seq-cifar100-224'
     SETTING = 'class-il'
@@ -37,19 +48,15 @@ class SequentialCIFAR100224(ContinualDataset):
     TEST_TRANSFORM = transforms.Compose(
         [transforms.Resize(224), transforms.ToTensor(), transforms.Normalize(MEAN, STD)])
 
-    def get_data_loaders(self):
+    def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = self.TRANSFORM
 
         test_transform = self.TEST_TRANSFORM
 
         train_dataset = MyCIFAR100(base_path() + 'CIFAR100', train=True,
                                    download=True, transform=transform)
-        if self.args.validation:
-            train_dataset, test_dataset = get_train_val(train_dataset,
-                                                        test_transform, self.NAME)
-        else:
-            test_dataset = TCIFAR100(base_path() + 'CIFAR100', train=False,
-                                     download=True, transform=test_transform)
+        test_dataset = TCIFAR100(base_path() + 'CIFAR100', train=False,
+                                 download=True, transform=test_transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
 

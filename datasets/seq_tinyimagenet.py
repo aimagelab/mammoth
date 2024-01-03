@@ -4,28 +4,26 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from backbone.ResNet18 import resnet18
 from PIL import Image
 from torch.utils.data import Dataset
 
+from backbone.ResNet18 import resnet18
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
-from datasets.utils.validation import get_train_val
 from utils import smart_joint
 from utils.conf import base_path
 
 
 class TinyImagenet(Dataset):
-    """
-    Defines Tiny Imagenet as for the others pytorch datasets.
-    """
+    """Defines the Tiny Imagenet dataset."""
 
     def __init__(self, root: str, train: bool = True, transform: Optional[nn.Module] = None,
                  target_transform: Optional[nn.Module] = None, download: bool = False) -> None:
@@ -84,9 +82,7 @@ class TinyImagenet(Dataset):
 
 
 class MyTinyImagenet(TinyImagenet):
-    """
-    Defines Tiny Imagenet as for the others pytorch datasets.
-    """
+    """Overrides the TinyImagenet dataset to change the getitem function."""
 
     def __init__(self, root: str, train: bool = True, transform: Optional[nn.Module] = None,
                  target_transform: Optional[nn.Module] = None, download: bool = False) -> None:
@@ -116,6 +112,19 @@ class MyTinyImagenet(TinyImagenet):
 
 
 class SequentialTinyImagenet(ContinualDataset):
+    """The Sequential Tiny Imagenet dataset.
+
+    Args:
+        NAME (str): name of the dataset.
+        SETTING (str): setting of the dataset.
+        N_CLASSES_PER_TASK (int): number of classes per task.
+        N_TASKS (int): number of tasks.
+        N_CLASSES (int): number of classes.
+        SIZE (tuple): size of the images.
+        MEAN (tuple): mean of the dataset.
+        STD (tuple): standard deviation of the dataset.
+        TRANSFORM (torchvision.transforms): transformations to apply to the dataset.
+    """
 
     NAME = 'seq-tinyimg'
     SETTING = 'class-il'
@@ -130,7 +139,7 @@ class SequentialTinyImagenet(ContinualDataset):
          transforms.ToTensor(),
          transforms.Normalize(MEAN, STD)])
 
-    def get_data_loaders(self):
+    def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = self.TRANSFORM
 
         test_transform = transforms.Compose(
@@ -138,12 +147,8 @@ class SequentialTinyImagenet(ContinualDataset):
 
         train_dataset = MyTinyImagenet(base_path() + 'TINYIMG',
                                        train=True, download=True, transform=transform)
-        if self.args.validation:
-            train_dataset, test_dataset = get_train_val(train_dataset,
-                                                        test_transform, self.NAME)
-        else:
-            test_dataset = TinyImagenet(base_path() + 'TINYIMG',
-                                        train=False, download=True, transform=test_transform)
+        test_dataset = TinyImagenet(base_path() + 'TINYIMG',
+                                    train=False, download=True, transform=test_transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test

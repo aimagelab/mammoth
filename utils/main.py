@@ -1,9 +1,22 @@
+"""
+This script is the main entry point for the Mammoth project. It contains the main function `main()` that orchestrates the training process.
+
+The script performs the following tasks:
+- Imports necessary modules and libraries.
+- Sets up the necessary paths and configurations.
+- Parses command-line arguments.
+- Initializes the dataset, model, and other components.
+- Trains the model using the `train()` function.
+
+To run the script, execute it directly or import it as a module and call the `main()` function.
+"""
 # Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import numpy  # needed (don't change it)
+# needed (don't change it)
+import numpy  # noqa
 import time
 import importlib
 import os
@@ -20,7 +33,8 @@ sys.path.append(mammoth_path + '/datasets')
 sys.path.append(mammoth_path + '/backbone')
 sys.path.append(mammoth_path + '/models')
 
-from utils import create_if_not_exists
+from utils import create_if_not_exists, custom_str_underscore
+from utils.args import add_management_args, add_experiment_args
 from utils.conf import base_path
 from utils.distributed import make_dp
 from utils.best_args import best_args
@@ -36,26 +50,33 @@ def lecun_fix():
 
 
 def parse_args():
-    from models import get_all_models
-    from datasets import NAMES as DATASET_NAMES, get_dataset_class
+    """
+    Parse command line arguments for the mammoth program and sets up the `args` object.
+
+    Returns:
+        args (argparse.Namespace): Parsed command line arguments.
+    """
+    from models import get_all_models, get_model_class
+    from datasets import get_dataset_names, get_dataset_class
 
     parser = ArgumentParser(description='mammoth', allow_abbrev=False, add_help=False)
-    parser.add_argument('--model', type=str, help='Model name.', choices=get_all_models())
+    parser.add_argument('--model', type=custom_str_underscore, help='Model name.', choices=list(get_all_models().keys()))
     parser.add_argument('--load_best_args', action='store_true',
                         help='Loads the best arguments for each method, '
                              'dataset and memory buffer.')
-    torch.set_num_threads(4)
+
     args = parser.parse_known_args()[0]
+    models_dict = get_all_models()
     if args.model is None:
         print('No model specified. Please specify a model with --model to see all other options.')
-        print('Available models are: {}'.format(get_all_models()))
+        print('Available models are: {}'.format(list(models_dict.keys())))
         sys.exit(1)
 
-    mod = importlib.import_module('models.' + args.model)
+    mod = importlib.import_module('models.' + models_dict[args.model])
 
     if args.load_best_args:
         parser.add_argument('--dataset', type=str, required=True,
-                            choices=DATASET_NAMES,
+                            choices=get_dataset_names(),
                             help='Which dataset to perform experiments on.')
         if hasattr(mod, 'Buffer'):
             parser.add_argument('--buffer_size', type=int, required=True,
@@ -69,16 +90,19 @@ def parse_args():
             best = best[args.buffer_size]
         else:
             best = best[-1]
-        get_parser = getattr(mod, 'get_parser')
-        parser = get_parser()
+
+        parser = get_model_class(args).get_parser()
+        add_management_args(parser)
+        add_experiment_args(parser)
         to_parse = sys.argv[1:] + ['--' + k + '=' + str(v) for k, v in best.items()]
         to_parse.remove('--load_best_args')
         args = parser.parse_args(to_parse)
         if args.model == 'joint' and args.dataset == 'mnist-360':
             args.model = 'joint_gcl'
     else:
-        get_parser = getattr(mod, 'get_parser')
-        parser = get_parser()
+        parser = get_model_class(args).get_parser()
+        add_management_args(parser)
+        add_experiment_args(parser)
         args = parser.parse_args()
 
     tmp_dset_class = get_dataset_class(args)
@@ -87,7 +111,12 @@ def parse_args():
         args.n_epochs = n_epochs
     else:
         if args.n_epochs != n_epochs:
-            print('Warning: n_epochs set to {} instead of {}'.format(args.n_epochs, n_epochs), file=sys.stderr)
+            print('Warning: n_epochs set to {} instead of {}.'.format(args.n_epochs, n_epochs), file=sys.stderr)
+
+    args.model = models_dict[args.model]
+
+    if args.lr_scheduler is not None:
+        print('Warning: lr_scheduler set to {}, overrides default from dataset.'.format(args.lr_scheduler), file=sys.stderr)
 
     if args.seed is not None:
         set_random_seed(args.seed)
@@ -137,14 +166,19 @@ def main(args=None):
         args.n_epochs = dataset.get_epochs()
     if args.batch_size is None:
         args.batch_size = dataset.get_batch_size()
-    if hasattr(importlib.import_module('models.' + args.model), 'Buffer') and (not hasattr(args, 'minibatch_size') or args.minibatch_size is None):
-        args.minibatch_size = dataset.get_minibatch_size()
+        if hasattr(importlib.import_module('models.' + args.model), 'Buffer') and (not hasattr(args, 'minibatch_size') or args.minibatch_size is None):
+            args.minibatch_size = dataset.get_minibatch_size()
+    else:
+        args.minibatch_size = args.batch_size
 
     backbone = dataset.get_backbone()
     loss = dataset.get_loss()
     model = get_model(args, backbone, loss, dataset.get_transform())
 
     if args.distributed == 'dp':
+        if args.batch_size < torch.cuda.device_count():
+            raise Exception(f"Batch too small for DataParallel (Need at least {torch.cuda.device_count()}).")
+
         model.net = make_dp(model.net)
         model.to('cuda:0')
         args.conf_ngpus = torch.cuda.device_count()

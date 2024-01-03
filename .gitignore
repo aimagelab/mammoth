@@ -91,3 +91,7 @@ dmypy.json
 cython_debug/
 wandb
 logs
+**/_build/
+_autosummary
+generated
+val_permutations

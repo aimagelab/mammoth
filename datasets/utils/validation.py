@@ -53,11 +53,15 @@ def get_train_val(train: Dataset, test_transform: nn.Module,
                   dataset: str, val_perc: float = 0.1):
     """
     Extract val_perc% of the training set as the validation set.
-    :param train: training dataset
-    :param test_transform: transformation of the test dataset
-    :param dataset: dataset name
-    :param val_perc: percentage of the training set to be extracted
-    :return: the training set and the validation set
+
+    Args:
+        train: training dataset
+        test_transform: transformation of the test dataset
+        dataset: dataset name
+        val_perc: percentage of the training set to be extracted
+
+    Returns:
+        the training set and the validation set
     """
     dataset_length = train.data.shape[0]
     directory = 'datasets/val_permutations/'

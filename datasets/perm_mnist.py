@@ -3,38 +3,18 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from typing import Tuple, Type
+from typing import Tuple
 
+import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from backbone.MNISTMLP import MNISTMLP
 from PIL import Image
 from torchvision.datasets import MNIST
 
+from backbone.MNISTMLP import MNISTMLP
 from datasets.transforms.permutation import Permutation
-from datasets.utils.continual_dataset import ContinualDataset
-from datasets.utils.validation import get_train_val
-from utils.conf import base_path, create_seeded_dataloader
-
-
-def store_mnist_loaders(transform, setting):
-    train_dataset = MyMNIST(base_path() + 'MNIST',
-                            train=True, download=True, transform=transform)
-    if setting.args.validation:
-        train_dataset, test_dataset = get_train_val(train_dataset,
-                                                    transform, setting.NAME)
-    else:
-        test_dataset = MNIST(base_path() + 'MNIST',
-                             train=False, download=True, transform=transform)
-
-    train_loader = create_seeded_dataloader(setting.args, train_dataset,
-                                            batch_size=setting.args.batch_size, shuffle=True)
-    test_loader = create_seeded_dataloader(setting.args, test_dataset,
-                                           batch_size=setting.args.batch_size, shuffle=False)
-    setting.test_loaders.append(test_loader)
-    setting.train_loader = train_loader
-
-    return train_loader, test_loader
+from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
+from utils.conf import base_path
 
 
 class MyMNIST(MNIST):
@@ -50,8 +30,12 @@ class MyMNIST(MNIST):
     def __getitem__(self, index: int) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
-        :param index: index of the element to be returned
-        :returns: tuple: (image, target) where target is index of the target class.
+
+        Args:
+            index: index of the element to be returned
+
+        Returns:
+            tuple: (image, target) where target is index of the target class.
         """
         img, target = self.data[index], int(self.targets[index])
 
@@ -69,17 +53,34 @@ class MyMNIST(MNIST):
 
 
 class PermutedMNIST(ContinualDataset):
+    """Permuted MNIST Dataset.
+
+    Creates a dataset composed by a sequence of tasks, each containing a
+    different permutation of the pixels of the MNIST dataset.
+
+    Args:
+        NAME (str): name of the dataset
+        SETTING (str): setting of the experiment
+        N_CLASSES_PER_TASK (int): number of classes in each task
+        N_TASKS (int): number of tasks
+        SIZE (tuple): size of the images
+    """
 
     NAME = 'perm-mnist'
     SETTING = 'domain-il'
     N_CLASSES_PER_TASK = 10
     N_TASKS = 20
-    N_CLASSES = N_CLASSES_PER_TASK * N_TASKS
     SIZE = (28, 28)
 
-    def get_data_loaders(self):
+    def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = transforms.Compose((transforms.ToTensor(), Permutation()))
-        train, test = store_mnist_loaders(transform, self)
+
+        train_dataset = MyMNIST(base_path() + 'MNIST',
+                                train=True, download=True, transform=transform)
+        test_dataset = MNIST(base_path() + 'MNIST',
+                             train=False, download=True, transform=transform)
+
+        train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
 
     @staticmethod
