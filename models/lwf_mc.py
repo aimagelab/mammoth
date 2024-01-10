@@ -11,17 +11,6 @@ from utils.args import *
 from models.utils.continual_model import ContinualModel
 
 
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Learning without Forgetting - Multi-Class.')
-
-    add_management_args(parser)
-    add_experiment_args(parser)
-
-    parser.add_argument('--wd_reg', type=float, default=0.0,
-                        help='L2 regularization applied to the parameters.')
-    return parser
-
-
 class LwFMC(ContinualModel):
     NAME = 'lwf_mc'
     COMPATIBILITY = ['class-il', 'task-il']
