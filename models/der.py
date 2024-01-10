@@ -41,8 +41,8 @@ class Der(ContinualModel):
             buf_inputs, buf_logits = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, device=self.device)
             buf_outputs = self.net(buf_inputs)
-            loss = self.args.alpha * F.mse_loss(buf_outputs, buf_logits)
-            tot_loss += loss.item()
+            loss_mse = self.args.alpha * F.mse_loss(buf_outputs, buf_logits)
+            tot_loss += loss_mse.item()
             loss.backward()
 
         self.opt.step()

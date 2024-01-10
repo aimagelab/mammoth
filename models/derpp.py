@@ -44,15 +44,15 @@ class Derpp(ContinualModel):
             buf_inputs, _, buf_logits = self.buffer.get_data(self.args.minibatch_size, transform=self.transform, device=self.device)
 
             buf_outputs = self.net(buf_inputs)
-            loss = self.args.alpha * F.mse_loss(buf_outputs, buf_logits)
-            tot_loss += loss.item()
-            loss.backward()
+            loss_mse = self.args.alpha * F.mse_loss(buf_outputs, buf_logits)
+            tot_loss += loss_mse.item()
+            loss_ce.backward()
 
             buf_inputs, buf_labels, _ = self.buffer.get_data(self.args.minibatch_size, transform=self.transform, device=self.device)
 
             buf_outputs = self.net(buf_inputs)
-            loss = self.args.beta * self.loss(buf_outputs, buf_labels)
-            tot_loss += loss.item()
+            loss_ce = self.args.beta * self.loss(buf_outputs, buf_labels)
+            tot_loss += loss_ce.item()
             loss.backward()
 
         self.opt.step()
