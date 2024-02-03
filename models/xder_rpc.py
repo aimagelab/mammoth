@@ -73,22 +73,26 @@ class XDerRPC(ContinualModel):
         parser.add_argument('--m', type=float, default=0.3)
 
         parser.add_argument('--clip_grad', type=none_or_float, default=None, metavar='NORM', help='Clip gradient norm (default: None, no clipping)')
+        parser.add_argument('--align_bn', type=int, default=0, choices=[0,1], help='Use BatchNorm alignment')
+
+        parser.add_argument('--n_rpc_heads', type=int, help='N Heads for RPC')
         return parser
 
     def __init__(self, backbone, loss, args, transform):
         super().__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)
         self.update_counter = torch.zeros(self.args.buffer_size).to(self.device)
-        self.pernicehead = torch.from_numpy(dsimplex(self.num_classes)).float().to(self.device)
+        n_rpc_heads = self.args.n_rpc_heads if self.args.n_rpc_heads is not None else self.num_classes
+        self.rpc_head = torch.from_numpy(dsimplex(n_rpc_heads)).float().to(self.device)
 
         if not hasattr(self.args, 'start_from'):
             self.args.start_from = 0
 
     def forward(self, x):
         x = self.net(x)[:, :-1]
-        if x.dtype != self.pernicehead.dtype:
-            self.pernicehead = self.pernicehead.type(x.dtype)
-        x = x @ self.pernicehead
+        if x.dtype != self.rpc_head.dtype:
+            self.rpc_head = self.rpc_head.type(x.dtype)
+        x = x @ self.rpc_head[:x.shape[1]]
         return x
 
     def end_task(self, dataset):
@@ -186,7 +190,8 @@ class XDerRPC(ContinualModel):
 
         self.opt.zero_grad()
 
-        outputs = self(inputs).float()
+        with bn_track_stats(self, self.args.align_bn==0 or self.current_task == 0):
+            outputs = self(inputs)
 
         # Present head
         loss_stream = self.loss(outputs[:, self.n_past_classes:self.n_seen_classes], labels % self.n_classes_current_task)
@@ -196,7 +201,14 @@ class XDerRPC(ContinualModel):
             # Distillation Replay Loss (all heads)
             buf_idx1, buf_inputs1, buf_labels1, buf_logits1, buf_tl1 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
-            buf_outputs1 = self(buf_inputs1).float()
+            if self.args.align_bn:
+                buf_inputs1 = torch.cat([buf_inputs1, inputs[:self.args.minibatch_size // self.current_task]])
+
+            buf_outputs1 = self(buf_inputs1)
+            
+            if self.args.align_bn:
+                buf_inputs1 = buf_inputs1[:self.args.minibatch_size]
+                buf_outputs1 = buf_outputs1[:self.args.minibatch_size]
 
             buf_logits1 = buf_logits1.type(buf_outputs1.dtype)
             mse = F.mse_loss(buf_outputs1, buf_logits1, reduction='none')
@@ -205,7 +217,8 @@ class XDerRPC(ContinualModel):
             # Label Replay Loss (past heads)
             buf_idx2, buf_inputs2, buf_labels2, buf_logits2, buf_tl2 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
-            buf_outputs2 = self(buf_inputs2).float()
+            with bn_track_stats(self, self.args.align_bn==0):
+                buf_outputs2 = self(buf_inputs2).float()
 
             buf_ce = self.loss(buf_outputs2[:, :self.n_past_classes], buf_labels2)
             loss_derpp = self.args.beta * buf_ce

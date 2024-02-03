@@ -134,11 +134,13 @@ class ContinualDataset:
     def get_scheduler(model, args: Namespace) -> torch.optim.lr_scheduler._LRScheduler:
         """Returns the scheduler to be used for the current dataset."""
         if args.lr_scheduler is not None:
+            model.opt = model.get_optimizer()
             # check if lr_scheduler is in torch.optim.lr_scheduler
             supported_scheds = {sched_name.lower(): sched_name for sched_name in dir(scheds) if sched_name.lower() in ContinualDataset.AVAIL_SCHEDS}
             sched = None
             if args.lr_scheduler.lower() in supported_scheds:
                 if args.lr_scheduler.lower() == 'multisteplr':
+                    assert args.lr_milestones is not None, 'MultiStepLR requires `--lr_milestones`'
                     sched = getattr(scheds, supported_scheds[args.lr_scheduler.lower()])(model.opt,
                                                                                          milestones=args.lr_milestones,
                                                                                          gamma=args.sched_multistep_lr_gamma)

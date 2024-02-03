@@ -7,24 +7,6 @@ from utils.augmentations import cutmix_data
 from utils.status import progress_bar
 
 
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='GDumb learns an empty model only on the buffer.'
-                                        'Treated with LiDER!')
-    add_management_args(parser)
-    add_rehearsal_args(parser)
-    parser.add_argument('--maxlr', type=float, default=5e-2,
-                        help='Max learning rate.')
-    parser.add_argument('--minlr', type=float, default=5e-4,
-                        help='Min learning rate.')
-    parser.add_argument('--fitting_epochs', type=int, default=256,
-                        help='Number of epochs to fit the buffer.')
-    parser.add_argument('--cutmix_alpha', type=float, default=1.0,
-                        help='Alpha parameter for cutmix')
-    add_experiment_args(parser)
-    add_lipschitz_args(parser)
-
-    return parser
-
 
 def fit_buffer(self: LiderOptimizer, epochs):
     optimizer = SGD(self.get_parameters(), lr=self.args.maxlr, momentum=self.args.optim_mom, weight_decay=self.args.optim_wd, nesterov=self.args.optim_nesterov)
