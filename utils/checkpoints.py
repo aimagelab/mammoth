@@ -66,11 +66,12 @@ def _load_net(dict_keys, model: torch.nn.Module, args, ignore_classifier=True):
         model.net.load_state_dict(dict_keys)
     except BaseException:
         _, unm = model.net.load_state_dict(dict_keys, strict=False)
+        unm = [k for k in unm if '_features' not in k and 'linear' not in k]
         if ignore_classifier:
             assert all(['classifier' in k for k in unm]
                        ), f"Some of the keys not loaded where not classifier keys: {unm}"
         else:
-            assert unm is None, f"Missing keys: {unm}"
+            assert unm is None or len(unm) == 0, f"Missing keys: {unm}"
 
     model.net.to(model.device)
     return model

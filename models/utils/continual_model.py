@@ -124,6 +124,13 @@ class ContinualModel(nn.Module):
         """
         return self._cpt
 
+    @cpt.setter
+    def cpt(self, value):
+        """
+        Sets the number of classes per task.
+        """
+        self._cpt = value
+
     def __init__(self, backbone: nn.Module, loss: nn.Module,
                  args: Namespace, transform: nn.Module) -> None:
         super(ContinualModel, self).__init__()
@@ -324,6 +331,8 @@ class ContinualModel(nn.Module):
         """
         if not self.args.nowand and not self.args.debug_mode:
             tmp = {k: (v.item() if isinstance(v, torch.Tensor) and v.dim() == 0 else v)
-                   for k, v in locals.items() if k.startswith('_wandb_') or k.startswith('loss')}
+                   for k, v in locals.items() if k.startswith('_wandb_') or 'loss' in k.lower()}
             tmp.update(extra or {})
+            if hasattr(self, 'opt'):
+                tmp['lr'] = self.opt.param_groups[0]['lr']
             wandb.log(tmp)
