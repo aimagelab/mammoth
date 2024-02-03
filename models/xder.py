@@ -36,10 +36,10 @@ class XDerV2(ContinualModel):
 
         parser.add_argument('--dp_weight', type=float, default=0, help='Weight for distance preserving loss')
 
-        parser.add_argument('--past_constraint', type=int, default=1, choices=[0,1], help='Enable past constraint')
-        parser.add_argument('--future_constraint', type=int, default=1, choices=[0,1], help='Enable future constraint')
-        parser.add_argument('--align_bn', type=int, default=0, choices=[0,1], help='Use BatchNorm alignment')
-        
+        parser.add_argument('--past_constraint', type=int, default=1, choices=[0, 1], help='Enable past constraint')
+        parser.add_argument('--future_constraint', type=int, default=1, choices=[0, 1], help='Enable future constraint')
+        parser.add_argument('--align_bn', type=int, default=0, choices=[0, 1], help='Use BatchNorm alignment')
+
         return parser
 
     def __init__(self, backbone, loss, args, transform):
@@ -147,7 +147,7 @@ class XDerV2(ContinualModel):
 
         self.opt.zero_grad()
 
-        with bn_track_stats(self, self.args.align_bn==0 or self.current_task == 0):
+        with bn_track_stats(self, self.args.align_bn == 0 or self.current_task == 0):
             outputs = self.net(inputs)
 
         # Present head
@@ -163,7 +163,7 @@ class XDerV2(ContinualModel):
                 buf_inputs1 = torch.cat([buf_inputs1, inputs[:self.args.minibatch_size // self.current_task]])
 
             buf_outputs1 = self.net(buf_inputs1)
-            
+
             if self.args.align_bn:
                 buf_inputs1 = buf_inputs1[:self.args.minibatch_size]
                 buf_outputs1 = buf_outputs1[:self.args.minibatch_size]
@@ -174,7 +174,7 @@ class XDerV2(ContinualModel):
             # Label Replay Loss (past heads)
             buf_idx2, buf_inputs2, buf_labels2, buf_logits2, buf_tl2 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
-            with bn_track_stats(self, self.args.align_bn==0):
+            with bn_track_stats(self, self.args.align_bn == 0):
                 buf_outputs2 = self.net(buf_inputs2)
 
             buf_ce = self.loss(buf_outputs2[:, :self.n_past_classes], buf_labels2)
@@ -220,14 +220,14 @@ class XDerV2(ContinualModel):
             scl_labels = labels  # [:self.args.simclr_batch_size]
             scl_na_inputs = not_aug_inputs  # [:self.args.simclr_batch_size]
             if not self.buffer.is_empty():
-                buf_idxscl, buf_na_inputsscl, buf_labelsscl, buf_logitsscl, _ = self.buffer.get_data(self.args.simclr_batch_size, 
+                buf_idxscl, buf_na_inputsscl, buf_labelsscl, buf_logitsscl, _ = self.buffer.get_data(self.args.simclr_batch_size,
                                                                                                      transform=None, return_index=True, device=self.device)
                 scl_na_inputs = torch.cat([buf_na_inputsscl, scl_na_inputs])
                 scl_labels = torch.cat([buf_labelsscl, scl_labels])
             with torch.no_grad():
                 scl_inputs = self.gpu_augmentation(scl_na_inputs.repeat_interleave(self.args.simclr_num_aug, 0)).to(self.device)
 
-            with bn_track_stats(self, self.args.align_bn==0):
+            with bn_track_stats(self, self.args.align_bn == 0):
                 scl_outputs = self.net(scl_inputs)
 
             scl_featuresFull = scl_outputs.reshape(-1, self.args.simclr_num_aug, scl_outputs.shape[-1])
@@ -242,13 +242,13 @@ class XDerV2(ContinualModel):
             loss_cons *= self.args.lambd
 
             # DP loss
-            if self.args.dp_weight>0 and not self.buffer.is_empty():
+            if self.args.dp_weight > 0 and not self.buffer.is_empty():
                 dp_features = scl_featuresFull[:len(buf_logitsscl), :, (self.current_task + 1) * self.cpt:]
                 dp_logits = buf_logitsscl[:, (self.current_task + 1) * self.cpt:]
 
                 dp_features = torch.stack(dp_features.split(self.cpt, 2), 1)
 
-                dp_logits = torch.stack(dp_logits.split(self.cpt, 1), 1) 
+                dp_logits = torch.stack(dp_logits.split(self.cpt, 1), 1)
 
                 loss_dp = self.args.dp_weight * torch.mean(torch.stack(
                     [self.spkdloss(dp_features[:, i, k, :], dp_logits[:, i, :]) for i in range(self.n_tasks - self.current_task - 1) for k in range(self.args.simclr_num_aug)]
