@@ -228,10 +228,8 @@ class Logger:
             mean_acc: mean accuracy value
         """
         if self.setting == 'general-continual':
-            mean_acc, _ = mean_acc
             self.accs.append(mean_acc)
         elif self.setting == 'domain-il':
-            mean_acc, _ = mean_acc
             self.accs.append(mean_acc)
         else:
             mean_acc_class_il, mean_acc_task_il = mean_acc
