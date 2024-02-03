@@ -45,9 +45,9 @@ class XDer(ContinualModel):
         self.buffer = Buffer(self.args.buffer_size)
         self.update_counter = torch.zeros(self.args.buffer_size)
 
-        denorm = get_dataset(args).get_denormalization_transform()
+        denorm = self.dataset.get_denormalization_transform()
         self.dataset_mean, self.dataset_std = denorm.mean, denorm.std
-        self.dataset_shape = get_dataset(args).get_data_loaders()[0].dataset.data.shape[2]
+        self.dataset_shape = self.dataset.SIZE
         self.gpu_augmentation = strong_aug(self.dataset_shape, self.dataset_mean, self.dataset_std)
         self.simclr_lss = SupConLoss(temperature=self.args.simclr_temp, base_temperature=self.args.simclr_temp, reduction='sum')
 
@@ -147,17 +147,21 @@ class XDer(ContinualModel):
 
         self.opt.zero_grad()
 
-        outputs = self.net(inputs).float()
+        with bn_track_stats(self, self.current_task == 0):
+            outputs = self.net(inputs).float()
 
         # Present head
-        loss_stream = self.loss(outputs[:, self.current_task * self.cpt:(self.current_task + 1) * self.cpt], labels % self.cpt)
+        loss_stream = self.loss(outputs[:, self.n_past_classes:self.n_seen_classes], labels - self.n_past_classes)
 
         loss_der, loss_derpp = torch.tensor(0.), torch.tensor(0.)
         if not self.buffer.is_empty():
             # Distillation Replay Loss (all heads)
             buf_idx1, buf_inputs1, buf_labels1, buf_logits1, buf_tl1 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
+            buf_inputs1 = torch.cat([buf_inputs1, inputs[:self.args.minibatch_size // self.current_task]])  # bufbal
             buf_outputs1 = self.net(buf_inputs1).float()
+            buf_inputs1 = buf_inputs1[:self.args.minibatch_size]
+            buf_outputs1 = buf_outputs1[:self.args.minibatch_size]
 
             buf_logits1 = buf_logits1.type(buf_outputs1.dtype)
             mse = F.mse_loss(buf_outputs1, buf_logits1, reduction='none')
@@ -166,9 +170,10 @@ class XDer(ContinualModel):
             # Label Replay Loss (past heads)
             buf_idx2, buf_inputs2, buf_labels2, buf_logits2, buf_tl2 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
-            buf_outputs2 = self.net(buf_inputs2).float()
+            with bn_track_stats(self, False):
+                buf_outputs2 = self.net(buf_inputs2).float()
 
-            buf_ce = self.loss(buf_outputs2[:, :(self.current_task) * self.cpt], buf_labels2)
+            buf_ce = self.loss(buf_outputs2[:, :self.n_past_classes], buf_labels2)
             loss_derpp = self.args.beta * buf_ce
 
             # Merge Batches & Remove Duplicates
@@ -178,6 +183,8 @@ class XDer(ContinualModel):
             buf_logits = torch.cat([buf_logits1, buf_logits2])
             buf_outputs = torch.cat([buf_outputs1, buf_outputs2])
             buf_tl = torch.cat([buf_tl1, buf_tl2])
+
+            # remove dupulicates
             eyey = torch.eye(self.buffer.buffer_size).to(buf_idx.device)[buf_idx]
             umask = (eyey * eyey.cumsum(0)).sum(1) < 2
 
@@ -206,8 +213,8 @@ class XDer(ContinualModel):
         loss_cons = loss_cons.type(loss_stream.dtype)
         if self.current_task < self.n_tasks - 1:
 
-            scl_labels = labels[:self.args.simclr_batch_size]
-            scl_na_inputs = not_aug_inputs[:self.args.simclr_batch_size]
+            scl_labels = labels  # [:self.args.simclr_batch_size]
+            scl_na_inputs = not_aug_inputs  # [:self.args.simclr_batch_size]
             if not self.buffer.is_empty():
                 buf_idxscl, buf_na_inputsscl, buf_labelsscl, buf_logitsscl, _ = self.buffer.get_data(self.args.simclr_batch_size,
                                                                                                      transform=None, return_index=True, device=self.device)
