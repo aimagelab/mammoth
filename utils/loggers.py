@@ -64,7 +64,7 @@ def print_mean_accuracy(accs: np.ndarray, task_number: int,
         epoch: the epoch number (optional)
 
     Returns:
-        The mean accuracy value.    
+        The mean accuracy value.
     """
     mean_acc = np.mean(accs, axis=1)
 
@@ -73,26 +73,27 @@ def print_mean_accuracy(accs: np.ndarray, task_number: int,
         if setting == 'domain-il' or setting == 'general-continual':
             mean_acc, _ = mean_acc
             print('\n{}: \t [Domain-IL]: {} %'.format(prefix, round(mean_acc, 2), file=sys.stderr))
-            print('\tRaw accuracy values: [Domain-IL] {}'.format(accs[0]), file=sys.stderr)
+            print('\tRaw accuracy values: Domain-IL {}'.format(accs[0]), file=sys.stderr)
         else:
             mean_acc_class_il, mean_acc_task_il = mean_acc
             print('\n{}: \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, round(
-                      mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
-            print('\tRaw accuracy values: [Class-IL] {} | [Task-IL] {}'.format(accs[0], accs[1]), file=sys.stderr)
+                mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
+            print('\tRaw accuracy values: Class-IL {} | Task-IL {}'.format(accs[0], accs[1]), file=sys.stderr)
     else:
         prefix = "Accuracy" if epoch is None else f"Accuracy (epoch {epoch})"
         if setting == 'domain-il' or setting == 'general-continual':
             mean_acc, _ = mean_acc
             print('\n{} for {} task(s): [Domain-IL]: {} %'.format(prefix,
-                                                                    task_number, round(mean_acc, 2)), file=sys.stderr)
-            print('\tRaw accuracy values: [Domain-IL] {}'.format(accs[0]), file=sys.stderr)
+                                                                  task_number, round(mean_acc, 2)), file=sys.stderr)
+            print('\tRaw accuracy values: Domain-IL {}'.format(accs[0]), file=sys.stderr)
         else:
             mean_acc_class_il, mean_acc_task_il = mean_acc
             print('\n{} for {} task(s): \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, task_number, round(
-                      mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
-            print('\tRaw accuracy values: [Class-IL] {} | [Task-IL] {}'.format(accs[0], accs[1]), file=sys.stderr)
+                mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
+            print('\tRaw accuracy values: Class-IL {} | Task-IL {}'.format(accs[0], accs[1]), file=sys.stderr)
 
     return mean_acc
+
 
 class Logger:
     def __init__(self, setting_str: str, dataset_str: str,

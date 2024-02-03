@@ -29,6 +29,10 @@ class XDerCE(ContinualModel):
         parser.add_argument('--eta', type=float, default=0.1)
         parser.add_argument('--m', type=float, default=0.3)
 
+        parser.add_argument('--past_constraint', type=int, default=1, choices=[0,1], help='Enable past constraint')
+        parser.add_argument('--future_constraint', type=int, default=1, choices=[0,1], help='Enable future constraint')
+        parser.add_argument('--align_bn', type=int, default=0, choices=[0,1], help='Use BatchNorm alignment')
+
         return parser
 
     def __init__(self, backbone, loss, args, transform):
@@ -140,7 +144,8 @@ class XDerCE(ContinualModel):
 
         self.opt.zero_grad()
 
-        outputs = self.net(inputs).float()
+        with bn_track_stats(self, self.args.align_bn==0 or self.current_task == 0):
+            outputs = self.net(inputs)
 
         # Present head
         loss_stream = self.loss(outputs[:, self.n_past_classes:], labels % self.n_classes_current_task)
@@ -150,7 +155,14 @@ class XDerCE(ContinualModel):
             # Distillation Replay Loss (all heads)
             buf_idx1, buf_inputs1, buf_labels1, buf_logits1, buf_tl1 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
-            buf_outputs1 = self.net(buf_inputs1).float()
+            if self.args.align_bn:
+                buf_inputs1 = torch.cat([buf_inputs1, inputs[:self.args.minibatch_size // self.current_task]])
+
+            buf_outputs1 = self.net(buf_inputs1)
+            
+            if self.args.align_bn:
+                buf_inputs1 = buf_inputs1[:self.args.minibatch_size]
+                buf_outputs1 = buf_outputs1[:self.args.minibatch_size]
 
             buf_logits1 = buf_logits1.type(buf_outputs1.dtype)
             mse = F.mse_loss(buf_outputs1, buf_logits1, reduction='none')
@@ -159,7 +171,8 @@ class XDerCE(ContinualModel):
             # Label Replay Loss (past heads)
             buf_idx2, buf_inputs2, buf_labels2, buf_logits2, buf_tl2 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
-            buf_outputs2 = self.net(buf_inputs2).float()
+            with bn_track_stats(self, self.args.align_bn==0):
+                buf_outputs2 = self.net(buf_inputs2)
 
             _, offset = self.dataset.get_offsets(self.current_task + (1 if self.current_task == 0 else 0))
             buf_ce = self.loss(buf_outputs2[:, :offset], buf_labels2)
@@ -197,7 +210,7 @@ class XDerCE(ContinualModel):
 
         # Past Logits Constraint
         loss_constr_past = torch.tensor(0.).type(loss_stream.dtype)
-        if self.current_task > 0:
+        if self.args.past_constraint and self.current_task > 0:
             chead = F.softmax(outputs[:, :self.n_seen_classes], 1)
 
             good_head = chead[:, self.n_past_classes:self.n_seen_classes]
@@ -212,7 +225,7 @@ class XDerCE(ContinualModel):
 
         # Future Logits Constraint
         loss_constr_futu = torch.tensor(0.)
-        if self.current_task < self.n_tasks - 1:
+        if self.args.future_constraint and self.current_task < self.n_tasks - 1:
             bad_head = outputs[:, self.n_seen_classes:]
             good_head = outputs[:, self.n_past_classes:self.n_seen_classes]
 

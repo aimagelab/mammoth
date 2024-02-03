@@ -104,6 +104,13 @@ class ContinualModel(nn.Module):
         """
         return self._cpt
 
+    @cpt.setter
+    def cpt(self, value):
+        """
+        Sets the number of classes per task.
+        """
+        self._cpt = value
+
     def __init__(self, backbone: nn.Module, loss: nn.Module,
                  args: Namespace, transform: nn.Module) -> None:
         super(ContinualModel, self).__init__()
