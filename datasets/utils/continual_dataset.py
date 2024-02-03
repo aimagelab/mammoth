@@ -133,6 +133,7 @@ class ContinualDataset:
     @staticmethod
     def get_scheduler(model, args: Namespace) -> torch.optim.lr_scheduler._LRScheduler:
         """Returns the scheduler to be used for the current dataset."""
+        model.opt = model.get_optimizer()
         if args.lr_scheduler is not None:
             # check if lr_scheduler is in torch.optim.lr_scheduler
             supported_scheds = {sched_name.lower(): sched_name for sched_name in dir(scheds) if sched_name.lower() in ContinualDataset.AVAIL_SCHEDS}
