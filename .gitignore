@@ -2,6 +2,7 @@
 *.gif
 *.pdf
 data/
+data
 checkpoints/
 *.png
 *.pt

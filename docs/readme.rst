@@ -161,28 +161,37 @@ Our Papers
 Other Awesome CL works using Mammoth
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- `New Insights on Reducing Abrupt Representation Change in Online Continual Learning (ICLR2022) <https://openreview.net/pdf?id=N8MaByOzUfb>`_ (`code <https://github.com/pclucas14/AML>`_)
-- `Learning fast, learning slow: A general continual learning method based on complementary learning system (ICLR2022) <https://openreview.net/pdf?id=uxxFrDwrE7Y>`_ (`code <https://github.com/NeurAI-Lab/CLS-ER>`_)
-- `Self-supervised models are continual learners (CVPR2022) <https://arxiv.org/abs/2112.04215>`_ (`code <https://github.com/DonkeyShot21/cassle>`_)
-- `Representational continuity for unsupervised continual learning (ICLR2022) <https://openreview.net/pdf?id=9Hrka5PA7LW>`_ (`code <https://github.com/divyam3897/UCL>`_)
-- `Continual Learning by Modeling Intra-Class Variation (TMLR 2023) <https://arxiv.org/abs/2210.05398>`_ (`code <https://github.com/yulonghui/MOCA>`_)
-- `Consistency is the key to further Mitigating Catastrophic Forgetting in Continual Learning (CoLLAs2022) <https://arxiv.org/pdf/2207.04998.pdf>`_ (`code <https://github.com/NeurAI-Lab/ConsistencyCL>`_)
-- `Continual Normalization: Rethinking Batch Normalization for Online Continual Learning (ICLR2022) <https://arxiv.org/abs/2203.16102>`_ (`code <https://github.com/phquang/Continual-Normalization>`_)
-- `NISPA: Neuro-Inspired Stability-Plasticity Adaptation for Continual Learning in Sparse Networks (ICML2022) <https://arxiv.org/abs/2206.09117>`_
-- `Learning from Students: Online Contrastive Distillation Network for General Continual Learning (IJCAI2022) <https://www.ijcai.org/proceedings/2022/0446.pdf>`_ (`code <https://github.com/lijincm/OCD-Net>`_)
-- `Learning Fast, Learning Slow: A General Continual Learning Method based on Complementary Learning System (ICLR2022) <https://arxiv.org/pdf/2201.12604.pdf>`_ (`code <https://github.com/NeurAI-Lab/CLS-ER>`_)
+.. admonition::
 
-Update Roadmap
---------------
+    **Get in touch if we missed your awesome work!**
 
-In the near future, we plan to incorporate the following improvements into this master repository:
 
-- ER+Tricks (*Rethinking Experience Replay: a Bag of Tricks for Continual Learning*)
-
-Pull requests welcome! `Get in touch <mailto:matteo.boschini@unimore.it>`_
+`- Decoupling Learning and Remembering: a Bilevel Memory Framework with Knowledge Projection for Task-Incremental Learning (CVPR2023) <(https://openaccess.thecvf.com/content/CVPR2023/papers/Sun_Decoupling_Learning_and_Remembering_A_Bilevel_Memory_Framework_With_Knowledge_CVPR_2023_paper.pdf)>`_ (`code <(https://github.com/SunWenJu123/BMKP)>`_)
+`- Regularizing Second-Order Influences for Continual Learning (CVPR2023) <(https://openaccess.thecvf.com/content/CVPR2023/papers/Sun_Regularizing_Second-Order_Influences_for_Continual_Learning_CVPR_2023_paper.pdf)>`_ (`code <(https://github.com/feifeiobama/InfluenceCL)>`_)
+`- Sparse Coding in a Dual Memory System for Lifelong Learning (CVPR2023) <(https://arxiv.org/pdf/2301.05058.pdf)>`_ (`code <(https://github.com/NeurAI-Lab/SCoMMER)>`_)
+`- A Unified Approach to Domain Incremental Learning with Memory: Theory and Algorithm (CVPR2023) <(https://arxiv.org/pdf/2310.12244.pdf)>`_ (`code <(https://github.com/Wang-ML-Lab/unified-continual-learning)>`_)
+`- A Multi-Head Model for Continual Learning via Out-of-Distribution Replay (CVPR2023) <(https://arxiv.org/pdf/2208.09734.pdf)>`_ (`code <(https://github.com/k-gyuhak/MORE)>`_)
+`- Preserving Linear Separability in Continual Learning by Backward Feature Projection (CVPR2023) <(https://arxiv.org/pdf/2303.14595.pdf)>`_ (`code <(https://github.com/rvl-lab-utoronto/BFP)>`_)
+`- Complementary Calibration: Boosting General Continual Learning With Collaborative Distillation and Self-Supervision (TIP2023) <(https://ieeexplore.ieee.org/document/10002397)>`_ (`code <(https://github.com/lijincm/CoCa)>`_)
+`- Continual Learning by Modeling Intra-Class Variation (TMLR2023) <(https://arxiv.org/abs/2210.05398)>`_ (`code <(https://github.com/yulonghui/MOCA)>`_)
+`- ConSlide: Asynchronous Hierarchical Interaction Transformer with Breakup-Reorganize Rehearsal for Continual Whole Slide Image Analysis (ICCV2023) <(https://openaccess.thecvf.com/content/ICCV2023/papers/Huang_ConSlide_Asynchronous_Hierarchical_Interaction_Transformer_with_Breakup-Reorganize_Rehearsal_for_Continual_ICCV_2023_paper.pdf)>`_ (`code <(https://github.com/HKU-MedAI/ConSlide)>`_)
+`- CBA: Improving Online Continual Learning via Continual Bias Adaptor (ICCV2023) <(https://arxiv.org/pdf/2308.06925.pdf)>`_ (`code <(https://github.com/wqza/CBA-online-CL)>`_)
+`- Neuro-Symbolic Continual Learning: Knowledge, Reasoning Shortcuts and Concept Rehearsal (ICML2023) <(https://arxiv.org/pdf/2302.01242.pdf)>`_ (`code <(https://github.com/ema-marconato/NeSy-CL)>`_)
+`- Pretrained Language Model in Continual Learning: a Comparative Study (ICLR2022) <(https://openreview.net/pdf?id=figzpGMrdD)>`_ (`code <(https://github.com/wutong8023/PLM4CL)>`_)
+`- Representational continuity for unsupervised continual learning (ICLR2022) <(https://openreview.net/pdf?id=9Hrka5PA7LW)>`_ (`code <(https://github.com/divyam3897/UCL)>`_)
+`- Continual Normalization: Rethinking Batch Normalization for Online Continual Learning (ICLR2022) <(https://arxiv.org/abs/2203.16102)>`_ (`code <(https://github.com/phquang/Continual-Normalization)>`_)
+`- Learning Fast, Learning Slow: A General Continual Learning Method based on Complementary Learning System (ICLR2022) <(https://arxiv.org/pdf/2201.12604.pdf)>`_ (`code <(https://github.com/NeurAI-Lab/CLS-ER)>`_)
+`- New Insights on Reducing Abrupt Representation Change in Online Continual Learning (ICLR2022) <(https://openreview.net/pdf?id=N8MaByOzUfb)>`_ (`code <(https://github.com/pclucas14/AML)>`_)
+`- Looking Back on Learned Experiences for Class/Task Incremental Learning (ICLR2022) <(https://openreview.net/pdf?id=RxplU3vmBx)>`_ (`code <(https://github.com/MozhganPourKeshavarz/Cost-Free-Incremental-Learning)>`_)
+`- Task Agnostic Representation Consolidation: a Self-supervised based Continual Learning Approach (CoLLAs2022) <(https://arxiv.org/pdf/2207.06267.pdf)>`_ (`code <(https://github.com/NeurAI-Lab/TARC)>`_)
+`- Consistency is the key to further Mitigating Catastrophic Forgetting in Continual Learning (CoLLAs2022) <(https://arxiv.org/pdf/2207.04998.pdf)>`_ (`code <(https://github.com/NeurAI-Lab/ConsistencyCL)>`_)
+`- Self-supervised models are continual learners (CVPR2022) <(https://arxiv.org/abs/2112.04215)>`_ (`code <(https://github.com/DonkeyShot21/cassle)>`_)
+`- Learning from Students: Online Contrastive Distillation Network for General Continual Learning (IJCAI2022) <(https://www.ijcai.org/proceedings/2022/0446.pdf)>`_ (`code <(https://github.com/lijincm/OCD-Net)>`_)
 
 Contributing
 ------------
+
+Pull requests welcome!
 
 Please use `autopep8` with parameters:
 
