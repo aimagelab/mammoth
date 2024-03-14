@@ -11,13 +11,12 @@ import torch
 import torch.nn.functional as F
 from datasets import get_dataset
 from torch import nn
-from torch.utils.data.dataloader import DataLoader
 
-from models.icarl import fill_buffer
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
-from utils.buffer import Buffer, icarl_replay
+from utils.buffer import Buffer, fill_buffer, icarl_replay
+from utils.conf import create_seeded_dataloader
 
 
 def lucir_batch_hard_triplet_loss(labels, embeddings, k, margin, num_old_classes):
@@ -37,36 +36,13 @@ def lucir_batch_hard_triplet_loss(labels, embeddings, k, margin, num_old_classes
         max_novel_scores = max_novel_scores[hard_index]
         assert (gt_scores.size() == max_novel_scores.size())
         assert (gt_scores.size(0) == hard_num)
+        target = torch.ones(hard_num * k, 1).to(embeddings.device)
         loss = nn.MarginRankingLoss(margin=margin)(gt_scores.view(-1, 1),
-                                                   max_novel_scores.view(-1, 1), torch.ones(hard_num * k).to(embeddings.device))
+                                                   max_novel_scores.view(-1, 1), target)
     else:
         loss = torch.zeros(1).to(embeddings.device)
 
     return loss
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via Lucir.')
-
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-
-    parser.add_argument('--lamda_base', type=float, required=False, default=5.,
-                        help='Regularization weight for embedding cosine similarity.')
-    parser.add_argument('--lamda_mr', type=float, required=False, default=1.,
-                        help='Regularization weight for embedding cosine similarity.')
-    parser.add_argument('--k_mr', type=int, required=False, default=2,
-                        help='K for margin-ranking loss.')
-    parser.add_argument('--mr_margin', type=float, default=0.5,
-                        required=False, help='Margin for margin-ranking loss.')
-    parser.add_argument('--fitting_epochs', type=int, required=False, default=20,
-                        help='Number of epochs to finetune on coreset after each task.')
-    parser.add_argument('--lr_finetune', type=float, required=False, default=0.01,
-                        help='Learning Rate for finetuning.')
-    parser.add_argument('--imprint_weights', type=int, choices=[0, 1], required=False, default=1,
-                        help='Apply weight imprinting?')
-    return parser
 
 
 class CustomClassifier(nn.Module):
@@ -80,7 +56,6 @@ class CustomClassifier(nn.Module):
         self.sigma = nn.parameter.Parameter(torch.Tensor(1))
 
         self.in_features = in_features
-        self.task = 0
         self.cpt = cpt
         self.n_tasks = n_tasks
         self.reset_parameters()
@@ -122,17 +97,37 @@ class Lucir(ContinualModel):
     NAME = 'lucir'
     COMPATIBILITY = ['class-il', 'task-il']
 
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual Learning via Lucir.')
+        add_rehearsal_args(parser)
+
+        parser.add_argument('--lamda_base', type=float, required=False, default=5.,
+                            help='Regularization weight for embedding cosine similarity.')
+        parser.add_argument('--lamda_mr', type=float, required=False, default=1.,
+                            help='Regularization weight for embedding cosine similarity.')
+        parser.add_argument('--k_mr', type=int, required=False, default=2,
+                            help='K for margin-ranking loss.')
+        parser.add_argument('--mr_margin', type=float, default=0.5,
+                            required=False, help='Margin for margin-ranking loss.')
+        parser.add_argument('--fitting_epochs', type=int, required=False, default=20,
+                            help='Number of epochs to finetune on coreset after each task.')
+        parser.add_argument('--lr_finetune', type=float, required=False, default=0.01,
+                            help='Learning Rate for finetuning.')
+        parser.add_argument('--imprint_weights', type=int, choices=[0, 1], required=False, default=1,
+                            help='Apply weight imprinting?')
+        return parser
+
     def __init__(self, backbone, loss, args, transform):
         super(Lucir, self).__init__(backbone, loss, args, transform)
         self.dataset = get_dataset(args)
 
         # Instantiate buffers
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
         self.eye = torch.eye(self.dataset.N_CLASSES_PER_TASK *
                              self.dataset.N_TASKS).to(self.device)
 
         self.old_net = None
-        self.task = 0
         self.epochs = int(args.n_epochs)
         self.lamda_cos_sim = args.lamda_base
 
@@ -151,8 +146,7 @@ class Lucir(ContinualModel):
         self.c_epoch = -1
 
     def update_classifier(self):
-        self.net.classifier.task += 1
-        self.net.classifier.reset_weight(self.task)
+        self.net.classifier.reset_weight(self.current_task)
 
     def forward(self, x):
         with torch.no_grad():
@@ -169,7 +163,7 @@ class Lucir(ContinualModel):
 
         self.opt.zero_grad()
         loss = self.get_loss(
-            inputs, labels.long(), self.task)
+            inputs, labels.long(), self.current_task)
         loss.backward()
 
         self.opt.step()
@@ -180,10 +174,14 @@ class Lucir(ContinualModel):
                  task_idx: int) -> torch.Tensor:
         """
         Computes the loss tensor.
-        :param inputs: the images to be fed to the network
-        :param labels: the ground-truth labels
-        :param task_idx: the task index
-        :return: the differentiable loss value
+
+        Args:
+            inputs: the images to be fed to the network
+            labels: the ground-truth labels
+            task_idx: the task index
+
+        Returns:
+            the differentiable loss value
         """
 
         pc = task_idx * self.dataset.N_CLASSES_PER_TASK
@@ -214,7 +212,7 @@ class Lucir(ContinualModel):
 
     def begin_task(self, dataset):
 
-        if self.task > 0:
+        if self.current_task > 0:
             icarl_replay(self, dataset)
 
             with torch.no_grad():
@@ -226,13 +224,13 @@ class Lucir(ContinualModel):
 
                 # Restore optimizer LR
                 upd_weights = [p for n, p in self.net.named_parameters()
-                               if 'classifier' not in n] + [self.net.classifier.weights[self.task], self.net.classifier.sigma]
+                               if 'classifier' not in n] + [self.net.classifier.weights[self.current_task], self.net.classifier.sigma]
                 fix_weights = list(
-                    self.net.classifier.weights[:self.task])
+                    self.net.classifier.weights[:self.current_task])
 
-                if self.task < self.dataset.N_TASKS - 1:
+                if self.current_task < self.dataset.N_TASKS - 1:
                     fix_weights += list(
-                        self.net.classifier.weights[self.task + 1:])
+                        self.net.classifier.weights[self.current_task + 1:])
 
                 self.opt = torch.optim.SGD([{'params': upd_weights, 'lr': self.args.lr, 'weight_decay': self.args.optim_wd}, {
                     'params': fix_weights, 'lr': 0, 'weight_decay': 0}], lr=self.args.lr, momentum=self.args.optim_mom, weight_decay=self.args.optim_wd)
@@ -242,20 +240,17 @@ class Lucir(ContinualModel):
 
         self.net.train()
         with torch.no_grad():
-            fill_buffer(self, self.buffer, dataset, self.task)
+            fill_buffer(self.buffer, dataset, self.current_task, net=self.net, use_herding=True)
 
         if self.args.fitting_epochs is not None and self.args.fitting_epochs > 0:
             self.fit_buffer(self.args.fitting_epochs)
 
-        self.task += 1
-
         # Adapt lambda
-        self.lamda_cos_sim = math.sqrt(
-            self.task) * float(self.args.lamda_base)
+        self.lamda_cos_sim = math.sqrt(self.current_task) * float(self.args.lamda_base)
 
     def imprint_weights(self, dataset):
         self.net.eval()
-        old_embedding_norm = torch.cat([self.net.classifier.weights[i] for i in range(self.task)]).norm(
+        old_embedding_norm = torch.cat([self.net.classifier.weights[i] for i in range(self.current_task)]).norm(
             dim=1, keepdim=True)
         average_old_embedding_norm = torch.mean(
             old_embedding_norm, dim=0).cpu().type(torch.DoubleTensor)
@@ -266,14 +261,14 @@ class Lucir(ContinualModel):
 
         cur_dataset = deepcopy(loader.dataset)
 
-        for cls_idx in range(self.task * self.dataset.N_CLASSES_PER_TASK, (self.task + 1) * self.dataset.N_CLASSES_PER_TASK):
+        for cls_idx in range(self.current_task * self.dataset.N_CLASSES_PER_TASK, (self.current_task + 1) * self.dataset.N_CLASSES_PER_TASK):
 
             cls_indices = np.asarray(
                 loader.dataset.targets) == cls_idx
             cur_dataset.data = loader.dataset.data[cls_indices]
             cur_dataset.targets = np.zeros((cur_dataset.data.shape[0]))
-            dt = DataLoader(
-                cur_dataset, batch_size=self.args.batch_size, num_workers=0)
+            dt = create_seeded_dataloader(self.args,
+                                          cur_dataset, batch_size=self.args.batch_size, num_workers=0)
 
             num_samples = cur_dataset.data.shape[0]
             cls_features = torch.empty((num_samples, num_features))
@@ -287,10 +282,10 @@ class Lucir(ContinualModel):
             norm_features = F.normalize(cls_features, p=2, dim=1)
             cls_embedding = torch.mean(norm_features, dim=0)
 
-            novel_embedding[cls_idx - self.task * self.dataset.N_CLASSES_PER_TASK] = F.normalize(
+            novel_embedding[cls_idx - self.current_task * self.dataset.N_CLASSES_PER_TASK] = F.normalize(
                 cls_embedding, p=2, dim=0) * average_old_embedding_norm
 
-        self.net.classifier.weights[self.task].data = novel_embedding.to(
+        self.net.classifier.weights[self.current_task].data = novel_embedding.to(
             self.device)
         self.net.train()
 
@@ -305,9 +300,9 @@ class Lucir(ContinualModel):
 
         with bn_track_stats(self, False):
             for _ in range(opt_steps):
-                examples, labels, _ = self.buffer.get_all_data(self.transform)
-                dt = DataLoader([(e, l) for e, l in zip(examples, labels)],
-                                shuffle=True, batch_size=self.args.batch_size)
+                examples, labels = self.buffer.get_all_data(self.transform, device=self.device)
+                dt = create_seeded_dataloader(self.args, [(e, l) for e, l in zip(examples, labels)],
+                                              shuffle=True, batch_size=self.args.batch_size)
                 for inputs, labels in dt:
                     self.observe(inputs, labels, None, fitting=True)
                     lr_scheduler.step()

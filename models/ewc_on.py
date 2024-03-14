@@ -8,25 +8,21 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, ArgumentParser
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' online EWC.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    parser.add_argument('--e_lambda', type=float, required=True,
-                        help='lambda weight for EWC')
-    parser.add_argument('--gamma', type=float, required=True,
-                        help='gamma parameter for EWC online')
-
-    return parser
+from utils.args import ArgumentParser
 
 
 class EwcOn(ContinualModel):
     NAME = 'ewc_on'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual learning via online EWC.')
+        parser.add_argument('--e_lambda', type=float, required=True,
+                            help='lambda weight for EWC')
+        parser.add_argument('--gamma', type=float, required=True,
+                            help='gamma parameter for EWC online')
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         super(EwcOn, self).__init__(backbone, loss, args, transform)
@@ -68,7 +64,7 @@ class EwcOn(ContinualModel):
 
         self.checkpoint = self.net.get_params().data.clone()
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         self.opt.zero_grad()
         outputs = self.net(inputs)

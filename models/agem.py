@@ -8,16 +8,8 @@ import torch
 
 from models.gem import overwrite_grad, store_grad
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.buffer import Buffer
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via A-GEM.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    return parser
 
 
 def project(gxy: torch.Tensor, ger: torch.Tensor) -> torch.Tensor:
@@ -29,10 +21,16 @@ class AGem(ContinualModel):
     NAME = 'agem'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual learning via A-GEM.')
+        add_rehearsal_args(parser)
+        return parser
+
     def __init__(self, backbone, loss, args, transform):
         super(AGem, self).__init__(backbone, loss, args, transform)
 
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
         self.grad_dims = []
         for param in self.parameters():
             self.grad_dims.append(param.data.numel())
@@ -48,7 +46,7 @@ class AGem(ContinualModel):
             labels=cur_y.to(self.device)
         )
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         self.zero_grad()
         p = self.net.forward(inputs)
@@ -58,7 +56,7 @@ class AGem(ContinualModel):
         if not self.buffer.is_empty():
             store_grad(self.parameters, self.grad_xy, self.grad_dims)
 
-            buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size, transform=self.transform)
+            buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size, transform=self.transform, device=self.device)
             self.net.zero_grad()
             buf_outputs = self.net.forward(buf_inputs)
             penalty = self.loss(buf_outputs, buf_labels)

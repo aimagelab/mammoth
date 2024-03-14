@@ -6,33 +6,16 @@
 from torch.optim import SGD, lr_scheduler
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.augmentations import cutmix_data
 from utils.buffer import Buffer
 from utils.status import progress_bar
 
 
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via'
-                                        ' Progressive Neural Networks.')
-    add_management_args(parser)
-    add_rehearsal_args(parser)
-    parser.add_argument('--maxlr', type=float, default=5e-2,
-                        help='Penalty weight.')
-    parser.add_argument('--minlr', type=float, default=5e-4,
-                        help='Penalty weight.')
-    parser.add_argument('--fitting_epochs', type=int, default=256,
-                        help='Penalty weight.')
-    parser.add_argument('--cutmix_alpha', type=float, default=None,
-                        help='Penalty weight.')
-    add_experiment_args(parser)
-    return parser
-
-
-def fit_buffer(self, epochs):
-    optimizer = SGD(self.net.parameters(), lr=self.args.maxlr, momentum=self.args.optim_mom, weight_decay=self.args.optim_wd, nesterov=self.args.optim_nesterov)
+def fit_buffer(self: ContinualModel, epochs):
+    optimizer = SGD(self.get_parameters(), lr=self.args.maxlr, momentum=self.args.optim_mom, weight_decay=self.args.optim_wd, nesterov=self.args.optim_nesterov)
     scheduler = lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=1, T_mult=2, eta_min=self.args.minlr)
-    
+
     for epoch in range(epochs):
         if epoch <= 0:  # Warm start of 1 epoch
             for param_group in optimizer.param_groups:
@@ -44,9 +27,13 @@ def fit_buffer(self, epochs):
             scheduler.step()
 
         all_inputs, all_labels = self.buffer.get_data(
-            len(self.buffer.examples), transform=self.transform)
+            len(self.buffer.examples), transform=self.transform, device=self.device)
 
+        it = 0
         while len(all_inputs):
+            if it > self.get_debug_iters() and self.args.debug_mode:
+                break
+            it += 1
             optimizer.zero_grad()
             buf_inputs, buf_labels = all_inputs[:self.args.batch_size], all_labels[:self.args.batch_size]
             all_inputs, all_labels = all_inputs[self.args.batch_size:], all_labels[self.args.batch_size:]
@@ -71,20 +58,32 @@ class GDumb(ContinualModel):
     NAME = 'gdumb'
     COMPATIBILITY = ['class-il', 'task-il']
 
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Greedy sampler and Dumb Learner.')
+        add_rehearsal_args(parser)
+        parser.add_argument('--maxlr', type=float, default=5e-2,
+                            help='Max learning rate.')
+        parser.add_argument('--minlr', type=float, default=5e-4,
+                            help='Min learning rate.')
+        parser.add_argument('--fitting_epochs', type=int, default=256,
+                            help='Number of epochs to fit the buffer.')
+        parser.add_argument('--cutmix_alpha', type=float, default=1.0,
+                            help='Alpha parameter for cutmix')
+        return parser
+
     def __init__(self, backbone, loss, args, transform):
         super(GDumb, self).__init__(backbone, loss, args, transform)
-        self.buffer = Buffer(self.args.buffer_size, self.device)
-        self.task = 0
+        self.buffer = Buffer(self.args.buffer_size)
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.buffer.add_data(examples=not_aug_inputs,
                              labels=labels)
         return 0
 
     def end_task(self, dataset):
         # new model
-        self.task += 1
-        if not (self.task == dataset.N_TASKS):
+        if not (self.current_task == dataset.N_TASKS - 1):
             return
         self.net = dataset.get_backbone().to(self.device)
         fit_buffer(self, self.args.fitting_epochs)

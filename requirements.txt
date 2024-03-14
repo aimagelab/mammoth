@@ -1,9 +1,8 @@
-torch==1.12.1
-numpy==1.23.3
-torchvision==0.13.1
-setproctitle==1.3.2
-six==1.16.0
-wandb
-onedrivedownloader
-av
+torch
+numpy
+torchvision
+kornia>=0.7.0
+Pillow
+timm==0.9.8
 tqdm
+onedrivedownloader

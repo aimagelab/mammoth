@@ -6,26 +6,23 @@
 import torch
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.gss_buffer import Buffer as Buffer
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Gradient based sample selection'
-                                        'for online continual learning')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    parser.add_argument('--batch_num', type=int, required=True,
-                        help='Number of batches extracted from the buffer.')
-    parser.add_argument('--gss_minibatch_size', type=int, default=None,
-                        help='The batch size of the gradient comparison.')
-    return parser
 
 
 class Gss(ContinualModel):
     NAME = 'gss'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Gradient based sample selection for online continual learning')
+        add_rehearsal_args(parser)
+        parser.add_argument('--batch_num', type=int, default=1,
+                            help='Number of batches extracted from the buffer.')
+        parser.add_argument('--gss_minibatch_size', type=int, default=None,
+                            help='The batch size of the gradient comparison.')
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         super(Gss, self).__init__(backbone, loss, args, transform)
@@ -48,7 +45,7 @@ class Gss(ContinualModel):
             grads = grads.unsqueeze(0)
         return grads
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         real_batch_size = inputs.shape[0]
         self.buffer.drop_cache()

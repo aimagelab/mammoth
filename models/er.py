@@ -1,3 +1,13 @@
+"""
+This module implements the simplest form of rehearsal training: Experience Replay. It maintains a buffer
+of previously seen examples and uses them to augment the current batch during training.
+
+Example usage:
+    model = Er(backbone, loss, args, transform)
+    loss = model.observe(inputs, labels, not_aug_inputs, epoch)
+
+"""
+
 # Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
@@ -6,35 +16,43 @@
 import torch
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.buffer import Buffer
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Experience Replay.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    return parser
 
 
 class Er(ContinualModel):
     NAME = 'er'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Er, self).__init__(backbone, loss, args, transform)
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        """
+        Returns an ArgumentParser object with predefined arguments for the Er model.
 
-    def observe(self, inputs, labels, not_aug_inputs):
+        Besides the required `add_management_args` and `add_experiment_args`, this model requires the `add_rehearsal_args` to include the buffer-related arguments.
+        """
+        parser = ArgumentParser(description='Continual learning via Experience Replay.')
+        add_rehearsal_args(parser)
+        return parser
+
+    def __init__(self, backbone, loss, args, transform):
+        """
+        The ER model maintains a buffer of previously seen examples and uses them to augment the current batch during training.
+        """
+        super(Er, self).__init__(backbone, loss, args, transform)
+        self.buffer = Buffer(self.args.buffer_size)
+
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
+        """
+        ER trains on the current task using the data provided, but also augments the batch with data from the buffer.
+        """
 
         real_batch_size = inputs.shape[0]
 
         self.opt.zero_grad()
         if not self.buffer.is_empty():
             buf_inputs, buf_labels = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform)
+                self.args.minibatch_size, transform=self.transform, device=self.device)
             inputs = torch.cat((inputs, buf_inputs))
             labels = torch.cat((labels, buf_labels))
 

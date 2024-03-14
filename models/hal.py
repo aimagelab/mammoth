@@ -11,32 +11,28 @@ from datasets import get_dataset
 from torch.optim import SGD
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
-from utils.buffer import Buffer
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via'
-                                        ' Experience Replay.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-
-    parser.add_argument('--hal_lambda', type=float, default=0.1)
-    parser.add_argument('--beta', type=float, default=0.5)
-    parser.add_argument('--gamma', type=float, default=0.1)
-
-    return parser
+from utils.args import add_rehearsal_args, ArgumentParser
+from utils.ring_buffer import RingBuffer as Buffer
 
 
 class HAL(ContinualModel):
     NAME = 'hal'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Hindsight Anchor Learning.')
+        add_rehearsal_args(parser)
+
+        parser.add_argument('--hal_lambda', type=float, default=0.1)
+        parser.add_argument('--beta', type=float, default=0.5)
+        parser.add_argument('--gamma', type=float, default=0.1)
+        return parser
+
     def __init__(self, backbone, loss, args, transform):
-        super(HAL, self).__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform)
         self.task_number = 0
-        self.buffer = Buffer(self.args.buffer_size, self.device, get_dataset(args).N_TASKS, mode='ring')
+        self.buffer = Buffer(self.args.buffer_size, n_tasks=get_dataset(args).N_TASKS)
         self.hal_lambda = args.hal_lambda
         self.beta = args.beta
         self.gamma = args.gamma
@@ -64,7 +60,8 @@ class HAL(ContinualModel):
 
         # fine tune on memory buffer
         for _ in range(self.finetuning_epochs):
-            inputs, labels = self.buffer.get_data(self.args.batch_size, transform=self.transform)
+            inputs, labels = self.buffer.get_data(self.args.batch_size,
+                                                  transform=self.transform, device=self.device)
             self.spare_opt.zero_grad()
             out = self.spare_model(inputs)
             loss = self.loss(out, labels)
@@ -111,7 +108,7 @@ class HAL(ContinualModel):
 
         self.spare_model.zero_grad()
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         real_batch_size = inputs.shape[0]
         if not hasattr(self, 'input_shape'):
             self.input_shape = inputs.shape[1:]
@@ -125,7 +122,7 @@ class HAL(ContinualModel):
 
         if not self.buffer.is_empty():
             buf_inputs, buf_labels = self.buffer.get_data(
-                self.args.minibatch_size, transform=self.transform)
+                self.args.minibatch_size, transform=self.transform, device=self.device)
             inputs = torch.cat((inputs, buf_inputs))
             labels = torch.cat((labels, buf_labels))
 

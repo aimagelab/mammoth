@@ -1,3 +1,7 @@
+"""
+A version of A-GEM, leveraging a memory buffer with reservoir sampling.
+"""
+
 # Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
 # All rights reserved.
 # This source code is licensed under the license found in the
@@ -9,35 +13,32 @@ import torch
 from models.agem import project
 from models.gem import overwrite_grad, store_grad
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, add_rehearsal_args, ArgumentParser
+from utils.args import add_rehearsal_args, ArgumentParser
 from utils.buffer import Buffer
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual learning via A-GEM, '
-                                        'leveraging a reservoir buffer.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    add_rehearsal_args(parser)
-    return parser
 
 
 class AGemr(ContinualModel):
     NAME = 'agem_r'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Continual learning via A-GEM, '
+                                'leveraging a reservoir buffer.')
+        add_rehearsal_args(parser)
+        return parser
+
     def __init__(self, backbone, loss, args, transform):
         super(AGemr, self).__init__(backbone, loss, args, transform)
 
-        self.buffer = Buffer(self.args.buffer_size, self.device)
+        self.buffer = Buffer(self.args.buffer_size)
         self.grad_dims = []
         for param in self.parameters():
             self.grad_dims.append(param.data.numel())
         self.grad_xy = torch.Tensor(np.sum(self.grad_dims)).to(self.device)
         self.grad_er = torch.Tensor(np.sum(self.grad_dims)).to(self.device)
-        self.current_task = 0
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.zero_grad()
         p = self.net.forward(inputs)
         loss = self.loss(p, labels)
@@ -46,7 +47,7 @@ class AGemr(ContinualModel):
         if not self.buffer.is_empty():
             store_grad(self.parameters, self.grad_xy, self.grad_dims)
 
-            buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size)
+            buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size, device=self.device)
             self.net.zero_grad()
             buf_outputs = self.net.forward(buf_inputs)
             penalty = self.loss(buf_outputs, buf_labels)

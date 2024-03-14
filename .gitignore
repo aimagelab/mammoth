@@ -2,6 +2,7 @@
 *.gif
 *.pdf
 data/
+data
 checkpoints/
 *.png
 *.pt
@@ -90,3 +91,8 @@ dmypy.json
 .pytype/
 cython_debug/
 wandb
+logs
+**/_build/
+_autosummary
+generated
+val_permutations

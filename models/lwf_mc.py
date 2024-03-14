@@ -9,23 +9,18 @@ import torch.nn.functional as F
 from datasets import get_dataset
 from utils.args import *
 from models.utils.continual_model import ContinualModel
-import numpy as np
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via iCaRL.')
-
-    add_management_args(parser)
-    add_experiment_args(parser)
-    
-    parser.add_argument('--wd_reg', type=float, required=True,
-                        help='L2 regularization applied to the parameters.')
-    return parser
 
 
 class LwFMC(ContinualModel):
     NAME = 'lwf_mc'
     COMPATIBILITY = ['class-il', 'task-il']
+
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Learning without Forgetting - Multi-Class.')
+        parser.add_argument('--wd_reg', type=float, default=0.0,
+                            help='L2 regularization applied to the parameters.')
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         super(LwFMC, self).__init__(backbone, loss, args, transform)
@@ -37,7 +32,6 @@ class LwFMC(ContinualModel):
 
         self.class_means = None
         self.old_net = None
-        self.current_task = 0
 
     def observe(self, inputs, labels, not_aug_inputs, logits=None, epoch=None):
         if self.current_task > 0:
@@ -55,10 +49,14 @@ class LwFMC(ContinualModel):
                  task_idx: int, logits: torch.Tensor) -> torch.Tensor:
         """
         Computes the loss tensor.
-        :param inputs: the images to be fed to the network
-        :param labels: the ground-truth labels
-        :param task_idx: the task index
-        :return: the differentiable loss value
+
+        Args:
+            inputs: the images to be fed to the network
+            labels: the ground-truth labels
+            task_idx: the task index
+
+        Returns:
+            the differentiable loss value
         """
 
         pc = task_idx * self.dataset.N_CLASSES_PER_TASK
@@ -84,5 +82,3 @@ class LwFMC(ContinualModel):
     def end_task(self, dataset) -> None:
         self.old_net = deepcopy(self.net.eval())
         self.net.train()
-        self.current_task += 1
-    

@@ -9,16 +9,9 @@ import torch.optim as optim
 from datasets import get_dataset
 from torch.optim import SGD
 
-from utils.args import add_management_args, add_experiment_args, ArgumentParser
+from utils.args import ArgumentParser
 from utils.conf import get_device
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Continual Learning via'
-                                        ' Progressive Neural Networks.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    return parser
+from models.utils.continual_model import ContinualModel
 
 
 def get_backbone(bone, old_cols=None, x_shape=None):
@@ -35,30 +28,29 @@ def get_backbone(bone, old_cols=None, x_shape=None):
         raise NotImplementedError('Progressive Neural Networks is not implemented for this backbone')
 
 
-class Pnn(nn.Module):
+class Pnn(ContinualModel):
     NAME = 'pnn'
     COMPATIBILITY = ['task-il']
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Pnn, self).__init__()
-        self.loss = loss
-        self.args = args
-        self.transform = transform
-        self.device = get_device()
-        self.x_shape = None
-        self.nets = [get_backbone(backbone).to(self.device)]
-        self.net = self.nets[-1]
-        self.opt = SGD(self.net.parameters(), lr=self.args.lr)
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Progressive Neural Networks')
+        return parser
 
+    def __init__(self, backbone, loss, args, transform):
+        self.nets = [get_backbone(backbone).to(get_device())]
+        backbone = self.nets[-1]
+        super(Pnn, self).__init__(backbone, loss, args, transform)
+        self.x_shape = None
         self.soft = torch.nn.Softmax(dim=0)
         self.logsoft = torch.nn.LogSoftmax(dim=0)
-        self.dataset = get_dataset(args)
         self.task_idx = 0
 
     def forward(self, x, task_label):
         if self.x_shape is None:
             self.x_shape = x.shape
 
+        start_idx, end_idx = self.dataset.get_offsets(task_label)
         if self.task_idx == 0:
             out = self.net(x)
         else:
@@ -66,21 +58,26 @@ class Pnn(nn.Module):
             out = self.nets[task_label](x)
             if self.task_idx != task_label:
                 self.nets[task_label].cpu()
+
+        # mask out previous tasks - Task-IL forward
+        if start_idx > 0:
+            out[:, :start_idx] = -torch.inf
+        out[:, end_idx:] = -torch.inf
         return out
 
     def end_task(self, dataset):
         # instantiate new column
-        if self.task_idx == 4:
-            return
         self.task_idx += 1
         self.nets[-1].cpu()
         self.nets.append(get_backbone(dataset.get_backbone(), self.nets, self.x_shape).to(self.device))
         self.net = self.nets[-1]
-        self.opt = optim.SGD(self.net.parameters(), lr=self.args.lr)
+        self.opt = self.get_optimizer()
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         if self.x_shape is None:
             self.x_shape = inputs.shape
+
+        self.net.to(self.device)
 
         self.opt.zero_grad()
         outputs = self.net(inputs)

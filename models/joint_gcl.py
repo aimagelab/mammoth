@@ -9,33 +9,30 @@ import torch
 from torch.optim import SGD
 
 from models.utils.continual_model import ContinualModel
-from utils.args import add_management_args, add_experiment_args, ArgumentParser
+from utils.args import ArgumentParser
 from utils.status import progress_bar
-
-
-def get_parser() -> ArgumentParser:
-    parser = ArgumentParser(description='Joint training: a strong, simple baseline.')
-    add_management_args(parser)
-    add_experiment_args(parser)
-    return parser
 
 
 class JointGCL(ContinualModel):
     NAME = 'joint_gcl'
     COMPATIBILITY = ['general-continual']
 
+    @staticmethod
+    def get_parser() -> ArgumentParser:
+        parser = ArgumentParser(description='Joint training: a strong, simple baseline.')
+        return parser
+
     def __init__(self, backbone, loss, args, transform):
         super(JointGCL, self).__init__(backbone, loss, args, transform)
         self.old_data = []
         self.old_labels = []
-        self.current_task = 0
 
     def end_task(self, dataset):
         # reinit network
         self.net = dataset.get_backbone()
         self.net.to(self.device)
         self.net.train()
-        self.opt = SGD(self.net.parameters(), lr=self.args.lr)
+        self.opt = self.get_optimizer()
 
         # gather data
         all_data = torch.cat(self.old_data)
@@ -56,7 +53,7 @@ class JointGCL(ContinualModel):
                 self.opt.step()
                 progress_bar(i, math.ceil(len(all_data) / self.args.batch_size), e, 'J', loss.item())
 
-    def observe(self, inputs, labels, not_aug_inputs):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.old_data.append(inputs.data)
         self.old_labels.append(labels.data)
         return 0
