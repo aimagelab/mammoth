@@ -82,13 +82,9 @@ class SLCA(ContinualModel):
         self.opt, self.scheduler = self.net.get_optimizer()
         self.net._network.train()
 
-        self.old_epoch = 0
         self.opt.zero_grad()
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=0):
-        if self.old_epoch != epoch:
-            self.old_epoch = epoch
-            self.scheduler.step()
 
         labels = labels.long()
         logits = self.net._network(inputs, bcb_no_grad=self.net.fix_bcb)['logits']

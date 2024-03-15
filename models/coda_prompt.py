@@ -69,8 +69,7 @@ class CodaPrompt(ContinualModel):
         self.old_epoch = 0
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=0):
-        if self.scheduler and self.old_epoch != epoch:
-            self.scheduler.step()
+        if self.old_epoch != epoch:
             self.old_epoch = epoch
             self.iteration = 0
         labels = labels.long()
