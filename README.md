@@ -129,6 +129,7 @@ We have created a [WIKI](https://aimagelab.github.io/mammoth/)! Check it out for
 
 ***Get in touch if we missed your awesome work!***
 
+- A Unified and General Framework for Continual Learning (**ICLR2024**) [[paper](https://arxiv.org/pdf/2403.13249.pdf)] [[code](https://github.com/joey-wang123/CL-refresh-learning)]
 - Decoupling Learning and Remembering: a Bilevel Memory Framework with Knowledge Projection for Task-Incremental Learning (**CVPR2023**) [[paper](https://openaccess.thecvf.com/content/CVPR2023/papers/Sun_Decoupling_Learning_and_Remembering_A_Bilevel_Memory_Framework_With_Knowledge_CVPR_2023_paper.pdf)] [[code](https://github.com/SunWenJu123/BMKP)]
 - Regularizing Second-Order Influences for Continual Learning (**CVPR2023**) [[paper](https://openaccess.thecvf.com/content/CVPR2023/papers/Sun_Regularizing_Second-Order_Influences_for_Continual_Learning_CVPR_2023_paper.pdf)] [[code](https://github.com/feifeiobama/InfluenceCL)]
 - Sparse Coding in a Dual Memory System for Lifelong Learning (**CVPR2023**) [[paper](https://arxiv.org/pdf/2301.05058.pdf)] [[code](https://github.com/NeurAI-Lab/SCoMMER)]
