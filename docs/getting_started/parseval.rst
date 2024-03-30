@@ -3,6 +3,7 @@
 Mammoth parseval
 ================
 
-.. todo::
+.. admonition:: TO BE CONTINUED!
+    :class: tip
 
     To be written

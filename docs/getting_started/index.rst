@@ -19,7 +19,7 @@ Mammoth logs all the results and metrics under the ``data/results`` directory (b
 WandB
 ~~~~~
 
-For advanced logging, including loss values, metrics, and hyperparameters, you can use [WandB](https://wandb.ai/) by providing both ``--wandb_project`` and ``--wandb_entity`` arguments. If you don't want to use WandB, you can simply omit these arguments.
+For advanced logging, including loss values, metrics, and hyperparameters, you can use `WandB <https://wandb.ai/>`_ by providing both ``--wandb_project`` and ``--wandb_entity`` arguments. If you don't want to use WandB, you can simply omit these arguments.
 
 .. tip::
     By default, all arguments, loss values, and metrics are logged. Thanks to the **autolog_wandb** (:ref:`module-models`), all the variables created in the **observe** that contain *loss* or start with *_wandb_* will be logged. Thus, in order to loss all the separate loss values, you can simply add ``loss = loss + loss1 + loss2`` to the **observe** function.

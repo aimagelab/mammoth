@@ -643,7 +643,7 @@ def _create_vision_transformer(variant, pretrained=False, **kwargs):
     if 'siglip' in variant and kwargs.get('global_pool', None) != 'map':
         strict = False
 
-    pretrained_cfg = resolve_pretrained_cfg(variant, pretrained_cfg=kwargs.pop('pretrained_cfg', None))
+    pretrained_cfg = resolve_pretrained_cfg(variant, pretrained_cfg=kwargs.pop('pretrained_cfg', None) or default_cfgs[variant])
     pretrained_cfg.custom_load = True
 
     return build_model_with_cfg(
