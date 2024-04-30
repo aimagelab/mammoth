@@ -165,7 +165,10 @@ Other Awesome CL works using Mammoth
 
     **Get in touch if we missed your awesome work!**
 
-
+`- Prediction Error-based Classification for Class-Incremental Learning (ICLR2024) <(https://arxiv.org/pdf/2305.18806)>`_ (`code <(https://github.com/michalzajac-ml/pec)>`_)
+`- TriRE: A Multi-Mechanism Learning Paradigm for Continual Knowledge Retention and Promotion (NeurIPS2023) <(https://arxiv.org/pdf/2310.08217.pdf)>`_ (`code <(https://github.com/NeurAI-Lab/TriRE)>`_)
+`- Overcoming Recency Bias of Normalization Statistics in Continual Learning: Balance and Adaptation (NeurIPS2023) <(https://arxiv.org/pdf/2310.08855.pdf)>`_ (`code <(https://github.com/lvyilin/AdaB2N)>`_)
+`- A Unified and General Framework for Continual Learning (ICLR2024) <(https://arxiv.org/pdf/2403.13249.pdf)>`_ (`code <(https://github.com/joey-wang123/CL-refresh-learning)>`_)
 `- Decoupling Learning and Remembering: a Bilevel Memory Framework with Knowledge Projection for Task-Incremental Learning (CVPR2023) <(https://openaccess.thecvf.com/content/CVPR2023/papers/Sun_Decoupling_Learning_and_Remembering_A_Bilevel_Memory_Framework_With_Knowledge_CVPR_2023_paper.pdf)>`_ (`code <(https://github.com/SunWenJu123/BMKP)>`_)
 `- Regularizing Second-Order Influences for Continual Learning (CVPR2023) <(https://openaccess.thecvf.com/content/CVPR2023/papers/Sun_Regularizing_Second-Order_Influences_for_Continual_Learning_CVPR_2023_paper.pdf)>`_ (`code <(https://github.com/feifeiobama/InfluenceCL)>`_)
 `- Sparse Coding in a Dual Memory System for Lifelong Learning (CVPR2023) <(https://arxiv.org/pdf/2301.05058.pdf)>`_ (`code <(https://github.com/NeurAI-Lab/SCoMMER)>`_)

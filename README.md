@@ -127,8 +127,11 @@ We have created a [WIKI](https://aimagelab.github.io/mammoth/)! Check it out for
 
 ### Other Awesome CL works using Mammoth
 
-***Get in touch if we missed your awesome work!***
+**_Get in touch if we missed your awesome work!_**
 
+- Prediction Error-based Classification for Class-Incremental Learning (**ICLR2024**) [[paper](https://arxiv.org/pdf/2305.18806)] [[code](https://github.com/michalzajac-ml/pec)]
+- TriRE: A Multi-Mechanism Learning Paradigm for Continual Knowledge Retention and Promotion (**NeurIPS2023**) [[paper](https://arxiv.org/pdf/2310.08217.pdf)] [[code](https://github.com/NeurAI-Lab/TriRE)]
+- Overcoming Recency Bias of Normalization Statistics in Continual Learning: Balance and Adaptation (**NeurIPS2023**) [[paper](https://arxiv.org/pdf/2310.08855.pdf)] [[code](https://github.com/lvyilin/AdaB2N)]
 - A Unified and General Framework for Continual Learning (**ICLR2024**) [[paper](https://arxiv.org/pdf/2403.13249.pdf)] [[code](https://github.com/joey-wang123/CL-refresh-learning)]
 - Decoupling Learning and Remembering: a Bilevel Memory Framework with Knowledge Projection for Task-Incremental Learning (**CVPR2023**) [[paper](https://openaccess.thecvf.com/content/CVPR2023/papers/Sun_Decoupling_Learning_and_Remembering_A_Bilevel_Memory_Framework_With_Knowledge_CVPR_2023_paper.pdf)] [[code](https://github.com/SunWenJu123/BMKP)]
 - Regularizing Second-Order Influences for Continual Learning (**CVPR2023**) [[paper](https://openaccess.thecvf.com/content/CVPR2023/papers/Sun_Regularizing_Second-Order_Influences_for_Continual_Learning_CVPR_2023_paper.pdf)] [[code](https://github.com/feifeiobama/InfluenceCL)]
@@ -141,6 +144,7 @@ We have created a [WIKI](https://aimagelab.github.io/mammoth/)! Check it out for
 - ConSlide: Asynchronous Hierarchical Interaction Transformer with Breakup-Reorganize Rehearsal for Continual Whole Slide Image Analysis (**ICCV2023**) [[paper](https://openaccess.thecvf.com/content/ICCV2023/papers/Huang_ConSlide_Asynchronous_Hierarchical_Interaction_Transformer_with_Breakup-Reorganize_Rehearsal_for_Continual_ICCV_2023_paper.pdf)] [[code](https://github.com/HKU-MedAI/ConSlide)]
 - CBA: Improving Online Continual Learning via Continual Bias Adaptor (**ICCV2023**) [[paper](https://arxiv.org/pdf/2308.06925.pdf)] [[code](https://github.com/wqza/CBA-online-CL)]
 - Neuro-Symbolic Continual Learning: Knowledge, Reasoning Shortcuts and Concept Rehearsal (**ICML2023**) [[paper](https://arxiv.org/pdf/2302.01242.pdf)] [[code](https://github.com/ema-marconato/NeSy-CL)]
+- Learnability and Algorithm for Continual Learning (**ICML2023**) [[paper](https://arxiv.org/pdf/2306.12646.pdf)] [[code](https://github.com/k-gyuhak/CLOOD)]
 - Pretrained Language Model in Continual Learning: a Comparative Study (**ICLR2022**) [[paper](https://openreview.net/pdf?id=figzpGMrdD)] [[code](https://github.com/wutong8023/PLM4CL)]
 - Representational continuity for unsupervised continual learning (**ICLR2022**) [[paper](https://openreview.net/pdf?id=9Hrka5PA7LW)] [[code](https://github.com/divyam3897/UCL)]
 - Continual Normalization: Rethinking Batch Normalization for Online Continual Learning (**ICLR2022**) [[paper](https://arxiv.org/abs/2203.16102)] [[code](https://github.com/phquang/Continual-Normalization)]
@@ -151,7 +155,6 @@ We have created a [WIKI](https://aimagelab.github.io/mammoth/)! Check it out for
 - Consistency is the key to further Mitigating Catastrophic Forgetting in Continual Learning (**CoLLAs2022**) [[paper](https://arxiv.org/pdf/2207.04998.pdf)] [[code](https://github.com/NeurAI-Lab/ConsistencyCL)]
 - Self-supervised models are continual learners (**CVPR2022**) [[paper](https://arxiv.org/abs/2112.04215)] [[code](https://github.com/DonkeyShot21/cassle)]
 - Learning from Students: Online Contrastive Distillation Network for General Continual Learning (**IJCAI2022**) [[paper](https://www.ijcai.org/proceedings/2022/0446.pdf)] [[code](https://github.com/lijincm/OCD-Net)]
-
 
 ### Contributing
 
