@@ -249,7 +249,8 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
                                            batch_size=setting.args.batch_size, shuffle=False)
     setting.test_loaders.append(test_loader)
     setting.train_loader = train_loader
-
-    setting.i += setting.N_CLASSES_PER_TASK
-    setting.c_task += 1
+    
+    if setting.SETTING == 'task-il' or setting.SETTING == 'class-il':
+        setting.i += setting.N_CLASSES_PER_TASK
+        setting.c_task += 1
     return train_loader, test_loader

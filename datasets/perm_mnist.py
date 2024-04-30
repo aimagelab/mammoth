@@ -5,6 +5,7 @@
 
 from typing import Tuple
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
@@ -15,7 +16,6 @@ from backbone.MNISTMLP import MNISTMLP
 from datasets.transforms.permutation import Permutation
 from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
 from utils.conf import base_path
-
 
 class MyMNIST(MNIST):
     """
@@ -73,7 +73,7 @@ class PermutedMNIST(ContinualDataset):
     SIZE = (28, 28)
 
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
-        transform = transforms.Compose((transforms.ToTensor(), Permutation()))
+        transform = transforms.Compose((transforms.ToTensor(), Permutation(np.prod(PermutedMNIST.SIZE))))
 
         train_dataset = MyMNIST(base_path() + 'MNIST',
                                 train=True, download=True, transform=transform)
@@ -85,7 +85,7 @@ class PermutedMNIST(ContinualDataset):
 
     @staticmethod
     def get_backbone():
-        return MNISTMLP(28 * 28, PermutedMNIST.N_CLASSES_PER_TASK)
+        return MNISTMLP(np.prod(PermutedMNIST.SIZE), PermutedMNIST.N_CLASSES_PER_TASK)
 
     @staticmethod
     def get_transform():

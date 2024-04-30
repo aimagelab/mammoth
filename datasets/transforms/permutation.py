@@ -11,11 +11,11 @@ class Permutation(object):
     Defines a fixed permutation for a numpy array.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, size) -> None:
         """
         Initializes the permutation.
         """
-        self.perm = None
+        self.perm = np.random.permutation(size)
 
     def __call__(self, sample: np.ndarray) -> np.ndarray:
         """
@@ -28,8 +28,6 @@ class Permutation(object):
             permuted image
         """
         old_shape = sample.shape
-        if self.perm is None:
-            self.perm = np.random.permutation(len(sample.flatten()))
 
         return sample.flatten()[self.perm].reshape(old_shape)
 
