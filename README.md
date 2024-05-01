@@ -127,11 +127,12 @@ We have created a [WIKI](https://aimagelab.github.io/mammoth/)! Check it out for
 
 ### Other Awesome CL works using Mammoth
 
-***Get in touch if we missed your awesome work!***
+**_Get in touch if we missed your awesome work!_**
 
-- A Unified Approach to Domain Incremental Learning with Memory: Theory and Algorithm (**NeurIPS2023**) [[paper](https://arxiv.org/pdf/2310.12244.pdf)] [[code](https://github.com/Wang-ML-Lab/unified-continual-learning)]
+- Prediction Error-based Classification for Class-Incremental Learning (**ICLR2024**) [[paper](https://arxiv.org/pdf/2305.18806)] [[code](https://github.com/michalzajac-ml/pec)]
 - TriRE: A Multi-Mechanism Learning Paradigm for Continual Knowledge Retention and Promotion (**NeurIPS2023**) [[paper](https://arxiv.org/pdf/2310.08217.pdf)] [[code](https://github.com/NeurAI-Lab/TriRE)]
 - Overcoming Recency Bias of Normalization Statistics in Continual Learning: Balance and Adaptation (**NeurIPS2023**) [[paper](https://arxiv.org/pdf/2310.08855.pdf)] [[code](https://github.com/lvyilin/AdaB2N)]
+- A Unified and General Framework for Continual Learning (**ICLR2024**) [[paper](https://arxiv.org/pdf/2403.13249.pdf)] [[code](https://github.com/joey-wang123/CL-refresh-learning)]
 - Decoupling Learning and Remembering: a Bilevel Memory Framework with Knowledge Projection for Task-Incremental Learning (**CVPR2023**) [[paper](https://openaccess.thecvf.com/content/CVPR2023/papers/Sun_Decoupling_Learning_and_Remembering_A_Bilevel_Memory_Framework_With_Knowledge_CVPR_2023_paper.pdf)] [[code](https://github.com/SunWenJu123/BMKP)]
 - Regularizing Second-Order Influences for Continual Learning (**CVPR2023**) [[paper](https://openaccess.thecvf.com/content/CVPR2023/papers/Sun_Regularizing_Second-Order_Influences_for_Continual_Learning_CVPR_2023_paper.pdf)] [[code](https://github.com/feifeiobama/InfluenceCL)]
 - Sparse Coding in a Dual Memory System for Lifelong Learning (**CVPR2023**) [[paper](https://arxiv.org/pdf/2301.05058.pdf)] [[code](https://github.com/NeurAI-Lab/SCoMMER)]
@@ -154,7 +155,6 @@ We have created a [WIKI](https://aimagelab.github.io/mammoth/)! Check it out for
 - Consistency is the key to further Mitigating Catastrophic Forgetting in Continual Learning (**CoLLAs2022**) [[paper](https://arxiv.org/pdf/2207.04998.pdf)] [[code](https://github.com/NeurAI-Lab/ConsistencyCL)]
 - Self-supervised models are continual learners (**CVPR2022**) [[paper](https://arxiv.org/abs/2112.04215)] [[code](https://github.com/DonkeyShot21/cassle)]
 - Learning from Students: Online Contrastive Distillation Network for General Continual Learning (**IJCAI2022**) [[paper](https://www.ijcai.org/proceedings/2022/0446.pdf)] [[code](https://github.com/lijincm/OCD-Net)]
-
 
 ### Contributing
 
