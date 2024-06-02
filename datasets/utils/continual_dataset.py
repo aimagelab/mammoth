@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from argparse import Namespace
+import sys
 from typing import Tuple
 
 import torch
@@ -13,9 +14,9 @@ import torch.optim.lr_scheduler as scheds
 from torch.utils.data import DataLoader, Dataset
 
 from utils.conf import create_seeded_dataloader
+from datasets.utils import DEFAULT_ARGS
 
-
-class ContinualDataset:
+class ContinualDataset(object):
     """
     A base class for defining continual learning datasets.
 
@@ -40,6 +41,11 @@ class ContinualDataset:
     N_CLASSES: int
     SIZE: Tuple[int]
     AVAIL_SCHEDS = ['multisteplr']
+
+    # def __new__(cls, *args, **kwargs):
+    #     if not hasattr(cls, 'instance'):
+    #         cls.instance = super(ContinualDataset, cls).__new__(cls)
+    #     return cls.instance
 
     def __init__(self, args: Namespace) -> None:
         """
@@ -77,6 +83,15 @@ class ContinualDataset:
 
         if not all((self.NAME, self.SETTING, self.N_CLASSES_PER_TASK, self.N_TASKS, self.SIZE, self.N_CLASSES)):
             raise NotImplementedError('The dataset must be initialized with all the required fields.')
+
+    def update_default_args(self):
+        # global DEFAULT_ARGS
+        for k,v in DEFAULT_ARGS[self.args.dataset].items():
+            if getattr(self.args, k) is None:
+                setattr(self.args, k, v)
+            else:
+                if getattr(self.args, k) != v:
+                    print('Warning: {} set to {} instead of {}.'.format(k, getattr(self.args, k), v), file=sys.stderr)
 
     def get_offsets(self, task_idx: int = None):
         """
@@ -154,15 +169,13 @@ class ContinualDataset:
         """Returns the number of epochs to be used for the current dataset."""
         raise NotImplementedError
 
-    @staticmethod
-    def get_batch_size():
+    def get_batch_size(self):
         """Returns the batch size to be used for the current dataset."""
         raise NotImplementedError
 
-    @classmethod
-    def get_minibatch_size(cls):
+    def get_minibatch_size(self):
         """Returns the minibatch size to be used for the current dataset."""
-        return cls.get_batch_size()
+        return self.get_batch_size()
 
 
 def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):

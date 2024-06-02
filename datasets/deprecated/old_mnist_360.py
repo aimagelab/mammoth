@@ -206,10 +206,5 @@ class MNIST360(GCLDataset):
     def get_denormalization_transform():
         return None
 
-    @staticmethod
-    def get_batch_size() -> int:
-        return 16
-
-    @staticmethod
-    def get_minibatch_size() -> int:
+    def get_batch_size(self) -> int:
         return 16

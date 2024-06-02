@@ -57,7 +57,8 @@ def parse_args():
         args (argparse.Namespace): Parsed command line arguments.
     """
     from models import get_all_models, get_model_class
-    from datasets import get_dataset_names, get_dataset_class
+    from datasets import get_dataset_names, get_dataset
+    # from datasets.utils import update_default_args
 
     parser = ArgumentParser(description='mammoth', allow_abbrev=False, add_help=False)
     parser.add_argument('--model', type=custom_str_underscore, help='Model name.', choices=list(get_all_models().keys()))
@@ -105,14 +106,7 @@ def parse_args():
         add_experiment_args(parser)
         args = parser.parse_args()
 
-    tmp_dset_class = get_dataset_class(args)
-    n_epochs = tmp_dset_class.get_epochs()
-    if args.n_epochs is None:
-        args.n_epochs = n_epochs
-    else:
-        if args.n_epochs != n_epochs:
-            print('Warning: n_epochs set to {} instead of {}.'.format(args.n_epochs, n_epochs), file=sys.stderr)
-
+    get_dataset(args).update_default_args()
     args.model = models_dict[args.model]
 
     if args.lr_scheduler is not None:

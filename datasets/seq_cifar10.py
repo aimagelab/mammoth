@@ -16,6 +16,7 @@ from datasets.seq_tinyimagenet import base_path
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
+from datasets.utils import set_default_from_args
 
 
 class TCIFAR10(CIFAR10):
@@ -136,10 +137,10 @@ class SequentialCIFAR10(ContinualDataset):
         transform = DeNormalize(SequentialCIFAR10.MEAN, SequentialCIFAR10.STD)
         return transform
 
-    @staticmethod
-    def get_epochs():
+    @set_default_from_args('n_epochs')
+    def get_epochs(self):
         return 50
 
-    @staticmethod
-    def get_batch_size():
+    @set_default_from_args('batch_size')
+    def get_batch_size(self):
         return 32

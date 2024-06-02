@@ -15,6 +15,7 @@ from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
 from utils import smart_joint
 from utils.conf import base_path
+from datasets.utils import set_default_from_args
 
 
 class MyCUB200(Dataset):
@@ -197,10 +198,10 @@ class SequentialCUB200(ContinualDataset):
         transform = DeNormalize(SequentialCUB200.MEAN, SequentialCUB200.STD)
         return transform
 
-    @staticmethod
-    def get_batch_size():
+    @set_default_from_args('batch_size')
+    def get_batch_size(self):
         return 16
 
-    @staticmethod
-    def get_epochs():
+    @set_default_from_args('n_epochs')
+    def get_epochs(self):
         return 30

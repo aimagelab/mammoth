@@ -223,7 +223,7 @@ class Buffer:
             def transform(x): return x
 
         selected_samples = self.examples[choice] if mask_task_out is None else self.examples[samples_mask][choice]
-        ret_tuple = (torch.stack([transform(ee) for ee in selected_samples.cpu()]).to(target_device),)
+        ret_tuple = (apply_transform(selected_samples, transform=transform).to(target_device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str)
@@ -250,7 +250,7 @@ class Buffer:
 
         if transform is None:
             def transform(x): return x
-        ret_tuple = (apply_transform(self.examples[:len(self)], transform=transform).to(target_device),)
+        ret_tuple = (apply_transform(self.examples[indexes], transform=transform).to(target_device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str).to(target_device)

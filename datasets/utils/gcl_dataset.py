@@ -35,8 +35,7 @@ class GCLDataset(ContinualDataset):
         if not all((self.NAME, self.SETTING, self.SIZE)):
             raise NotImplementedError('The dataset must be initialized with all the required fields.')
 
-    @staticmethod
-    def get_epochs():
+    def get_epochs(self):
         """
         A GCLDataset is not compatible with multiple epochs.
         """

@@ -7,6 +7,7 @@ This module contains various image augmentation functions and classes.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import PIL
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -30,6 +31,8 @@ def apply_transform(x: torch.Tensor, transform) -> torch.Tensor:
     """
 
     if isinstance(transform, KorniaAugNoGrad):
+        if isinstance(x, PIL.Image.Image):
+            x = torch.as_tensor(np.array(x, copy=True)).permute((2, 0, 1))
         return transform(x)
     else:
         return torch.stack([transform(xi) for xi in x.cpu()], dim=0).to(x.device)

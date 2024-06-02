@@ -130,7 +130,7 @@ class Ccic(ContinualModel):
         real_mask = mask[:real_batch_size]
 
         if (~real_mask).sum() > 0:
-            unsup_aug_inputs = self.weak_transform(not_aug_inputs[~real_mask].repeat_interleave(self.args.k_aug, 0))
+            unsup_aug_inputs = self.transform(not_aug_inputs[~real_mask].repeat_interleave(self.args.k_aug, 0))
         else:
             unsup_aug_inputs = torch.zeros((0,)).to(self.device)
 

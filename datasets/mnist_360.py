@@ -19,7 +19,7 @@ from datasets.transforms.rotation import IncrementalRotation
 from datasets.utils.gcl_dataset import GCLDataset
 from datasets.utils.validation import get_train_val
 from utils.conf import base_path, create_seeded_dataloader
-
+from datasets.utils import set_default_from_args
 
 def custom_collate_unbatch(batch) -> List[torch.Tensor]:
     """
@@ -316,12 +316,12 @@ class SequentialMNIST360(GCLDataset):
     def get_denormalization_transform():
         return None
 
-    @staticmethod
-    def get_batch_size() -> int:
+    @set_default_from_args('batch_size')
+    def get_batch_size(self) -> int:
         return 16
 
-    @staticmethod
-    def get_epochs():
+    @set_default_from_args('n_epochs')
+    def get_epochs(self):
         return 1
 
 

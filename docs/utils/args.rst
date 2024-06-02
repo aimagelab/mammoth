@@ -10,14 +10,14 @@ Arguments
 
             - Default: None
 
-            - Choices: seq-tinyimg, seq-tinyimg-r, perm-mnist, seq-cifar10, seq-cifar100-224, seq-cub200, rot-mnist, seq-cifar100, seq-cifar100-224-rs, seq-mnist, mnist-360
+            - Choices: mnist-360, perm-mnist, rot-mnist, seq-cifar10, seq-cifar100, seq-cifar100-224, seq-cifar100-224-rs, seq-cub200, seq-imagenet-r, seq-mnist, seq-tinyimg, seq-tinyimg-r
 
-**\-\-model** : <function custom_str_underscore at 0x7fe9f47a42c0>
+**\-\-model** : <function custom_str_underscore at 0x0000020CC8BEE340>
             *Help*: Model name.
 
             - Default: None
 
-            - Choices: agem, agem-r, ewc-on, derpp-lider, gdumb-lider, slca, dualprompt, si, bic, er-ace, fdr, gdumb, gem, gss, joint-gcl, lwf, mer, rpc, twf, ccic, der, derpp, er, hal, icarl, l2p, lucir, lwf-mc, sgd, xder, xder-ce, xder-rpc, pnn, er-ace-lider, icarl-lider, coda-prompt
+            - Choices: agem, agem-r, bic, ccic, coda-prompt, der, derpp, derpp-lider, dualprompt, er, er-ace, er-ace-lider, ewc-on, fdr, gdumb, gdumb-lider, gem, gss, hal, icarl, icarl-lider, joint-gcl, l2p, lucir, lwf, lwf-mc, mer, pnn, rpc, sgd, si, slca, twf, xder, xder-ce, xder-rpc
 
 **\-\-lr** : <class 'float'>
             *Help*: Learning rate.
@@ -170,6 +170,13 @@ Arguments
 
 **\-\-notes** : <class 'str'>
             *Help*: Notes for this run.
+
+            - Default: None
+
+            - Choices: 
+
+**\-\-wandb_name** : <class 'str'>
+            *Help*: Wandb name for this run. Overrides the default name (`args.model`).
 
             - Default: None
 

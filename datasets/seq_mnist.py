@@ -15,6 +15,7 @@ from backbone.MNISTMLP import MNISTMLP
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
 from utils.conf import base_path
+from datasets.utils import set_default_from_args
 
 
 class MyMNIST(MNIST):
@@ -108,10 +109,10 @@ class SequentialMNIST(ContinualDataset):
     def get_denormalization_transform():
         return None
 
-    @staticmethod
-    def get_batch_size():
+    @set_default_from_args('batch_size')
+    def get_batch_size(self):
         return 64
 
-    @staticmethod
-    def get_epochs():
+    @set_default_from_args('n_epochs')
+    def get_epochs(self):
         return 1
