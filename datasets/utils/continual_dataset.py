@@ -42,11 +42,6 @@ class ContinualDataset(object):
     SIZE: Tuple[int]
     AVAIL_SCHEDS = ['multisteplr']
 
-    # def __new__(cls, *args, **kwargs):
-    #     if not hasattr(cls, 'instance'):
-    #         cls.instance = super(ContinualDataset, cls).__new__(cls)
-    #     return cls.instance
-
     def __init__(self, args: Namespace) -> None:
         """
         Initializes the train and test lists of dataloaders.
@@ -85,13 +80,24 @@ class ContinualDataset(object):
             raise NotImplementedError('The dataset must be initialized with all the required fields.')
 
     def update_default_args(self):
-        # global DEFAULT_ARGS
+        """
+        Updates the default arguments with the ones specified in the dataset class.
+        Default arguments are defined in the DEFAULT_ARGS dictionary and set by the 'set_default_from_args' decorator.
+
+        Returns:
+            Namespace: the updated arguments
+        """
+
         for k,v in DEFAULT_ARGS[self.args.dataset].items():
+            assert hasattr(self.args, k), f'Argument {k} set by the `set_default_from_args` decorator is not present in the arguments.'
+
             if getattr(self.args, k) is None:
                 setattr(self.args, k, v)
             else:
                 if getattr(self.args, k) != v:
                     print('Warning: {} set to {} instead of {}.'.format(k, getattr(self.args, k), v), file=sys.stderr)
+        
+        return self.args
 
     def get_offsets(self, task_idx: int = None):
         """
