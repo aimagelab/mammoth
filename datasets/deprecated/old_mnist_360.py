@@ -104,7 +104,7 @@ class MNIST360(GCLDataset):
                 tmp_train_dataset.transform = transforms.Compose(
                     [train_rotation, transforms.ToTensor()])
                 self.train_loaders[-1].append(create_seeded_dataloader(self.args,
-                    tmp_train_dataset, batch_size=1, shuffle=True, num_workers=0))
+                                                                       tmp_train_dataset, batch_size=1, shuffle=True, num_workers=0))
                 self.remaining_training_items[-1].append(
                     tmp_train_dataset.data.shape[0])
 
@@ -127,7 +127,7 @@ class MNIST360(GCLDataset):
             tmp_test_dataset.transform = transforms.Compose(
                 [test_rotation, transforms.ToTensor()])
             self.test_loaders.append(create_seeded_dataloader(self.args, tmp_test_dataset,
-                                                batch_size=self.args.batch_size, shuffle=True, num_workers=0))
+                                                              batch_size=self.args.batch_size, shuffle=True, num_workers=0))
 
     def get_train_data(self) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
@@ -158,7 +158,7 @@ class MNIST360(GCLDataset):
             x_train.append(i_x_train)
             y_train.append(i_y_train)
             x_train_naug.append(i_x_train_naug)
-        x_train, y_train, x_train_naug = torch.cat(x_train),\
+        x_train, y_train, x_train_naug = torch.cat(x_train), \
             torch.cat(y_train), torch.cat(x_train_naug)
 
         self.active_remaining_training_items[0] -= batch_size_0

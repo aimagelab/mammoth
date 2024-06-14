@@ -8,6 +8,7 @@ import inspect
 # Default arguments defined by the datasets
 DEFAULT_ARGS = {}
 
+
 def is_static_call(*args) -> bool:
     """
     Check if the function is called without any arguments.
@@ -17,7 +18,8 @@ def is_static_call(*args) -> bool:
     """
     return len(args) == 0
 
-def set_default_from_args(arg_name: str) -> function:
+
+def set_default_from_args(arg_name: str):
     """
     Decorator to define the default value of an argument of a given dataset.
 
@@ -39,11 +41,11 @@ def set_default_from_args(arg_name: str) -> function:
 
         @functools.wraps(func)
         def wrapper(*args):
-            
+
             if is_static_call(*args):
                 # if no arguments are passed, return the function
                 return func(None)
-            
+
             return func(*args)
         return wrapper
     return decorator_set_default_from_args

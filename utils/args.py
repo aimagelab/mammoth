@@ -106,6 +106,12 @@ def add_management_args(parser: ArgumentParser) -> None:
                         help='Perform inference intra-task at every `eval_epochs`.')
     parser.add_argument('--inference_only', action="store_true",
                         help='Perform inference only for each task (no training).')
+    parser.add_argument('-O', '--code_optimization', type=int, default=0, choices=[0, 1, 2, 3],
+                        help='Optimization level for the code.'
+                        '0: no optimization.'
+                        '1: Use TF32, if available.'
+                        '2: Use BF16, if available.'
+                        '3: Use BF16 and `torch.compile`. BEWARE: torch.compile may break your code if you change the model after the first run! Use with caution.')
 
 
 def add_rehearsal_args(parser: ArgumentParser) -> None:

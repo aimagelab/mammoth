@@ -165,7 +165,7 @@ class SequentialCUB200(ContinualDataset):
         train_dataset = MyCUB200(base_path() + 'CUB200', train=True,
                                  download=True, transform=transform)
         test_dataset = CUB200(base_path() + 'CUB200', train=False,
-                                download=True, transform=test_transform)
+                              download=True, transform=test_transform)
 
         train, test = store_masked_loaders(
             train_dataset, test_dataset, self)

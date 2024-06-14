@@ -21,6 +21,7 @@ from datasets.utils.validation import get_train_val
 from utils.conf import base_path, create_seeded_dataloader
 from datasets.utils import set_default_from_args
 
+
 def custom_collate_unbatch(batch) -> List[torch.Tensor]:
     """
     Custom collate function to unbatch a batch of data.

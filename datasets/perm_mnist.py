@@ -18,6 +18,7 @@ from datasets.utils.continual_dataset import ContinualDataset, store_masked_load
 from utils.conf import base_path
 from datasets.utils import set_default_from_args
 
+
 class MyMNIST(MNIST):
     """
     Overrides the MNIST dataset to change the getitem function.

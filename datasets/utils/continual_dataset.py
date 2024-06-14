@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader, Dataset
 from utils.conf import create_seeded_dataloader
 from datasets.utils import DEFAULT_ARGS
 
+
 class ContinualDataset(object):
     """
     A base class for defining continual learning datasets.
@@ -88,7 +89,7 @@ class ContinualDataset(object):
             Namespace: the updated arguments
         """
 
-        for k,v in DEFAULT_ARGS[self.args.dataset].items():
+        for k, v in DEFAULT_ARGS[self.args.dataset].items():
             assert hasattr(self.args, k), f'Argument {k} set by the `set_default_from_args` decorator is not present in the arguments.'
 
             if getattr(self.args, k) is None:
@@ -96,7 +97,7 @@ class ContinualDataset(object):
             else:
                 if getattr(self.args, k) != v:
                     print('Warning: {} set to {} instead of {}.'.format(k, getattr(self.args, k), v), file=sys.stderr)
-        
+
         return self.args
 
     def get_offsets(self, task_idx: int = None):
@@ -268,7 +269,7 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
                                            batch_size=setting.args.batch_size, shuffle=False)
     setting.test_loaders.append(test_loader)
     setting.train_loader = train_loader
-    
+
     if setting.SETTING == 'task-il' or setting.SETTING == 'class-il':
         setting.i += setting.N_CLASSES_PER_TASK
         setting.c_task += 1
