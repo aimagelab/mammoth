@@ -5,7 +5,7 @@ from utils.main import main, parse_args
 import pytest
 
 
-def test_l2p():
+def test_dualprompt():
     sys.argv = ['mammoth',
                 '--model',
                 'dualprompt',

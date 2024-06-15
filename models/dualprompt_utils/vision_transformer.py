@@ -1,18 +1,5 @@
-""" Vision Transformer (ViT) in PyTorch
-
-A clone of ViT from timm's implementation, with dualprompt implementation.
-
-Copyright 2020, Ross Wightman
-# ------------------------------------------
-# Modification:
-# Added code for dualprompt implementation
-# -- Jaeho Lee, dlwogh9344@khu.ac.kr
-# ------------------------------------------
-"""
 import math
 import logging
-from functools import partial
-from collections import OrderedDict
 
 import torch
 import torch.nn as nn
@@ -20,14 +7,13 @@ import torch.nn.functional as F
 import torch.utils.checkpoint
 
 from timm.models.helpers import named_apply
-from timm.models.layers import PatchEmbed, Mlp, DropPath, trunc_normal_
+from timm.models.layers import trunc_normal_
 
-from backbone.vit import Attention, Block, create_vision_transformer, VisionTransformer as MammothVP, get_init_weights_vit
+from backbone.vit import Attention, create_vision_transformer, VisionTransformer as MammothVP, get_init_weights_vit
 from models.dualprompt_utils.prompt import EPrompt
 from models.dualprompt_utils.attention import PreT_Attention
 
 _logger = logging.getLogger(__name__)
-
 
 class VisionTransformer(MammothVP):
 
@@ -36,8 +22,18 @@ class VisionTransformer(MammothVP):
             top_k=None, batchwise_prompt=False, prompt_key_init='uniform', head_type='token', use_prompt_mask=False,
             use_g_prompt=False, g_prompt_length=None, g_prompt_layer_idx=None, use_prefix_tune_for_g_prompt=False,
             use_e_prompt=False, e_prompt_layer_idx=None, use_prefix_tune_for_e_prompt=False, same_key_value=False, args=None, **kwargs):
-        super().__init__(args=args, **kwargs)
-        
+
+        if not (use_g_prompt or use_e_prompt):
+            attn_layer = Attention
+        elif not (use_prefix_tune_for_g_prompt or use_prefix_tune_for_e_prompt):
+            # Prompt tunning
+            attn_layer = Attention
+        else:
+            # Prefix tunning
+            attn_layer = PreT_Attention
+
+        super().__init__(args=args, attn_layer=attn_layer, **kwargs)
+
         self.prompt_pool = prompt_pool
         self.head_type = head_type
         self.use_prompt_mask = use_prompt_mask
@@ -91,15 +87,6 @@ class VisionTransformer(MammothVP):
                                     prompt_key_init=prompt_key_init, num_layers=num_e_prompt, use_prefix_tune_for_e_prompt=use_prefix_tune_for_e_prompt,
                                     num_heads=self.num_heads, same_key_value=same_key_value)
 
-        if not (use_g_prompt or use_e_prompt):
-            attn_layer = Attention
-        elif not (use_prefix_tune_for_g_prompt or use_prefix_tune_for_e_prompt):
-            # Prompt tunning
-            attn_layer = Attention
-        else:
-            # Prefix tunning
-            attn_layer = PreT_Attention
-
         self.total_prompt_len = 0
         if self.prompt_pool:
             if not self.use_prefix_tune_for_g_prompt:
@@ -107,13 +94,6 @@ class VisionTransformer(MammothVP):
             if not self.use_prefix_tune_for_e_prompt:
                 self.total_prompt_len += prompt_length * top_k * len(self.e_prompt_layer_idx)
 
-        self.blocks = nn.Sequential(*[
-            Block(
-                dim=self.embed_dim, num_heads=self.num_heads, mlp_ratio=self.mlp_ratio, qkv_bias=self.qkv_bias, init_values=self.init_values,
-                drop=self.pos_drop.p, attn_drop=self.attn_drop_rate, drop_path=self.dpr[i], norm_layer=self.norm_layer, act_layer=self.act_layer, attn_layer=attn_layer)
-            for i in range(self.depth)])
-
-        # Classifier Head
         self.head = nn.Linear(self.embed_dim, self.num_classes) if self.num_classes > 0 else nn.Identity()
 
         if self.weight_init != 'skip':

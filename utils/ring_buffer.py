@@ -13,6 +13,7 @@ import numpy as np
 import torch
 from torchvision import transforms
 
+from utils.augmentations import apply_transform
 
 def ring(num_seen_examples: int, buffer_portion_size: int, task: int) -> int:
     return num_seen_examples % buffer_portion_size + task * buffer_portion_size
@@ -94,11 +95,11 @@ class RingBuffer:
         if size > populated_portion_length:
             size = populated_portion_length
 
-        choice = torch.from_numpy(np.random.choice(populated_portion_length, size=size, replace=False)).to(self.device, dtype=torch.long)
+        choice = torch.from_numpy(np.random.choice(populated_portion_length, size=size, replace=False))
         if transform is None:
             def transform(x): return x
-        ret_tuple = (torch.stack([transform(ee)
-                                  for ee in self.examples[choice].cpu()]).to(target_device),)
+        
+        ret_tuple = (apply_transform(self.examples[choice], transform=transform).to(target_device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str)
@@ -129,8 +130,7 @@ class RingBuffer:
         target_device = self.device if device is None else device
         if transform is None:
             def transform(x): return x
-        ret_tuple = (torch.stack([transform(ee)
-                                  for ee in self.examples.cpu()]).to(target_device),)
+        ret_tuple = (apply_transform(self.examples[choice], transform=transform).to(target_device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str)

@@ -97,7 +97,7 @@ class SequentialCIFAR10(ContinualDataset):
          transforms.ToTensor(),
          transforms.Normalize(MEAN, STD)])
 
-    TEST_TRANSFORM = transforms.Compose([transforms.Resize(224), transforms.ToTensor(), transforms.Normalize(MEAN, STD)])
+    TEST_TRANSFORM = transforms.Compose([transforms.ToTensor(), transforms.Normalize(MEAN, STD)])
 
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         """Class method that returns the train and test loaders."""

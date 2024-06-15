@@ -110,7 +110,7 @@ class Attention(nn.Module):
         self.proj = LoRALinear(dim, dim, 0.)
         self.proj_drop = nn.Dropout(proj_drop)
 
-    def forward(self, x, AB: dict = None):
+    def forward(self, x, AB: dict = None, **kwargs):
         """
         Forward pass of the attention layer.
         Supports `AB` for LoRA-style parameters (checkout docs for `VisionTransformer.forward`).
@@ -163,7 +163,8 @@ class LayerScale(nn.Module):
 
 class Mlp(nn.Module):
     """
-    MLP as used in Vision Transformer, MLP-Mixer and related networks
+    MLP as used in Vision Transformer, MLP-Mixer and related networks.
+    Adapted to support LoRA-style parameters.
     """
 
     def __init__(
@@ -192,7 +193,15 @@ class Mlp(nn.Module):
         self.fc2 = LoRALinear(hidden_features, out_features, bias=bias[1], lora_dropout=0.)
         self.drop2 = nn.Dropout(drop_probs[1])
 
-    def forward(self, x: torch.Tensor, AB: dict = None):
+    def forward(self, x: torch.Tensor, AB: dict = None, **kwargs):
+        """
+        Forward pass of the MLP layer.
+        Supports `AB` for LoRA-style parameters (checkout docs for `VisionTransformer.forward`).
+
+        Args:
+            x: Input tensor
+            AB: Dictionary containing LoRA-style parameters for the layer
+        """
         AB_fc1 = None
         AB_fc2 = None
 
@@ -238,9 +247,9 @@ class Block(nn.Module):
         self.ls2 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
         self.drop_path2 = DropPath(drop_path) if drop_path > 0. else nn.Identity()
 
-    def forward(self, x, AB: dict = None, **kwargs):
-        x = x + self.drop_path1(self.ls1(self.attn(self.norm1(x), AB)))
-        x = x + self.drop_path2(self.ls2(self.mlp(self.norm2(x), AB)))
+    def forward(self, x, **kwargs):
+        x = x + self.drop_path1(self.ls1(self.attn(self.norm1(x), **kwargs)))
+        x = x + self.drop_path2(self.ls2(self.mlp(self.norm2(x), **kwargs)))
         return x
 
 
@@ -276,6 +285,7 @@ class VisionTransformer(MammothBackbone):
             norm_layer=None,
             act_layer=None,
             block_fn=Block,
+            attn_layer=Attention,
             args=None
     ):
         """
@@ -300,6 +310,9 @@ class VisionTransformer(MammothBackbone):
             embed_layer (nn.Module): patch embedding layer
             norm_layer: (nn.Module): normalization layer
             act_layer: (nn.Module): MLP activation layer
+            block_fn: (nn.Module): transformer block
+            attn_layer: (nn.Module): attention layer
+            args: (Namespace): optional command-line arguments
         """
         super().__init__()
         assert global_pool in ('', 'avg', 'token')
@@ -308,6 +321,7 @@ class VisionTransformer(MammothBackbone):
         norm_layer = norm_layer or partial(nn.LayerNorm, eps=1e-6)
         self.act_layer = act_layer or nn.GELU
 
+        self.attn_layer = attn_layer
         self.norm_layer = norm_layer
         self.num_heads = num_heads
         self.weight_init = weight_init
@@ -351,7 +365,8 @@ class VisionTransformer(MammothBackbone):
                 attn_drop=attn_drop_rate,
                 drop_path=self.dpr[i],
                 norm_layer=norm_layer,
-                act_layer=self.act_layer
+                act_layer=self.act_layer,
+                attn_layer=attn_layer
             )
             for i in range(depth)])
         self.norm = norm_layer(embed_dim) if not use_fc_norm else nn.Identity()

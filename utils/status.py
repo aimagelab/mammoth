@@ -82,7 +82,7 @@ class ProgressBar:
         self.last_iter = i
 
         # Print the progress bar every update_every iterations
-        if (i and i % self.update_every == 0) or i == max_iter - 1:
+        if (i and i % self.update_every == 0) or (max_iter is not None and i == max_iter - 1):
             progress = min(float((i + 1) / max_iter), 1) if max_iter else 0
             progress_bar = ('█' * int(50 * progress)) + ('┈' * (50 - int(50 * progress))) if max_iter else '~N/A~'
             if self.joint:

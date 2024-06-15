@@ -138,6 +138,7 @@ class ContinualModel(nn.Module):
         self.net = backbone
         self.loss = loss
         self.args = args
+        self.original_transform = transform
         self.transform = transform
         self.dataset = get_dataset(self.args)
         self.N_CLASSES = self.dataset.N_CLASSES

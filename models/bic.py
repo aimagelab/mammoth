@@ -44,7 +44,6 @@ class BiC(ContinualModel):
         super().__init__(backbone, loss, args, transform)
 
         dd = get_dataset(args)
-        self.transform = transform
         self.buffer = Buffer(self.args.buffer_size)
 
         self.lamda = 0

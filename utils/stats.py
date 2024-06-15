@@ -55,9 +55,19 @@ class track_system_stats:
             t()
 
     cpu_res, gpu_res = t.cpu_res, t.gpu_res
+
+    Args:
+        logger (Logger): external logger.
+        disabled (bool): If True, the context manager will not track the memory usage.
     """
 
     def get_stats(self):
+        """
+        Get the memory usage of the system.
+
+        Returns:
+            tuple: (cpu_res, gpu_res) where cpu_res is the memory usage of the CPU and gpu_res is the memory usage of the GPU.
+        """
         cpu_res = None
         if get_memory_mb is not None:
             cpu_res = get_memory_mb()['total']
@@ -97,8 +107,28 @@ class track_system_stats:
         if self.disabled:
             return
 
-        self._it += 1
         cpu_res, gpu_res = self.get_stats()
+        self.update_stats(cpu_res, gpu_res)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.disabled:
+            return
+
+        cpu_res, gpu_res = self.get_stats()
+        self.update_stats(cpu_res, gpu_res)
+
+    def update_stats(self, cpu_res, gpu_res):
+        """
+        Update the memory usage statistics.
+        
+        Args:
+            cpu_res (float): The memory usage of the CPU.
+            gpu_res (list): The memory usage of the GPUs.
+        """
+        if self.disabled:
+            return
+
+        self._it += 1
 
         alpha = 1 / self._it
         self.avg_cpu_res = self.avg_cpu_res + alpha * (cpu_res - self.avg_cpu_res)
@@ -110,34 +140,24 @@ class track_system_stats:
         if self.logger is not None:
             self.logger.log_system_stats(cpu_res, gpu_res)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.disabled:
-            return
-
-        self._it += 1
+    def print_stats(self):
+        """
+        Print the memory usage statistics.
+        """
+        
         cpu_res, gpu_res = self.get_stats()
-
-        alpha = 1 / self._it
-        self.avg_cpu_res = self.avg_cpu_res + alpha * (cpu_res - self.avg_cpu_res) if self._it > 1 else cpu_res
-        self.avg_gpu_res = {g: (g_res + alpha * (g_res - self.avg_gpu_res[g])) for g, g_res in enumerate(gpu_res)}
-
-        self.max_cpu_res = max(self.max_cpu_res, cpu_res)
-        self.max_gpu_res = {g: max(self.max_gpu_res[g], g_res) for g, g_res in enumerate(gpu_res)}
-
-        if self.logger is not None:
-            self.logger.log_system_stats(cpu_res, gpu_res)
 
         # Print initial, average, final, and max memory usage
         print("System stats:")
         if cpu_res is not None:
-            print(f"\tInitial CPU memory usage: {self.initial_cpu_res:.2f} MB")
-            print(f"\tAverage CPU memory usage: {self.avg_cpu_res:.2f} MB")
-            print(f"\tFinal CPU memory usage: {cpu_res:.2f} MB")
-            print(f"\tMax CPU memory usage: {self.max_cpu_res:.2f} MB")
+            print(f"\tInitial CPU memory usage: {self.initial_cpu_res:.2f} MB", flush=True)
+            print(f"\tAverage CPU memory usage: {self.avg_cpu_res:.2f} MB", flush=True)
+            print(f"\tFinal CPU memory usage: {cpu_res:.2f} MB", flush=True)
+            print(f"\tMax CPU memory usage: {self.max_cpu_res:.2f} MB", flush=True)
 
         if gpu_res is not None:
             for gpu_id, g_res in enumerate(gpu_res):
-                print(f"\tInitial GPU {gpu_id} memory usage: {self.initial_gpu_res[gpu_id]:.2f} MB")
-                print(f"\tAverage GPU {gpu_id} memory usage: {self.avg_gpu_res[gpu_id]:.2f} MB")
-                print(f"\tFinal GPU {gpu_id} memory usage: {g_res:.2f} MB")
-                print(f"\tMax GPU {gpu_id} memory usage: {self.max_gpu_res[gpu_id]:.2f} MB")
+                print(f"\tInitial GPU {gpu_id} memory usage: {self.initial_gpu_res[gpu_id]:.2f} MB", flush=True)
+                print(f"\tAverage GPU {gpu_id} memory usage: {self.avg_gpu_res[gpu_id]:.2f} MB", flush=True)
+                print(f"\tFinal GPU {gpu_id} memory usage: {g_res:.2f} MB", flush=True)
+                print(f"\tMax GPU {gpu_id} memory usage: {self.max_gpu_res[gpu_id]:.2f} MB", flush=True)

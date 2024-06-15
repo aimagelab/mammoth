@@ -89,6 +89,9 @@ class ContinualDataset(object):
             Namespace: the updated arguments
         """
 
+        if self.args.dataset not in DEFAULT_ARGS: # no default args for this dataset
+            return self.args
+
         for k, v in DEFAULT_ARGS[self.args.dataset].items():
             assert hasattr(self.args, k), f'Argument {k} set by the `set_default_from_args` decorator is not present in the arguments.'
 
