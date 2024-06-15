@@ -41,6 +41,7 @@ def test_twf_random_init(dataset, resize_maps):
                 '0',
                 '--seed',
                 '0',
+                # '-O2',
                 '--debug_mode',
                 '1']
 

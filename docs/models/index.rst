@@ -91,9 +91,9 @@ The base class **ContinualModel** provides a few properties that are automatical
 
 .. admonition:: Transforms and dataset-related Attributes
 
-    - **transform**: the transform applied to the input data. This attribute is automatically set during the initialization of the model and is defined by the chosen **dataset** (see :ref:`module-datasets` for more details).
+    - **transform**: the transform applied to the input data. This attribute is automatically set during the initialization of the model and is defined by the chosen **dataset** (see :ref:`module-datasets` for more details). In most cases, this is implemented as a `kornia <https://github.com/kornia/kornia>`_ transform (translated from PIL thanks to `to_kornia_transform` in :ref:`module-kornia_utils`). However, if a transform is not supported by the **to_kornia_transform**, it is implemented as `PIL <https://pillow.readthedocs.io/en/stable/>`_.
 
-    - **weak_transform**: this function is used to apply a new transform to a `torch.Tensor <https://pytorch.org/docs/stable/tensors.html>`_. In most cases, this is implemented as a `kornia <https://github.com/kornia/kornia>`_ transform. However, if a transform is not supported by the **to_kornia_transform**, it is implemented as `PIL <https://pillow.readthedocs.io/en/stable/>`_.
+    - **original_transform**: the original transform defined by the chosen **dataset**. This is implemented as a `PIL <https://pillow.readthedocs.io/en/stable/>`_ transform (and not translated into `kornia` as the **transform**).
 
     - **normalization_transform**: the transform used to normalize the input data. As for the **weak_transform**, this is implemented as a `kornia <https://github.com/kornia/kornia>`_ transform if possible, otherwise it is implemented as `PIL <https://pillow.readthedocs.io/en/stable/>`_.
 

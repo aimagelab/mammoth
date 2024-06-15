@@ -10,14 +10,14 @@ Arguments
 
             - Default: None
 
-            - Choices: seq-tinyimg, seq-tinyimg-r, perm-mnist, seq-cifar10, seq-cifar100-224, seq-cub200, rot-mnist, seq-cifar100, seq-cifar100-224-rs, seq-mnist, mnist-360
+            - Choices: mnist-360, perm-mnist, rot-mnist, seq-cifar10, seq-cifar100, seq-cifar100-224, seq-cifar100-224-rs, seq-cifar10-224, seq-cifar10-224-rs, seq-cub200, seq-imagenet-r, seq-mnist, seq-tinyimg, seq-tinyimg-r
 
-**\-\-model** : <function custom_str_underscore at 0x7fe9f47a42c0>
+**\-\-model** : <function custom_str_underscore at 0x7f86c21c43a0>
             *Help*: Model name.
 
             - Default: None
 
-            - Choices: agem, agem-r, ewc-on, derpp-lider, gdumb-lider, slca, dualprompt, si, bic, er-ace, fdr, gdumb, gem, gss, joint-gcl, lwf, mer, rpc, twf, ccic, der, derpp, er, hal, icarl, l2p, lucir, lwf-mc, sgd, xder, xder-ce, xder-rpc, pnn, er-ace-lider, icarl-lider, coda-prompt
+            - Choices: agem, agem-r, bic, ccic, coda-prompt, der, derpp, derpp-lider, dualprompt, er, er-ace, er-ace-lider, ewc-on, fdr, gdumb, gdumb-lider, gem, gss, hal, icarl, icarl-lider, joint-gcl, l2p, lucir, lwf, lwf-mc, mer, pnn, rpc, sgd, si, slca, twf, xder, xder-ce, xder-rpc
 
 **\-\-lr** : <class 'float'>
             *Help*: Learning rate.
@@ -175,6 +175,13 @@ Arguments
 
             - Choices: 
 
+**\-\-wandb_name** : <class 'str'>
+            *Help*: Wandb name for this run. Overrides the default name (`args.model`).
+
+            - Default: None
+
+            - Choices: 
+
 **\-\-non_verbose** : <class 'int'>
             *Help*: Make progress bars non verbose
 
@@ -244,6 +251,13 @@ Arguments
             - Default: False
 
             - Choices: 
+
+**\-\-code_optimization** : <class 'int'>
+            *Help*: Optimization level for the code.0: no optimization.1: Use TF32, if available.2: Use BF16, if available.3: Use BF16 and `torch.compile`. BEWARE: torch.compile may break your code if you change the model after the first run! Use with caution.
+
+            - Default: 0
+
+            - Choices: 0, 1, 2, 3
 
 .. rubric:: REEHARSAL-ONLY ARGS
 

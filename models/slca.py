@@ -51,7 +51,7 @@ class SLCA(ContinualModel):
         print("-" * 20)
 
         args.milestones = args.milestones.split(',')
-        n_features = backbone._network.feature_dim
+        n_features = backbone._network.convnet.feature_dim
         super().__init__(backbone, loss, args, transform)
         self.class_means = torch.zeros(self.num_classes, n_features).to(self.device)
         self.class_covs = torch.zeros(self.num_classes, n_features, n_features).to(self.device)

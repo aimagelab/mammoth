@@ -29,9 +29,9 @@ class XDerCE(ContinualModel):
         parser.add_argument('--eta', type=float, default=0.1)
         parser.add_argument('--m', type=float, default=0.3)
 
-        parser.add_argument('--past_constraint', type=int, default=1, choices=[0,1], help='Enable past constraint')
-        parser.add_argument('--future_constraint', type=int, default=1, choices=[0,1], help='Enable future constraint')
-        parser.add_argument('--align_bn', type=int, default=0, choices=[0,1], help='Use BatchNorm alignment')
+        parser.add_argument('--past_constraint', type=int, default=1, choices=[0, 1], help='Enable past constraint')
+        parser.add_argument('--future_constraint', type=int, default=1, choices=[0, 1], help='Enable future constraint')
+        parser.add_argument('--align_bn', type=int, default=0, choices=[0, 1], help='Use BatchNorm alignment')
 
         return parser
 
@@ -144,7 +144,7 @@ class XDerCE(ContinualModel):
 
         self.opt.zero_grad()
 
-        with bn_track_stats(self, self.args.align_bn==0 or self.current_task == 0):
+        with bn_track_stats(self, self.args.align_bn == 0 or self.current_task == 0):
             outputs = self.net(inputs)
 
         # Present head
@@ -159,7 +159,7 @@ class XDerCE(ContinualModel):
                 buf_inputs1 = torch.cat([buf_inputs1, inputs[:self.args.minibatch_size // self.current_task]])
 
             buf_outputs1 = self.net(buf_inputs1)
-            
+
             if self.args.align_bn:
                 buf_inputs1 = buf_inputs1[:self.args.minibatch_size]
                 buf_outputs1 = buf_outputs1[:self.args.minibatch_size]
@@ -171,7 +171,7 @@ class XDerCE(ContinualModel):
             # Label Replay Loss (past heads)
             buf_idx2, buf_inputs2, buf_labels2, buf_logits2, buf_tl2 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
-            with bn_track_stats(self, self.args.align_bn==0):
+            with bn_track_stats(self, self.args.align_bn == 0):
                 buf_outputs2 = self.net(buf_inputs2)
 
             _, offset = self.dataset.get_offsets(self.current_task + (1 if self.current_task == 0 else 0))

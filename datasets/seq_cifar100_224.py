@@ -5,13 +5,14 @@ from typing import Tuple
 import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from timm import create_model
 
+from backbone.vit import vit_base_patch16_224_prompt_prototype
 from datasets.seq_cifar100 import TCIFAR100, MyCIFAR100
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
 from utils.conf import base_path
+from datasets.utils import set_default_from_args
 
 
 class SequentialCIFAR100224(ContinualDataset):
@@ -70,12 +71,7 @@ class SequentialCIFAR100224(ContinualDataset):
 
     @staticmethod
     def get_backbone(hookme=False):
-        model_name = 'vit_base_patch16_224'
-        return create_model(
-            model_name,
-            pretrained=True,
-            num_classes=SequentialCIFAR100224.N_CLASSES
-        )
+        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=SequentialCIFAR100224.N_CLASSES_PER_TASK * SequentialCIFAR100224.N_TASKS)
 
     @staticmethod
     def get_loss():
@@ -91,10 +87,10 @@ class SequentialCIFAR100224(ContinualDataset):
         transform = DeNormalize(SequentialCIFAR100224.MEAN, SequentialCIFAR100224.STD)
         return transform
 
-    @staticmethod
-    def get_epochs():
+    @set_default_from_args('n_epochs')
+    def get_epochs(self):
         return 5
 
-    @staticmethod
-    def get_batch_size():
+    @set_default_from_args('batch_size')
+    def get_batch_size(self):
         return 128

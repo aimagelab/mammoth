@@ -16,6 +16,8 @@ from backbone.MNISTMLP import MNISTMLP
 from datasets.transforms.permutation import Permutation
 from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
 from utils.conf import base_path
+from datasets.utils import set_default_from_args
+
 
 class MyMNIST(MNIST):
     """
@@ -103,10 +105,10 @@ class PermutedMNIST(ContinualDataset):
     def get_loss():
         return F.cross_entropy
 
-    @staticmethod
-    def get_batch_size() -> int:
+    @set_default_from_args('batch_size')
+    def get_batch_size(self) -> int:
         return 128
 
-    @staticmethod
-    def get_epochs():
+    @set_default_from_args('n_epochs')
+    def get_epochs(self):
         return 1

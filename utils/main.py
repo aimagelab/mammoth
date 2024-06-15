@@ -35,7 +35,7 @@ sys.path.append(mammoth_path + '/models')
 
 from utils import create_if_not_exists, custom_str_underscore
 from utils.args import add_management_args, add_experiment_args
-from utils.conf import base_path
+from utils.conf import base_path, get_device
 from utils.distributed import make_dp
 from utils.best_args import best_args
 from utils.conf import set_random_seed
@@ -57,7 +57,8 @@ def parse_args():
         args (argparse.Namespace): Parsed command line arguments.
     """
     from models import get_all_models, get_model_class
-    from datasets import get_dataset_names, get_dataset_class
+    from datasets import get_dataset_names, get_dataset
+    # from datasets.utils import update_default_args
 
     parser = ArgumentParser(description='mammoth', allow_abbrev=False, add_help=False)
     parser.add_argument('--model', type=custom_str_underscore, help='Model name.', choices=list(get_all_models().keys()))
@@ -105,14 +106,7 @@ def parse_args():
         add_experiment_args(parser)
         args = parser.parse_args()
 
-    tmp_dset_class = get_dataset_class(args)
-    n_epochs = tmp_dset_class.get_epochs()
-    if args.n_epochs is None:
-        args.n_epochs = n_epochs
-    else:
-        if args.n_epochs != n_epochs:
-            print('Warning: n_epochs set to {} instead of {}.'.format(args.n_epochs, n_epochs), file=sys.stderr)
-
+    get_dataset(args).update_default_args()
     args.model = models_dict[args.model]
 
     if args.lr_scheduler is not None:
@@ -150,11 +144,20 @@ def main(args=None):
     if args is None:
         args = parse_args()
 
+    device = get_device()
+    args.device = device
+
     # set base path
     base_path(args.base_path)
 
-    os.putenv("MKL_SERVICE_FORCE_INTEL", "1")
-    os.putenv("NPY_MKL_FORCE_INTEL", "1")
+    if args.code_optimization != 0:
+        torch.set_float32_matmul_precision('high' if args.code_optimization == 1 else 'medium')
+        print("INFO: code_optimization is set to", args.code_optimization, file=sys.stderr)
+        print(f"Using {torch.get_float32_matmul_precision()} precision for matmul.", file=sys.stderr)
+
+        if args.code_optimization == 2:
+            if not torch.cuda.is_bf16_supported():
+                raise NotImplementedError('BF16 is not supported on this machine.')
 
     # Add uuid, timestamp and hostname for logging
     args.conf_jobnum = str(uuid.uuid4())
@@ -172,8 +175,25 @@ def main(args=None):
         args.minibatch_size = args.batch_size
 
     backbone = dataset.get_backbone()
+    if args.code_optimization == 3:
+        # check if the model is compatible with torch.compile
+        # from https://pytorch.org/tutorials/intermediate/torch_compile_tutorial.html
+        if torch.cuda.get_device_capability()[0] >= 7 and os.name != 'nt':
+            print("================ Compiling model with torch.compile ================")
+            print("WARNING: `torch.compile` may break your code if you change the model after the first run!")
+            print("This includes adding classifiers for new tasks, changing the backbone, etc.")
+            print("ALSO: some models CHANGE the backbone during initialization. Remember to call `torch.compile` again after that.")
+            print("====================================================================")
+            backbone = torch.compile(backbone)
+        else:
+            if torch.cuda.get_device_capability()[0] < 7:
+                raise NotImplementedError('torch.compile is not supported on this machine.')
+            else:
+                raise Exception(f"torch.compile is not supported on Windows. Check https://github.com/pytorch/pytorch/issues/90768 for updates.")
+
     loss = dataset.get_loss()
     model = get_model(args, backbone, loss, dataset.get_transform())
+    # model = torch.compile(model)
 
     if args.distributed == 'dp':
         if args.batch_size < torch.cuda.device_count():

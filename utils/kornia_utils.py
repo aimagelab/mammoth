@@ -6,6 +6,39 @@ from torchvision import transforms
 from kornia.augmentation.container.params import ParamItem
 
 
+class KorniaMultiAug(kornia.augmentation.AugmentationSequential):
+    """
+    A custom augmentation class that performs multiple Kornia augmentations.
+
+    Args:
+        n_augs (int): The number of augmentations to apply.
+        aug_list (List[kornia.augmentation.AugmentationBase2D]): The list of augmentations to apply.
+
+    Methods:
+        forward: Overrides the forward method to apply the transformation without gradient computation.
+    """
+
+    def __init__(self, n_augs: int, aug_list: List[kornia.augmentation.AugmentationBase2D]):
+        super().__init__(*aug_list)
+        self.n_augs = n_augs
+
+    @torch.no_grad()
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Overrides the forward method to apply the transformation without gradient computation.
+
+        Args:
+            x (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The transformed tensor.
+        """
+        original_shape = x.shape
+        x = super().forward(x.repeat(self.n_augs, 1, 1, 1))
+        x = x.reshape(self.n_augs, *original_shape)
+        return x
+
+
 class KorniaAugNoGrad(kornia.augmentation.AugmentationSequential):
     """
     A custom augmentation class that applies Kornia augmentations without gradient computation.

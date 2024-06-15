@@ -7,7 +7,6 @@ from utils.augmentations import cutmix_data
 from utils.status import progress_bar
 
 
-
 def fit_buffer(self: LiderOptimizer, epochs):
     optimizer = SGD(self.get_parameters(), lr=self.args.maxlr, momentum=self.args.optim_mom, weight_decay=self.args.optim_wd, nesterov=self.args.optim_nesterov)
     scheduler = lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=1, T_mult=2, eta_min=self.args.minlr)

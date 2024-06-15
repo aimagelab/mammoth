@@ -10,10 +10,10 @@ args = parser.parse_args()
 
 grid_combinations = [
     {
-        'name':'experiment_name',
+        'name': 'experiment_name',
         'combos': {
-            'lr': [0.01,0.3,0.05],
-            'buffer_size':[500],
+            'lr': [0.01, 0.3, 0.05],
+            'buffer_size': [500],
             'model': ['er'],
             'dataset': ['seq-cifar10']
         },
@@ -41,17 +41,16 @@ for experiment in grid_combinations:
             for k, v in zip(combos.keys(), c):
                 if v is None:
                     continue
-                if type(k) == tuple:
-                    for i in range(len(k)):
+if isinstance(k,                 if)                    for i in range(len(k)):
                         ll += f" --{k[i]}={v[i]}"
                 else:
                     ll += f" --{k}={v}"
-            f.write(ll+'\n')
+            f.write(ll +'\n')
             all_configs.append(ll)
 
             clines += 1
 
-    print(f"Total ({filenam}):",clines)
+    print(f"Total ({filenam}):", clines)
 
 print(f'{folder}list_all_grid.txt')
 clines = 0
@@ -60,5 +59,5 @@ with open(f'{folder}list_all_grid.txt', 'w') as f:
         f.write(ll + '\n')
         clines += 1
 
-print("Total (all):",clines)
+print("Total (all):", clines)
 print('')

@@ -68,7 +68,7 @@ class MNISTMLP(MammothBackbone):
 
         if returnt == 'out':
             return out
-        elif returnt == 'all':
+        elif returnt == 'full':
             return (out, feats)
 
         raise NotImplementedError("Unknown return type")

@@ -9,6 +9,8 @@ from datasets import get_dataset
 from torchvision import transforms
 import torch.nn.functional as F
 
+from utils.kornia_utils import KorniaMultiAug
+
 
 def batch_iterate(size: int, batch_size: int):
     n_chunks = size // batch_size
@@ -51,7 +53,7 @@ class TwF(ContinualModel):
             backbone, loss, args, transform)
 
         self.buffer = Buffer(self.args.buffer_size)
-        self.buf_transform = self.get_custom_double_transform(self.transform.transforms)
+        self.buf_transform = self.get_custom_double_transform(self.original_transform.transforms)
 
         if self.args.loadcheck is None:
             print("Warning: no checkpoint loaded!")
