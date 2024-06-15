@@ -12,7 +12,7 @@ Arguments
 
             - Choices: mnist-360, perm-mnist, rot-mnist, seq-cifar10, seq-cifar100, seq-cifar100-224, seq-cifar100-224-rs, seq-cifar10-224, seq-cifar10-224-rs, seq-cub200, seq-imagenet-r, seq-mnist, seq-tinyimg, seq-tinyimg-r
 
-**\-\-model** : <function custom_str_underscore at 0x7f53029c83a0>
+**\-\-model** : <function custom_str_underscore at 0x7f86c21c43a0>
             *Help*: Model name.
 
             - Default: None

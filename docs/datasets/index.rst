@@ -73,6 +73,19 @@ and are defined in the **SETTING** attribute of each dataset. The following sett
     Mammoth datasets support the **joint** setting, which is a special case of the `class-il` setting where all the classes are available at each task. This is useful to compare the performance of a method on what is usually considered the *upper bound* for the `class-il` setting. To run an experiment on the **joint** setting, simply set the ``--joint`` to ``1``. This will automatically set the **N_CLASSES_PER_TASK** attribute to the total number of classes in the dataset and the **TASKS** attribute to ``1``.
 
 
+Default arguments and command line
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Besides **get_epochs** and **get_batch_size**, datasets can define default arguments that are used to set the default values for the command line arguments.
+This is done with the **set_default_from_args** decorator, which takes the name of the command line argument as input. For example, the following code sets the default value for the `--label_perc` argument:
+
+.. code-block:: python
+
+    @set_default_from_args('--label_perc')
+    def get_label_perc(self):
+        return 0.5
+
+
 Steps to create a new dataset:
 ------------------------------
     
