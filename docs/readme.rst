@@ -16,7 +16,9 @@ Idelly, all the code necessary to run the experiments is included *in the reposi
 
 With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
 
-**NEW**: Join our Discord Server for all your Mammoth-related questions → ![Discord Shield](https://discordapp.com/api/guilds/1164956257392799860/widget.png?style=shield)
+**NEW**: Join our Discord Server for all your Mammoth-related questions!
+
+.. image:: https://discordapp.com/api/guilds/1164956257392799860/widget.png?style=shield
 
 .. list-table::
    :widths: 15 15 15 15 15 15

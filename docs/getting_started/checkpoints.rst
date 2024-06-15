@@ -39,4 +39,4 @@ Mammoth supports loading checkpoint both from the local machine and from a remot
 
 Checkpoints can be loaded either following the mammoth format (defined above) or from a simple ``.pt`` file. In the latter case, the checkpoint file should contain all the parameters of the *backbone* of the model. The other parameters (optimizer, scheduler, etc.) will be initialized from scratch.
 
-The loading functions are available in :ref:`module-checkpoints` and should take care of loading all the parameters regardless of the presence of module parallelism (see :ref:`module-distributed-training`).
+The loading functions are available in :ref:`module-checkpoints` and should take care of loading all the parameters regardless of the presence of module parallelism (see :ref:`module-fast-training`).

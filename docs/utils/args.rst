@@ -10,9 +10,9 @@ Arguments
 
             - Default: None
 
-            - Choices: mnist-360, perm-mnist, rot-mnist, seq-cifar10, seq-cifar100, seq-cifar100-224, seq-cifar100-224-rs, seq-cub200, seq-imagenet-r, seq-mnist, seq-tinyimg, seq-tinyimg-r
+            - Choices: mnist-360, perm-mnist, rot-mnist, seq-cifar10, seq-cifar100, seq-cifar100-224, seq-cifar100-224-rs, seq-cifar10-224, seq-cifar10-224-rs, seq-cub200, seq-imagenet-r, seq-mnist, seq-tinyimg, seq-tinyimg-r
 
-**\-\-model** : <function custom_str_underscore at 0x0000020CC8BEE340>
+**\-\-model** : <function custom_str_underscore at 0x7f53029c83a0>
             *Help*: Model name.
 
             - Default: None
@@ -251,6 +251,13 @@ Arguments
             - Default: False
 
             - Choices: 
+
+**\-\-code_optimization** : <class 'int'>
+            *Help*: Optimization level for the code.0: no optimization.1: Use TF32, if available.2: Use BF16, if available.3: Use BF16 and `torch.compile`. BEWARE: torch.compile may break your code if you change the model after the first run! Use with caution.
+
+            - Default: 0
+
+            - Choices: 0, 1, 2, 3
 
 .. rubric:: REEHARSAL-ONLY ARGS
 
