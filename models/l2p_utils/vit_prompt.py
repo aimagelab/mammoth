@@ -50,7 +50,7 @@ class VisionTransformer(MammothVP):
             top_k=None, batchwise_prompt=False, prompt_key_init='uniform', head_type='token', use_prompt_mask=False, prompt_shuffle=False, args=None, **kwargs):
 
         super().__init__(args=args, **kwargs)
-        
+
         self.num_prefix_tokens = 1 if self.class_token else 0
 
         embed_len = self.pos_embed.shape[1]
@@ -139,6 +139,7 @@ class VisionTransformer(MammothVP):
             return res, feats
         return res
 
+
 def resize_pos_embed(posemb, posemb_new, num_prefix_tokens=1, gs_new=()):
     # Rescale the grid of position embeddings when loading from state_dict. Adapted from
     # https://github.com/google-research/vision_transformer/blob/00883dd691c63a6830751563748663526e811cee/vit_jax/checkpoint.py#L224
@@ -195,6 +196,7 @@ def checkpoint_filter_fn(state_dict, model, adapt_layer_scale=False):
             continue
         out_dict[k] = v
     return out_dict
+
 
 def vit_base_patch16_224_l2p(pretrained=False, **kwargs):
     """ ViT-Base (ViT-B/16) from original paper (https://arxiv.org/abs/2010.11929).

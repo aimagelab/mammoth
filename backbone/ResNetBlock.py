@@ -203,6 +203,7 @@ def resnet18(nclasses: int, nf: int = 64) -> ResNet:
     """
     return ResNet(BasicBlock, [2, 2, 2, 2], nclasses, nf)
 
+
 def resnet34(nclasses: int, nf: int = 64) -> ResNet:
     """
     Instantiates a ResNet34 network.

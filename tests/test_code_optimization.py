@@ -38,6 +38,7 @@ def test_code_optim_erace(code_optimization):
     sys.stderr = sys.stdout
     main()
 
+
 @pytest.mark.parametrize('code_optimization', [0, 1, 2, 3])
 def test_code_optimization_slca(code_optimization):
     sys.argv = ['mammoth',

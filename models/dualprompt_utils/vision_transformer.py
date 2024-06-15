@@ -15,6 +15,7 @@ from models.dualprompt_utils.attention import PreT_Attention
 
 _logger = logging.getLogger(__name__)
 
+
 class VisionTransformer(MammothVP):
 
     def __init__(

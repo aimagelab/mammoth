@@ -118,7 +118,7 @@ class VisionTransformer(MammothVP):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
-    def forward(self, x, prompt=None, q=None, train=False, task_id=None):       
+    def forward(self, x, prompt=None, q=None, train=False, task_id=None):
         B = x.shape[0]
         x = self.patch_embed(x)
 

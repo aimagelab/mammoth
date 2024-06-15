@@ -89,7 +89,7 @@ class ContinualDataset(object):
             Namespace: the updated arguments
         """
 
-        if self.args.dataset not in DEFAULT_ARGS: # no default args for this dataset
+        if self.args.dataset not in DEFAULT_ARGS:  # no default args for this dataset
             return self.args
 
         for k, v in DEFAULT_ARGS[self.args.dataset].items():

@@ -120,7 +120,7 @@ class track_system_stats:
     def update_stats(self, cpu_res, gpu_res):
         """
         Update the memory usage statistics.
-        
+
         Args:
             cpu_res (float): The memory usage of the CPU.
             gpu_res (list): The memory usage of the GPUs.
@@ -144,7 +144,7 @@ class track_system_stats:
         """
         Print the memory usage statistics.
         """
-        
+
         cpu_res, gpu_res = self.get_stats()
 
         # Print initial, average, final, and max memory usage

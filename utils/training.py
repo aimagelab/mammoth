@@ -267,6 +267,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 logger.add_fwt(results, random_results_class,
                                results_mask_classes, random_results_task)
 
+        system_tracker.print_stats()
+
     if not args.disable_log:
         logger.write(vars(args))
         if not args.nowand:

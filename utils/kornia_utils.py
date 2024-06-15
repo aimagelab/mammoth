@@ -38,6 +38,7 @@ class KorniaMultiAug(kornia.augmentation.AugmentationSequential):
         x = x.reshape(self.n_augs, *original_shape)
         return x
 
+
 class KorniaAugNoGrad(kornia.augmentation.AugmentationSequential):
     """
     A custom augmentation class that applies Kornia augmentations without gradient computation.

@@ -476,7 +476,7 @@ class VisionTransformer(MammothBackbone):
             output tensor
         """
         assert returnt in ('out', 'features', 'both', 'full')
-        
+
         x = self.forward_features(x, AB, return_all=returnt == 'full')
         if returnt == 'full':
             all_features = x
