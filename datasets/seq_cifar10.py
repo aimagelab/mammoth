@@ -11,7 +11,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 from torchvision.datasets import CIFAR10
 
-from backbone.ResNet18 import resnet18
+from backbone.ResNetBlock import resnet18
 from datasets.seq_tinyimagenet import base_path
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset,

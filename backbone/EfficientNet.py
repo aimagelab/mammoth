@@ -849,7 +849,7 @@ class EfficientNet(MammothBackbone):
             x = self.classifier(x)
         if returnt == 'out':
             return x
-        elif returnt == 'all':
+        elif returnt == 'full':
             return (x, feats)
 
         raise NotImplementedError("Unknown return type")

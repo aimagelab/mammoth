@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.functional import avg_pool2d, relu
 
-from backbone.ResNet18 import BasicBlock, ResNet, conv3x3
+from backbone.ResNetBlock import BasicBlock, ResNet, conv3x3
 from backbone.utils.modules import AlphaModule, ListModule
 
 

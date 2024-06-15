@@ -9,7 +9,7 @@ import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 
-from backbone.ResNet18 import resnet18
+from backbone.vit import vit_base_patch16_224_prompt_prototype
 from datasets.seq_cifar10 import TCIFAR10, MyCIFAR10
 from datasets.seq_tinyimagenet import base_path
 from datasets.transforms.denormalization import DeNormalize
@@ -20,6 +20,7 @@ from datasets.utils import set_default_from_args
 
 class SequentialCIFAR10224(ContinualDataset):
     """Sequential CIFAR10 Dataset. The images are resized to 224x224.
+    Version with ViT backbone.
 
     Args:
         NAME (str): name of the dataset.
@@ -69,8 +70,7 @@ class SequentialCIFAR10224(ContinualDataset):
 
     @staticmethod
     def get_backbone():
-        return resnet18(SequentialCIFAR10224.N_CLASSES_PER_TASK
-                        * SequentialCIFAR10224.N_TASKS)
+        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=SequentialCIFAR10224.N_CLASSES_PER_TASK * SequentialCIFAR10224.N_TASKS)
 
     @staticmethod
     def get_loss():
