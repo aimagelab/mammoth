@@ -138,6 +138,7 @@ class ContinualModel(nn.Module):
         self.net = backbone
         self.loss = loss
         self.args = args
+        self.original_transform = transform
         self.transform = transform
         self.dataset = get_dataset(self.args)
         self.N_CLASSES = self.dataset.N_CLASSES
@@ -149,11 +150,10 @@ class ContinualModel(nn.Module):
         self._current_task = 0
 
         try:
-            self.weak_transform = to_kornia_transform(transform.transforms[-1].transforms)
+            self.transform = to_kornia_transform(transform.transforms[-1].transforms)
             self.normalization_transform = to_kornia_transform(self.dataset.get_normalization_transform())
         except BaseException:
             print("Warning: could not initialize kornia transforms.")
-            self.weak_transform = transforms.Compose([transforms.ToPILImage(), self.transform])
             self.normalization_transform = transforms.Compose([transforms.ToPILImage(), self.dataset.TEST_TRANSFORM]) if hasattr(
                 self.dataset, 'TEST_TRANSFORM') else transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), self.dataset.get_normalization_transform()])
 

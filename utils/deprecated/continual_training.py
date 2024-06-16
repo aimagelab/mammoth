@@ -12,6 +12,7 @@ from models import get_model
 from models.utils.continual_model import ContinualModel
 from utils.loggers import Logger
 
+from utils.stats import track_system_stats
 from utils.status import progress_bar
 
 try:
@@ -57,31 +58,35 @@ def train(args: Namespace):
     backbone = dataset.get_backbone()
     loss = dataset.get_loss()
     model = get_model(args, backbone, loss, dataset.get_transform())
-    model.net.to(model.device)
 
     if not args.disable_log:
-        logger = Logger(dataset.SETTING, dataset.NAME, model.NAME)
-
+        logger = Logger(args, dataset.SETTING, dataset.NAME, model.NAME)
     if not args.nowand:
         assert wandb is not None, "Wandb not installed, please install it or run without wandb"
         wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args))
         args.wandb_url = wandb.run.get_url()
 
-    model.net.train()
-    epoch, i = 0, 0
-    while not dataset.train_over:
-        inputs, labels, not_aug_inputs = dataset.get_train_data()
-        inputs, labels = inputs.to(model.device), labels.to(model.device)
-        not_aug_inputs = not_aug_inputs.to(model.device)
-        loss = model.observe(inputs, labels, not_aug_inputs)
-        progress_bar(i, dataset.LENGTH // args.batch_size, epoch, 'C', loss)
-        i += 1
+    model.net.to(model.device)
+    torch.cuda.empty_cache()
 
-    if model.NAME == 'joint_gcl':
-        model.end_task(dataset)
+    with track_system_stats(logger) as system_tracker:
+        epoch, i = 0, 0
+        model.net.train()
 
-    acc = evaluate(model, dataset)
-    print('Accuracy:', acc)
+        while not dataset.train_over:
+            inputs, labels, not_aug_inputs = dataset.get_train_data()
+            inputs, labels = inputs.to(model.device), labels.to(model.device)
+            not_aug_inputs = not_aug_inputs.to(model.device)
+            loss = model.observe(inputs, labels, not_aug_inputs)
+            progress_bar(i, dataset.LENGTH // args.batch_size, epoch, 'C', loss)
+            system_tracker()
+            i += 1
+
+        if model.NAME == 'joint_gcl':
+            model.end_task(dataset)
+
+        acc = evaluate(model, dataset)
+        print('Accuracy:', acc)
 
     if not args.disable_log:
         logger.log(acc)

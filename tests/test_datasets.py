@@ -7,6 +7,7 @@ import pytest
 
 @pytest.mark.parametrize('dataset', ['seq-mnist', 'seq-cifar10', 'seq-cifar100', 'seq-tinyimg',
                                      'rot-mnist', 'perm-mnist', 'mnist-360', 'seq-cifar100-224',
+                                     'seq-cifar10-224', 'seq-cifar100-224-rs',
                                      'seq-cifar100-224-rs', 'seq-tinyimg-r', 'seq-cub200', 'seq-imagenet-r'])
 def test_datasets(dataset):
     sys.argv = ['mammoth',
@@ -29,10 +30,18 @@ def test_datasets(dataset):
                 '--debug_mode',
                 '1']
 
+    # clean all downloaded datasets
+    dataset_paths = ['CUB200', 'CIFAR10', 'CIFAR100', 'MNIST', 'TINYIMG', 'imagenet-r']
+    basepath = os.path.dirname(os.path.abspath(__file__))
+    dt_dir = os.path.join(os.path.dirname(basepath), 'data')
+    for path in dataset_paths:
+        if os.path.exists(os.path.join(dt_dir, path)):
+            os.system(f'rm -rf {os.path.join(dt_dir, path)}')
+
     # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_datasets.{dataset}.log'), 'w', encoding='utf-8')
+    if not os.path.exists(os.path.join(basepath, 'logs')):
+        os.mkdir(os.path.join(basepath, 'logs'))
+    sys.stdout = open(os.path.join(basepath, 'logs', f'test_datasets.{dataset}.log'), 'w', encoding='utf-8')
     sys.stderr = sys.stdout
 
     main()

@@ -51,7 +51,7 @@ class ErACE(ContinualModel):
                 self.args.minibatch_size, transform=self.transform, device=self.device)
             loss_re = self.loss(self.net(buf_inputs), buf_labels)
 
-        loss += loss_re
+            loss += loss_re
 
         loss.backward()
         self.opt.step()

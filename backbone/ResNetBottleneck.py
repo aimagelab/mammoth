@@ -146,6 +146,8 @@ class ResNet(MammothBackbone):
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.classifier = nn.Linear(512 * block.expansion, num_classes)
 
+        self.feature_dim = 512 * block.expansion
+
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(
@@ -242,7 +244,7 @@ class ResNet(MammothBackbone):
         elif returnt == 'both':
             return (out, feature)
 
-        raise NotImplementedError("Unknown return type. Must be in ['out', 'features', 'both', 'all'] but got {}".format(returnt))
+        raise NotImplementedError("Unknown return type. Must be in ['out', 'features', 'both', 'full'] but got {}".format(returnt))
 
     def set_grad_filter(self, filter_s: str, enable: bool) -> None:
         negative_mode = filter_s[0] == '~'

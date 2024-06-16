@@ -19,6 +19,7 @@ from datasets.transforms.rotation import IncrementalRotation
 from datasets.utils.gcl_dataset import GCLDataset
 from datasets.utils.validation import get_train_val
 from utils.conf import base_path, create_seeded_dataloader
+from datasets.utils import set_default_from_args
 
 
 def custom_collate_unbatch(batch) -> List[torch.Tensor]:
@@ -138,7 +139,7 @@ class MNIST360(torch.utils.data.Dataset):
             train_dataset = MyMNIST(base_path() + 'MNIST',
                                     train=True, download=True)
             _, test_dataset = get_train_val(
-                train_dataset, test_transform, 'mnist-360', val_perc=self.args.validation / 100)
+                train_dataset, test_transform, 'mnist-360', val_perc=self.args.validation)
         else:
             test_dataset = MNIST(base_path() + 'MNIST',
                                  train=False, download=True)
@@ -316,12 +317,12 @@ class SequentialMNIST360(GCLDataset):
     def get_denormalization_transform():
         return None
 
-    @staticmethod
-    def get_batch_size() -> int:
+    @set_default_from_args('batch_size')
+    def get_batch_size(self) -> int:
         return 16
 
-    @staticmethod
-    def get_epochs():
+    @set_default_from_args('n_epochs')
+    def get_epochs(self):
         return 1
 
 

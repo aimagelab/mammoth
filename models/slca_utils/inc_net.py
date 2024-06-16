@@ -1,11 +1,14 @@
 import copy
+import os
+import sys
 import torch
 from torch import nn
-from models.slca_utils.convs.cifar_resnet import resnet32
-from models.slca_utils.convs.resnet import resnet18, resnet34, resnet50
-from models.slca_utils.convs.linears import SimpleContinualLinear
-from models.slca_utils.convs.vits import vit_base_patch16_224_in21k, vit_base_patch16_224_mocov3
 import torch.nn.functional as F
+from backbone.ResNetBlock import resnet18, resnet34
+from backbone.ResNetBottleneck import resnet50
+from backbone.vit import vit_base_patch16_224_prompt_prototype
+from models.slca_utils.convs.cifar_resnet import resnet32
+from models.slca_utils.convs.linears import SimpleContinualLinear
 
 
 def get_convnet(feature_extractor_type, pretrained=False):
@@ -24,9 +27,25 @@ def get_convnet(feature_extractor_type, pretrained=False):
         return resnet50(pretrained=pretrained)
     elif name == 'vit-b-p16':
         print("Using ViT-B/16 pretrained on ImageNet21k (NO FINETUNE ON IN1K)")
-        return vit_base_patch16_224_in21k(pretrained=pretrained)
+        model = vit_base_patch16_224_prompt_prototype(pretrained=pretrained, pretrain_type='in21k', num_classes=0)
+        model.norm = nn.LayerNorm(model.embed_dim)  # from the original implementation
+        return model
     elif name == 'vit-b-p16-mocov3':
-        return vit_base_patch16_224_mocov3(pretrained=True)
+        model = vit_base_patch16_224_prompt_prototype(pretrained=pretrained, pretrain_type='in21k', num_classes=0)
+
+        del model.head
+        if not os.path.exists('mocov3-vit-base-300ep.pth'):
+            print("Cannot find the pretrained model for MoCoV3-ViT-B/16")
+            print("Please download the model from https://drive.google.com/file/d/1bshDu4jEKztZZvwpTVXSAuCsDoXwCkfy/view?usp=share_link")
+            sys.exit(1)
+
+        ckpt = torch.load('mocov3-vit-base-300ep.pth', map_location='cpu')['model']  # from the original implementation
+        state_dict = model.state_dict()
+        state_dict.update(ckpt)
+        model.load_state_dict(state_dict)
+        del model.norm
+        model.norm = nn.LayerNorm(model.embed_dim)
+        return model
     else:
         raise NotImplementedError('Unknown type {}'.format(feature_extractor_type))
 
@@ -44,11 +63,11 @@ class BaseNet(nn.Module):
         return self.convnet.out_dim
 
     def extract_vector(self, x):
-        return self.convnet(x)['features']
+        return self.convnet(x, returnt='features')
 
     def forward(self, x):
-        x = self.convnet(x)
-        out = self.fc(x['features'])
+        x = self.convnet(x, returnt='features')
+        out = self.fc(x)
         '''
         {
             'fmaps': [x_1, x_2, ..., x_n],
@@ -56,7 +75,7 @@ class BaseNet(nn.Module):
             'logits': logits
         }
         '''
-        out.update(x)
+        out.update({'features': x})
 
         return out
 
@@ -84,19 +103,9 @@ class FinetuneIncrementalNet(BaseNet):
         self.old_fc = None
         self.fc_with_ln = fc_with_ln
 
-    def extract_layerwise_vector(self, x, pool=True):
-        with torch.no_grad():
-            features = self.convnet(x, layer_feat=True)['features']
-        for f_i in range(len(features)):
-            if pool:
-                features[f_i] = features[f_i].mean(1).cpu().numpy()
-            else:
-                features[f_i] = features[f_i][:, 0].cpu().numpy()
-        return features
-
     def update_fc(self, nb_classes, freeze_old=True):
         if self.fc is None:
-            self.fc = self.generate_fc(self.feature_dim, nb_classes)
+            self.fc = self.generate_fc(self.convnet.feature_dim, nb_classes)
         else:
             self.fc.update(nb_classes, freeze_old=freeze_old)
 
@@ -120,10 +129,10 @@ class FinetuneIncrementalNet(BaseNet):
             return fc_out
         if bcb_no_grad:
             with torch.no_grad():
-                x = self.convnet(x)
+                x = self.convnet(x, returnt='features')
         else:
-            x = self.convnet(x)
-        out = self.fc(x['features'])
-        out.update(x)
+            x = self.convnet(x, returnt='features')
+        out = self.fc(x)
+        out.update({'features': x})
 
         return out

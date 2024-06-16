@@ -17,7 +17,7 @@ from models.utils.continual_model import ContinualModel
 def get_backbone(bone, old_cols=None, x_shape=None):
     from backbone.MNISTMLP import MNISTMLP
     from backbone.MNISTMLP_PNN import MNISTMLP_PNN
-    from backbone.ResNet18 import ResNet
+    from backbone.ResNetBlock import ResNet
     from backbone.ResNet18_PNN import resnet18_pnn
 
     if isinstance(bone, MNISTMLP):

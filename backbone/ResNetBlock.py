@@ -110,6 +110,8 @@ class ResNet(MammothBackbone):
         self.layer4 = self._make_layer(block, nf * 8, num_blocks[3], stride=2)
         self.classifier = nn.Linear(nf * 8 * block.expansion, num_classes)
 
+        self.feature_dim = nf * 8 * block.expansion
+
     def to(self, device, **kwargs):
         self.device = device
         return super().to(device, **kwargs)
@@ -185,7 +187,7 @@ class ResNet(MammothBackbone):
                 out_4 if not self.return_prerelu else self.layer4[-1].prerelu
             ]
 
-        raise NotImplementedError("Unknown return type. Must be in ['out', 'features', 'both', 'all'] but got {}".format(returnt))
+        raise NotImplementedError("Unknown return type. Must be in ['out', 'features', 'both', 'full'] but got {}".format(returnt))
 
 
 def resnet18(nclasses: int, nf: int = 64) -> ResNet:
@@ -200,3 +202,17 @@ def resnet18(nclasses: int, nf: int = 64) -> ResNet:
         ResNet network
     """
     return ResNet(BasicBlock, [2, 2, 2, 2], nclasses, nf)
+
+
+def resnet34(nclasses: int, nf: int = 64) -> ResNet:
+    """
+    Instantiates a ResNet34 network.
+
+    Args:
+        nclasses: number of output classes
+        nf: number of filters
+
+    Returns:
+        ResNet network
+    """
+    return ResNet(BasicBlock, [3, 4, 6, 3], nclasses, nf)

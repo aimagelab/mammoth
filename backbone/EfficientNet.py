@@ -155,7 +155,7 @@ def round_filters(filters, global_params):
     multiplier = global_params.width_coefficient
     if not multiplier:
         return filters
-        
+
     divisor = global_params.depth_divisor
     min_depth = global_params.min_depth
     filters *= multiplier
@@ -243,6 +243,7 @@ def get_same_padding_conv2d(image_size=None):
         return Conv2dDynamicSamePadding
     else:
         return partial(Conv2dStaticSamePadding, image_size=image_size)
+
 
 GlobalParams = collections.namedtuple('GlobalParams', [
     'batch_norm_momentum', 'batch_norm_epsilon', 'dropout_rate', 'data_format',
@@ -848,7 +849,7 @@ class EfficientNet(MammothBackbone):
             x = self.classifier(x)
         if returnt == 'out':
             return x
-        elif returnt == 'all':
+        elif returnt == 'full':
             return (x, feats)
 
         raise NotImplementedError("Unknown return type")

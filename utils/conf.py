@@ -29,6 +29,24 @@ def warn_once(*msg):
         print(msg, file=sys.stderr)
 
 
+def get_alloc_memory_all_devices() -> list[int]:
+    """
+    Returns the memory allocated on all the available devices.
+    """
+    gpu_memory = []
+    for i in range(torch.cuda.device_count()):
+        _ = torch.tensor([1]).to(i)
+        gpu_memory.append(torch.cuda.memory_allocated(i))
+    if all(memory == 0 for memory in gpu_memory):
+        print("WARNING: some weird GPU memory issue. "
+              "Using trick from https://discuss.pytorch.org/t/torch-cuda-memory-allocated-returns-0-if-pytorch-no-cuda-memory-caching-1/188796")
+        for i in range(torch.cuda.device_count()):
+            torch.zeros(1).to(i)
+            free_memory, total_memory = torch.cuda.mem_get_info(i)
+            gpu_memory[i] = total_memory - free_memory
+    return gpu_memory
+
+
 def get_device() -> torch.device:
     """
     Returns the least used GPU device if available else MPS or CPU.
@@ -36,11 +54,8 @@ def get_device() -> torch.device:
     def _get_device():
         # get least used gpu by used memory
         if torch.cuda.is_available() and torch.cuda.device_count() > 0:
-            gpu_memory = []
-            for i in range(torch.cuda.device_count()):
-                gpu_memory.append(torch.cuda.memory_allocated(i))
+            gpu_memory = get_alloc_memory_all_devices()
             device = torch.device(f'cuda:{np.argmin(gpu_memory)}')
-            print(f'Using device {device}')
             return device
         try:
             if torch.backends.mps.is_available() and torch.backends.mps.is_built():

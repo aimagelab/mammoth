@@ -24,7 +24,7 @@ def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
     """
     Logs the accuracy values and other metrics.
 
-    All metrics are prefixed with `RESULT_` to be logged on wandb.
+    All metrics are prefixed with `prefix` to be logged on wandb.
 
     Args:
         args: The arguments for logging.
@@ -35,7 +35,7 @@ def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
         epoch: The epoch number (optional).
         prefix: The prefix for the metrics (default="RESULT").
     """
-    mean_acc = print_mean_accuracy(accs, t + 1, setting, joint=args.joint, epoch=epoch)
+    mean_acc = print_mean_accuracy(accs, t + 1 if isinstance(t, (float, int)) else t, setting, joint=args.joint, epoch=epoch)
 
     if not args.disable_log:
         logger.log(mean_acc)
@@ -72,23 +72,23 @@ def print_mean_accuracy(accs: np.ndarray, task_number: int,
         prefix = "Joint Accuracy" if epoch is None else f"Joint Accuracy (epoch {epoch})"
         if setting == 'domain-il' or setting == 'general-continual':
             mean_acc, _ = mean_acc
-            print('\n{}: \t [Domain-IL]: {} %'.format(prefix, round(mean_acc, 2), file=sys.stderr))
+            print('{}: \t [Domain-IL]: {} %'.format(prefix, round(mean_acc, 2), file=sys.stderr))
             print('\tRaw accuracy values: Domain-IL {}'.format(accs[0]), file=sys.stderr)
         else:
             mean_acc_class_il, mean_acc_task_il = mean_acc
-            print('\n{}: \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, round(
+            print('{}: \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, round(
                 mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
             print('\tRaw accuracy values: Class-IL {} | Task-IL {}'.format(accs[0], accs[1]), file=sys.stderr)
     else:
         prefix = "Accuracy" if epoch is None else f"Accuracy (epoch {epoch})"
         if setting == 'domain-il' or setting == 'general-continual':
             mean_acc, _ = mean_acc
-            print('\n{} for {} task(s): [Domain-IL]: {} %'.format(prefix,
-                                                                  task_number, round(mean_acc, 2)), file=sys.stderr)
+            print('{} for {} task(s): [Domain-IL]: {} %'.format(prefix,
+                                                                task_number, round(mean_acc, 2)), file=sys.stderr)
             print('\tRaw accuracy values: Domain-IL {}'.format(accs[0]), file=sys.stderr)
         else:
             mean_acc_class_il, mean_acc_task_il = mean_acc
-            print('\n{} for {} task(s): \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, task_number, round(
+            print('{} for {} task(s): \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, task_number, round(
                 mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
             print('\tRaw accuracy values: Class-IL {} | Task-IL {}'.format(accs[0], accs[1]), file=sys.stderr)
 
@@ -96,16 +96,18 @@ def print_mean_accuracy(accs: np.ndarray, task_number: int,
 
 
 class Logger:
-    def __init__(self, setting_str: str, dataset_str: str,
+    def __init__(self, args, setting_str: str, dataset_str: str,
                  model_str: str) -> None:
         """
         Initializes a Logger object. This will take track and log the accuracy values and other metrics in the default path (`data/results`).
 
         Args:
+            args: The args from the command line.
             setting_str: The setting of the benchmark.
             dataset_str: The dataset used.
             model_str: The model used.
         """
+        self.args = args
         self.accs = []
         self.fullaccs = []
         if setting_str == 'class-il':
@@ -120,6 +122,8 @@ class Logger:
         self.bwt_mask_classes = None
         self.forgetting = None
         self.forgetting_mask_classes = None
+        self.cpu_res = []
+        self.gpu_res = []
 
     def dump(self):
         """
@@ -248,6 +252,23 @@ class Logger:
             self.fullaccs.append(acc_class_il)
             self.fullaccs_mask_classes.append(acc_task_il)
 
+    def log_system_stats(self, cpu_res, gpu_res):
+        """
+        Logs the system stats.
+        Supported only if the `psutil` and `torch` libraries are installed.
+
+        Args:
+            cpu_res: the CPU memory usage
+            gpu_res: the GPU memory usage
+        """
+        if cpu_res is not None:
+            self.cpu_res.append(cpu_res)
+        if gpu_res is not None:
+            self.gpu_res.append(gpu_res)
+
+        if not self.args.nowand:
+            wandb.log({'CPU_memory_usage': cpu_res, **{f'GPU_{i}_memory_usage': r for i, r in gpu_res.items()}})
+
     def write(self, args: Dict[str, Any]) -> None:
         """
         Writes out the logged value along with its arguments in the default path (`data/results`).
@@ -263,6 +284,9 @@ class Logger:
         for i, fa in enumerate(self.fullaccs):
             for j, acc in enumerate(fa):
                 wrargs['accuracy_' + str(j + 1) + '_task' + str(i + 1)] = acc
+
+        wrargs['cpu_memory_usage'] = self.cpu_res
+        wrargs['gpu_memory_usage'] = self.gpu_res
 
         wrargs['forward_transfer'] = self.fwt
         wrargs['backward_transfer'] = self.bwt

@@ -9,12 +9,13 @@ from PIL import Image
 from torch.utils.data.dataset import Dataset
 
 
-from backbone.ResNet50 import resnet50
+from backbone.ResNetBottleneck import resnet50
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
 from utils import smart_joint
 from utils.conf import base_path
+from datasets.utils import set_default_from_args
 
 
 class MyCUB200(Dataset):
@@ -164,7 +165,7 @@ class SequentialCUB200(ContinualDataset):
         train_dataset = MyCUB200(base_path() + 'CUB200', train=True,
                                  download=True, transform=transform)
         test_dataset = CUB200(base_path() + 'CUB200', train=False,
-                                download=True, transform=test_transform)
+                              download=True, transform=test_transform)
 
         train, test = store_masked_loaders(
             train_dataset, test_dataset, self)
@@ -197,10 +198,10 @@ class SequentialCUB200(ContinualDataset):
         transform = DeNormalize(SequentialCUB200.MEAN, SequentialCUB200.STD)
         return transform
 
-    @staticmethod
-    def get_batch_size():
+    @set_default_from_args('batch_size')
+    def get_batch_size(self):
         return 16
 
-    @staticmethod
-    def get_epochs():
+    @set_default_from_args('n_epochs')
+    def get_epochs(self):
         return 30

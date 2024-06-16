@@ -11,11 +11,12 @@ import torchvision.transforms as transforms
 from PIL import Image
 from torchvision.datasets import CIFAR10
 
-from backbone.ResNet18 import resnet18
+from backbone.ResNetBlock import resnet18
 from datasets.seq_tinyimagenet import base_path
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
+from datasets.utils import set_default_from_args
 
 
 class TCIFAR10(CIFAR10):
@@ -96,17 +97,16 @@ class SequentialCIFAR10(ContinualDataset):
          transforms.ToTensor(),
          transforms.Normalize(MEAN, STD)])
 
+    TEST_TRANSFORM = transforms.Compose([transforms.ToTensor(), transforms.Normalize(MEAN, STD)])
+
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         """Class method that returns the train and test loaders."""
         transform = self.TRANSFORM
 
-        test_transform = transforms.Compose(
-            [transforms.ToTensor(), self.get_normalization_transform()])
-
         train_dataset = MyCIFAR10(base_path() + 'CIFAR10', train=True,
                                   download=True, transform=transform)
         test_dataset = TCIFAR10(base_path() + 'CIFAR10', train=False,
-                                download=True, transform=test_transform)
+                                download=True, transform=self.TEST_TRANSFORM)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
@@ -136,10 +136,10 @@ class SequentialCIFAR10(ContinualDataset):
         transform = DeNormalize(SequentialCIFAR10.MEAN, SequentialCIFAR10.STD)
         return transform
 
-    @staticmethod
-    def get_epochs():
+    @set_default_from_args('n_epochs')
+    def get_epochs(self):
         return 50
 
-    @staticmethod
-    def get_batch_size():
+    @set_default_from_args('batch_size')
+    def get_batch_size(self):
         return 32

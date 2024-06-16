@@ -14,12 +14,13 @@ import torchvision.transforms as transforms
 from PIL import Image
 from torch.utils.data import Dataset
 
-from backbone.ResNet18 import resnet18
+from backbone.ResNetBlock import resnet18
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset,
                                               store_masked_loaders)
 from utils import smart_joint
 from utils.conf import base_path
+from datasets.utils import set_default_from_args
 
 
 class TinyImagenet(Dataset):
@@ -177,10 +178,10 @@ class SequentialTinyImagenet(ContinualDataset):
         transform = DeNormalize(SequentialTinyImagenet.MEAN, SequentialTinyImagenet.STD)
         return transform
 
-    @staticmethod
-    def get_epochs():
+    @set_default_from_args('n_epochs')
+    def get_epochs(self):
         return 50
 
-    @staticmethod
-    def get_batch_size():
+    @set_default_from_args('batch_size')
+    def get_batch_size(self):
         return 32

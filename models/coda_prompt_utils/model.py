@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from timm.models.vision_transformer import vit_base_patch16_224
+from backbone.vit import create_vision_transformer
 from models.coda_prompt_utils.vit import VisionTransformer
 import copy
 
@@ -216,14 +216,16 @@ class Model(nn.Module):
 
         # get feature encoder
         vit_model = VisionTransformer(img_size=224, patch_size=16, embed_dim=768, depth=12,
-                                      num_heads=12, ckpt_layer=0,
-                                      drop_path_rate=0)
+                                      num_heads=12, drop_path_rate=0)
 
         if pt:
-            load_dict = vit_base_patch16_224(pretrained=True).state_dict()
-            del load_dict['head.weight']
-            del load_dict['head.bias']
-            vit_model.load_state_dict(load_dict)
+            load_dict = create_vision_transformer('vit_base_patch16_224', base_class=VisionTransformer, pretrained=True, num_classes=0).state_dict()
+            if 'head.weight' in load_dict:
+                del load_dict['head.weight']
+                del load_dict['head.bias']
+            missing, unexpected = vit_model.load_state_dict(load_dict, strict=False)
+            assert len([m for m in missing if 'head' not in m]) == 0, f"Missing keys: {missing}"
+            assert len(unexpected) == 0, f"Unexpected keys: {unexpected}"
 
         # classifier
         self.last = nn.Linear(768, num_classes)
