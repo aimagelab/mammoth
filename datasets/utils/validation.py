@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Optional
+from typing import Optional, Tuple
 
 import numpy as np
 import torch
@@ -48,6 +48,37 @@ class ValidationDataset(Dataset):
 
         return img, target
 
+def get_validation_indexes(validation_size: float, dataset: Dataset, seed=None) -> Tuple[Dataset, Dataset]:
+    """
+    Returns the indexes of train and validation datasets from the given dataset, according to the validation size.
+    
+    Args:
+        validation_size (float): percentage of samples for each class to be used for validation (between 0 and 100)
+        dataset (Dataset): the dataset to split
+        seed (int): the seed for the random generator. If None, the seed is set to 0
+
+    Returns:
+        tuple: the train and validation dataset indexes
+    """
+    seed = 0 if seed is None else seed
+    if validation_size < 1:
+        validation_size = round(validation_size * 100, 2)
+
+    cls_ids, samples_per_class = np.unique(dataset.targets, return_counts=True)
+    n_samples_val_per_class = np.ceil(samples_per_class * (validation_size / 100)).astype(int)
+
+    all_idxs = np.arange(len(dataset.targets))
+    val_idxs, train_idxs = [], []
+    for cls_id, n_samples, n_samples_val in zip(cls_ids, samples_per_class, n_samples_val_per_class):
+        cls_idxs = all_idxs[dataset.targets == cls_id]
+        idxs = torch.randperm(n_samples, generator=torch.Generator().manual_seed(seed)).numpy()
+        val_idxs.append(cls_idxs[idxs[:n_samples_val]])
+        train_idxs.append(cls_idxs[idxs[n_samples_val:]])
+        
+    train_idxs = np.concatenate(train_idxs)
+    val_idxs = np.concatenate(val_idxs)
+
+    return train_idxs, val_idxs
 
 def get_train_val(train: Dataset, test_transform: nn.Module,
                   dataset: str, val_perc: float = 0.1):
@@ -72,12 +103,13 @@ def get_train_val(train: Dataset, test_transform: nn.Module,
     else:
         perm = torch.randperm(dataset_length)
         torch.save(perm, directory + file_name)
-    train.data = train.data[perm]
-    train.targets = np.array(train.targets)[perm]
-    test_dataset = ValidationDataset(train.data[:int(val_perc * dataset_length)],
-                                     train.targets[:int(val_perc * dataset_length)],
+
+    train_idxs, val_idxs = get_validation_indexes(val_perc, train)
+
+    test_dataset = ValidationDataset(train.data[val_idxs],
+                                     train.targets[val_idxs],
                                      transform=test_transform)
-    train.data = train.data[int(val_perc * dataset_length):]
-    train.targets = train.targets[int(val_perc * dataset_length):]
+    train.data = train.data[train_idxs]
+    train.targets = train.targets[train_idxs]
 
     return train, test_dataset

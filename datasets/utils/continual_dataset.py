@@ -13,6 +13,7 @@ import torch.nn as nn
 import torch.optim.lr_scheduler as scheds
 from torch.utils.data import DataLoader, Dataset
 
+from datasets.utils.validation import get_validation_indexes
 from utils.conf import create_seeded_dataloader
 from datasets.utils import DEFAULT_ARGS
 
@@ -218,37 +219,6 @@ def _prepare_data_loaders(train_dataset, test_dataset, setting: ContinualDataset
 
     return train_dataset, test_dataset
 
-
-def get_validation_indexes(validation_size: float, dataset: Dataset, args) -> Tuple[Dataset, Dataset]:
-    """
-    Returns the indexes of train and validation datasets from the given dataset, according to the validation size.
-    
-    Args:
-        validation_size (float): percentage of samples for each class to be used for validation
-        dataset (Dataset): the dataset to split
-        args (Namespace): the arguments from the command line
-
-    Returns:
-        tuple: the train and validation dataset indexes
-    """
-    seed = 0 if args.seed is None else args.seed
-
-    cls_ids, samples_per_class = np.unique(dataset.targets, return_counts=True)
-    n_samples_val_per_class = np.ceil(samples_per_class * (validation_size / 100)).astype(int)
-
-    all_idxs = np.arange(len(dataset.targets))
-    val_idxs, train_idxs = [], []
-    for cls_id, n_samples, n_samples_val in zip(cls_ids, samples_per_class, n_samples_val_per_class):
-        cls_idxs = all_idxs[dataset.targets == cls_id]
-        idxs = torch.randperm(n_samples, generator=torch.Generator().manual_seed(seed)).numpy()
-        val_idxs.append(cls_idxs[idxs[:n_samples_val]])
-        train_idxs.append(cls_idxs[idxs[n_samples_val:]])
-        
-    train_idxs = np.concatenate(train_idxs)
-    val_idxs = np.concatenate(val_idxs)
-
-    return train_idxs, val_idxs
-
 def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
                          setting: ContinualDataset) -> Tuple[DataLoader, DataLoader]:
     """
@@ -272,7 +242,7 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
         test_dataset.targets = setting.args.class_order[test_dataset.targets]
 
     if setting.args.validation:
-        train_idxs, val_idxs = get_validation_indexes(setting.args.validation, train_dataset, setting.args)
+        train_idxs, val_idxs = get_validation_indexes(setting.args.validation, train_dataset, setting.args.seed)
 
         test_dataset.data = train_dataset.data[val_idxs]
         test_dataset.targets = train_dataset.targets[val_idxs]

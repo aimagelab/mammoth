@@ -132,11 +132,7 @@ def parse_args():
 
     assert 0 < args.label_perc <= 1, "label_perc must be in (0, 1]"
 
-    if args.validation is not None:
-        if args.validation < 1:
-            print("Validation set size is less than 1, converting to percentage.", file=sys.stderr)
-            args.validation = round(args.validation * 100, 2)
-        
+    if args.validation is not None:        
         print(f"INFO: Using {args.validation}% of the training set as validation set.", file=sys.stderr)
         print(f"INFO: Validation will be computed with mode `{args.validation_mode}`.", file=sys.stderr)
 
