@@ -139,7 +139,7 @@ class MNIST360(torch.utils.data.Dataset):
             train_dataset = MyMNIST(base_path() + 'MNIST',
                                     train=True, download=True)
             _, test_dataset = get_train_val(
-                train_dataset, test_transform, 'mnist-360', val_perc=self.args.validation / 100)
+                train_dataset, test_transform, 'mnist-360', val_perc=self.args.validation)
         else:
             test_dataset = MNIST(base_path() + 'MNIST',
                                  train=False, download=True)

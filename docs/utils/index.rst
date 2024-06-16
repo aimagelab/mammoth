@@ -38,10 +38,10 @@ Other arguments such as the size of the training batch and the number of epochs 
   python utils/main.py --dataset seq-cifar10 --model der --buffer_size 500 --lr 0.03 --batch_size 128 --epochs 10
 
 .. note::
-    To ease hyper-parameter tuning, all boolean arguments follow the convention: ``--<argument>=1`` for ``True`` and ``--<argument>=0`` for ``False``. The only exceptions are ``--savecheck`` and ``--inference_only``, as they should not be included in the hyper-parameter search.
+    To ease hyper-parameter tuning, all boolean arguments follow the convention: ``--<argument>=1`` for ``True`` and ``--<argument>=0`` for ``False``.
 
 Other useful arguments
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 * ``--debug_mode``: If set to ``1``, the model will run for only a few iterations per each epoch and will disable WandB logging. This is useful for debugging.
 

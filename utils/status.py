@@ -33,13 +33,26 @@ class ProgressBar:
             update_every: the number of iterations after which the progress bar is updated
         """
         self.joint = joint
-        self.old_time = 0
-        self.running_sum = 0
-        self.verbose = verbose
         self.update_every = update_every
-        self.last_iter = 0
+        self.verbose = verbose
+        self.old_time = None
+
+        self.reset()
 
         assert self.update_every > 0
+
+    def reset(self) -> None:
+        """
+        Resets the progress bar.
+        """
+        if self.old_time is not None:
+            max_width = shutil.get_terminal_size((80, 20)).columns
+            padded_print(f'\n\t- Took: {round(self.running_sum, 2)} s', max_width=max_width, file=sys.stderr, flush=True)
+
+        self.old_time = time()
+        self.running_sum = 0
+        self.current_task_iter = 0
+        self.last_task = 0
 
     def prog(self, i: int, max_iter: int, epoch: Union[int, str],
              task_number: int, loss: float) -> None:
@@ -70,46 +83,42 @@ class ProgressBar:
             else:
                 return
 
-        if i < self.last_iter:
-            padded_print('\tLast task took: {} s'.format(round(self.running_sum, 2)), max_width=max_width, file=sys.stderr, flush=True)
-        if i == 0:
-            self.old_time = time()
-            self.running_sum = 0
-        else:
-            timediff = time() - self.old_time
-            self.running_sum = self.running_sum + timediff + 1e-8
-            self.old_time = time()
-        self.last_iter = i
+        timediff = time() - self.old_time
+        self.running_sum = self.running_sum + timediff + 1e-8
 
         # Print the progress bar every update_every iterations
         if (i and i % self.update_every == 0) or (max_iter is not None and i == max_iter - 1):
             progress = min(float((i + 1) / max_iter), 1) if max_iter else 0
             progress_bar = ('█' * int(50 * progress)) + ('┈' * (50 - int(50 * progress))) if max_iter else '~N/A~'
             if self.joint:
-                padded_print('\r[ {} ] Joint | epoch {}: |{}| {} ep/h | loss: {} | Time: {} ms/it'.format(
+                padded_print('\r[ {} ] Joint | epoch {} | iter {}: |{}| {} ep/h | loss: {} | Time: {} ms/it'.format(
                     datetime.now().strftime("%m-%d | %H:%M"),
                     epoch,
+                    self.current_task_iter + 1,
                     progress_bar,
                     round(3600 / (self.running_sum / i * max_iter), 2) if max_iter else 'N/A',
                     round(loss, 8),
                     round(1000 * timediff / self.update_every, 2)
                 ), max_width=max_width, file=sys.stderr, end='', flush=True)
             else:
-                padded_print('\r[ {} ] Task {} | epoch {}: |{}| {} ep/h | loss: {} | Time: {} ms/it'.format(
+                padded_print('\r[ {} ] Task {} | epoch {} | iter {}: |{}| {} ep/h | loss: {} | Time: {} ms/it'.format(
                     datetime.now().strftime("%m-%d | %H:%M"),
                     task_number + 1 if isinstance(task_number, int) else task_number,
                     epoch,
+                    self.current_task_iter + 1,
                     progress_bar,
                     round(3600 / (self.running_sum / i * max_iter), 2) if max_iter else 'N/A',
                     round(loss, 8),
                     round(1000 * timediff / self.update_every, 2)
                 ), max_width=max_width, file=sys.stderr, end='', flush=True)
 
-    def __del__(self):
-        max_width = shutil.get_terminal_size((80, 20)).columns
-        # if self.verbose:
-        #     print('\n', file=sys.stderr, flush=True)
-        padded_print('\tLast task took: {} s'.format(round(self.running_sum, 2)), max_width=max_width, file=sys.stderr, flush=True)
+        self.current_task_iter += 1
+
+    # def __del__(self):
+    #     max_width = shutil.get_terminal_size((80, 20)).columns
+    #     # if self.verbose:
+    #     #     print('\n', file=sys.stderr, flush=True)
+    #     padded_print('\tLast task took: {} s'.format(round(self.running_sum, 2)), max_width=max_width, file=sys.stderr, flush=True)
 
 
 def progress_bar(i: int, max_iter: int, epoch: Union[int, str],

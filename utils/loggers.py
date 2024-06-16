@@ -24,7 +24,7 @@ def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
     """
     Logs the accuracy values and other metrics.
 
-    All metrics are prefixed with `RESULT_` to be logged on wandb.
+    All metrics are prefixed with `prefix` to be logged on wandb.
 
     Args:
         args: The arguments for logging.
@@ -35,7 +35,7 @@ def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
         epoch: The epoch number (optional).
         prefix: The prefix for the metrics (default="RESULT").
     """
-    mean_acc = print_mean_accuracy(accs, t + 1, setting, joint=args.joint, epoch=epoch)
+    mean_acc = print_mean_accuracy(accs, t + 1 if isinstance(t, (float, int)) else t, setting, joint=args.joint, epoch=epoch)
 
     if not args.disable_log:
         logger.log(mean_acc)
@@ -72,23 +72,23 @@ def print_mean_accuracy(accs: np.ndarray, task_number: int,
         prefix = "Joint Accuracy" if epoch is None else f"Joint Accuracy (epoch {epoch})"
         if setting == 'domain-il' or setting == 'general-continual':
             mean_acc, _ = mean_acc
-            print('\n{}: \t [Domain-IL]: {} %'.format(prefix, round(mean_acc, 2), file=sys.stderr))
+            print('{}: \t [Domain-IL]: {} %'.format(prefix, round(mean_acc, 2), file=sys.stderr))
             print('\tRaw accuracy values: Domain-IL {}'.format(accs[0]), file=sys.stderr)
         else:
             mean_acc_class_il, mean_acc_task_il = mean_acc
-            print('\n{}: \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, round(
+            print('{}: \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, round(
                 mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
             print('\tRaw accuracy values: Class-IL {} | Task-IL {}'.format(accs[0], accs[1]), file=sys.stderr)
     else:
         prefix = "Accuracy" if epoch is None else f"Accuracy (epoch {epoch})"
         if setting == 'domain-il' or setting == 'general-continual':
             mean_acc, _ = mean_acc
-            print('\n{} for {} task(s): [Domain-IL]: {} %'.format(prefix,
-                                                                  task_number, round(mean_acc, 2)), file=sys.stderr)
+            print('{} for {} task(s): [Domain-IL]: {} %'.format(prefix,
+                                                                task_number, round(mean_acc, 2)), file=sys.stderr)
             print('\tRaw accuracy values: Domain-IL {}'.format(accs[0]), file=sys.stderr)
         else:
             mean_acc_class_il, mean_acc_task_il = mean_acc
-            print('\n{} for {} task(s): \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, task_number, round(
+            print('{} for {} task(s): \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, task_number, round(
                 mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
             print('\tRaw accuracy values: Class-IL {} | Task-IL {}'.format(accs[0], accs[1]), file=sys.stderr)
 

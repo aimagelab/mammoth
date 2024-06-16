@@ -35,9 +35,10 @@ def get_alloc_memory_all_devices() -> list[int]:
     """
     gpu_memory = []
     for i in range(torch.cuda.device_count()):
+        _ = torch.tensor([1]).to(i)
         gpu_memory.append(torch.cuda.memory_allocated(i))
     if all(memory == 0 for memory in gpu_memory):
-        print("WARNING: some weird GPU memory issue."
+        print("WARNING: some weird GPU memory issue. "
               "Using trick from https://discuss.pytorch.org/t/torch-cuda-memory-allocated-returns-0-if-pytorch-no-cuda-memory-caching-1/188796")
         for i in range(torch.cuda.device_count()):
             torch.zeros(1).to(i)

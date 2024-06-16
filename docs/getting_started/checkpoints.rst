@@ -3,6 +3,16 @@ Load and save checkpoints
 
 Loading and saving checkpoints is handeled automatically in :ref:`module-training` by supplying the ``--savecheck`` and ``--loadcheck`` arguments. 
 
+For example, to save a checkpoint after training, simply run the following command:
+.. code-block:: python 
+    
+        python utils/main.py --savecheck=1 --model=sgd --dataset=seq-cifar10 --lr=0.1
+
+This will save the checkpoint in the ``checkpoints`` folder. To load the checkpoint, simply run the following command:
+.. code-block:: python 
+    
+        python utils/main.py --loadcheck=<path to checkpoint>.pt --model=sgd --dataset=seq-cifar10 --lr=0.1
+
 .. rubric:: Checkpoint save format
 
 Mammoth saves checkpoints in the ``checkpoints`` folder, with a separate checkpoint file for each task. The checkpoint file follows the format: ``[<base_checkpoint_name>]<model>_<dataset>_<buffer_size>_<n_epochs>_<timestamp>_<task>.pt``. 
@@ -33,9 +43,9 @@ Inside the checkpoint file, the following information is saved:
 
 - ``results``: all the metrics mesured up to the current task and the state of the logger. This information is necessary in order to continue training from the last checkpoint. 
 
-.. rubric:: Checkpoint loading
+.. rubric:: Additional info on checkpoint loading
 
-Mammoth supports loading checkpoint both from the local machine and from a remote machine using the ``--loadcheck`` argument. To load a checkpoint from a remote machine, simply supply the ``--loadcheck`` with the URL of the checkpoint file. 
+Mammoth supports loading checkpoint both from the local machine **and from a remote machine** using the ``--loadcheck`` argument. To load a checkpoint from a remote machine, simply supply the ``--loadcheck`` with the URL of the checkpoint file. 
 
 Checkpoints can be loaded either following the mammoth format (defined above) or from a simple ``.pt`` file. In the latter case, the checkpoint file should contain all the parameters of the *backbone* of the model. The other parameters (optimizer, scheduler, etc.) will be initialized from scratch.
 

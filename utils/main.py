@@ -132,6 +132,10 @@ def parse_args():
 
     assert 0 < args.label_perc <= 1, "label_perc must be in (0, 1]"
 
+    if args.validation is not None:
+        print(f"INFO: Using {args.validation}% of the training set as validation set.", file=sys.stderr)
+        print(f"INFO: Validation will be computed with mode `{args.validation_mode}`.", file=sys.stderr)
+
     return args
 
 
@@ -165,14 +169,21 @@ def main(args=None):
     args.conf_host = socket.gethostname()
     dataset = get_dataset(args)
 
-    if args.n_epochs is None and isinstance(dataset, ContinualDataset):
+    if args.fitting_mode == 'epochs' and args.n_epochs is None and isinstance(dataset, ContinualDataset):
         args.n_epochs = dataset.get_epochs()
+    elif args.fitting_mode == 'iters' and args.n_iters is None and isinstance(dataset, ContinualDataset):
+        args.n_iters = dataset.get_iters()
+
     if args.batch_size is None:
         args.batch_size = dataset.get_batch_size()
         if hasattr(importlib.import_module('models.' + args.model), 'Buffer') and (not hasattr(args, 'minibatch_size') or args.minibatch_size is None):
             args.minibatch_size = dataset.get_minibatch_size()
     else:
         args.minibatch_size = args.batch_size
+
+    if args.validation:
+        if args.validation_mode == 'current':
+            assert dataset.SETTING in ['class-il', 'task-il'], "`current` validation modes is only supported for class-il and task-il settings (requires a task division)."
 
     backbone = dataset.get_backbone()
     if args.code_optimization == 3:

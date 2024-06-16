@@ -163,7 +163,7 @@ Our Papers
 Other Awesome CL works using Mammoth
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. admonition::
+.. important::
 
     **Get in touch if we missed your awesome work!**
 

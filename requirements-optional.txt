@@ -1,0 +1,6 @@
+googledrivedownloader==0.4
+onedrivedownloader==1.1.3
+pytest==7.4.2
+quadprog==0.1.11
+setproctitle==1.3.2
+wandb

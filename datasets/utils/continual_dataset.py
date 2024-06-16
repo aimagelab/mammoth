@@ -13,6 +13,7 @@ import torch.nn as nn
 import torch.optim.lr_scheduler as scheds
 from torch.utils.data import DataLoader, Dataset
 
+from datasets.utils.validation import get_validation_indexes
 from utils.conf import create_seeded_dataloader
 from datasets.utils import DEFAULT_ARGS
 
@@ -175,13 +176,17 @@ class ContinualDataset(object):
             return sched
         return None
 
+    def get_iters(self):
+        """Returns the number of iterations to be used for the current dataset."""
+        raise NotImplementedError('The dataset does not implement the method `get_iters` to set the default number of iterations.')
+
     def get_epochs(self):
         """Returns the number of epochs to be used for the current dataset."""
-        raise NotImplementedError
+        raise NotImplementedError('The dataset does not implement the method `get_epochs` to set the default number of epochs.')
 
     def get_batch_size(self):
         """Returns the batch size to be used for the current dataset."""
-        raise NotImplementedError
+        raise NotImplementedError('The dataset does not implement the method `get_batch_size` to set the default batch size.')
 
     def get_minibatch_size(self):
         """Returns the minibatch size to be used for the current dataset."""
@@ -242,27 +247,32 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
         test_dataset.targets = setting.args.class_order[test_dataset.targets]
 
     if setting.args.validation:
-        n_samples = len(train_dataset)
-        n_samples_val = torch.div(n_samples, setting.args.validation, rounding_mode='floor').item()
+        train_idxs, val_idxs = get_validation_indexes(setting.args.validation, train_dataset, setting.args.seed)
 
-        train_idxs = torch.randperm(n_samples, generator=torch.Generator().manual_seed(setting._c_seed)).numpy()
-        val_idxs = train_idxs[:n_samples_val]
-        train_idxs = train_idxs[n_samples_val:]
+        test_dataset.data = train_dataset.data[val_idxs]
+        test_dataset.targets = train_dataset.targets[val_idxs]
 
-        train_dataset.data, test_dataset.data = train_dataset.data[train_idxs], train_dataset.data[val_idxs]
-        train_dataset.targets, test_dataset.targets = train_dataset.targets[train_idxs], train_dataset.targets[val_idxs]
+        train_dataset.data = train_dataset.data[train_idxs]
+        train_dataset.targets = train_dataset.targets[train_idxs]
 
     if setting.SETTING == 'class-il' or setting.SETTING == 'task-il':
-        train_mask = np.logical_and(np.array(train_dataset.targets) >= setting.i,
-                                    np.array(train_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
-        test_mask = np.logical_and(np.array(test_dataset.targets) >= setting.i,
-                                   np.array(test_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
+        train_mask = np.logical_and(train_dataset.targets >= setting.i,
+                                    train_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
+
+        if setting.args.validation_mode == 'current':
+            test_mask = np.logical_and(test_dataset.targets >= setting.i,
+                                       test_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
+        elif setting.args.validation_mode == 'complete':
+            test_mask = np.logical_and(test_dataset.targets >= 0,
+                                       test_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
+        else:
+            raise ValueError('Unknown validation mode: {}'.format(setting.args.validation_mode))
+
+        test_dataset.data = test_dataset.data[test_mask]
+        test_dataset.targets = test_dataset.targets[test_mask]
 
         train_dataset.data = train_dataset.data[train_mask]
-        test_dataset.data = test_dataset.data[test_mask]
-
         train_dataset.targets = train_dataset.targets[train_mask]
-        test_dataset.targets = test_dataset.targets[test_mask]
 
     train_dataset, test_dataset = _prepare_data_loaders(train_dataset, test_dataset, setting)
 
