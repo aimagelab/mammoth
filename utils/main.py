@@ -132,6 +132,14 @@ def parse_args():
 
     assert 0 < args.label_perc <= 1, "label_perc must be in (0, 1]"
 
+    if args.validation is not None:
+        if args.validation < 1:
+            print("Validation set size is less than 1, converting to percentage.", file=sys.stderr)
+            args.validation = round(args.validation * 100, 2)
+        
+        print(f"INFO: Using {args.validation}% of the training set as validation set.", file=sys.stderr)
+        print(f"INFO: Validation will be computed with mode `{args.validation_mode}`.", file=sys.stderr)
+
     return args
 
 
@@ -173,6 +181,10 @@ def main(args=None):
             args.minibatch_size = dataset.get_minibatch_size()
     else:
         args.minibatch_size = args.batch_size
+
+    if args.validation:
+        if args.validation_mode == 'current':
+            assert dataset.SETTING in ['class-il', 'task-il'], "`current` validation modes is only supported for class-il and task-il settings (requires a task division)."
 
     backbone = dataset.get_backbone()
     if args.code_optimization == 3:

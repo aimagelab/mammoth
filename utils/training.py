@@ -220,7 +220,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     if scheduler is not None:
                         scheduler.step()
 
-                    if args.eval_epochs is not None and epoch % args.eval_epochs == 0 and epoch < model.args.n_epochs - 1:
+                    if args.eval_epochs is not None and (epoch>0 or args.eval_epochs==1) and epoch % args.eval_epochs == 0 and epoch < model.args.n_epochs:
                         epoch_accs = evaluate(model, dataset)
 
                         log_accs(args, logger, epoch_accs, t, dataset.SETTING, epoch=epoch)
@@ -251,14 +251,18 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         del progress_bar
 
         if args.validation:
+            # Final evaluation on the real test set
+            print("Starting final evaluation on the real test set...", file=sys.stderr)
             del dataset
             args.validation = None
+            args.validation_mode = 'current'
 
             final_dataset = get_dataset(args)
             for _ in range(final_dataset.N_TASKS):
                 final_dataset.get_data_loaders()
             accs = evaluate(model, final_dataset)
-            log_accs(args, logger, accs, t, final_dataset.SETTING, prefix="FINAL")
+
+            log_accs(args, logger, accs, 'final', final_dataset.SETTING, prefix="FINAL")
 
         if not args.disable_log and args.enable_other_metrics:
             logger.add_bwt(results, results_mask_classes)

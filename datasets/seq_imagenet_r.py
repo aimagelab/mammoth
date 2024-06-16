@@ -6,7 +6,6 @@ import torch.nn.functional as F
 import numpy as np
 from utils.conf import base_path
 from PIL import Image
-from datasets.utils.validation import get_train_val
 from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
 from typing import Tuple
 from datasets.transforms.denormalization import DeNormalize
@@ -139,12 +138,9 @@ class SequentialImagenetR(ContinualDataset):
 
         train_dataset = MyImagenetR(base_path() + 'imagenet-r/', train=True,
                                     download=True, transform=transform)
-        if self.args.validation:
-            train_dataset, test_dataset = get_train_val(train_dataset,
-                                                        test_transform, self.NAME)
-        else:
-            test_dataset = MyImagenetR(base_path() + 'imagenet-r/', train=False,
-                                       download=True, transform=test_transform)
+
+        test_dataset = MyImagenetR(base_path() + 'imagenet-r/', train=False,
+                                    download=True, transform=test_transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test

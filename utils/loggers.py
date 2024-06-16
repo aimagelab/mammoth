@@ -24,7 +24,7 @@ def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
     """
     Logs the accuracy values and other metrics.
 
-    All metrics are prefixed with `RESULT_` to be logged on wandb.
+    All metrics are prefixed with `prefix` to be logged on wandb.
 
     Args:
         args: The arguments for logging.
@@ -35,7 +35,7 @@ def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
         epoch: The epoch number (optional).
         prefix: The prefix for the metrics (default="RESULT").
     """
-    mean_acc = print_mean_accuracy(accs, t + 1, setting, joint=args.joint, epoch=epoch)
+    mean_acc = print_mean_accuracy(accs, t + 1 if isinstance(t, (float, int)) else t, setting, joint=args.joint, epoch=epoch)
 
     if not args.disable_log:
         logger.log(mean_acc)

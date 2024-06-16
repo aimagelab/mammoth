@@ -219,6 +219,36 @@ def _prepare_data_loaders(train_dataset, test_dataset, setting: ContinualDataset
     return train_dataset, test_dataset
 
 
+def get_validation_indexes(validation_size: float, dataset: Dataset, args) -> Tuple[Dataset, Dataset]:
+    """
+    Returns the indexes of train and validation datasets from the given dataset, according to the validation size.
+    
+    Args:
+        validation_size (float): percentage of samples for each class to be used for validation
+        dataset (Dataset): the dataset to split
+        args (Namespace): the arguments from the command line
+
+    Returns:
+        tuple: the train and validation dataset indexes
+    """
+    seed = 0 if args.seed is None else args.seed
+
+    cls_ids, samples_per_class = np.unique(dataset.targets, return_counts=True)
+    n_samples_val_per_class = np.ceil(samples_per_class * (validation_size / 100)).astype(int)
+
+    all_idxs = np.arange(len(dataset.targets))
+    val_idxs, train_idxs = [], []
+    for cls_id, n_samples, n_samples_val in zip(cls_ids, samples_per_class, n_samples_val_per_class):
+        cls_idxs = all_idxs[dataset.targets == cls_id]
+        idxs = torch.randperm(n_samples, generator=torch.Generator().manual_seed(seed)).numpy()
+        val_idxs.append(cls_idxs[idxs[:n_samples_val]])
+        train_idxs.append(cls_idxs[idxs[n_samples_val:]])
+        
+    train_idxs = np.concatenate(train_idxs)
+    val_idxs = np.concatenate(val_idxs)
+
+    return train_idxs, val_idxs
+
 def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
                          setting: ContinualDataset) -> Tuple[DataLoader, DataLoader]:
     """
@@ -242,27 +272,32 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
         test_dataset.targets = setting.args.class_order[test_dataset.targets]
 
     if setting.args.validation:
-        n_samples = len(train_dataset)
-        n_samples_val = torch.div(n_samples, setting.args.validation, rounding_mode='floor').item()
+        train_idxs, val_idxs = get_validation_indexes(setting.args.validation, train_dataset, setting.args)
 
-        train_idxs = torch.randperm(n_samples, generator=torch.Generator().manual_seed(setting._c_seed)).numpy()
-        val_idxs = train_idxs[:n_samples_val]
-        train_idxs = train_idxs[n_samples_val:]
+        test_dataset.data = train_dataset.data[val_idxs]
+        test_dataset.targets = train_dataset.targets[val_idxs]
 
-        train_dataset.data, test_dataset.data = train_dataset.data[train_idxs], train_dataset.data[val_idxs]
-        train_dataset.targets, test_dataset.targets = train_dataset.targets[train_idxs], train_dataset.targets[val_idxs]
+        train_dataset.data = train_dataset.data[train_idxs]
+        train_dataset.targets = train_dataset.targets[train_idxs]
 
     if setting.SETTING == 'class-il' or setting.SETTING == 'task-il':
-        train_mask = np.logical_and(np.array(train_dataset.targets) >= setting.i,
-                                    np.array(train_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
-        test_mask = np.logical_and(np.array(test_dataset.targets) >= setting.i,
-                                   np.array(test_dataset.targets) < setting.i + setting.N_CLASSES_PER_TASK)
+        train_mask = np.logical_and(train_dataset.targets >= setting.i,
+                                    train_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
+
+        if setting.args.validation_mode == 'current':
+            test_mask = np.logical_and(test_dataset.targets >= setting.i,
+                                        test_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
+        elif setting.args.validation_mode == 'complete':
+            test_mask = np.logical_and(test_dataset.targets >= 0,
+                                        test_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
+        else:
+            raise ValueError('Unknown validation mode: {}'.format(setting.args.validation_mode))
+
+        test_dataset.data = test_dataset.data[test_mask]
+        test_dataset.targets = test_dataset.targets[test_mask]
 
         train_dataset.data = train_dataset.data[train_mask]
-        test_dataset.data = test_dataset.data[test_mask]
-
         train_dataset.targets = train_dataset.targets[train_mask]
-        test_dataset.targets = test_dataset.targets[test_mask]
 
     train_dataset, test_dataset = _prepare_data_loaders(train_dataset, test_dataset, setting)
 
