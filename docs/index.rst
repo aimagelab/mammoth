@@ -22,6 +22,7 @@
    :caption: Getting started:
 
    getting_started/index.rst
+   getting_started/validation.rst
    getting_started/checkpoints.rst
    getting_started/fast_training.rst
    getting_started/scripts.rst

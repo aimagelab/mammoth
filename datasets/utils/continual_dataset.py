@@ -176,13 +176,17 @@ class ContinualDataset(object):
             return sched
         return None
 
+    def get_iters(self):
+        """Returns the number of iterations to be used for the current dataset."""
+        raise NotImplementedError('The dataset does not implement the method `get_iters` to set the default number of iterations.')
+
     def get_epochs(self):
         """Returns the number of epochs to be used for the current dataset."""
-        raise NotImplementedError
+        raise NotImplementedError('The dataset does not implement the method `get_epochs` to set the default number of epochs.')
 
     def get_batch_size(self):
         """Returns the batch size to be used for the current dataset."""
-        raise NotImplementedError
+        raise NotImplementedError('The dataset does not implement the method `get_batch_size` to set the default batch size.')
 
     def get_minibatch_size(self):
         """Returns the minibatch size to be used for the current dataset."""
@@ -218,6 +222,7 @@ def _prepare_data_loaders(train_dataset, test_dataset, setting: ContinualDataset
         train_dataset.targets[setting.unlabeled_mask] = -1  # -1 is the unlabeled class
 
     return train_dataset, test_dataset
+
 
 def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
                          setting: ContinualDataset) -> Tuple[DataLoader, DataLoader]:
@@ -256,10 +261,10 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
 
         if setting.args.validation_mode == 'current':
             test_mask = np.logical_and(test_dataset.targets >= setting.i,
-                                        test_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
+                                       test_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
         elif setting.args.validation_mode == 'complete':
             test_mask = np.logical_and(test_dataset.targets >= 0,
-                                        test_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
+                                       test_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
         else:
             raise ValueError('Unknown validation mode: {}'.format(setting.args.validation_mode))
 
