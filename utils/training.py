@@ -328,9 +328,14 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 if 'buffer_size' in model.args:
                     save_obj['buffer'] = deepcopy(model.buffer).to('cpu')
 
-                # Saving model checkpoint
-                checkpoint_name = f'checkpoints/{args.ckpt_name}_joint.pt' if args.joint else f'checkpoints/{args.ckpt_name}_{t}.pt'
-                torch.save(save_obj, checkpoint_name)
+                # Saving model checkpoint for the current task
+                checkpoint_name = None
+                if args.savecheck == 'task':
+                    checkpoint_name = f'checkpoints/{args.ckpt_name}_joint.pt' if args.joint else f'checkpoints/{args.ckpt_name}_{t}.pt'
+                elif args.savecheck == 'last' and t == end_task - 1:
+                    checkpoint_name = f'checkpoints/{args.ckpt_name}_joint.pt' if args.joint else f'checkpoints/{args.ckpt_name}_last.pt'
+                if checkpoint_name is not None:
+                    torch.save(save_obj, checkpoint_name)
 
         del progress_bar
 

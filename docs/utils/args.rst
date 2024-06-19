@@ -15,7 +15,7 @@ Arguments
             - Default: None
 
             - Choices: mnist-360, perm-mnist, rot-mnist, seq-cifar10, seq-cifar100, seq-cifar100-224, seq-cifar100-224-rs, seq-cifar10-224, seq-cifar10-224-rs, seq-cub200, seq-imagenet-r, seq-mnist, seq-tinyimg, seq-tinyimg-r
-**\-\-model** : <function custom_str_underscore at 0x7fbde63d4dc0>
+**\-\-model** : <function custom_str_underscore at 0x7f23b22f8dc0>
             *Help*: Model name.
 
             - Default: None
@@ -236,12 +236,12 @@ Arguments
             - Default: no
 
             - Choices: no, dp, ddp
-**\-\-savecheck** : <class 'int'>
-            *Help*: Save checkpoint?
+**\-\-savecheck** : <class 'str'>
+            *Help*: Save checkpoint every `task` or at the end of the training (`last`).
 
-            - Default: 0
+            - Default: None
 
-            - Choices: 0, 1
+            - Choices: last, task
 **\-\-loadcheck** : <class 'str'>
             *Help*: Path of the checkpoint to load (.pt file for the specific task)
 

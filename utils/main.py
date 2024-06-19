@@ -115,15 +115,20 @@ def parse_args():
     if args.seed is not None:
         set_random_seed(args.seed)
 
+    # Add uuid, timestamp and hostname for logging
+    args.conf_jobnum = str(uuid.uuid4())
+    args.conf_timestamp = str(datetime.datetime.now())
+    args.conf_host = socket.gethostname()
+
     if args.savecheck:
         assert args.inference_only == 0, "Should not save checkpoint in inference only mode"
         if not os.path.isdir('checkpoints'):
             create_if_not_exists("checkpoints")
 
         now = time.strftime("%Y%m%d-%H%M%S")
+        uid = args.conf_jobnum.split('-')[0]
         extra_ckpt_name = "" if args.ckpt_name is None else f"{args.ckpt_name}_"
-        args.ckpt_name = f"{extra_ckpt_name}{args.model}_{args.dataset}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}_{args.n_epochs}_{str(now)}"
-        args.ckpt_name_replace = f"{extra_ckpt_name}{args.model}_{args.dataset}_{'{}'}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}__{args.n_epochs}_{str(now)}"
+        args.ckpt_name = f"{extra_ckpt_name}{args.model}_{args.dataset}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}_{args.n_epochs}_{str(now)}_{uid}"
         print("Saving checkpoint into", args.ckpt_name, file=sys.stderr)
 
     if args.joint:
@@ -163,10 +168,6 @@ def main(args=None):
             if not torch.cuda.is_bf16_supported():
                 raise NotImplementedError('BF16 is not supported on this machine.')
 
-    # Add uuid, timestamp and hostname for logging
-    args.conf_jobnum = str(uuid.uuid4())
-    args.conf_timestamp = str(datetime.datetime.now())
-    args.conf_host = socket.gethostname()
     dataset = get_dataset(args)
 
     if args.fitting_mode == 'epochs' and args.n_epochs is None and isinstance(dataset, ContinualDataset):
