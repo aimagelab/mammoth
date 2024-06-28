@@ -5,6 +5,7 @@
 
 from copy import deepcopy
 import math
+import os
 import sys
 from argparse import Namespace
 from typing import Iterable, Tuple
@@ -122,7 +123,8 @@ def initialize_wandb(args: Namespace) -> None:
 
     run_id = args.conf_jobnum.split('-')[0]
     name = f'{run_name}_{run_id}'
-    wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args), name=name)
+    mode = 'disabled' if os.getenv('MAMMOTH_TEST', '0') == '1' else os.getenv('WANDB_MODE', 'online')
+    wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args), name=name, mode=mode)
     args.wandb_url = wandb.run.get_url()
 
 
