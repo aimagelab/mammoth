@@ -120,7 +120,7 @@ def initialize_wandb(args: Namespace) -> None:
     assert wandb is not None, "Wandb not installed, please install it or run without wandb"
     run_name = args.wandb_name if args.wandb_name is not None else args.model
 
-    run_id = random_id(5)
+    run_id = args.conf_jobnum.split('-')[0]
     name = f'{run_name}_{run_id}'
     wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args), name=name)
     args.wandb_url = wandb.run.get_url()

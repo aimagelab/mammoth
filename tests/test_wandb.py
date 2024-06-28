@@ -5,26 +5,21 @@ from utils.main import main
 from utils.test_utils import init_test_environ
 import pytest
 
-
 @init_test_environ
-@pytest.mark.parametrize('dataset', ['seq-cifar10'])
-@pytest.mark.parametrize('label_perc', ['0.1', '0.08'])
-def test_ccic(dataset, label_perc):
+def test_wandb_log_erace():
     sys.argv = ['mammoth',
                 '--model',
-                'ccic',
-                '--dataset',
-                dataset,
+                'er-ace',
                 '--buffer_size',
-                '500',
-                '--label_perc',
-                label_perc,
+                '50',
+                '--dataset',
+                'seq-cifar10',
                 '--lr',
-                '1e-4',
+                '1e-3',
                 '--n_epochs',
                 '1',
                 '--batch_size',
-                '32',
+                '4',
                 '--non_verbose',
                 '1',
                 '--num_workers',
@@ -32,12 +27,19 @@ def test_ccic(dataset, label_perc):
                 '--seed',
                 '0',
                 '--debug_mode',
-                '1']
+                '1',
+                '--wandb_project',
+                'mammoth-test',
+                '--wandb_entity',
+                'mammoth-test']
+
+    os.environ['WANDB_MODE'] = 'disabled'
+    
+    log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_wandb_log_erace.log')
 
     # log all outputs to file
     if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
         os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_ccic.{dataset}.{label_perc}.log'), 'w', encoding='utf-8')
+    sys.stdout = open(log_path, 'w', encoding='utf-8')
     sys.stderr = sys.stdout
-
     main()

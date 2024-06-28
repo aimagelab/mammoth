@@ -1,11 +1,13 @@
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.main import main, parse_args
+from utils.main import main
+from utils.test_utils import init_test_environ
 import pytest
 
 
 @pytest.mark.parametrize('dataset', ['seq-mnist', 'seq-cifar10', 'rot-mnist', 'perm-mnist', 'mnist-360', 'seq-cifar100-224'])
+@init_test_environ
 def test_der(dataset):
     sys.argv = ['mammoth',
                 '--model',
@@ -38,6 +40,7 @@ def test_der(dataset):
     main()
 
 
+@init_test_environ
 @pytest.mark.parametrize('dataset', ['seq-mnist', 'seq-cifar10', 'rot-mnist', 'perm-mnist', 'mnist-360', 'seq-cifar100-224'])
 def test_derpp(dataset):
     sys.argv = ['mammoth',

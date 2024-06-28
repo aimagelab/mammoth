@@ -2,9 +2,11 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.main import main
+from utils.test_utils import init_test_environ
 import pytest
 
 
+@init_test_environ
 def test_gdumb_cutmix():
     sys.argv = ['mammoth',
                 '--model',
@@ -40,6 +42,7 @@ def test_gdumb_cutmix():
     main()
 
 
+@init_test_environ
 def test_gdumb():
     sys.argv = ['mammoth',
                 '--model',

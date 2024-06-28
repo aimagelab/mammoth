@@ -1,10 +1,12 @@
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.main import main, parse_args
+from utils.main import main
+from utils.test_utils import init_test_environ
 import pytest
 
 
+@init_test_environ
 @pytest.mark.parametrize('dataset', ['seq-mnist', 'seq-cifar10', 'seq-cifar100', 'seq-tinyimg',
                                      'rot-mnist', 'perm-mnist', 'mnist-360', 'seq-cifar100-224',
                                      'seq-cifar10-224', 'seq-cifar100-224-rs',
@@ -47,6 +49,7 @@ def test_datasets(dataset):
     main()
 
 
+@init_test_environ
 def test_dataset_workers():
     sys.argv = ['mammoth',
                 '--model',

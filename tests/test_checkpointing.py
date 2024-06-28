@@ -2,9 +2,11 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.main import main
+from utils.test_utils import init_test_environ
 import pytest
 
 
+@init_test_environ
 @pytest.mark.parametrize('model', ['sgd', 'slca', 'l2p'])
 @pytest.mark.parametrize('savecheck', ['last', 'task'])
 @pytest.mark.parametrize('joint', ['0', '1'])
@@ -105,6 +107,7 @@ def test_checkpointing_bufferfree(model, savecheck, joint):
         os.remove(ckpt_path)
 
 
+@init_test_environ
 @pytest.mark.parametrize('savecheck', ['last', 'task'])
 @pytest.mark.parametrize('joint', ['0', '1'])
 def test_checkpointing_replay(savecheck, joint):
