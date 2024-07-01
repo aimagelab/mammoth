@@ -38,6 +38,7 @@ each dataset **must statically define** all the necessary information to run a c
 
     - **get_denormalization_transform** static method (``callable``): returns the transform to apply on the tensors to revert the normalization. You can use the `DeNormalize` function defined in `datasets/transforms/denormalization.py`.
 
+    - **get_scheduler** static method (``callable``): returns the learning rate scheduler to use during train. *By default*, it also initializes the optimizer. This prevents errors due to the learning rate being continouosly reduced task after task. This behavior can be changed setting the argument ``reload_optim=False``.
 
 See :ref:`continual_dataset` for more details or **SequentialCIFAR10** in :ref:`seq_cifar10` for an example.
 

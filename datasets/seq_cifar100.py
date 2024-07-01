@@ -151,8 +151,10 @@ class SequentialCIFAR100(ContinualDataset):
         return 32
 
     @staticmethod
-    def get_scheduler(model, args: Namespace) -> torch.optim.lr_scheduler:
-        scheduler = ContinualDataset.get_scheduler(model, args)
+    def get_scheduler(model, args: Namespace, reload_optim=True) -> torch.optim.lr_scheduler:
+        scheduler = ContinualDataset.get_scheduler(model, args, reload_optim)
         if scheduler is None:
+            if reload_optim:
+                model.opt = model.get_optimizer()
             scheduler = torch.optim.lr_scheduler.MultiStepLR(model.opt, [35, 45], gamma=0.1, verbose=False)
         return scheduler

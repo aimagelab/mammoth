@@ -131,11 +131,13 @@ class track_system_stats:
         self._it += 1
 
         alpha = 1 / self._it
-        self.avg_cpu_res = self.avg_cpu_res + alpha * (cpu_res - self.avg_cpu_res)
-        self.avg_gpu_res = {g: (g_res + alpha * (g_res - self.avg_gpu_res[g])) for g, g_res in enumerate(gpu_res)}
+        if self.initial_cpu_res is not None:
+            self.avg_cpu_res = self.avg_cpu_res + alpha * (cpu_res - self.avg_cpu_res)
+            self.max_cpu_res = max(self.max_cpu_res, cpu_res)
 
-        self.max_cpu_res = max(self.max_cpu_res, cpu_res)
-        self.max_gpu_res = {g: max(self.max_gpu_res[g], g_res) for g, g_res in enumerate(gpu_res)}
+        if self.initial_gpu_res is not None:
+            self.avg_gpu_res = {g: (g_res + alpha * (g_res - self.avg_gpu_res[g])) for g, g_res in enumerate(gpu_res)}
+            self.max_gpu_res = {g: max(self.max_gpu_res[g], g_res) for g, g_res in enumerate(gpu_res)}
 
         if self.logger is not None:
             self.logger.log_system_stats(cpu_res, gpu_res)
