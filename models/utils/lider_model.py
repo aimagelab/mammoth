@@ -160,9 +160,6 @@ class LiderOptimizer(ContinualModel):
 
         self.net.lip_coeffs = torch.autograd.Variable(torch.randn(len(teacher_feats), dtype=torch.float), requires_grad=True).to(self.device)
         self.net.lip_coeffs.data = budget_lip
-        self.opt = self.get_optimizer()
-        if hasattr(self, 'scheduler'):
-            self.scheduler = self.dataset.get_scheduler()
 
         self.net.train(was_training)
 

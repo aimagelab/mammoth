@@ -257,7 +257,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     if dataset.SETTING == 'class-il':
                         results_mask_classes[t - 1] = results_mask_classes[t - 1] + accs[1]
 
-                scheduler = dataset.get_scheduler(model, args) if not hasattr(model, 'scheduler') else model.scheduler
+                scheduler = dataset.get_scheduler(model, args, reload_optim=True) if not hasattr(model, 'scheduler') else model.scheduler
 
                 epoch = 0
                 best_ea_metric = None
