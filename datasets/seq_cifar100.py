@@ -14,7 +14,7 @@ from torchvision.datasets import CIFAR100
 
 from backbone.ResNetBlock import resnet18
 from datasets.transforms.denormalization import DeNormalize
-from datasets.utils.continual_dataset import (ContinualDataset,
+from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
                                               store_masked_loaders)
 from utils.conf import base_path
 from datasets.utils import set_default_from_args
@@ -158,3 +158,11 @@ class SequentialCIFAR100(ContinualDataset):
                 model.opt = model.get_optimizer()
             scheduler = torch.optim.lr_scheduler.MultiStepLR(model.opt, [35, 45], gamma=0.1, verbose=False)
         return scheduler
+
+    def get_class_names(self):
+        if self.class_names is not None:
+            return self.class_names
+        classes = CIFAR100(base_path() + 'CIFAR100', train=True, download=True).classes
+        classes = fix_class_names_order(classes, self.args)
+        self.class_names = classes
+        return self.class_names

@@ -27,8 +27,9 @@ from abc import abstractmethod
 import sys
 from argparse import ArgumentParser, Namespace
 from contextlib import suppress
-from typing import List
+from typing import List, Tuple
 
+import kornia
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -51,6 +52,20 @@ class ContinualModel(nn.Module):
     NAME: str
     COMPATIBILITY: List[str]
     AVAIL_OPTIMS = ['sgd', 'adam', 'adamw']
+
+    args: Namespace # The command line arguments
+    device: torch.device # The device to be used for training
+    net: nn.Module # The backbone of the model (defined by the `dataset`)
+    loss: nn.Module # The loss function to be used (defined by the `dataset`)
+    opt: optim.Optimizer # The optimizer to be used for training
+    scheduler: optim.lr_scheduler._LRScheduler # (optional) The scheduler for the optimizer. If defined, it will overwrite the one defined in the `dataset`
+    transform: transforms.Compose|kornia.augmentation.AugmentationSequential # The transformation to be applied to the input data. The model will try to convert it to a kornia transform to be applicable to a batch of samples at once
+    original_transform: transforms.Compose # The original transformation to be applied to the input data. This is the one defined by the `dataset`
+    task_iteration: int # Number of iterations in the current task
+    epoch_iteration: int # Number of iterations in the current epoch. Updated if `epoch` is passed to observe
+    dataset: ContinualDataset # The instance of the dataset. Used to update the number of classes in the current task
+    num_classes: int # Total number of classes in the dataset
+    n_tasks: int # Total number of tasks in the dataset
 
     @staticmethod
     def get_parser() -> Namespace:
@@ -191,7 +206,7 @@ class ContinualModel(nn.Module):
         """
         return self.net.parameters()
 
-    def get_optimizer(self):
+    def get_optimizer(self) -> optim.Optimizer:
         # check if optimizer is in torch.optim
         supported_optims = {optim_name.lower(): optim_name for optim_name in dir(optim) if optim_name.lower() in self.AVAIL_OPTIMS}
         opt = None
@@ -209,10 +224,24 @@ class ContinualModel(nn.Module):
             raise ValueError('Unknown optimizer: {}'.format(self.args.optimizer))
         return opt
 
-    def _compute_offsets(self, task):
-        cpt = self.N_CLASSES // self.N_TASKS
-        offset1 = task * cpt
-        offset2 = (task + 1) * cpt
+    def compute_offsets(self, task: int) -> Tuple[int, int]:
+        """
+        Compute the start and end offset given the task.
+
+        Args:
+            task: the task index
+
+        Returns:
+            the start and end offset
+        """
+        if isinstance(self._cpt, int):
+            cpt = self.N_CLASSES // self.N_TASKS
+            offset1 = task * cpt
+            offset2 = (task + 1) * cpt
+        else:
+            offset1 = sum(self._cpt[:self._current_task])
+            offset2 = sum(self._cpt[:self._current_task + 1])
+
         return offset1, offset2
 
     def get_debug_iters(self):
@@ -264,6 +293,11 @@ class ContinualModel(nn.Module):
         Returns:
             the value of the loss function
         """
+        if 'epoch' in kwargs and kwargs['epoch'] is not None:
+            epoch = kwargs['epoch']
+            if self._past_epoch != epoch:
+                self._past_epoch = epoch
+                self.epoch_iteration = 0
 
         if 'cssl' not in self.COMPATIBILITY:  # drop unlabeled data if not supported
             labeled_mask = args[1] != -1
@@ -277,6 +311,7 @@ class ContinualModel(nn.Module):
         else:
             ret = self.observe(*args, **kwargs)
         self.task_iteration += 1
+        self.epoch_iteration += 1
         return ret
 
     def meta_begin_task(self, dataset):
@@ -289,10 +324,11 @@ class ContinualModel(nn.Module):
             dataset: the current task's dataset
         """
         self.task_iteration = 0
+        self.epoch_iteration = 0
+        self._past_epoch = 0
         self._n_classes_current_task = self._cpt if isinstance(self._cpt, int) else self._cpt[self._current_task]
-        self._n_seen_classes = self._cpt * (self._current_task + 1) if isinstance(self._cpt, int) else sum(self._cpt[:self._current_task + 1])
+        self._n_past_classes, self._n_seen_classes = self.compute_offsets(self._current_task)
         self._n_remaining_classes = self.N_CLASSES - self._n_seen_classes
-        self._n_past_classes = self._cpt * self._current_task if isinstance(self._cpt, int) else sum(self._cpt[:self._current_task])
         self.begin_task(dataset)
 
     def meta_end_task(self, dataset):

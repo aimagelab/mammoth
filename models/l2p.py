@@ -84,10 +84,9 @@ class L2P(ContinualModel):
         logits = outputs['logits']
 
         # here is the trick to mask out classes of non-current tasks
-        offset_1, offset_2 = self._compute_offsets(self.current_task)
-        logits[:, :offset_1] = -float('inf')
+        logits[:, :self.n_past_classes] = -float('inf')
 
-        loss = self.loss(logits[:, :offset_2], labels)
+        loss = self.loss(logits[:, :self.n_seen_classes], labels)
         if self.args.pull_constraint and 'reduce_sim' in outputs:
             loss = loss - self.args.pull_constraint_coeff * outputs['reduce_sim']
 
@@ -102,8 +101,4 @@ class L2P(ContinualModel):
         return [p for n, p in self.net.model.named_parameters() if 'prompt' in n or 'head' in n]
 
     def forward(self, x):
-        if self.current_task > 0:
-            _, offset_2 = self._compute_offsets(self.current_task - 1)
-        else:
-            offset_2 = self.N_CLASSES
-        return self.net(x)[:, :offset_2]
+        return self.net(x)[:, :self.n_seen_classes]

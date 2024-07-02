@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import numpy as np
 from utils.conf import base_path
 from PIL import Image
-from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
+from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
 from typing import Tuple
 from datasets.transforms.denormalization import DeNormalize
 from torch.utils.data import Dataset
@@ -140,7 +140,7 @@ class SequentialImagenetR(ContinualDataset):
                                     download=True, transform=transform)
 
         test_dataset = MyImagenetR(base_path() + 'imagenet-r/', train=False,
-                                    download=True, transform=test_transform)
+                                   download=True, transform=test_transform)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
@@ -201,3 +201,12 @@ class SequentialImagenetR(ContinualDataset):
     @staticmethod
     def get_n_epochs_first_stage():
         return 50
+
+    def get_class_names(self):
+        pwd = os.path.dirname(os.path.abspath(__file__))
+        with open(pwd + '/imagenet_r_utils/label_to_class_name.pkl', 'rb') as f:
+            label_to_class_name = pickle.load(f)
+        class_names = label_to_class_name.values()
+        class_names = [x.replace('_', ' ') for x in class_names]
+        class_names = fix_class_names_order(class_names, self.args)
+        return class_names

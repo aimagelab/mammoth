@@ -5,7 +5,7 @@
 
 from argparse import Namespace
 import sys
-from typing import Tuple
+from typing import List, Tuple
 
 import torch
 import numpy as np
@@ -29,6 +29,8 @@ class ContinualDataset(object):
         N_TASKS (int): the number of tasks
         N_CLASSES (int): the number of classes
         SIZE (Tuple[int]): the size of the dataset
+        AVAIL_SCHEDS (List[str]): the available schedulers
+        class_names (List[str]): list of the class names of the dataset (should be populated by `get_class_names`)
         train_loader (DataLoader): the training loader
         test_loaders (List[DataLoader]): the test loaders
         i (int): the current task
@@ -43,6 +45,7 @@ class ContinualDataset(object):
     N_CLASSES: int
     SIZE: Tuple[int]
     AVAIL_SCHEDS = ['multisteplr']
+    class_names: List[str] = None
 
     def __init__(self, args: Namespace) -> None:
         """
@@ -160,7 +163,7 @@ class ContinualDataset(object):
     def get_scheduler(model, args: Namespace, reload_optim=True) -> torch.optim.lr_scheduler._LRScheduler:
         """
         Returns the scheduler to be used for the current dataset.
-        If `reload_optim` is True, the optimizer is reloaded from the model. This should be done at least ONCE every task 
+        If `reload_optim` is True, the optimizer is reloaded from the model. This should be done at least ONCE every task
         to ensure that the learning rate is reset to the initial value.
         """
         if args.lr_scheduler is not None:
@@ -196,6 +199,10 @@ class ContinualDataset(object):
     def get_minibatch_size(self):
         """Returns the minibatch size to be used for the current dataset."""
         return self.get_batch_size()
+
+    def get_class_names(self) -> List[str]:
+        """Returns the class names for the current dataset."""
+        raise NotImplementedError('The dataset does not implement the method `get_class_names` to get the class names.')
 
 
 def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):
@@ -292,3 +299,20 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
         setting.i += setting.N_CLASSES_PER_TASK
         setting.c_task += 1
     return train_loader, test_loader
+
+
+def fix_class_names_order(class_names: List[str], args: Namespace) -> List[str]:
+    """
+    Permutes the order of the class names according to the class order specified in the arguments.
+    The order reflects that of `store_masked_loaders`.
+
+    Args:
+        class_names: the list of class names. This should contain all classes in the dataset (not just the current task's ones).
+        args: the command line arguments
+
+    Returns:
+        List[str]: the class names in the correct order
+    """
+    if args.permute_classes:
+        class_names = [class_names[np.where(args.class_order == i)[0][0]] for i in range(len(class_names))]
+    return class_names

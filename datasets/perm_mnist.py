@@ -14,7 +14,7 @@ from torchvision.datasets import MNIST
 
 from backbone.MNISTMLP import MNISTMLP
 from datasets.transforms.permutation import Permutation
-from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
+from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
 from utils.conf import base_path
 from datasets.utils import set_default_from_args
 
@@ -112,3 +112,12 @@ class PermutedMNIST(ContinualDataset):
     @set_default_from_args('n_epochs')
     def get_epochs(self):
         return 1
+
+    def get_class_names(self):
+        if self.class_names is not None:
+            return self.class_names
+        classes = MNIST(base_path() + 'MNIST', train=True, download=True).classes
+        classes = [c.split('-')[1].strip() for c in classes]
+        classes = fix_class_names_order(classes, self.args)
+        self.class_names = classes
+        return self.class_names

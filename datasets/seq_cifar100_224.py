@@ -5,11 +5,12 @@ from typing import Tuple
 import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
+from torchvision.datasets import CIFAR100
 
 from backbone.vit import vit_base_patch16_224_prompt_prototype
 from datasets.seq_cifar100 import TCIFAR100, MyCIFAR100
 from datasets.transforms.denormalization import DeNormalize
-from datasets.utils.continual_dataset import (ContinualDataset,
+from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
                                               store_masked_loaders)
 from utils.conf import base_path
 from datasets.utils import set_default_from_args
@@ -94,3 +95,11 @@ class SequentialCIFAR100224(ContinualDataset):
     @set_default_from_args('batch_size')
     def get_batch_size(self):
         return 128
+
+    def get_class_names(self):
+        if self.class_names is not None:
+            return self.class_names
+        classes = CIFAR100(base_path() + 'CIFAR100', train=True, download=True).classes
+        classes = fix_class_names_order(classes, self.args)
+        self.class_names = classes
+        return self.class_names
