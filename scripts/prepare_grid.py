@@ -1,6 +1,8 @@
 import os
+if os.getcwd().split('/')[-1] == 'scripts':
+    os.chdir('..')
+
 import itertools
-import numpy as np
 import argparse
 
 parser = argparse.ArgumentParser(description='Prepare grid')

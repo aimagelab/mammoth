@@ -85,7 +85,7 @@ class FirstStageStarprompt(ContinualModel):
                 'args': self.args,
             }
             torch.save(st, f'./coop_keys/coop_keys_{self.current_task}_{self.args.conf_jobnum}.pt')
-            print('Done', file=sys.stderr)
+            print('Saved in', f'./coop_keys/coop_keys_{self.current_task}_{self.args.conf_jobnum}.pt', file=sys.stderr)
 
     def get_parameters(self):
         return [v for k, v in self.net.named_parameters() if 'prompt_parameters' in k]
