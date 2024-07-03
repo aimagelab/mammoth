@@ -82,8 +82,8 @@ class Prompter(torch.nn.Module):
     @torch.no_grad()
     def load_keys(self):
         print(f'Loading keys from {self.keys_ckpt_path}', file=sys.stderr)
-        st = torch.load(self.keys_ckpt_path).to(self.device)
-        keys = st['keys']
+        st = torch.load(self.keys_ckpt_path)
+        keys = st['keys'].to(self.device)
         old_args = st['args']
         assert self.num_classes == keys.shape[0]
         print('Keys loaded successfully', file=sys.stderr)
@@ -194,6 +194,8 @@ class Model(nn.Module):
     def __init__(self, args, backbone: nn.Module, dataset: ContinualDataset, num_classes):
         super().__init__()
 
+        assert 'resnet' not in str(type(backbone)).lower(), "ResNet not supported"
+
         self.args = args
         self.num_classes = num_classes
         self.device = backbone.device
@@ -203,9 +205,9 @@ class Model(nn.Module):
 
         # load pretrained weights
         load_dict = backbone.state_dict()
-        if 'head.weight' in load_dict:
-            del load_dict['head.weight']
-            del load_dict['head.bias']
+        for k in list(load_dict.keys()):
+            if 'head' in k:
+                del load_dict[k]
         missing, unexpected = vit_model.load_state_dict(load_dict, strict=False)
         assert len([m for m in missing if 'head' not in m]) == 0, f"Missing keys: {missing}"
         assert len(unexpected) == 0, f"Unexpected keys: {unexpected}"
@@ -219,6 +221,7 @@ class Model(nn.Module):
 
         self.prompter = Prompter(args,
                                  dataset,
+                                 num_classes=num_classes,
                                  target_embed_len=self.vit.patch_embed.num_patches,
                                  target_embed_dim=self.vit.embed_dim,
                                  prompt_layers=self.prompt_layers)
@@ -236,7 +239,7 @@ class Model(nn.Module):
 
     def forward(self, x, cur_classes: int, frozen_past_classes=0, return_features=False):
         clip_out = self.prompter.get_query(x, disable_renorm=False)
-        features = self.vit.forward_features(x, clip_out=clip_out, prompter=self.prompter, cur_classes=cur_classes, frozen_past_classes=frozen_past_classes)
+        features = self.vit.forward_features(x, first_stage_query=clip_out, prompter=self.prompter, cur_classes=cur_classes, frozen_past_classes=frozen_past_classes)
         if return_features:
             return features
 

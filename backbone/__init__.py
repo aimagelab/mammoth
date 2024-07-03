@@ -65,6 +65,12 @@ class MammothBackbone(nn.Module):
 
     def __init__(self, **kwargs) -> None:
         super(MammothBackbone, self).__init__()
+        self.device = torch.device('cpu') if 'device' not in kwargs else kwargs['device']
+
+    def to(self, device, *args, **kwargs):
+        super(MammothBackbone, self).to(device, *args, **kwargs)
+        self.device = device
+        return self
 
     def forward(self, x: torch.Tensor, returnt='out') -> torch.Tensor:
         """

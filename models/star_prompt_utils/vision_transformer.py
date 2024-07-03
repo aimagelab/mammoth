@@ -41,6 +41,9 @@ class Attention(nn.Module):
 
 
 class Block(MammothViTBlock):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, attn_layer=Attention, **kwargs)
+
     def forward(self, x, prompts=None):
         x = x + self.drop_path1(self.ls1(self.attn(self.norm1(x), prompts)))
         x = x + self.drop_path2(self.ls2(self.mlp(self.norm2(x))))

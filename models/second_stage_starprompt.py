@@ -62,7 +62,7 @@ class SecondStageStarprompt(ContinualModel):
             if isinstance(m, (torch.nn.BatchNorm2d, torch.nn.BatchNorm1d)):
                 m.track_running_stats = False
 
-        embed_dim = backbone.vit.embed_dim
+        embed_dim = self.net.vit.embed_dim
 
         self.distributions = torch.nn.ModuleList([self._get_dist(embed_dim)
                                                   for _ in range(self.num_classes)]).to(self.device)
