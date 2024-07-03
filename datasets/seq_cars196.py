@@ -192,14 +192,14 @@ class SequentialCars196(ContinualDataset):
         return transform
 
     @set_default_from_args('n_epochs')
-    def get_epochs():
+    def get_epochs(self):
         return 50
 
     @set_default_from_args('batch_size')
-    def get_batch_size():
+    def get_batch_size(self):
         return 128
 
-    @set_default_from_args('virtual_bs_n')
+    @staticmethod
     def get_virtual_bn_num():
         return 1
 
