@@ -153,11 +153,8 @@ class SequentialChestX(ContinualDataset):
 
     @staticmethod
     def get_transform():
-        transform = transforms.Compose(
-            [transforms.ToPILImage(),
-             SequentialChestX.TRANSFORM]
-        )
-        return transform
+        return transforms.Compose([transforms.ToPILImage(),
+                                   SequentialChestX.TRANSFORM])
 
     @staticmethod
     def get_backbone():
@@ -182,15 +179,11 @@ class SequentialChestX(ContinualDataset):
 
     @set_default_from_args('batch_size')
     def get_batch_size(self):
-        return 128
+        return 32
 
     @staticmethod
     def get_virtual_bn_num():
-        return 1
-
-    @staticmethod
-    def get_n_epochs_first_stage():
-        return 50
+        return 4
 
 
 if __name__ == '__main__':

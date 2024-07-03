@@ -31,16 +31,27 @@ from utils.conf import get_device
 
 class FinalModel(nn.Module):
     @torch.no_grad()
-    def __init__(self, clip_model, dataset: ContinualDataset) -> None:
+    def __init__(self, clip_model, dataset: ContinualDataset, args) -> None:
         super().__init__()
         self.dataset = dataset
         self.clip_model = clip_model
+        self.args = args
 
         self.classes = self.dataset.get_class_names()
-        text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in self.classes]).to(get_device())
-        self.text_features = self.clip_model.encode_text(text_inputs)
-        self.text_features /= self.text_features.norm(dim=-1, keepdim=True)
+        if args.use_templates:
+            templates = self.dataset.get_prompt_templates()
+            text_inputs = []
+            for t in templates:
+                t_inputs = torch.cat([clip.tokenize(t.format(c)) for c in self.classes]).to(get_device())
+                t_inputs = self.clip_model.encode_text(t_inputs)
+                t_inputs /= t_inputs.norm(dim=-1, keepdim=True) # double normalization if use templates is expected (see https://github.dev/KaiyangZhou/CoOp)
+                text_inputs.append(t_inputs)
+            self.text_features = torch.stack(text_inputs).mean(0)
+        else:
+            text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in self.classes]).to(get_device())
+            self.text_features = self.clip_model.encode_text(text_inputs)
 
+        self.text_features /= self.text_features.norm(dim=-1, keepdim=True) # double normalization if use templates is expected
         self.task_id = 0
 
     @torch.no_grad()
@@ -66,16 +77,19 @@ class CLIP(ContinualModel):
                             help='Backbone architecture for CLIP')
         parser.add_argument('--save_predictions', type=int, choices=[0, 1], default=0,
                             help='Whether to save predictions of the TRAINING set after each task')
+        parser.add_argument('--use_templates', type=int, choices=[0, 1], default=0,
+                            help='Whether to use prompt templates for CLIP. NOTE: Datasets NEED to have a `get_prompt_templates` method implemented.')
         return parser
 
     def __init__(self, backbone, loss, args, transform):
         backbone, clip_transform = clip.load(args.clip_backbone, device=get_device())
-        if args.n_epochs > 1:
-            print("CLIP is a STATIC model, setting n_epochs to 1")
-            args.n_epochs = 1
+        n_epochs = 1 if args.save_predictions else 0
+        if args.n_epochs != n_epochs:
+            print(f"CLIP is a STATIC model, setting n_epochs to {args.n_epochs}")
+            args.n_epochs = n_epochs
         super().__init__(backbone, loss, args, transform)
 
-        self.net = FinalModel(self.net, self.dataset)
+        self.net = FinalModel(self.net, self.dataset, args)
         self.clip_transform = clip_transform
 
         self.predictions = []

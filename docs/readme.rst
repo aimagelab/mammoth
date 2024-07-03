@@ -65,7 +65,7 @@ Setup
 - New datasets can be added to the ``datasets/`` folder.
 
 .. note::
-    **Pytorch version >=2.1.0 is required for scaled_dot_product_attention** (see: https://github.com/Lightning-AI/litgpt/issues/763). If you cannot support this version, you can uncomment the lines 136-139 under `scaled_dot_product_attention` in `backbone/vit.py`.
+    **Pytorch version >=2.1.0 is required for scaled_dot_product_attention** (see: https://github.com/Lightning-AI/litgpt/issues/763). If you cannot support this version, you can uncomment the lines 113-116 under `scaled_dot_product_attention` in `backbone/vit.py`.
 
 Models
 ------

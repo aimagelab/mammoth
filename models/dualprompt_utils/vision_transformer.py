@@ -9,7 +9,7 @@ import torch.utils.checkpoint
 from timm.models.helpers import named_apply
 from timm.models.layers import trunc_normal_
 
-from backbone.vit import Attention, create_vision_transformer, VisionTransformer as MammothVP, get_init_weights_vit
+from backbone.vit import LoRAAttention, create_vision_transformer, VisionTransformer as MammothVP, get_init_weights_vit
 from models.dualprompt_utils.prompt import EPrompt
 from models.dualprompt_utils.attention import PreT_Attention
 
@@ -25,10 +25,10 @@ class VisionTransformer(MammothVP):
             use_e_prompt=False, e_prompt_layer_idx=None, use_prefix_tune_for_e_prompt=False, same_key_value=False, args=None, **kwargs):
 
         if not (use_g_prompt or use_e_prompt):
-            attn_layer = Attention
+            attn_layer = LoRAAttention
         elif not (use_prefix_tune_for_g_prompt or use_prefix_tune_for_e_prompt):
             # Prompt tunning
-            attn_layer = Attention
+            attn_layer = LoRAAttention
         else:
             # Prefix tunning
             attn_layer = PreT_Attention

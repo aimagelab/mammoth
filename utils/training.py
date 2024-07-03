@@ -251,7 +251,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             train_loader, test_loader = dataset.get_data_loaders()
             model.meta_begin_task(dataset)
 
-            if not args.inference_only:
+            if not args.inference_only and args.n_epochs>0:
                 if t and args.enable_other_metrics:
                     accs = evaluate(model, dataset, last=True)
                     results[t - 1] = results[t - 1] + accs[0]

@@ -198,10 +198,6 @@ class SequentialImagenetR(ContinualDataset):
     def get_virtual_bn_num():
         return 4
 
-    @staticmethod
-    def get_n_epochs_first_stage():
-        return 50
-
     def get_class_names(self):
         pwd = os.path.dirname(os.path.abspath(__file__))
         with open(pwd + '/imagenet_r_utils/label_to_class_name.pkl', 'rb') as f:

@@ -49,7 +49,6 @@ Hacked together by / Copyright 2020, Ross Wightman
 
 import logging
 import math
-from collections import OrderedDict
 from functools import partial
 
 import torch
@@ -62,33 +61,18 @@ from timm.layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_normal_,
 from timm.models._builder import build_model_with_cfg
 from timm.models._manipulate import named_apply
 
-from backbone.utils.layers import LoRALinear, IncrementalClassifier
-
-from itertools import repeat
-import collections.abc
-
+from backbone.utils.layers import IncrementalClassifier
 from backbone import MammothBackbone
+from backbone.utils.lora_utils import LoRAAttention, LoRAMlp
 
 __all__ = ['VisionTransformer']  # model_registry will add each entrypoint fn to this
 
 _logger = logging.getLogger(__name__)
 
 
-def _ntuple(n):
-    def parse(x):
-        if isinstance(x, collections.abc.Iterable) and not isinstance(x, str):
-            return tuple(x)
-        return tuple(repeat(x, n))
-    return parse
-
-
-to_2tuple = _ntuple(2)
-
-
 class Attention(nn.Module):
     """
     Attention layer as used in Vision Transformer.
-    Adapted to support LoRA-style parameters.
 
     Args:
         dim: Number of input channels
@@ -105,29 +89,22 @@ class Attention(nn.Module):
         head_dim = dim // num_heads
         self.scale = head_dim ** -0.5
 
-        self.qkv = LoRALinear(dim, dim * 3, 0., bias=qkv_bias)
+        self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)
-        self.proj = LoRALinear(dim, dim, 0.)
+        self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop)
 
-    def forward(self, x, AB: dict = None, **kwargs):
+    def forward(self, x, **kwargs):
         """
         Forward pass of the attention layer.
-        Supports `AB` for LoRA-style parameters (checkout docs for `VisionTransformer.forward`).
 
         Args:
             x: Input tensor
-            AB: Dictionary containing LoRA-style parameters for the layer
         """
 
         B, N, C = x.shape
 
-        AB_qkv = None
-
-        if AB is not None:
-            AB_qkv = AB.get("qkv")
-
-        qkv = self.qkv(x, AB_qkv)
+        qkv = self.qkv(x)
         qkv = qkv.reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         q, k, v = qkv.unbind(0)  # make torchscript happy (cannot use tensor as tuple)
 
@@ -140,12 +117,7 @@ class Attention(nn.Module):
 
         x = x.transpose(1, 2).reshape(B, N, C)
 
-        AB_proj = None
-
-        if AB is not None:
-            AB_proj = AB.get("proj")
-
-        x = self.proj(x, AB_proj)
+        x = self.proj(x)
         x = self.proj_drop(x)
 
         return x
@@ -159,65 +131,6 @@ class LayerScale(nn.Module):
 
     def forward(self, x):
         return x.mul_(self.gamma) if self.inplace else x * self.gamma
-
-
-class Mlp(nn.Module):
-    """
-    MLP as used in Vision Transformer, MLP-Mixer and related networks.
-    Adapted to support LoRA-style parameters.
-    """
-
-    def __init__(
-            self,
-            in_features,
-            hidden_features=None,
-            out_features=None,
-            act_layer=nn.GELU,
-            norm_layer=None,
-            bias=True,
-            drop=0.,
-            use_conv=False,
-    ):
-        super().__init__()
-        out_features = out_features or in_features
-        hidden_features = hidden_features or in_features
-        bias = to_2tuple(bias)
-        drop_probs = to_2tuple(drop)
-
-        assert use_conv is False
-
-        self.fc1 = LoRALinear(in_features, hidden_features, bias=bias[0], lora_dropout=0.)
-        self.act = act_layer()
-        self.drop1 = nn.Dropout(drop_probs[0])
-        self.norm = norm_layer(hidden_features) if norm_layer is not None else nn.Identity()
-        self.fc2 = LoRALinear(hidden_features, out_features, bias=bias[1], lora_dropout=0.)
-        self.drop2 = nn.Dropout(drop_probs[1])
-
-    def forward(self, x: torch.Tensor, AB: dict = None, **kwargs):
-        """
-        Forward pass of the MLP layer.
-        Supports `AB` for LoRA-style parameters (checkout docs for `VisionTransformer.forward`).
-
-        Args:
-            x: Input tensor
-            AB: Dictionary containing LoRA-style parameters for the layer
-        """
-        AB_fc1 = None
-        AB_fc2 = None
-
-        if AB is not None:
-            AB_fc1 = AB.get("fc1")
-            AB_fc2 = AB.get("fc2")
-
-        x = self.fc1(x, AB_fc1)
-        x = self.act(x)
-        x = self.drop1(x)
-        x = self.norm(x)
-        x = self.fc2(x, AB_fc2)
-        x = self.drop2(x)
-
-        return x
-
 
 class Block(nn.Module):
 
@@ -234,6 +147,7 @@ class Block(nn.Module):
             act_layer=nn.GELU,
             norm_layer=nn.LayerNorm,
             attn_layer=Attention,
+            mlp_layer=Mlp
     ):
         super().__init__()
         self.norm1 = norm_layer(dim)
@@ -243,7 +157,7 @@ class Block(nn.Module):
         self.drop_path1 = DropPath(drop_path) if drop_path > 0. else nn.Identity()
 
         self.norm2 = norm_layer(dim)
-        self.mlp = Mlp(in_features=dim, hidden_features=int(dim * mlp_ratio), act_layer=act_layer, drop=drop)
+        self.mlp = mlp_layer(in_features=dim, hidden_features=int(dim * mlp_ratio), act_layer=act_layer, drop=drop)
         self.ls2 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
         self.drop_path2 = DropPath(drop_path) if drop_path > 0. else nn.Identity()
 
@@ -254,7 +168,8 @@ class Block(nn.Module):
 
 
 class VisionTransformer(MammothBackbone):
-    """ Vision Transformer
+    """ Vision Transformer.
+    This implementation supports LoRA (Layer-wise Relevance Adaptation) parameters if `use_lora=True`.
 
     A PyTorch impl of : `An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale`
         - https://arxiv.org/abs/2010.11929
@@ -285,7 +200,9 @@ class VisionTransformer(MammothBackbone):
             norm_layer=None,
             act_layer=None,
             block_fn=Block,
-            attn_layer=Attention,
+            attn_layer=None,
+            mlp_layer=None,
+            use_lora=False,
             args=None
     ):
         """
@@ -320,7 +237,9 @@ class VisionTransformer(MammothBackbone):
         use_fc_norm = global_pool == 'avg' if fc_norm is None else fc_norm
         norm_layer = norm_layer or partial(nn.LayerNorm, eps=1e-6)
         self.act_layer = act_layer or nn.GELU
-
+        
+        attn_layer = attn_layer if attn_layer is not None else (Attention if not use_lora else LoRAAttention)
+        mlp_layer = mlp_layer if mlp_layer is not None else (Mlp if not use_lora else LoRAMlp)
         self.attn_layer = attn_layer
         self.norm_layer = norm_layer
         self.num_heads = num_heads
@@ -366,7 +285,8 @@ class VisionTransformer(MammothBackbone):
                 drop_path=self.dpr[i],
                 norm_layer=norm_layer,
                 act_layer=self.act_layer,
-                attn_layer=attn_layer
+                attn_layer=attn_layer,
+                mlp_layer=mlp_layer
             )
             for i in range(depth)])
         self.norm = norm_layer(embed_dim) if not use_fc_norm else nn.Identity()

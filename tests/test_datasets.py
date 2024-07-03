@@ -9,7 +9,7 @@ import pytest
                                      'rot-mnist', 'perm-mnist', 'mnist-360', 'seq-cifar100-224',
                                      'seq-cifar10-224', 'seq-cifar100-224-rs',
                                      'seq-cifar100-224-rs', 'seq-tinyimg-r', 'seq-cub200', 'seq-imagenet-r',
-                                     'seq-cafr196', 'seq-chestx'])
+                                     'seq-cafr196', 'seq-chestx', 'seq-cropdisease', 'seq-eurosat-rgb'])
 def test_datasets(dataset):
     sys.argv = ['mammoth',
                 '--model',
@@ -32,7 +32,9 @@ def test_datasets(dataset):
                 '1']
 
     # clean all downloaded datasets
-    dataset_paths = ['CUB200', 'CIFAR10', 'CIFAR100', 'MNIST', 'TINYIMG', 'imagenet-r', 'cars196', 'chestx']
+    dataset_paths = ['CUB200', 'CIFAR10', 'CIFAR100', 'MNIST', 
+                     'TINYIMG', 'imagenet-r', 'cars196', 'chestx', 
+                     'cropdisease', 'eurosat']
     basepath = os.path.dirname(os.path.abspath(__file__))
     dt_dir = os.path.join(os.path.dirname(basepath), 'data')
     for path in dataset_paths:
