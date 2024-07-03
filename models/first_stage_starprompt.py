@@ -27,9 +27,11 @@ class FirstStageStarprompt(ContinualModel):
         # Tunable hyperparameters
         parser.add_argument("--learning_rate_gr", type=float, default=0.05,
                             help="Learning rate for Generative Replay.")
-        parser.add_argument("--lambda_ortho_coop", type=float, default=30, help="Orthogonality loss coefficient for coop")
-        parser.add_argument("--num_monte_carlo_gr", type=int, default=5, help="How many times to sample from the dataset for alignment")
-        parser.add_argument("--num_epochs_alignment", type=int, default=10,
+        parser.add_argument("--lambda_ortho_coop", type=float, default=30, 
+                            help="Orthogonality loss coefficient for coop")
+        parser.add_argument("--num_monte_carlo_gr", type=int, default=5, 
+                            help="How many times to sample from the dataset for Generative Replay")
+        parser.add_argument("--num_epochs_gr", type=int, default=10,
                             help="Num. of epochs for Generative Replay.")
         parser.add_argument('--gr_mog_n_components', type=int, default=5,
                             help="Number of components for Generative Replay with MOG.")
@@ -85,7 +87,7 @@ class FirstStageStarprompt(ContinualModel):
                 'args': self.args,
             }
             torch.save(st, f'./coop_keys/coop_keys_{self.current_task}_{self.args.conf_jobnum}.pt')
-            print('Saved in', f'./coop_keys/coop_keys_{self.current_task}_{self.args.conf_jobnum}.pt', file=sys.stderr)
+            print('Done', file=sys.stderr)
 
     def get_parameters(self):
         return [v for k, v in self.net.named_parameters() if 'prompt_parameters' in k]

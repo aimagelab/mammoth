@@ -117,7 +117,7 @@ class Prompter(torch.nn.Module):
         optim = torch.optim.SGD(lr=self.args.learning_rate_gr, params=[self.prompt_parameters],
                                 momentum=0.0, weight_decay=0.0)
 
-        for e in range(self.args.num_epochs_alignment):
+        for e in range(self.args.num_epochs_gr):
             self.train_alignment_epoch(optim, current_task=current_task)
 
     @torch.no_grad()

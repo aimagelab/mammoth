@@ -1,8 +1,7 @@
-import os
-if os.getcwd().split('/')[-1] == 'scripts':
-    os.chdir('..')
-    
 import argparse
+import os
+import socket
+import time
 import math
 
 if __name__ == '__main__':

@@ -30,7 +30,7 @@ class SecondStageStarprompt(ContinualModel):
                             help="orthogonality loss coefficient")
         parser.add_argument("--num_monte_carlo_gr", type=int, default=1,
                             help="how many times to sample from the dataset for alignment")
-        parser.add_argument("--num_epochs_alignment", type=int, default=10,
+        parser.add_argument("--num_epochs_gr", type=int, default=10,
                             help="Num. of epochs for GR.")
         parser.add_argument("--learning_rate_gr", type=float, default=0.001,
                             help="Learning rate for GR.")
@@ -139,7 +139,7 @@ class SecondStageStarprompt(ContinualModel):
                                 momentum=0.0,
                                 weight_decay=0.0)
 
-        num_epochs = self.args.num_epochs_alignment + (5 * self.current_task)
+        num_epochs = self.args.num_epochs_gr + (5 * self.current_task)
 
         for e in range(num_epochs):
             self.train_alignment_epoch(classifier, optim)

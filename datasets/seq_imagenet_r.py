@@ -43,7 +43,7 @@ class MyImagenetR(Dataset):
                 r = request('GET', url, allow_redirects=True)
                 if not os.path.exists(self.root):
                     os.makedirs(self.root)
-                print("Saving tar...")
+                print("Writing tar on disk...")
                 open(self.root + 'imagenet-r.tar', 'wb').write(r.content)
                 print("Extracting tar...")
                 os.system('tar -xf ' + self.root + 'imagenet-r.tar -C ' + self.root.rstrip('imagenet-r'))
