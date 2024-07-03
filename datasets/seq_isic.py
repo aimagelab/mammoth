@@ -16,20 +16,15 @@ from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
 from backbone.vit import vit_base_patch16_224_prompt_prototype
 
-class ChestX(Dataset):
+class Isic(Dataset):
     N_CLASSES = 6
 
-    """
-    To reduce the effect of the severe imbalance in the dataset, we drop the two classes with the smallest and largest amount of samples.
-    """
-    LABELS = [
-        "Cardiomegaly",
-        "Consolidation",
-        "Edema",
-        "Fibrosis",
-        "Pleural Thickening",
-        "Pneumothorax"
-    ]
+    LABELS = ['melanoma',
+              'basal cell carcinoma',
+              'actinic keratosis or intraepithelial carcinoma',
+              'benign keratosis',
+              'dermatofibroma',
+              'vascular skin lesion']
 
     """
     Overrides the ChestX dataset to change the getitem function.
@@ -42,25 +37,20 @@ class ChestX(Dataset):
         self.train = train
         self.transform = transform
         self.target_transform = target_transform
-
-        if not os.path.exists(f'{root}/train_images.pkl'):
+        
+        split = 'train' if train else 'test'
+        if not os.path.exists(f'{root}/{split}_images.pkl'):
             if download:
+                ln = 'https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/ERM64PkPkFtJhmiUQkVvE64BR900MbIHtJVA_CR4KKhy8A?e=OsrQr5'
                 from onedrivedownloader import download
-
-                print('Downloading dataset')
-                ln = "https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EfmFCiLaGlpFgtAuv0YLpeYBeR54I7YHK75bu_Ex78mADA?e=K8rHpZ"
-                download(ln, filename=smart_joint(root, 'chestx.zip'), unzip=True, unzip_path=root.rstrip('chestx'), clean=True)
+                download(ln, filename=smart_joint(root, 'isic.tar.gz'), unzip=True, unzip_path=root.rstrip('isic'), clean=True)
             else:
-                raise FileNotFoundError(f'File not found: {root}/train_images.pkl')
+                raise FileNotFoundError(f'File not found: {root}/{split}_images.pkl')
+            
+        filename_labels = f'{self.root}/{split}_labels.pkl'
+        filename_images = f'{self.root}/{split}_images.pkl'
 
-        if train:
-            filename_labels = f'{self.root}/train_labels.pkl'
-            filename_images = f'{self.root}/train_images.pkl'
-        else:
-            filename_labels = f'{self.root}/test_labels.pkl'
-            filename_images = f'{self.root}/test_images.pkl'
-
-        self.not_aug_transform = transforms.ToTensor()
+        self.not_aug_transform = transforms.Compose([transforms.ToTensor()])
 
         with open(filename_images, 'rb') as f:
             self.data = pickle.load(f)
@@ -78,8 +68,7 @@ class ChestX(Dataset):
         :returns: tuple: (image, target) where target is index of the target class.
         """
         img, target = self.data[index], self.targets[index]
-        img = np.repeat(img[np.newaxis,:,:], 3, axis=0)
-        img = Image.fromarray((img*255).astype(np.int8).transpose(1,2,0), mode='RGB')
+        img = Image.fromarray((img*255).astype(np.int8), mode='RGB')
 
         original_img = img.copy()
 
@@ -100,60 +89,63 @@ class ChestX(Dataset):
         return img, target, not_aug_img
 
 
-class SequentialChestX(ContinualDataset):
+class SequentialIsic(ContinualDataset):
 
-    NAME = 'seq-chestx'
+    NAME = 'seq-isic'
     SETTING = 'class-il'
-    N_TASKS = 2
+    N_TASKS = 3
+    N_CLASSES_PER_TASK = 2
     N_CLASSES = 6
-    N_CLASSES_PER_TASK = 3
-    SIZE=(224, 224)
+    SIZE = (224, 224)
     MEAN, STD = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
-    normalize = transforms.Normalize(mean=MEAN,
-                                     std=STD)
 
     TRANSFORM = transforms.Compose([
-        transforms.Resize(size=SIZE, interpolation=InterpolationMode.BICUBIC),
+        transforms.Resize(256, interpolation=InterpolationMode.BICUBIC),
+        transforms.RandomCrop(SIZE[0]),
+        transforms.RandomHorizontalFlip(0.5),
         transforms.ToTensor(),
-        normalize,
+        transforms.Normalize(mean=MEAN, std=STD),
     ])
 
     TEST_TRANSFORM = transforms.Compose([
-        transforms.Resize(size=SIZE, interpolation=InterpolationMode.BICUBIC),
+        transforms.Resize(size=(256, 256), interpolation=InterpolationMode.BICUBIC),
+        transforms.CenterCrop(SIZE[0]),
         transforms.ToTensor(),
-        normalize,
+        transforms.Normalize(mean=MEAN, std=STD),
     ])
 
     def get_data_loaders(self):
-        train_dataset = ChestX(base_path() + 'chestx', train=True,
+        train_dataset = Isic(base_path() + 'isic', train=True,
                                     download=True, transform=self.TRANSFORM)
 
-        test_dataset = ChestX(base_path() + 'chestx', train=False, download=True,
+        test_dataset = Isic(base_path() + 'isic', train=False, download=True,
                               transform=self.TEST_TRANSFORM)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
 
         return train, test
-    
+
     def get_class_names(self):
         if self.class_names is not None:
             return self.class_names
-        classes = fix_class_names_order(ChestX.LABELS, self.args)
+        classes = fix_class_names_order(Isic.LABELS, self.args)
         self.class_names = classes
         return self.class_names
-    
+
     @staticmethod
     def get_prompt_templates():
         return templates['cifar100']
 
     @staticmethod
     def get_transform():
-        return transforms.Compose([transforms.ToPILImage(),
-                                   SequentialChestX.TRANSFORM])
+        transform = transforms.Compose([
+            transforms.ToPILImage(),
+             SequentialIsic.TRANSFORM])
+        return transform
 
     @staticmethod
     def get_backbone():
-        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=SequentialChestX.N_CLASSES)
+        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=SequentialIsic.N_CLASSES)
 
     @staticmethod
     def get_loss():
@@ -161,11 +153,11 @@ class SequentialChestX(ContinualDataset):
 
     @staticmethod
     def get_normalization_transform():
-        return transforms.Normalize(mean=SequentialChestX.MEAN, std=SequentialChestX.STD)
+        return transforms.Normalize(mean=SequentialIsic.MEAN, std=SequentialIsic.STD)
 
     @staticmethod
     def get_denormalization_transform():
-        transform = DeNormalize(mean=SequentialChestX.MEAN, std=SequentialChestX.STD)
+        transform = DeNormalize(mean=SequentialIsic.MEAN, std=SequentialIsic.STD)
         return transform
 
     @set_default_from_args('n_epochs')
@@ -174,13 +166,13 @@ class SequentialChestX(ContinualDataset):
 
     @set_default_from_args('batch_size')
     def get_batch_size(self):
-        return 32
+        return 128
 
     @staticmethod
     def get_virtual_bn_num():
-        return 4
+        return 1
 
 
 if __name__ == '__main__':
-    d = ChestX('../data/chestx', train=False)
+    d = Isic('../data/isic', train=False)
     d[0]

@@ -37,7 +37,11 @@ def set_default_from_args(arg_name: str):
         DEFAULT_ARGS[caller_name] = {}
 
     def decorator_set_default_from_args(func):
-        DEFAULT_ARGS[caller_name][arg_name] = func(None)
+        n_args = len(inspect.signature(func).parameters)
+        if n_args == 1: # has self
+            DEFAULT_ARGS[caller_name][arg_name] = func(None)
+        else:
+            DEFAULT_ARGS[caller_name][arg_name] = func()
 
         @functools.wraps(func)
         def wrapper(*args):
