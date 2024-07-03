@@ -1,6 +1,8 @@
-import functools
 import os
-import random
+if os.getcwd().split('/')[-1] == 'scripts':
+    os.chdir('..')
+    
+import functools
 import subprocess
 import sys
 import time
