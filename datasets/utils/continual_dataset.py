@@ -56,7 +56,6 @@ class ContinualDataset(object):
         """
         self.train_loader = None
         self.test_loaders = []
-        self.i = 0
         self.c_task = -1
         self.args = args
         if self.SETTING == 'class-il':
@@ -124,6 +123,8 @@ class ContinualDataset(object):
 
         start_c = self.N_CLASSES_PER_TASK * task_idx if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK[:task_idx])
         end_c = self.N_CLASSES_PER_TASK * (task_idx + 1) if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK[:task_idx + 1])
+
+        assert end_c > start_c, 'End class index must be greater than start class index.'
 
         return start_c, end_c
 
@@ -249,6 +250,9 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     Returns:
         the training and test loaders
     """
+    if setting.SETTING == 'task-il' or setting.SETTING == 'class-il':
+        setting.c_task += 1
+
     if not isinstance(train_dataset.targets, np.ndarray):
         train_dataset.targets = np.array(train_dataset.targets)
     if not isinstance(test_dataset.targets, np.ndarray):
@@ -267,16 +271,18 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
         train_dataset.data = train_dataset.data[train_idxs]
         train_dataset.targets = train_dataset.targets[train_idxs]
 
+    start_c, end_c = setting.get_offsets()
+
     if setting.SETTING == 'class-il' or setting.SETTING == 'task-il':
-        train_mask = np.logical_and(train_dataset.targets >= setting.i,
-                                    train_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
+        train_mask = np.logical_and(train_dataset.targets >= start_c,
+                                    train_dataset.targets < end_c)
 
         if setting.args.validation_mode == 'current':
-            test_mask = np.logical_and(test_dataset.targets >= setting.i,
-                                       test_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
+            test_mask = np.logical_and(test_dataset.targets >= start_c,
+                                       test_dataset.targets < end_c)
         elif setting.args.validation_mode == 'complete':
             test_mask = np.logical_and(test_dataset.targets >= 0,
-                                       test_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
+                                       test_dataset.targets < end_c)
         else:
             raise ValueError('Unknown validation mode: {}'.format(setting.args.validation_mode))
 
@@ -295,9 +301,6 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     setting.test_loaders.append(test_loader)
     setting.train_loader = train_loader
 
-    if setting.SETTING == 'task-il' or setting.SETTING == 'class-il':
-        setting.i += setting.N_CLASSES_PER_TASK
-        setting.c_task += 1
     return train_loader, test_loader
 
 

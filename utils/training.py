@@ -39,9 +39,10 @@ def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> No
         dataset: the continual dataset
         k: the task index
     """
-    outputs[:, 0:k * dataset.N_CLASSES_PER_TASK] = -float('inf')
-    outputs[:, (k + 1) * dataset.N_CLASSES_PER_TASK:
-            dataset.N_TASKS * dataset.N_CLASSES_PER_TASK] = -float('inf')
+    num_classes = dataset.N_CLASSES
+    start_c, end_c = dataset.get_offsets()
+    outputs[:, :start_c] = -float('inf')
+    outputs[:, end_c:num_classes] = -float('inf')
 
 
 @torch.no_grad()

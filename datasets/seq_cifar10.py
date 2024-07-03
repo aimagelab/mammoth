@@ -12,7 +12,7 @@ from PIL import Image
 from torchvision.datasets import CIFAR10
 
 from backbone.ResNetBlock import resnet18
-from datasets.seq_tinyimagenet import base_path
+from utils.conf import base_path
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
                                               store_masked_loaders)

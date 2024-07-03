@@ -11,8 +11,7 @@ import torchvision.transforms as transforms
 from torchvision.datasets import CIFAR10
 
 from backbone.ResNetBottleneck import resnet50
-from datasets.seq_cifar10 import TCIFAR10, MyCIFAR10
-from datasets.seq_tinyimagenet import base_path
+from datasets.seq_cifar10 import TCIFAR10, MyCIFAR10, base_path
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
                                               store_masked_loaders)
