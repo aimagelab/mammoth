@@ -58,10 +58,14 @@ With Mammoth, nothing is set in stone. You can easily add new models, datasets, 
 Setup
 -----
 
+- Install with ``pip install -r requirements.txt``.
 - Use ``./utils/main.py`` to run experiments.
 - Use argument ``--load_best_args`` to use the best hyperparameters from the paper.
 - New models can be added to the ``models/`` folder.
 - New datasets can be added to the ``datasets/`` folder.
+
+.. note::
+    **Pytorch version >=2.1.0 is required for scaled_dot_product_attention** (see: https://github.com/Lightning-AI/litgpt/issues/763). If you cannot support this version, you can uncomment the lines 136-139 under `scaled_dot_product_attention` in `backbone/vit.py`.
 
 Models
 ------
