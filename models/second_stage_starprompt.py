@@ -36,8 +36,10 @@ class SecondStageStarprompt(ContinualModel):
                             help="Learning rate for GR.")
         parser.add_argument('--gr_mog_n_iters', type=int, default=500,
                             help="Number of EM iterations during fit for GR with MOG.")
+        parser.add_argument("--enable_gr", type=int, default=1, choices=[0, 1],
+                            help="Enable Generative Replay.")
 
-        parser.add_argument('--keys_ckpt_path', type=str, required=True,
+        parser.add_argument('--keys_ckpt_path', type=str,
                             help="Path for first-stage keys. The keys can be saved by runninng `first_stage_starprompt` with `--save_first_stage_keys=1`.")
 
         parser.add_argument('--batch_size_gr', type=int, default=128,
@@ -180,7 +182,7 @@ class SecondStageStarprompt(ContinualModel):
         print(f"RECALL: Task - {self.current_task} - classes from "
               f"{self.n_past_classes} - to {self.n_seen_classes}")
 
-        if self.current_task == 0:
+        if self.current_task == 0 or self.args.enable_gr == 0:
             return
 
         assert self.classifier_state_dict
@@ -192,11 +194,12 @@ class SecondStageStarprompt(ContinualModel):
         if hasattr(self, 'opt'):
             del self.opt  # free up some vram
 
-        self.update_statistics(dataset)
-        self.backup()
+        if self.args.enable_gr:
+            self.update_statistics(dataset)
+            self.backup()
 
-        if self.current_task > 0:
-            self.align()
+            if self.current_task > 0:
+                self.align()
 
     def get_parameters(self):
         return [p for p in self.net.parameters() if p.requires_grad]
@@ -211,7 +214,7 @@ class SecondStageStarprompt(ContinualModel):
             del self.opt
 
         self.opt = self.get_optimizer()
-        self.scheduler = self.get_scheduler() # TODO: check custom scheduler
+        self.scheduler = self.get_scheduler()
 
     def forward(self, x):
         logits = self.net(x, cur_classes=self.n_seen_classes)

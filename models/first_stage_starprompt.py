@@ -37,6 +37,8 @@ class FirstStageStarprompt(ContinualModel):
                             help="Number of components for Generative Replay with MOG.")
         parser.add_argument('--gr_mog_n_iters', type=int, default=200,
                             help="Number of EM iterations during fit for GR with MOG.")
+        parser.add_argument("--enable_gr", type=int, default=1, choices=[0, 1],
+                            help="Enable Generative Replay.")
         
         parser.add_argument('--batch_size_gr', type=int, default=128,
                             help="Batch size for Generative Replay.")
@@ -50,7 +52,6 @@ class FirstStageStarprompt(ContinualModel):
         # Backbone arguments
         parser.add_argument("--clip_backbone", type=str, default='ViT-L/14', help="CLIP backbone architecture",
                             choices=clip.available_models())
-
         return parser
 
 
@@ -75,8 +76,9 @@ class FirstStageStarprompt(ContinualModel):
             delattr(self, 'opt')
 
         # Generative replay
-        self.net.prompter.update_statistics(dataset, self.current_task)
-        self.net.prompter.align(self.current_task)
+        if self.args.enable_gr:
+            self.net.prompter.update_statistics(dataset, self.current_task)
+            self.net.prompter.align(self.current_task)
 
         if self.current_task == (self.n_tasks - 1) and self.args.save_first_stage_keys:
             print('Saving text encoder outputs... ', end='', file=sys.stderr)

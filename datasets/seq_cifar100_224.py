@@ -14,6 +14,7 @@ from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_
                                               store_masked_loaders)
 from utils.conf import base_path
 from datasets.utils import set_default_from_args
+from utils.prompt_templates import templates
 
 
 class SequentialCIFAR100224(ContinualDataset):
@@ -103,3 +104,7 @@ class SequentialCIFAR100224(ContinualDataset):
         classes = fix_class_names_order(classes, self.args)
         self.class_names = classes
         return self.class_names
+
+    @staticmethod
+    def get_prompt_templates():
+        return templates['cifar100']

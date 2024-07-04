@@ -12,7 +12,6 @@ except ImportError:
 
 from datasets.utils.continual_dataset import ContinualDataset
 from models.star_prompt_utils.vision_transformer import VisionTransformer
-from utils.conf import get_device
 
 
 class Prompter(torch.nn.Module):
@@ -20,44 +19,43 @@ class Prompter(torch.nn.Module):
 
     def __init__(self, args, dataset: ContinualDataset,
                  num_classes: int, target_embed_len: int,
-                 target_embed_dim: int, prompt_layers: List[int],
-                 pretrained=True):
+                 target_embed_dim: int, prompt_layers: List[int]):
         super().__init__()
+        self.args = args
+        self.prompt_layers = prompt_layers
+        self.target_embed_len = target_embed_len
+        self.target_embed_dim = target_embed_dim
+        self.device = args.device
+        self.num_classes = num_classes
 
-        if pretrained:
-            if args.keys_ckpt_path is None:
+        clip_backbone = 'ViT-L/14'
+        if args.keys_ckpt_path is not None:
+            if args.keys_ckpt_path.endswith('.json'):
                 try:
                     key_jobnum = json.load(open(os.path.join(os.path.dirname(__file__), 'first_stage_keys.json'), 'r'))[args.dataset][str(args.seed)]
                 except BaseException:
                     print("key missing", args.dataset, args.seed, file=sys.stderr)
                     raise ValueError
 
-                self.keys_ckpt_path = f"coop_keys/coop_keys_9_{key_jobnum}.pt"
+                t = dataset.N_TASKS - 1
+                self.keys_ckpt_path = f"coop_keys/coop_keys_{t}_{key_jobnum}.pt"
             else:
                 self.keys_ckpt_path = args.keys_ckpt_path
 
             if not os.path.exists(self.keys_ckpt_path):
-                raise ValueError(f'Keys ckpt {self.keys_ckpt_path} does not exist')
-
-        self.args = args
-        self.prompt_layers = prompt_layers
-        self.device = get_device()
-        self.target_embed_len = target_embed_len
-        self.target_embed_dim = target_embed_dim
-
-        self.num_classes = num_classes
-
-        clip_backbone = 'ViT-L/14'
-        if pretrained:
-            self.keys, self.first_stage_args = self.load_keys()
-            print("Keys loaded. Loading CLIP version:", self.first_stage_args.clip_backbone)
-            clip_backbone = self.first_stage_args.clip_backbone
-        else:
+                raise ValueError(f'Keys checkpoint `{self.keys_ckpt_path}` does not exist')
+            
+            self.keys, first_stage_args = self.load_keys()
+            print("Keys loaded. Loading CLIP version:", first_stage_args.clip_backbone)
+            clip_backbone = first_stage_args.clip_backbone
+            self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
+            self.clip_model = self.clip_model.float()
+        else: # use prompt templates
+            self.keys_ckpt_path = None
             print("No keys loaded. Using default CLIP version:", clip_backbone)
-
-        # TODO: READ CLIP BACKBONE FROM CHECKPOINT
-        self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
-        self.clip_model = self.clip_model.float()
+            self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
+            self.clip_model = self.clip_model.float()
+            self.keys = self.load_default_prompt_templates(dataset.get_prompt_templates(), dataset.get_class_names())
 
         self.clip_normalization = Normalize(self.clip_preprocess.transforms[-1].mean,
                                             self.clip_preprocess.transforms[-1].std).to(self.device)
@@ -78,6 +76,16 @@ class Prompter(torch.nn.Module):
         if type_init == 'gaussian':
             torch.nn.init.normal_(param, mean=0.0, std=0.1)
         return param
+
+    @torch.no_grad()
+    def load_default_prompt_templates(self, prompt_templates: List[str], dataset_classes: List[str]) -> torch.Tensor:
+        all_features = []
+        for t in prompt_templates:
+            text_inputs = torch.cat([clip.tokenize(t.format(c)) for c in dataset_classes]).to(self.device)
+            text_features = self.clip_model.encode_text(text_inputs)
+            all_features.append(text_features)
+        text_features = torch.stack(all_features).mean(dim=0)
+        return text_features
 
     @torch.no_grad()
     def load_keys(self):
