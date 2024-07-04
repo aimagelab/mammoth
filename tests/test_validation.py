@@ -1,12 +1,13 @@
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.main import main, parse_args
+from utils.main import main
+from utils.test_utils import init_test_environ
 import pytest
 
-
-@pytest.mark.parametrize('validation', ['0.2', '0', '20'])
-@pytest.mark.parametrize('validation_mode', ['complete', 'current'])
+@init_test_environ
+@pytest.mark.parametrize('validation', ['0.2','0','20'])
+@pytest.mark.parametrize('validation_mode', ['complete','current'])
 def test_validation_classil(validation, validation_mode):
     sys.argv = ['mammoth',
                 '--model',
@@ -41,8 +42,9 @@ def test_validation_classil(validation, validation_mode):
     main()
 
 
-@pytest.mark.parametrize('dataset', ['mnist-360', 'perm-mnist'])
-@pytest.mark.parametrize('validation', ['0.2', '0', '20'])
+@init_test_environ
+@pytest.mark.parametrize('dataset', ['mnist-360','perm-mnist'])
+@pytest.mark.parametrize('validation', ['0.2','0','20'])
 @pytest.mark.parametrize('validation_mode', ['complete'])
 def test_validation_domainil(dataset, validation, validation_mode):
     sys.argv = ['mammoth',

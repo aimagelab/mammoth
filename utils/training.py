@@ -5,6 +5,7 @@
 
 from copy import deepcopy
 import math
+import os
 import sys
 from argparse import Namespace
 from typing import Iterable, Tuple
@@ -121,7 +122,8 @@ def initialize_wandb(args: Namespace) -> None:
 
     run_id = args.conf_jobnum.split('-')[0]
     name = f'{run_name}_{run_id}'
-    wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args), name=name)
+    mode = 'disabled' if os.getenv('MAMMOTH_TEST', '0') == '1' else os.getenv('WANDB_MODE', 'online')
+    wandb.init(project=args.wandb_project, entity=args.wandb_entity, config=vars(args), name=name, mode=mode)
     args.wandb_url = wandb.run.get_url()
 
 
@@ -327,9 +329,14 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 if 'buffer_size' in model.args:
                     save_obj['buffer'] = deepcopy(model.buffer).to('cpu')
 
-                # Saving model checkpoint
-                checkpoint_name = f'checkpoints/{args.ckpt_name}_joint.pt' if args.joint else f'checkpoints/{args.ckpt_name}_{t}.pt'
-                torch.save(save_obj, checkpoint_name)
+                # Saving model checkpoint for the current task
+                checkpoint_name = None
+                if args.savecheck == 'task':
+                    checkpoint_name = f'checkpoints/{args.ckpt_name}_joint.pt' if args.joint else f'checkpoints/{args.ckpt_name}_{t}.pt'
+                elif args.savecheck == 'last' and t == end_task - 1:
+                    checkpoint_name = f'checkpoints/{args.ckpt_name}_joint.pt' if args.joint else f'checkpoints/{args.ckpt_name}_last.pt'
+                if checkpoint_name is not None:
+                    torch.save(save_obj, checkpoint_name)
 
         del progress_bar
 

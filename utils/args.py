@@ -119,7 +119,7 @@ def add_management_args(parser: ArgumentParser) -> None:
                            '2: Use BF16, if available.'
                            '3: Use BF16 and `torch.compile`. BEWARE: torch.compile may break your code if you change the model after the first run! Use with caution.')
     mng_group.add_argument('--distributed', type=str, default='no', choices=['no', 'dp', 'ddp'], help='Enable distributed training?')
-    mng_group.add_argument('--savecheck', default=0, choices=[0, 1], type=int, help='Save checkpoint?')
+    mng_group.add_argument('--savecheck', choices=['last', 'task'], type=str, help='Save checkpoint every `task` or at the end of the training (`last`).')
     mng_group.add_argument('--loadcheck', type=str, default=None, help='Path of the checkpoint to load (.pt file for the specific task)')
     mng_group.add_argument('--ckpt_name', type=str, required=False, help='(optional) checkpoint save name.')
     mng_group.add_argument('--start_from', type=int, default=None, help="Task to start from")

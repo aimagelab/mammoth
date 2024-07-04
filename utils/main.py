@@ -17,9 +17,19 @@ To run the script, execute it directly or import it as a module and call the `ma
 
 # needed (don't change it)
 import numpy  # noqa
+import os
+
+try:
+    if os.getenv('MAMMOTH_TEST', '0') == '0':
+        from dotenv import load_dotenv
+        load_dotenv()
+    else:
+        print("Running in test mode. Ignoring .env file.")
+except ImportError:
+    print("Warning: python-dotenv not installed. Ignoring .env file.", file=sys.stderr)
+
 import time
 import importlib
-import os
 import socket
 import sys
 import datetime
@@ -115,6 +125,11 @@ def parse_args():
     if args.seed is not None:
         set_random_seed(args.seed)
 
+    # Add uuid, timestamp and hostname for logging
+    args.conf_jobnum = str(uuid.uuid4())
+    args.conf_timestamp = str(datetime.datetime.now())
+    args.conf_host = socket.gethostname()
+
     if args.savecheck:
         assert args.inference_only == 0, "Should not save checkpoint in inference only mode"
         if not os.path.isdir('checkpoints'):
@@ -163,10 +178,6 @@ def main(args=None):
             if not torch.cuda.is_bf16_supported():
                 raise NotImplementedError('BF16 is not supported on this machine.')
 
-    # Add uuid, timestamp and hostname for logging
-    args.conf_jobnum = str(uuid.uuid4())
-    args.conf_timestamp = str(datetime.datetime.now())
-    args.conf_host = socket.gethostname()
     dataset = get_dataset(args)
 
     if args.fitting_mode == 'epochs' and args.n_epochs is None and isinstance(dataset, ContinualDataset):
@@ -220,6 +231,11 @@ def main(args=None):
     if args.debug_mode:
         print('Debug mode enabled: running only a few forward steps per epoch with W&B disabled.')
         args.nowand = 1
+
+    if args.wandb_entity is None:
+        args.wandb_entity = os.getenv('WANDB_ENTITY', None)
+    if args.wandb_project is None:
+        args.wandb_project = os.getenv('WANDB_PROJECT', None)
 
     if args.wandb_entity is None or args.wandb_project is None:
         print('Warning: wandb_entity and wandb_project not set. Disabling wandb.')

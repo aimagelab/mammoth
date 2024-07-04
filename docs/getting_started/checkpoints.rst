@@ -3,10 +3,19 @@ Load and save checkpoints
 
 Loading and saving checkpoints is handeled automatically in :ref:`module-training` by supplying the ``--savecheck`` and ``--loadcheck`` arguments. 
 
-For example, to save a checkpoint after training, simply run the following command:
+For example, to save a checkpoint after the end of the last task, simply run the following command:
 .. code-block:: python 
     
-        python utils/main.py --savecheck=1 --model=sgd --dataset=seq-cifar10 --lr=0.1
+        python utils/main.py --savecheck=last --model=sgd --dataset=seq-cifar10 --lr=0.1
+
+Other options for ``--savecheck`` are:
+
+- ``last``: save the checkpoint after **the last task**.
+- ``task``: save the checkpoint after **each task**.
+
+.. note:: 
+
+        The ``last`` and ``task`` options have the same effect when training with ``--joint``.
 
 This will save the checkpoint in the ``checkpoints`` folder. To load the checkpoint, simply run the following command:
 .. code-block:: python 

@@ -2,6 +2,7 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.main import main
+from utils.test_utils import init_test_environ
 import pytest
 
 
@@ -9,6 +10,7 @@ def unsupport_quadprog():
     return os.name == 'nt'
 
 
+@init_test_environ
 @pytest.mark.skipif(unsupport_quadprog(), reason='`quadprog` not supported on Windows. Good luck.')
 @pytest.mark.parametrize('dataset', ['seq-cifar10', 'seq-mnist'])
 @pytest.mark.parametrize('model', ['gem', 'agem', 'agem_r'])
