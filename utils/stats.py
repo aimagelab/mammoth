@@ -87,19 +87,20 @@ class track_system_stats:
         if self.disabled:
             return self
         self.initial_cpu_res, self.initial_gpu_res = self.get_stats()
-        self.initial_gpu_res = {g: g_res for g, g_res in enumerate(self.initial_gpu_res)}
-
-        self.avg_gpu_res = self.initial_gpu_res
-        self.avg_cpu_res = self.initial_cpu_res
-
-        self.max_cpu_res = self.initial_cpu_res
-        self.max_gpu_res = self.initial_gpu_res
-
         if self.initial_cpu_res is None and self.initial_gpu_res is None:
             self.disabled = True
+        else:
+            if self.initial_gpu_res is not None:
+                self.initial_gpu_res = {g: g_res for g, g_res in enumerate(self.initial_gpu_res)}
 
-        if self.logger is not None:
-            self.logger.log_system_stats(self.initial_cpu_res, self.initial_gpu_res)
+            self.avg_gpu_res = self.initial_gpu_res
+            self.avg_cpu_res = self.initial_cpu_res
+
+            self.max_cpu_res = self.initial_cpu_res
+            self.max_gpu_res = self.initial_gpu_res
+
+            if self.logger is not None:
+                self.logger.log_system_stats(self.initial_cpu_res, self.initial_gpu_res)
 
         return self
 
