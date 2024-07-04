@@ -139,11 +139,9 @@ class track_system_stats:
         if self.initial_gpu_res is not None:
             self.avg_gpu_res = {g: (g_res + alpha * (g_res - self.avg_gpu_res[g])) for g, g_res in enumerate(gpu_res)}
             self.max_gpu_res = {g: max(self.max_gpu_res[g], g_res) for g, g_res in enumerate(gpu_res)}
-
-        gpu_res = {g: g_res for g, g_res in enumerate(gpu_res)}
+            gpu_res = {g: g_res for g, g_res in enumerate(gpu_res)}
         
         if self.logger is not None:
-            gpu_res = {g: g_res for g, g_res in enumerate(gpu_res)}
             self.logger.log_system_stats(cpu_res, gpu_res)
 
     def print_stats(self):
