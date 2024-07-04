@@ -53,7 +53,7 @@ class MyCUB200(Dataset):
         self.segs = data_file['segs']
         self._return_segmask = False
 
-    def __getitem__(self, index: int) -> Tuple[type(Image), int, type(Image)]:
+    def __getitem__(self, index: int) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
 
@@ -96,7 +96,7 @@ class CUB200(MyCUB200):
         super().__init__(root, train=train, transform=transform,
                          target_transform=target_transform, download=download)
 
-    def __getitem__(self, index: int, ret_segmask=False) -> Tuple[type(Image), int, type(Image)]:
+    def __getitem__(self, index: int, ret_segmask=False) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
 
