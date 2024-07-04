@@ -174,11 +174,7 @@ class SequentialChestX(ContinualDataset):
 
     @set_default_from_args('batch_size')
     def get_batch_size(self):
-        return 32
-
-    @staticmethod
-    def get_virtual_bn_num():
-        return 4
+        return 128
 
 
 if __name__ == '__main__':

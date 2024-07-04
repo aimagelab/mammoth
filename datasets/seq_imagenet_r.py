@@ -16,7 +16,6 @@ from utils.conf import base_path
 from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
 from datasets.transforms.denormalization import DeNormalize
 from torchvision.transforms.functional import InterpolationMode
-from utils.prompt_templates import templates
 from backbone.vit import vit_base_patch16_224_prompt_prototype
 
 
@@ -152,10 +151,6 @@ class SequentialImagenetR(ContinualDataset):
         return self.class_names
 
     @staticmethod
-    def get_prompt_templates():
-        return templates['imagenet']
-
-    @staticmethod
     def get_transform():
         transform = transforms.Compose(
             [transforms.ToPILImage(), SequentialImagenetR.TRANSFORM])
@@ -184,8 +179,4 @@ class SequentialImagenetR(ContinualDataset):
 
     @set_default_from_args('batch_size')
     def get_batch_size(self):
-        return 32
-
-    @staticmethod
-    def get_virtual_bn_num():
-        return 4
+        return 128

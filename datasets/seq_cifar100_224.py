@@ -91,7 +91,7 @@ class SequentialCIFAR100224(ContinualDataset):
 
     @set_default_from_args('n_epochs')
     def get_epochs(self):
-        return 5
+        return 20
 
     @set_default_from_args('batch_size')
     def get_batch_size(self):

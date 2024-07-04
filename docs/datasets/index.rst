@@ -41,7 +41,7 @@ each dataset **must statically define** all the necessary information to run a c
     - **get_scheduler** static method (``callable``): returns the learning rate scheduler to use during train. *By default*, it also initializes the optimizer. This prevents errors due to the learning rate being continouosly reduced task after task. This behavior can be changed setting the argument ``reload_optim=False``.
 
 .. admonition:: Optional methods to implement:
-    - **get_prompt_templates** (``callable``): returns the prompt templates for the dataset. This method is not implemented by default, but is expected for some methods (e.g., `clip`).
+    - **get_prompt_templates** (``callable``): returns the prompt templates for the dataset. This method is expected for some methods (e.g., `clip`). *By default*, it returns the ImageNet prompt templates.
 
     - **get_class_names** (``callable``): returns the class names for the dataset. This method is not implemented by default, but is expected for some methods (e.g., `clip`). The method *should* populate the **class_names** attribute of the dataset to cache the result and call the ``fix_class_names_order`` method to ensure that the class names are in the correct order.
 

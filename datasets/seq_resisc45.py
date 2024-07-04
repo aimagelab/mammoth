@@ -205,10 +205,6 @@ class SequentialResisc45(ContinualDataset):
     def get_batch_size(self):
         return 128
 
-    @staticmethod
-    def get_virtual_bn_num():
-        return 1
-
 
 if __name__ == '__main__':
     d = Resisc45('../data/imagenet-r/imagenet-r', train=False)

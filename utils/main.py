@@ -18,6 +18,7 @@ To run the script, execute it directly or import it as a module and call the `ma
 # needed (don't change it)
 import numpy  # noqa
 import os
+import sys
 
 try:
     if os.getenv('MAMMOTH_TEST', '0') == '0':
@@ -31,7 +32,6 @@ except ImportError:
 import time
 import importlib
 import socket
-import sys
 import datetime
 import uuid
 from argparse import ArgumentParser

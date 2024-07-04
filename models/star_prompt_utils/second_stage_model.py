@@ -49,12 +49,12 @@ class Prompter(torch.nn.Module):
             print("Keys loaded. Loading CLIP version:", first_stage_args.clip_backbone)
             clip_backbone = first_stage_args.clip_backbone
             self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
-            self.clip_model = self.clip_model.float()
+            self.clip_model = self.clip_model.float() # force fp32 when used for eval
         else: # use prompt templates
             self.keys_ckpt_path = None
             print("No keys loaded. Using default CLIP version:", clip_backbone)
             self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
-            self.clip_model = self.clip_model.float()
+            self.clip_model = self.clip_model.float() # force fp32 when used for eval
             self.keys = self.load_default_prompt_templates(dataset.get_prompt_templates(), dataset.get_class_names())
 
         self.clip_normalization = Normalize(self.clip_preprocess.transforms[-1].mean,

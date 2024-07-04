@@ -1,21 +1,19 @@
 import os
-from typing import Tuple
-
 import numpy as np
 import torch
-import torch.nn.functional as F
 import torchvision.transforms as transforms
+import torch.nn.functional as F
 from PIL import Image
-from torch.utils.data.dataset import Dataset
+from typing import Tuple
 
-
-from backbone.ResNetBottleneck import resnet50
+from datasets.utils import set_default_from_args
+from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
 from datasets.transforms.denormalization import DeNormalize
-from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
-                                              store_masked_loaders)
 from utils import smart_joint
 from utils.conf import base_path
-from datasets.utils import set_default_from_args
+from torch.utils.data import Dataset
+from torchvision.transforms.functional import InterpolationMode
+from backbone.vit import vit_base_patch16_224_prompt_prototype
 
 
 class MyCUB200(Dataset):
@@ -24,12 +22,12 @@ class MyCUB200(Dataset):
     """
     IMG_SIZE = 224
     N_CLASSES = 200
-    MEAN, STD = (0.4856, 0.4994, 0.4324), (0.2272, 0.2226, 0.2613)
-    TEST_TRANSFORM = transforms.Compose([transforms.Resize(IMG_SIZE), transforms.ToTensor(), transforms.Normalize(MEAN, STD)])
 
     def __init__(self, root, train=True, transform=None,
                  target_transform=None, download=True) -> None:
-        self.not_aug_transform = transforms.Compose([transforms.ToTensor()])
+        self.not_aug_transform = transforms.Compose([
+            transforms.Resize(MyCUB200.IMG_SIZE, interpolation=InterpolationMode.BICUBIC),
+            transforms.ToTensor()])
         self.root = root
         self.train = train
         self.transform = transform
@@ -147,25 +145,23 @@ class SequentialCUB200(ContinualDataset):
     N_CLASSES_PER_TASK = 20
     N_TASKS = 10
     SIZE = (MyCUB200.IMG_SIZE, MyCUB200.IMG_SIZE)
-    MEAN, STD = (0.4856, 0.4994, 0.4324), (0.2272, 0.2226, 0.2613)
+    MEAN, STD = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
     TRANSFORM = transforms.Compose([
-        transforms.Resize(MyCUB200.IMG_SIZE),
-        transforms.RandomCrop(MyCUB200.IMG_SIZE, padding=4),
+        transforms.Resize((300, 300), interpolation=InterpolationMode.BICUBIC),
+        transforms.RandomCrop(SIZE),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(MEAN, STD)])
-    TEST_TRANSFORM = MyCUB200.TEST_TRANSFORM
+    TEST_TRANSFORM = transforms.Compose([transforms.Resize(256, interpolation=InterpolationMode.BICUBIC),
+                                         transforms.CenterCrop(MyCUB200.IMG_SIZE),
+                                         transforms.ToTensor(),
+                                         transforms.Normalize(MEAN, STD)])
 
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
-        transform = self.TRANSFORM
-
-        test_transform = transforms.Compose(
-            [transforms.Resize((MyCUB200.IMG_SIZE, MyCUB200.IMG_SIZE)), transforms.ToTensor(), self.get_normalization_transform()])
-
         train_dataset = MyCUB200(base_path() + 'CUB200', train=True,
-                                 download=True, transform=transform)
+                                 download=True, transform=SequentialCUB200.TRANSFORM)
         test_dataset = CUB200(base_path() + 'CUB200', train=False,
-                              download=True, transform=test_transform)
+                              download=True, transform=SequentialCUB200.TEST_TRANSFORM)
 
         train, test = store_masked_loaders(
             train_dataset, test_dataset, self)
@@ -179,9 +175,9 @@ class SequentialCUB200(ContinualDataset):
         return transform
 
     @staticmethod
-    def get_backbone(hookme=False):
+    def get_backbone():
         num_classes = SequentialCUB200.N_CLASSES_PER_TASK * SequentialCUB200.N_TASKS
-        return resnet50(num_classes, pretrained=True)
+        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=num_classes)
 
     @staticmethod
     def get_loss():
@@ -189,9 +185,8 @@ class SequentialCUB200(ContinualDataset):
 
     @staticmethod
     def get_normalization_transform():
-        transform = transforms.Normalize(
-            SequentialCUB200.MEAN, SequentialCUB200.STD)
-        return transform
+        return transforms.Compose([transforms.ToPILImage(),
+                                   transforms.Normalize(SequentialCUB200.MEAN, SequentialCUB200.STD)])
 
     @staticmethod
     def get_denormalization_transform():
@@ -200,11 +195,11 @@ class SequentialCUB200(ContinualDataset):
 
     @set_default_from_args('batch_size')
     def get_batch_size(self):
-        return 16
+        return 128
 
     @set_default_from_args('n_epochs')
     def get_epochs(self):
-        return 30
+        return 50
 
     def get_class_names(self):
         if self.class_names is not None:
@@ -212,8 +207,7 @@ class SequentialCUB200(ContinualDataset):
         classes = fix_class_names_order(CLASS_NAMES, self.args)
         self.class_names = classes
         return self.class_names
-
-
+        
 CLASS_NAMES = [
     'black footed albatross',
     'laysan albatross',

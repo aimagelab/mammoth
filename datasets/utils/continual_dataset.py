@@ -16,6 +16,7 @@ from torch.utils.data import DataLoader, Dataset
 from datasets.utils.validation import get_validation_indexes
 from utils.conf import create_seeded_dataloader
 from datasets.utils import DEFAULT_ARGS
+from utils.prompt_templates import templates
 
 
 class ContinualDataset(object):
@@ -206,9 +207,11 @@ class ContinualDataset(object):
         raise NotImplementedError('The dataset does not implement the method `get_class_names` to get the class names.')
 
     def get_prompt_templates(self) -> List[str]:
-        """Returns the prompt templates for the current dataset."""
-        raise NotImplementedError('The dataset does not implement the method `get_prompt_templates` to get the prompt templates.')
-
+        """
+        Returns the prompt templates for the current dataset.
+        By default, it returns the ImageNet prompt templates.
+        """
+        return templates['imagenet']
 
 def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):
     if setting.args.label_perc == 1:

@@ -199,10 +199,6 @@ class SequentialEuroSatRgb(ContinualDataset):
         return 128
 
     @staticmethod
-    def get_virtual_bn_num():
-        return 1
-
-    @staticmethod
     def get_prompt_templates():
         return templates['eurosat']
 

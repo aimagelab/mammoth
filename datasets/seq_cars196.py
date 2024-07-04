@@ -1,4 +1,3 @@
-
 import os
 import sys
 import torch
@@ -198,11 +197,6 @@ class SequentialCars196(ContinualDataset):
     @set_default_from_args('batch_size')
     def get_batch_size(self):
         return 128
-
-    @staticmethod
-    def get_virtual_bn_num():
-        return 1
-
 
 if __name__ == '__main__':
     d = MyCars196('../data/cars196', train=True)

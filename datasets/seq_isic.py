@@ -168,10 +168,6 @@ class SequentialIsic(ContinualDataset):
     def get_batch_size(self):
         return 128
 
-    @staticmethod
-    def get_virtual_bn_num():
-        return 1
-
 
 if __name__ == '__main__':
     d = Isic('../data/isic', train=False)

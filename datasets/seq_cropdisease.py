@@ -195,9 +195,5 @@ class SequentialCropDisease(ContinualDataset):
 
     @set_default_from_args('n_epochs')
     def get_batch_size(self):
-        return 32
-
-    @staticmethod
-    def get_virtual_bn_num():
-        return 4
+        return 128
 
