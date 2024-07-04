@@ -270,9 +270,12 @@ class Logger:
             self.cpu_res.append(cpu_res)
         if gpu_res is not None:
             self.gpu_res.append(gpu_res)
+            gpu_res = {f'GPU_{i}_memory_usage': r for i, r in gpu_res.items()}
+        else:
+            gpu_res = {}
 
         if not self.args.nowand:
-            wandb.log({'CPU_memory_usage': cpu_res, **{f'GPU_{i}_memory_usage': r for i, r in gpu_res.items()}})
+            wandb.log({'CPU_memory_usage': cpu_res, **gpu_res})
 
     def write(self, args: Dict[str, Any]) -> None:
         """
