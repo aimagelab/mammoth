@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 from backbone.vit import create_vision_transformer
+from models.coda_prompt_utils import gram_schmidt
 from models.coda_prompt_utils.vit import VisionTransformer
-import copy
 
 
 class CodaPrompt(nn.Module):
@@ -13,6 +13,8 @@ class CodaPrompt(nn.Module):
         self.key_d = key_dim
         self.n_tasks = n_tasks
         self._init_smart(emb_d, prompt_param)
+
+        pt = int(self.e_pool_size / (self.n_tasks))
 
         # e prompt init
         for e in self.e_layers:
@@ -27,9 +29,9 @@ class CodaPrompt(nn.Module):
             p = tensor_prompt(self.e_pool_size, e_l, emb_d)
             k = tensor_prompt(self.e_pool_size, self.key_d)
             a = tensor_prompt(self.e_pool_size, self.key_d)
-            p = self.gram_schmidt(p)
-            k = self.gram_schmidt(k)
-            a = self.gram_schmidt(a)
+            p = gram_schmidt(p, start_c=0, end_c=pt)
+            k = gram_schmidt(k, start_c=0, end_c=pt)
+            a = gram_schmidt(a, start_c=0, end_c=pt)
             setattr(self, f'e_p_{e}', p)
             setattr(self, f'e_k_{e}', k)
             setattr(self, f'e_a_{e}', a)
@@ -52,80 +54,19 @@ class CodaPrompt(nn.Module):
         #
         # in the original paper, we used ortho init at the start - this modification is more
         # fair in the spirit of continual learning and has little affect on performance
-        #
-        # code for this function is modified from:
-        # https://github.com/legendongary/pytorch-gram-schmidt/blob/master/gram_schmidt.py
+        pt = int(self.e_pool_size / (self.n_tasks))
+        s = int(self.task_count * pt)
+        f = int((self.task_count + 1) * pt)
         for e in self.e_layers:
             K = getattr(self, f'e_k_{e}')
             A = getattr(self, f'e_a_{e}')
             P = getattr(self, f'e_p_{e}')
-            k = self.gram_schmidt(K)
-            a = self.gram_schmidt(A)
-            p = self.gram_schmidt(P)
+            k = gram_schmidt(K, s, f)
+            a = gram_schmidt(A, s, f)
+            p = gram_schmidt(P, s, f)
             setattr(self, f'e_p_{e}', p)
             setattr(self, f'e_k_{e}', k)
             setattr(self, f'e_a_{e}', a)
-
-    # code for this function is modified from:
-    # https://github.com/legendongary/pytorch-gram-schmidt/blob/master/gram_schmidt.py
-    def gram_schmidt(self, vv):
-
-        def projection(u, v):
-            denominator = (u * u).sum()
-
-            if denominator < 1e-8:
-                return None
-            else:
-                return (v * u).sum() / denominator * u
-
-        # check if the tensor is 3D and flatten the last two dimensions if necessary
-        is_3d = len(vv.shape) == 3
-        if is_3d:
-            shape_2d = copy.deepcopy(vv.shape)
-            vv = vv.view(vv.shape[0], -1)
-
-        # swap rows and columns
-        vv = vv.T
-
-        # process matrix size
-        nk = vv.size(1)
-        uu = torch.zeros_like(vv, device=vv.device)
-
-        # get starting point
-        pt = int(self.e_pool_size / (self.n_tasks))
-        s = int(self.task_count * pt)
-        f = int((self.task_count + 1) * pt)
-        if s > 0:
-            uu[:, 0:s] = vv[:, 0:s].clone()
-        for k in range(s, f):
-            redo = True
-            while redo:
-                redo = False
-                vk = torch.randn_like(vv[:, k]).to(vv.device)
-                uk = 0
-                for j in range(0, k):
-                    if not redo:
-                        uj = uu[:, j].clone()
-                        proj = projection(uj, vk)
-                        if proj is None:
-                            redo = True
-                            print('restarting!!!')
-                        else:
-                            uk = uk + proj
-                if not redo:
-                    uu[:, k] = vk - uk
-        for k in range(s, f):
-            uk = uu[:, k].clone()
-            uu[:, k] = uk / (uk.norm())
-
-        # undo swapping of rows and columns
-        uu = uu.T
-
-        # return from 2D
-        if is_3d:
-            uu = uu.view(shape_2d)
-
-        return torch.nn.Parameter(uu)
 
     def forward(self, x_querry, l, x_block, train=False, task_id=None):
 

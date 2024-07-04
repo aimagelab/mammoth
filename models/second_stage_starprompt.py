@@ -46,6 +46,14 @@ class SecondStageStarprompt(ContinualModel):
                             help="Batch size for Generative Replay.")
         parser.add_argument('--num_samples_gr', type=int, default=256,
                             help="Number of samples for Generative Replay.")
+        
+        # prompt type
+        parser.add_argument('--prompt_mode', type=str, default='residual', choices=['residual', 'concat'],
+                            help="Prompt type for the second stage. "
+                            "- `residual`: STAR-Prompt style prompting. "
+                            "- `concat`: Prefix-Tuning style prompting.")
+        parser.add_argument('--prefix_tuning_prompt_len', type=int, default=5,
+                            help="Prompt length for prefix tuning. Used only if `--prompt_mode==concat`.")
 
         return parser
 

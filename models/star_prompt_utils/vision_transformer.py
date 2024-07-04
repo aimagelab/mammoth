@@ -3,9 +3,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from backbone.vit import VisionTransformer as MammothVP, Block as MammothViTBlock
+from models.coda_prompt_utils.vit import Attention as PrefixTuningAttention
 
 
-class Attention(nn.Module):
+class ResidualPromptAttention(nn.Module):
     def __init__(self, dim, num_heads=8, qkv_bias=False, attn_drop=0., proj_drop=0.):
         super().__init__()
         assert dim % num_heads == 0, 'dim should be divisible by num_heads'
@@ -41,9 +42,6 @@ class Attention(nn.Module):
 
 
 class Block(MammothViTBlock):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, attn_layer=Attention, **kwargs)
-
     def forward(self, x, prompts=None):
         x = x + self.drop_path1(self.ls1(self.attn(self.norm1(x), prompts)))
         x = x + self.drop_path2(self.ls2(self.mlp(self.norm2(x))))
@@ -52,9 +50,11 @@ class Block(MammothViTBlock):
 
 class VisionTransformer(MammothVP):
 
-    def __init__(self, *args, **kwargs):
-
+    def __init__(self, *args, prompt_mode='residual', **kwargs):
         super().__init__(*args, **kwargs)
+        assert prompt_mode in ['residual', 'concat'], 'prompt_mode should be either residual or concat'
+
+        attn_layer = ResidualPromptAttention if prompt_mode=='residual' else PrefixTuningAttention
 
         self.blocks = nn.Sequential(*[
             Block(
@@ -65,6 +65,7 @@ class VisionTransformer(MammothVP):
                 init_values=self.init_values,
                 drop=self.pos_drop.p,
                 attn_drop=self.attn_drop_rate,
+                attn_layer=attn_layer,
                 drop_path=self.dpr[i],
                 norm_layer=self.norm_layer,
                 act_layer=self.act_layer

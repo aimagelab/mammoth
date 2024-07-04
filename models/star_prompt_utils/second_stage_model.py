@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 from typing import List
 from kornia.augmentation import Normalize
+
 try:
     import clip
 except ImportError:
@@ -21,12 +22,14 @@ class Prompter(torch.nn.Module):
                  num_classes: int, target_embed_len: int,
                  target_embed_dim: int, prompt_layers: List[int]):
         super().__init__()
+        assert args.prompt_mode in ['residual', 'concat'], 'This prompter supports only STAR-Prompt residual-style prompts (`residual`) or Prefix tuning-style prompts (`concat`).'
         self.args = args
         self.prompt_layers = prompt_layers
         self.target_embed_len = target_embed_len
         self.target_embed_dim = target_embed_dim
         self.device = args.device
         self.num_classes = num_classes
+        self.prompt_mode = args.prompt_mode
 
         clip_backbone = 'ViT-L/14'
         if args.keys_ckpt_path is not None:
@@ -65,10 +68,14 @@ class Prompter(torch.nn.Module):
             p.requires_grad = False
 
         for l in self.prompt_layers:
-            setattr(self, f'p_{l}', self.get_parameter((self.num_classes, self.target_embed_dim)))
-            setattr(self, f'a_{l}', self.get_parameter((self.num_classes, self.clip_model.visual.output_dim),
-                                                       type_init='orto'))
-
+            if args.prompt_mode == 'residual':
+                setattr(self, f'p_{l}', self.get_parameter((self.num_classes, self.target_embed_dim)))
+            else:
+                setattr(self, f'p_concat_{l}', self.get_parameter((self.num_classes, 2 * self.args.prefix_tuning_prompt_len,
+                                                                   self.target_embed_dim)))
+                
+            setattr(self, f'a_{l}', self.get_parameter((self.num_classes, self.clip_model.visual.output_dim)))
+                
     def get_parameter(self, shape, type_init: str = 'orto'):
         param = torch.nn.Parameter(torch.zeros(*shape, dtype=torch.float32, device=self.device))
         if type_init == 'orto':
@@ -128,15 +135,23 @@ class Prompter(torch.nn.Module):
         sim_act_map = sim_act_map[:, start_idx:end_idx]
         p = p[start_idx:end_idx]
 
-        sp = torch.einsum('bc,cd->bd', sim_act_map, p)
+        if self.args.prompt_mode == 'residual':
+            sp = torch.einsum('bc,cd->bd', sim_act_map, p)
+        else:
+            sp = torch.einsum('bc,cmd->bmd', sim_act_map, p)
         return sp
 
     def get_prompts(self, layer_idx, clip_out, cur_classes: int, frozen_past_classes=0):
 
         if layer_idx in self.prompt_layers:
-
-            pv: torch.Tensor = getattr(self, f'p_{layer_idx}')
+            
             a: torch.Tensor = getattr(self, f'a_{layer_idx}')
+            if self.prompt_mode == 'residual':
+                pv: torch.Tensor = getattr(self, f'p_{layer_idx}')
+            else:
+                clip_out = clip_out[:, :1] # only use class token for prefix tuning
+                p_concat: torch.Tensor = getattr(self, f'p_concat_{layer_idx}')
+                p_concat_k, p_concat_v = torch.split(p_concat, self.args.prefix_tuning_prompt_len, dim=1)
 
             if frozen_past_classes > 0:
                 with torch.no_grad():
@@ -146,15 +161,29 @@ class Prompter(torch.nn.Module):
                 clip_out = self.get_masked_clip_out(clip_out)
 
                 with torch.no_grad():
-                    sp_past = self.compute_super_prompts(pv, clip_out, 0, frozen_past_classes)
-                sp_curr = self.compute_super_prompts(pv, clip_out, frozen_past_classes, cur_classes)
-
-                super_prompt = sp_past.detach() + sp_curr
+                    if self.prompt_mode == 'residual':
+                        sp_past = self.compute_super_prompts(pv, clip_out, 0, frozen_past_classes)
+                    else:
+                        sp_concat_k_past = self.compute_super_prompts(p_concat_k, clip_out, 0, frozen_past_classes).squeeze(2)
+                        sp_concat_v_past = self.compute_super_prompts(p_concat_v, clip_out, 0, frozen_past_classes).squeeze(2)
+            
+                if self.prompt_mode == 'residual':
+                    sp_curr = self.compute_super_prompts(pv, clip_out, frozen_past_classes, cur_classes)
+                    super_prompt = sp_past.detach() + sp_curr
+                else:
+                    sp_concat_k_curr = self.compute_super_prompts(p_concat_k, clip_out, frozen_past_classes, cur_classes).squeeze(2)
+                    sp_concat_v_curr = self.compute_super_prompts(p_concat_v, clip_out, frozen_past_classes, cur_classes).squeeze(2)
+                    super_prompt = (sp_concat_k_past.detach() + sp_concat_k_curr, sp_concat_v_past.detach() + sp_concat_v_curr)
             else:
                 clip_out = self.compute_maps(clip_out, a[:cur_classes], self.keys[:cur_classes])
                 clip_out = self.get_masked_clip_out(clip_out)
 
-                super_prompt = self.compute_super_prompts(pv, clip_out, 0, cur_classes)
+                if self.prompt_mode == 'residual':
+                    super_prompt = self.compute_super_prompts(pv, clip_out, 0, cur_classes)
+                else:
+                    sp_concat_k = self.compute_super_prompts(p_concat_k, clip_out, 0, cur_classes).squeeze(2)
+                    sp_concat_v = self.compute_super_prompts(p_concat_v, clip_out, 0, cur_classes).squeeze(2)
+                    super_prompt = (sp_concat_k, sp_concat_v)
 
             return super_prompt, clip_out
         else:
@@ -168,10 +197,7 @@ class Prompter(torch.nn.Module):
         ortho_loss_list = []
         weight_loss_list = []
 
-        for layer_idx in self.prompt_layers:
-
-            p = getattr(self, f'p_{layer_idx}')
-
+        def _compute_loss(p, frozen_past_classes, cur_classes):
             past_pv = p[:frozen_past_classes].detach()
             cur_pv = p[frozen_past_classes:cur_classes]
 
@@ -179,10 +205,26 @@ class Prompter(torch.nn.Module):
 
             intra_ortho_loss = (torch.matmul(cur_pv, cur_pv.T)[eye_intra] - 1).pow(2).mean()
             inter_ortho_loss = (torch.matmul(cur_pv, past_pv.T)).pow(2).mean()
+            return intra_ortho_loss + inter_ortho_loss
 
-            current_loss = intra_ortho_loss + inter_ortho_loss
+        for layer_idx in self.prompt_layers:
+
+            if self.prompt_mode == 'residual':
+                p = getattr(self, f'p_{layer_idx}')
+                current_loss = _compute_loss(p, frozen_past_classes, cur_classes)
+            else:
+                p_concat = getattr(self, f'p_concat_{layer_idx}')
+                p_concat_k, p_concat_v = torch.split(p_concat, self.args.prefix_tuning_prompt_len, dim=1)
+
+                p_concat_k = p_concat_k.view(p_concat_k.shape[0], -1)
+                p_concat_v = p_concat_v.view(p_concat_v.shape[0], -1)
+
+                current_loss_k = _compute_loss(p_concat_k, frozen_past_classes, cur_classes)
+                current_loss_v = _compute_loss(p_concat_v, frozen_past_classes, cur_classes)
+
+                current_loss = current_loss_k + current_loss_v
+
             current_weight = 1.
-
             if layer_idx < self.args.ortho_split_val:
                 current_weight = 0.
 
@@ -209,7 +251,12 @@ class Model(nn.Module):
         self.device = backbone.device
 
         # get feature encoder
-        vit_model = VisionTransformer(embed_dim=768, depth=12, num_heads=12, drop_path_rate=0, num_classes=num_classes)
+        vit_model = VisionTransformer(embed_dim=768, 
+                                      depth=12, 
+                                      num_heads=12, 
+                                      drop_path_rate=0, 
+                                      num_classes=num_classes, 
+                                      prompt_mode=args.prompt_mode)
 
         # load pretrained weights
         load_dict = backbone.state_dict()

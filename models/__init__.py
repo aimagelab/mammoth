@@ -88,7 +88,6 @@ def get_model_names() -> List[str]:
                 names[c.NAME.replace('_', '-')] = c
             except Exception as e:
                 warn_once("Error in model", model)
-                warn_once("\t-", e)
                 names[model.replace('_', '-')] = e
         return names
 
