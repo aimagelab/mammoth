@@ -52,6 +52,9 @@ class FirstStageStarprompt(ContinualModel):
         # Backbone arguments
         parser.add_argument("--clip_backbone", type=str, default='ViT-L/14', help="CLIP backbone architecture",
                             choices=clip.available_models())
+        
+        parser.add_argument("--use_data_aug", type=int, default=0, 
+                            choices=[0, 1], help="Use data augmentation during training.")
         return parser
 
 
@@ -96,7 +99,8 @@ class FirstStageStarprompt(ContinualModel):
 
     def begin_task(self, dataset):
         # Disable transforms and set normalization as CLIP's preprocessing
-        dataset.train_loader.dataset.transform = self.net.prompter.clip_preprocess
+        if self.args.use_data_aug==0:
+            dataset.train_loader.dataset.transform = self.net.prompter.clip_preprocess
         dataset.test_loaders[-1].dataset.transform = self.net.prompter.clip_preprocess
 
         if hasattr(self, 'opt'):

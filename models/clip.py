@@ -85,7 +85,7 @@ class CLIP(ContinualModel):
         backbone, clip_transform = clip.load(args.clip_backbone, device=get_device())
         n_epochs = 1 if args.save_predictions else 0
         if args.n_epochs != n_epochs:
-            print(f"CLIP is a STATIC model, setting n_epochs to {args.n_epochs}")
+            print(f"CLIP is a STATIC model, setting n_epochs to {n_epochs}")
             args.n_epochs = n_epochs
         super().__init__(backbone, loss, args, transform)
 

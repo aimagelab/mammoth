@@ -66,7 +66,7 @@ def get_alloc_memory_all_devices(return_all=False) -> list[int]:
         try:
             gpu_memory_nvidiasmi.append(_get_gpu_memory_pynvml_all_processes(i))
         except BaseException as e:
-            warn_once('Could not get memory from pynvml.', str(e))
+            warn_once('Could not get memory from pynvml. Maybe try `pip install --force-reinstall gpustat`.', str(e))
             gpu_memory_nvidiasmi.append(-1)
         
     if return_all:

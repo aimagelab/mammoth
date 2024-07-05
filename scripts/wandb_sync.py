@@ -1,4 +1,5 @@
 import argparse
+from functools import partial
 import os
 from pathlib import Path
 
@@ -15,7 +16,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-w","-n","--n_workers", type=int, help="Number of workers to use. If not specified, will use all available cores. (Recommended: n_cpus*3)")
     parser.add_argument("-l","--limit", type=int, help="Limit the number of runs to sync")
-    parser.add_argument("-r","--reverse", action="store_true", help="Reverse the order of runs to sync")
+    parser.add_argument("-r","--reverse", action="store_true", help="Reverse the order of runs to sync?")
+    parser.add_argument("-c","--clean_after", action="store_true", help="Clean run after syncing?")
     args = parser.parse_args()
 
     if args.n_workers is None:
@@ -32,9 +34,11 @@ def check_offline():
     return len([f for f in os.listdir() if 'offline' in f]) > 0
 
 
-def sync_run(run):
+def sync_run(run, clean_after=False):
     """Syncs a single run"""
-    os.system(f"wandb sync {run} >>synced.log 2>>err.log")
+    ret_code = os.system(f"wandb sync {run} >>synced.log 2>>err.log")
+    if ret_code == 0 and clean_after:
+        os.system(f"rm -rf {run}")
 
 
 if __name__ == "__main__":
@@ -53,6 +57,9 @@ if __name__ == "__main__":
         runlist = runlist[:args.limit]
         print("Limiting to", args.limit, "runs")
 
+    if args.clean_after:
+        print("INFO: Cleaning after syncing")
+
     print(len(runlist), "runs to sync")
 
     # delete file synced.log if exists
@@ -64,8 +71,9 @@ if __name__ == "__main__":
         Path("err.log").unlink()
 
     # sync all runs in multiple threads and log tqdm
+    sync_fn = partial(sync_run, clean_after=args.clean_after)
     with ThreadPool(args.n_workers) as p:
-        r = list(tqdm(p.imap(sync_run, runlist), total=len(runlist)))
+        r = list(tqdm(p.imap(sync_fn, runlist), total=len(runlist)))
 
     # check if there are any errors in err.log
     if Path("err.log").exists():
