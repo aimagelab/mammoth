@@ -19,16 +19,6 @@ To run the script, execute it directly or import it as a module and call the `ma
 import numpy  # noqa
 import os
 import sys
-
-try:
-    if os.getenv('MAMMOTH_TEST', '0') == '0':
-        from dotenv import load_dotenv
-        load_dotenv()
-    else:
-        print("Running in test mode. Ignoring .env file.")
-except ImportError:
-    print("Warning: python-dotenv not installed. Ignoring .env file.", file=sys.stderr)
-
 import time
 import importlib
 import socket
@@ -44,6 +34,18 @@ sys.path.append(mammoth_path + '/backbone')
 sys.path.append(mammoth_path + '/models')
 
 from utils import create_if_not_exists, custom_str_underscore
+from utils.conf import warn_once
+
+if __name__ == '__main__':
+    try:
+        if os.getenv('MAMMOTH_TEST', '0') == '0':
+            from dotenv import load_dotenv
+            load_dotenv()
+        else:
+            warn_once("Running in test mode. Ignoring .env file.")
+    except ImportError:
+        warn_once("Warning: python-dotenv not installed. Ignoring .env file.")
+
 from utils.args import add_management_args, add_experiment_args
 from utils.conf import base_path, get_device
 from utils.distributed import make_dp

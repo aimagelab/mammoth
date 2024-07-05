@@ -7,6 +7,7 @@ This module contains utility functions for configuration settings.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from functools import partial
 import os
 import sys
 import random
@@ -143,16 +144,14 @@ def set_random_seed(seed: int) -> None:
         print('Could not set cuda seed.')
 
 
-def get_dataloader_seed_fn(seed: int) -> torch.Generator:
+def worker_init_fn(worker_id, num_workers, seed, rank=1):
     """
     Sets the seeds for a worker of a dataloader.
+    The seed of each worker is set to: `num_worker * rank + worker_id + seed`
     """
-
-    def set_random_seed_worker(worker_id) -> None:
-        worker_seed = (worker_id + seed) % 2**32
-        np.random.seed(worker_seed)
-        random.seed(worker_seed)
-    return set_random_seed_worker
+    worker_seed = num_workers * rank + worker_id + seed
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
 
 
 def create_seeded_dataloader(args, dataset, **dataloader_args) -> DataLoader:
@@ -170,6 +169,7 @@ def create_seeded_dataloader(args, dataset, **dataloader_args) -> DataLoader:
 
     n_cpus = 4 if not hasattr(os, 'sched_getaffinity') else len(os.sched_getaffinity(0))
     num_workers = n_cpus if args.num_workers is None else args.num_workers
+    print(f'INFO: Using {num_workers} workers for the dataloader.')
     dataloader_args['num_workers'] = num_workers if 'num_workers' not in dataloader_args else dataloader_args['num_workers']
     if args.seed is not None:
         worker_generator = torch.Generator()
@@ -177,6 +177,7 @@ def create_seeded_dataloader(args, dataset, **dataloader_args) -> DataLoader:
     else:
         worker_generator = None
     dataloader_args['generator'] = worker_generator if 'generator' not in dataloader_args else dataloader_args['generator']
-    dataloader_args['worker_init_fn'] = get_dataloader_seed_fn(args.seed) if 'worker_init_fn' not in dataloader_args else dataloader_args['worker_init_fn']
+    init_fn = partial(worker_init_fn, num_workers=num_workers, seed=args.seed) if args.seed is not None else None
+    dataloader_args['worker_init_fn'] = init_fn if 'worker_init_fn' not in dataloader_args else dataloader_args['worker_init_fn']
 
     return DataLoader(dataset, **dataloader_args)

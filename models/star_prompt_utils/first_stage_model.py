@@ -90,12 +90,12 @@ class Prompter(torch.nn.Module):
         labels = torch.cat(labels, dim=0).long()
         return create_seeded_dataloader(self.args, TensorDataset(features, labels), num_workers=0, batch_size=self.args.batch_size_gr, shuffle=True)
 
-    def train_alignment_epoch(self, optim: torch.optim.Optimizer, current_task: int):
+    def train_alignment_epoch(self, optim: torch.optim.Optimizer, current_task: int, epoch: int = 0):
         offset_1, offset_2 = self.dataset.get_offsets(current_task)
 
         dl = self.create_features_dataset(current_task)
 
-        for i, (image_features, labels) in tqdm(enumerate(dl), total=len(dl), desc='GR first stage epoch'):
+        for i, (image_features, labels) in tqdm(enumerate(dl), total=len(dl), desc=f'GR epoch {epoch + 1}/{self.args.num_epochs_gr}'):
             if self.args.debug_mode and i > 3:
                 break
             optim.zero_grad()
@@ -120,7 +120,7 @@ class Prompter(torch.nn.Module):
                                 momentum=0.0, weight_decay=0.0)
 
         for e in range(self.args.num_epochs_gr):
-            self.train_alignment_epoch(optim, current_task=current_task)
+            self.train_alignment_epoch(optim, current_task=current_task, epoch=e)
 
     @torch.no_grad()
     def update_statistics(self, dataset: ContinualDataset, current_task: int):
