@@ -65,9 +65,8 @@ class MyCUB200(Dataset):
 
         # to return a PIL Image
         img = Image.fromarray(img, mode='RGB')
-        original_img = img.copy()
 
-        not_aug_img = self.not_aug_transform(original_img)
+        not_aug_img = self.not_aug_transform(img.copy())
 
         if self.transform is not None:
             img = self.transform(img)
@@ -79,6 +78,7 @@ class MyCUB200(Dataset):
             img, target, not_aug_img]
 
         if self._return_segmask:
+            # TODO: add to the return tuple 
             raise "Unsupported segmentation output in training set!"
 
         return ret_tuple
@@ -118,6 +118,7 @@ class CUB200(MyCUB200):
         ret_tuple = [img, target, self.logits[index]] if hasattr(self, 'logits') else [img, target]
 
         if ret_segmask or self._return_segmask:
+            # TODO: does not work with the current implementation
             seg = self.segs[index]
             seg = Image.fromarray(seg, mode='L')
             seg = transforms.ToTensor()(transforms.CenterCrop((MyCUB200.IMG_SIZE, MyCUB200.IMG_SIZE))(seg))[0]
@@ -185,8 +186,7 @@ class SequentialCUB200(ContinualDataset):
 
     @staticmethod
     def get_normalization_transform():
-        return transforms.Compose([transforms.ToPILImage(),
-                                   transforms.Normalize(SequentialCUB200.MEAN, SequentialCUB200.STD)])
+        return transforms.Normalize(SequentialCUB200.MEAN, SequentialCUB200.STD)
 
     @staticmethod
     def get_denormalization_transform():

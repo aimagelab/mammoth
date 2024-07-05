@@ -39,7 +39,7 @@ def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> No
         k: the task index
     """
     num_classes = dataset.N_CLASSES
-    start_c, end_c = dataset.get_offsets()
+    start_c, end_c = dataset.get_offsets(k)
     outputs[:, :start_c] = -float('inf')
     outputs[:, end_c:num_classes] = -float('inf')
 
@@ -180,7 +180,7 @@ def train_single_epoch(model: ContinualModel,
             loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch)
         assert not math.isnan(loss)
 
-        if args.code_optimization == 0:
+        if args.code_optimization == 0 and 'cuda' in str(args.device):
             torch.cuda.synchronize()
         progress_bar.prog(i, data_len, epoch, current_task, loss)
         system_tracker()

@@ -13,9 +13,9 @@ else:
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n_workers", type=int, help="Number of workers to use. If not specified, will use all available cores. (Recommended: n_cpus*3)")
-    parser.add_argument("--limit", type=int, help="Limit the number of runs to sync")
-    parser.add_argument("--reverse", action="store_true", help="Reverse the order of runs to sync")
+    parser.add_argument("-w","-n","--n_workers", type=int, help="Number of workers to use. If not specified, will use all available cores. (Recommended: n_cpus*3)")
+    parser.add_argument("-l","--limit", type=int, help="Limit the number of runs to sync")
+    parser.add_argument("-r","--reverse", action="store_true", help="Reverse the order of runs to sync")
     args = parser.parse_args()
 
     if args.n_workers is None:

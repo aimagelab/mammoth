@@ -4,7 +4,7 @@ from torch import nn
 import torch
 from torchvision import transforms
 from kornia.augmentation.container.params import ParamItem
-
+from kornia.constants import Resample
 
 class KorniaMultiAug(kornia.augmentation.AugmentationSequential):
     """
@@ -86,6 +86,12 @@ class KorniaAugNoGrad(kornia.augmentation.AugmentationSequential):
         """
         return self._do_transform(*args, **kwargs)
 
+def _convert_interpolation_to_resample(interpolation: int) -> int:
+    interpolation_name = transforms.InterpolationMode(interpolation).name
+    if hasattr(Resample, interpolation_name):
+        return getattr(Resample, interpolation_name)
+    else:
+        raise NotImplementedError(f"Interpolation mode {interpolation_name} not supported by Kornia.")
 
 def to_kornia_transform(transform: transforms.Compose, apply: bool = True) -> Union[List[kornia.augmentation.AugmentationBase2D], KorniaAugNoGrad]:
     """
@@ -144,6 +150,8 @@ def to_kornia_transform(transform: transforms.Compose, apply: bool = True) -> Un
             pass
         elif isinstance(t, transforms.Normalize):
             ts.append(kornia.augmentation.Normalize(mean=t.mean, std=t.std, p=1))
+        elif isinstance(t, transforms.Resize):
+            ts.append(kornia.augmentation.Resize(size=t.size, antialias=t.antialias, resample=_convert_interpolation_to_resample(t.interpolation)))
         else:
             raise NotImplementedError
 
