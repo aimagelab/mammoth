@@ -1,3 +1,4 @@
+import math
 from typing import List
 import torch.nn.functional as F
 import torch
@@ -95,25 +96,30 @@ class Prompter(torch.nn.Module):
 
         dl = self.create_features_dataset(current_task)
 
-        for i, (image_features, labels) in tqdm(enumerate(dl), total=len(dl), desc=f'GR epoch {epoch + 1}/{self.args.num_epochs_gr}'):
-            if self.args.debug_mode and i > 3:
-                break
-            optim.zero_grad()
+        with tqdm(enumerate(dl), total=len(dl), desc=f'GR epoch {epoch + 1}/{self.args.num_epochs_gr}') as pbar:
+            for i, (image_features, labels) in pbar:
+                if self.args.debug_mode and i > 3:
+                    break
+                optim.zero_grad()
 
-            image_features, labels = image_features.to(self.device, dtype=self.clip_model.dtype), labels.to(self.device)
-            image_features = torch.nn.functional.normalize(image_features, dim=-1)
+                image_features, labels = image_features.to(self.device, dtype=self.clip_model.dtype), labels.to(self.device)
+                image_features = torch.nn.functional.normalize(image_features, dim=-1)
 
-            text_features = self.compute_keys(0, offset_2)
+                text_features = self.compute_keys(0, offset_2)
 
-            text_features = torch.cat((text_features[:offset_1].detach(), text_features[offset_1:offset_2]), dim=0)
-            text_features = torch.nn.functional.normalize(text_features, dim=-1)
+                text_features = torch.cat((text_features[:offset_1].detach(), text_features[offset_1:offset_2]), dim=0)
+                text_features = torch.nn.functional.normalize(text_features, dim=-1)
 
-            clip_logits = torch.einsum('bd,cd->bc', image_features, text_features)
-            clip_logits = clip_logits * self.clip_logit_scale.exp()
-            loss = F.cross_entropy(clip_logits, labels)
+                clip_logits = torch.einsum('bd,cd->bc', image_features, text_features)
+                clip_logits = clip_logits * self.clip_logit_scale.exp()
+                loss = F.cross_entropy(clip_logits, labels)
 
-            loss.backward()
-            optim.step()
+                assert not math.isnan(loss.item())
+
+                loss.backward()
+                optim.step()
+
+                pbar.set_postfix({'loss': loss.item()})
 
     def align(self, current_task: int):
         optim = torch.optim.SGD(lr=self.args.learning_rate_gr, params=[self.prompt_parameters],
@@ -194,6 +200,7 @@ class Prompter(torch.nn.Module):
     @torch.no_grad()
     def get_query(self, x):
         clip_out = self.clip_model.encode_image(x)
+        assert not torch.isnan(clip_out).any()
         return clip_out
 
     def get_clip_logits(self, clip_out, keys):

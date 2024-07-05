@@ -5,6 +5,7 @@ Copyright (c) 2019 Lucas Deecke.
 Licensed under the MIT License.
 """
 
+import math
 import torch
 import numpy as np
 
@@ -19,13 +20,23 @@ class MixtureOfGaussiansModel(torch.nn.Module):
         self.gm = GaussianMixture(n_components, embed_dim, covariance_type='diag')
 
     def fit(self, x):
-        self.gm.fit(x, n_iter=self.n_iters)
+        tries = 0
+        while tries < 10:
+            self.gm.fit(x, n_iter=self.n_iters)
+            if self.gm.log_likelihood > -np.inf:
+                break
+            self.gm.to(x.device)
+            tries += 1
+
+        assert (self.gm.var > 0).all(), "Variance is not positive"
+        assert self.gm.log_likelihood > -np.inf, "Log-likelihood is not finite"
 
     def sample(self, n_sample):
         return self.gm.sample(n_sample)[0]
 
     def forward(self, n_sample, *args, **kwargs):
         return self.sample(n_sample)
+
 
 class Gaussian(torch.nn.Module):
 
@@ -43,6 +54,7 @@ class Gaussian(torch.nn.Module):
 
     def forward(self, n_sample, scale_mean: float = 1.0):
         return self.sample(n_sample, scale_mean)
+
 
 def calculate_matmul_n_times(n_components, mat_a, mat_b):
     """
@@ -218,10 +230,11 @@ class GaussianMixture(torch.nn.Module):
                 for p in self.parameters():
                     p.data = p.data.to(device)
                 if self.init_params == "kmeans":
-                    self.mu.data, = self.get_kmeans_mu(x, n_centers=self.n_components)
+                    self.mu.data = self.get_kmeans_mu(x, n_centers=self.n_components)[0]
 
             i += 1
             j = self.log_likelihood - log_likelihood_old
+            j = np.inf if math.isnan(j) else j
 
             if j <= delta:
                 # When score decreases, revert to old parameters
