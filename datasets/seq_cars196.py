@@ -21,6 +21,41 @@ from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
 from backbone.vit import vit_base_patch16_224_prompt_prototype
 
+def load_and_preprocess_cars196(train_str='test', names_only=False) -> Tuple[torch.Tensor, torch.Tensor, dict] | dict:
+    """
+    Loads data from deeplake and preprocesses it to be stored locally.
+
+    Args:
+        train_str (str): 'train' or 'test'.
+        names_only (bool): If True, returns the class names only.   
+
+    Returns:
+        Tuple[torch.Tensor, torch.Tensor, dict] | dict: If names_only is False, returns a tuple of data, targets, and class_idx_to_name
+    """
+    ds = deeplake.load("hub://activeloop/stanford-cars-train")
+    loader = ds.pytorch()
+    class_names = ds['car_models'].info['class_names']
+    class_idx_to_name = {i: class_names[i] for i in range(len(class_names))}
+    if names_only:
+        return class_idx_to_name
+    
+    # Pre-process dataset
+    data = []
+    targets = []
+    for x in tqdm(loader, desc=f'Pre-processing {train_str} dataset'):
+        img = x['images'][0].permute(2, 0, 1) # load one image at a time
+        if len(img) < 3:
+            img = img.repeat(3, 1, 1) # fix rgb
+        img = MyCars196.PREPROCESSING_TRANSFORM(img) # resize
+        data.append(img)
+        label = x['car_models'][0].item() # get label
+        targets.append(label)
+
+    data = torch.stack(data) # stack all images
+    targets = torch.tensor(targets)
+
+    return data, targets, class_idx_to_name
+
 class MyCars196(Dataset):
     N_CLASSES = 196
 
@@ -53,23 +88,8 @@ class MyCars196(Dataset):
         self.class_names = MyCars196.get_class_names()
 
     def load_and_preprocess_dataset(self, root, train_str='test'):
-        ds = deeplake.load("hub://activeloop/stanford-cars-train")
-        loader = ds.pytorch()
-        class_names = ds['car_models'].info['class_names']
-        class_idx_to_name = {i: class_names[i] for i in range(len(class_names))}
-        data = []
-        targets = []
-        for x in tqdm(loader, desc=f'Pre-processing {train_str} dataset'):
-            img = x['images'][0].permute(2, 0, 1) # load one image at a time
-            if len(img) < 3:
-                img = img.repeat(3, 1, 1) # fix rgb
-            img = self.PREPROCESSING_TRANSFORM(img) # resize
-            data.append(img)
-            label = x['car_models'][0].item() # get label
-            targets.append(label)
-        self.data = torch.stack(data) # stack all images
-        self.targets = torch.tensor(targets)
-
+        self.data, self.targets, class_idx_to_name = load_and_preprocess_cars196(train_str)
+        
         print(f"Saving pre-processed dataset in {root} ({train_str}_images.pt and {train_str}_labels.py)...", file=sys.stderr)
         if not os.path.exists(root):
             os.makedirs(root)
@@ -84,7 +104,7 @@ class MyCars196(Dataset):
     def get_class_names(root=base_path() + 'cars196'):
         if not os.path.exists(base_path() + f'cars196/class_names.json'):
             print("Class names not found, performing pre-processing...")
-            MyCars196.load_and_preprocess_dataset(root)
+            class_idx_to_name = load_and_preprocess_cars196(root, names_only=True)
             print('Done', file=sys.stderr)
         else:
             with open(base_path() + f'cars196/class_names.json', 'rt') as f:
@@ -98,8 +118,12 @@ class MyCars196(Dataset):
     def __getitem__(self, index: int) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
-        :param index: index of the element to be returned
-        :returns: tuple: (image, target) where target is index of the target class.
+
+        Args:
+            index: index of the element to be returned
+        
+        Returns:
+            tuple: (image, target) where target is index of the target class.
         """
         img, target = self.data[index], self.targets[index]
 
