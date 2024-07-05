@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 from utils.schedulers import CosineSchedule
 from models.utils.continual_model import ContinualModel
 from models.star_prompt_utils.second_stage_model import Model
-from models.star_prompt_utils.generative_replay import MixtureOfGaussiansModel
+from models.star_prompt_utils.generative_replay import Gaussian, MixtureOfGaussiansModel
 
 
 class SecondStageStarprompt(ContinualModel):
@@ -38,6 +38,10 @@ class SecondStageStarprompt(ContinualModel):
                             help="Number of EM iterations during fit for GR with MOG.")
         parser.add_argument("--enable_gr", type=int, default=1, choices=[0, 1],
                             help="Enable Generative Replay.")
+        parser.add_argument('--gr_model', type=str, default='mog', choices=['mog', 'gaussian'],
+                            help="Type of distribution model for Generative Replay. "
+                            "- `mog`: Mixture of Gaussian. "
+                            "- `gaussian`: Single Gaussian distribution.")
 
         parser.add_argument('--keys_ckpt_path', type=str,
                             help="Path for first-stage keys. The keys can be saved by runninng `first_stage_starprompt` with `--save_first_stage_keys=1`.")
@@ -79,8 +83,13 @@ class SecondStageStarprompt(ContinualModel):
         self.classifier_state_dict = None
 
     def _get_dist(self, embed_dim):
-        return MixtureOfGaussiansModel(embed_dim, n_components=self.args.gr_mog_n_components,
-                                       n_iters=self.args.gr_mog_n_iters)
+        assert self.args.gr_model in ['mog', 'gaussian'], f"Invalid GR model: {self.args.gr_model}"
+
+        if self.args.gr_model == 'mog':
+            return MixtureOfGaussiansModel(embed_dim, n_components=self.args.gr_mog_n_components,
+                                           n_iters=self.args.gr_mog_n_iters)
+        else:
+            return Gaussian(embed_dim)
 
     def norm(self, t):
         return torch.norm(t, p=2, dim=-1, keepdim=True) + 1e-7
@@ -108,8 +117,7 @@ class SecondStageStarprompt(ContinualModel):
 
             prev_t_size, cur_t_size = self.compute_offsets(_ti)
 
-            for class_idx in range(prev_t_size, cur_t_size):
-
+            for class_idx in range(prev_t_size, cur_t_size):                
                 current_samples = self.distributions[class_idx](self.args.num_samples_gr)
                 features.append(current_samples)
                 labels.append(torch.ones(self.args.num_samples_gr) * class_idx)

@@ -24,9 +24,25 @@ class MixtureOfGaussiansModel(torch.nn.Module):
     def sample(self, n_sample):
         return self.gm.sample(n_sample)[0]
 
-    def forward(self, n_sample):
+    def forward(self, n_sample, *args, **kwargs):
         return self.sample(n_sample)
 
+class Gaussian(torch.nn.Module):
+
+    def __init__(self, embed_dim):
+        super(Gaussian, self).__init__()
+        self.embed_dim = embed_dim
+        self.register_buffer("mean", torch.zeros(embed_dim))
+        self.register_buffer("std", torch.ones(embed_dim))
+
+    def fit(self, x):
+        self.std, self.mean = torch.std_mean(x, dim=0)
+
+    def sample(self, n_sample, scale_mean):
+        return torch.distributions.normal.Normal(scale_mean * self.mean, self.std).sample((n_sample,))
+
+    def forward(self, n_sample, scale_mean: float = 1.0):
+        return self.sample(n_sample, scale_mean)
 
 def calculate_matmul_n_times(n_components, mat_a, mat_b):
     """
