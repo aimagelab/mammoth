@@ -1,9 +1,10 @@
 import torch
 from copy import deepcopy
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import TensorDataset
 from tqdm import tqdm
 from argparse import ArgumentParser
 
+from utils.conf import create_seeded_dataloader
 from utils.schedulers import CosineSchedule
 from models.utils.continual_model import ContinualModel
 from models.star_prompt_utils.second_stage_model import Model
@@ -50,7 +51,7 @@ class SecondStageStarprompt(ContinualModel):
                             help="Batch size for Generative Replay.")
         parser.add_argument('--num_samples_gr', type=int, default=256,
                             help="Number of samples for Generative Replay.")
-        
+
         # prompt type
         parser.add_argument('--prompt_mode', type=str, default='residual', choices=['residual', 'concat'],
                             help="Prompt type for the second stage. "
@@ -117,7 +118,7 @@ class SecondStageStarprompt(ContinualModel):
 
             prev_t_size, cur_t_size = self.compute_offsets(_ti)
 
-            for class_idx in range(prev_t_size, cur_t_size):                
+            for class_idx in range(prev_t_size, cur_t_size):
                 current_samples = self.distributions[class_idx](self.args.num_samples_gr)
                 features.append(current_samples)
                 labels.append(torch.ones(self.args.num_samples_gr) * class_idx)
@@ -125,9 +126,7 @@ class SecondStageStarprompt(ContinualModel):
         features = torch.cat(features, dim=0)
         labels = torch.cat(labels, dim=0).long()
 
-        return DataLoader(TensorDataset(features, labels),
-                          batch_size=self.args.batch_size_gr,
-                          shuffle=True, num_workers=0)
+        return create_seeded_dataloader(self.args, TensorDataset(features, labels), batch_size=self.args.batch_size_gr, shuffle=True, num_workers=0)
 
     def train_alignment_epoch(self, classifier: torch.nn.Module, optim: torch.optim.Optimizer):
 

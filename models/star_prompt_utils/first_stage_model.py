@@ -1,8 +1,10 @@
 from typing import List
 import torch.nn.functional as F
 import torch
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import TensorDataset
 from tqdm import tqdm
+
+from utils.conf import create_seeded_dataloader
 try:
     import clip
 except ImportError:
@@ -86,7 +88,7 @@ class Prompter(torch.nn.Module):
 
         features = torch.cat(features, dim=0)
         labels = torch.cat(labels, dim=0).long()
-        return DataLoader(TensorDataset(features, labels), batch_size=self.args.batch_size_gr, shuffle=True, num_workers=0)
+        return create_seeded_dataloader(self.args, TensorDataset(features, labels), num_workers=0, batch_size=self.args.batch_size_gr, shuffle=True)
 
     def train_alignment_epoch(self, optim: torch.optim.Optimizer, current_task: int):
         offset_1, offset_2 = self.dataset.get_offsets(current_task)
@@ -129,7 +131,7 @@ class Prompter(torch.nn.Module):
         was_training = self.training
         self.eval()
 
-        with tqdm(total=self.args.num_monte_carlo_gr * len(dataset.train_loader), 
+        with tqdm(total=self.args.num_monte_carlo_gr * len(dataset.train_loader),
                   desc='Updating statistics for first stage Generative Replay') as pbar:
             for _ in range(self.args.num_monte_carlo_gr):
                 for i, data in enumerate(dataset.train_loader):

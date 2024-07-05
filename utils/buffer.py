@@ -13,7 +13,7 @@ import torch.nn as nn
 from datasets.utils.continual_dataset import ContinualDataset
 from models.utils.continual_model import ContinualModel
 from utils.augmentations import apply_transform
-from utils.conf import get_device
+from utils.conf import create_seeded_dataloader, get_device
 
 
 def icarl_replay(self: ContinualModel, dataset, val_set_split=0):
@@ -67,8 +67,7 @@ def icarl_replay(self: ContinualModel, dataset, val_set_split=0):
                 refold_transform((self.buffer.examples)[:len(self.buffer)][buff_val_mask])
             ])
 
-            self.val_loader = torch.utils.data.DataLoader(self.val_dataset, batch_size=self.args.batch_size, shuffle=True,
-                                                          num_workers=self.args.num_workers)
+            self.val_loader = create_seeded_dataloader(self.args, self.val_dataset, batch_size=self.args.batch_size, shuffle=True)
 
 
 def reservoir(num_seen_examples: int, buffer_size: int) -> int:
