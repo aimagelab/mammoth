@@ -29,22 +29,52 @@ def warn_once(*msg):
         print(msg, file=sys.stderr)
 
 
-def get_alloc_memory_all_devices() -> list[int]:
+def _get_gpu_memory_pynvml_all_processes(device_id: int = 0) -> int:
+    """
+    Use pynvml to get the memory allocated on the GPU.
+    Returns the memory allocated on the GPU in Bytes.
+    """
+    if not hasattr(_get_gpu_memory_pynvml_all_processes, 'handle'):
+        torch.cuda.pynvml.nvmlInit() # only once
+        handle = torch.cuda.pynvml.nvmlDeviceGetHandleByIndex(device_id)
+        setattr(_get_gpu_memory_pynvml_all_processes, 'handle', handle)
+    
+    handle = getattr(_get_gpu_memory_pynvml_all_processes, 'handle')
+
+    procs = torch.cuda.pynvml.nvmlDeviceGetComputeRunningProcesses(handle)
+    return sum([proc.usedGpuMemory for proc in procs])
+
+
+def get_alloc_memory_all_devices(return_all=False) -> list[int]:
     """
     Returns the memory allocated on all the available devices.
+    By default, tries to return the memory read from pynvml, if available.
+    Else, it returns the memory `reserved` by torch.
+
+    If `return_all` is set to True, it returns a tuple with the memory reserved, allocated and from pynvml.
+
+    Values are in Bytes.
     """
-    gpu_memory = []
+    gpu_memory_reserved = []
+    gpu_memory_allocated = []
+    gpu_memory_nvidiasmi = []
     for i in range(torch.cuda.device_count()):
-        _ = torch.tensor([1]).to(i)
-        gpu_memory.append(torch.cuda.memory_allocated(i))
-    if all(memory == 0 for memory in gpu_memory):
-        print("WARNING: some weird GPU memory issue. "
-              "Using trick from https://discuss.pytorch.org/t/torch-cuda-memory-allocated-returns-0-if-pytorch-no-cuda-memory-caching-1/188796")
-        for i in range(torch.cuda.device_count()):
-            torch.zeros(1).to(i)
-            free_memory, total_memory = torch.cuda.mem_get_info(i)
-            gpu_memory[i] = total_memory - free_memory
-    return gpu_memory
+        _ = torch.tensor([1]).to(i) # allocate memory to get more accurate reading from torch
+        gpu_memory_reserved.append(torch.cuda.max_memory_reserved(i))
+        gpu_memory_allocated.append(torch.cuda.max_memory_allocated(i))
+
+        try:
+            gpu_memory_nvidiasmi.append(_get_gpu_memory_pynvml_all_processes(i))
+        except BaseException as e:
+            warn_once('Could not get memory from pynvml.', str(e))
+            gpu_memory_nvidiasmi.append(-1)
+        
+    if return_all:
+        return gpu_memory_reserved, gpu_memory_allocated, gpu_memory_nvidiasmi
+    else:
+        if any([g>0 for g in gpu_memory_nvidiasmi]):
+            return gpu_memory_nvidiasmi
+        return gpu_memory_allocated
 
 
 def get_device() -> torch.device:

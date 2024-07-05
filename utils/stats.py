@@ -34,7 +34,7 @@ try:
             Get the memory usage of all GPUs in MB.
             """
 
-            return [d / 1024 for d in get_alloc_memory_all_devices()]
+            return [d / 1024 / 1024 for d in get_alloc_memory_all_devices()]
     else:
         get_memory_gpu_mb = None
 except BaseException:
