@@ -74,9 +74,6 @@ class ContinualDataset(object):
                 else:
                     self.args.class_order = np.random.permutation(sum(self.N_CLASSES_PER_TASK))
 
-        if self.args.validation:
-            self._c_seed = self.args.seed if self.args.seed is not None else torch.initial_seed()
-
         if args.joint:
             self.N_CLASSES_PER_TASK = self.N_CLASSES
             self.N_TASKS = 1
@@ -212,6 +209,7 @@ class ContinualDataset(object):
         By default, it returns the ImageNet prompt templates.
         """
         return templates['imagenet']
+
 
 def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):
     if setting.args.label_perc == 1:

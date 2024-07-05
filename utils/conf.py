@@ -12,6 +12,7 @@ import sys
 import random
 import torch
 import numpy as np
+from torch.utils.data import DataLoader
 
 
 def warn_once(*msg):
@@ -35,10 +36,10 @@ def _get_gpu_memory_pynvml_all_processes(device_id: int = 0) -> int:
     Returns the memory allocated on the GPU in Bytes.
     """
     if not hasattr(_get_gpu_memory_pynvml_all_processes, 'handle'):
-        torch.cuda.pynvml.nvmlInit() # only once
+        torch.cuda.pynvml.nvmlInit()  # only once
         handle = torch.cuda.pynvml.nvmlDeviceGetHandleByIndex(device_id)
         setattr(_get_gpu_memory_pynvml_all_processes, 'handle', handle)
-    
+
     handle = getattr(_get_gpu_memory_pynvml_all_processes, 'handle')
 
     procs = torch.cuda.pynvml.nvmlDeviceGetComputeRunningProcesses(handle)
@@ -59,7 +60,7 @@ def get_alloc_memory_all_devices(return_all=False) -> list[int]:
     gpu_memory_allocated = []
     gpu_memory_nvidiasmi = []
     for i in range(torch.cuda.device_count()):
-        _ = torch.tensor([1]).to(i) # allocate memory to get more accurate reading from torch
+        _ = torch.tensor([1]).to(i)  # allocate memory to get more accurate reading from torch
         gpu_memory_reserved.append(torch.cuda.max_memory_reserved(i))
         gpu_memory_allocated.append(torch.cuda.max_memory_allocated(i))
 
@@ -68,11 +69,11 @@ def get_alloc_memory_all_devices(return_all=False) -> list[int]:
         except BaseException as e:
             warn_once('Could not get memory from pynvml. Maybe try `pip install --force-reinstall gpustat`.', str(e))
             gpu_memory_nvidiasmi.append(-1)
-        
+
     if return_all:
         return gpu_memory_reserved, gpu_memory_allocated, gpu_memory_nvidiasmi
     else:
-        if any([g>0 for g in gpu_memory_nvidiasmi]):
+        if any([g > 0 for g in gpu_memory_nvidiasmi]):
             return gpu_memory_nvidiasmi
         return gpu_memory_allocated
 
@@ -142,16 +143,19 @@ def set_random_seed(seed: int) -> None:
         print('Could not set cuda seed.')
 
 
-def set_random_seed_worker(worker_id) -> None:
+def get_dataloader_seed_fn(seed: int) -> torch.Generator:
     """
     Sets the seeds for a worker of a dataloader.
     """
-    worker_seed = torch.initial_seed() % 2**32
-    np.random.seed(worker_seed)
-    random.seed(worker_seed)
+
+    def set_random_seed_worker(worker_id) -> None:
+        worker_seed = (worker_id + seed) % 2**32
+        np.random.seed(worker_seed)
+        random.seed(worker_seed)
+    return set_random_seed_worker
 
 
-def create_seeded_dataloader(args, dataset, **dataloader_args) -> torch.utils.data.DataLoader:
+def create_seeded_dataloader(args, dataset, **dataloader_args) -> DataLoader:
     """
     Creates a dataloader object from a dataset, setting the seeds for the workers (if `--seed` is set).
 
@@ -173,5 +177,5 @@ def create_seeded_dataloader(args, dataset, **dataloader_args) -> torch.utils.da
     else:
         worker_generator = None
     dataloader_args['generator'] = worker_generator if 'generator' not in dataloader_args else dataloader_args['generator']
-    dataloader_args['worker_init_fn'] = set_random_seed_worker if 'worker_init_fn' not in dataloader_args else dataloader_args['worker_init_fn']
-    return torch.utils.data.DataLoader(dataset, **dataloader_args)
+    dataloader_args['worker_init_fn'] = get_dataloader_seed_fn(args.seed) if 'worker_init_fn' not in dataloader_args else dataloader_args['worker_init_fn']
+    return DataLoader(dataset, **dataloader_args)
