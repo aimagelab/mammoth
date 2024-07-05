@@ -75,6 +75,7 @@ class MyCars196(Dataset):
         self.train = train
         self.transform = transform
         self.target_transform = target_transform
+        self.not_aug_transform = transforms.ToTensor()
 
         train_str = 'train' if train else 'test'
         if not os.path.exists(f'{root}/{train_str}_images.pt'):
@@ -127,9 +128,9 @@ class MyCars196(Dataset):
         """
         img, target = self.data[index], self.targets[index]
 
-        img = img / 255.0
+        img = Image.fromarray(img.permute(1,2,0).numpy(), mode='RGB')
 
-        not_aug_img = img
+        not_aug_img = self.not_aug_transform(img.copy())
 
         if self.transform is not None:
             img = self.transform(img)
@@ -161,9 +162,10 @@ class SequentialCars196(ContinualDataset):
 
     TRANSFORM = transforms.Compose([
         transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
         transforms.Normalize(mean=MEAN, std=STD),
     ])
-    TEST_TRANSFORM = transforms.Compose([transforms.Normalize(mean=MEAN, std=STD)]) # no transform for test
+    TEST_TRANSFORM = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=MEAN, std=STD)]) # no transform for test
 
     def __init__(self, args):
         super().__init__(args)

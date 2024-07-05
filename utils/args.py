@@ -2,7 +2,6 @@
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-
 if __name__ == '__main__':
     import os
     import sys
@@ -169,11 +168,12 @@ class _DocsArgs:
         return ', '.join([c.keys() if isinstance(c, dict) else str(c) for c in self.choices])
 
     def __str__(self):
-        tb = '\t'
-        return f"""**\\-\\-{self.name}** : {self.type}
-            *Help*: {self.help}\n
-            - Default: {self.default}\n
-            - Choices: {self.parse_choices() if self.choices is not None else ''}"""
+        tb = f"""**\\-\\-{self.name}** : {self.type.__name__}
+\t*Help*: {self.help}\n
+\t- *Default*: {self.default}"""
+        if self.choices is not None:
+            tb += f"\n\t- *Choices*: {self.parse_choices()}"
+        return tb
 
 
 class _DocArgsGroup:
