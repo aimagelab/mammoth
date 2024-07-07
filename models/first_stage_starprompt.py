@@ -27,9 +27,9 @@ class FirstStageStarprompt(ContinualModel):
         # Tunable hyperparameters
         parser.add_argument("--learning_rate_gr", type=float, default=0.05,
                             help="Learning rate for Generative Replay.")
-        parser.add_argument("--lambda_ortho_coop", type=float, default=30, 
+        parser.add_argument("--lambda_ortho_coop", type=float, default=30,
                             help="Orthogonality loss coefficient for coop")
-        parser.add_argument("--num_monte_carlo_gr", type=int, default=5, 
+        parser.add_argument("--num_monte_carlo_gr", type=int, default=5,
                             help="How many times to sample from the dataset for Generative Replay")
         parser.add_argument("--num_epochs_gr", type=int, default=10,
                             help="Num. of epochs for Generative Replay.")
@@ -39,24 +39,21 @@ class FirstStageStarprompt(ContinualModel):
                             help="Number of EM iterations during fit for GR with MOG.")
         parser.add_argument("--enable_gr", type=int, default=1, choices=[0, 1],
                             help="Enable Generative Replay.")
-        
+
         parser.add_argument('--batch_size_gr', type=int, default=128,
                             help="Batch size for Generative Replay.")
         parser.add_argument('--num_samples_gr', type=int, default=256,
                             help="Number of samples for Generative Replay.")
-                
+
         # Useful flags
-        parser.add_argument("--save_first_stage_keys", type=int, default=1, 
+        parser.add_argument("--save_first_stage_keys", type=int, default=1,
                             choices=[0, 1], help="save text encoder outputs")
-        
+
         # Backbone arguments
         parser.add_argument("--clip_backbone", type=str, default='ViT-L/14', help="CLIP backbone architecture",
                             choices=clip.available_models())
-        
-        parser.add_argument("--use_data_aug", type=int, default=0, 
-                            choices=[0, 1], help="Use data augmentation during training.")
-        return parser
 
+        return parser
 
     def __init__(self, backbone, loss, args, transform):
         print("WARNING: The first stage of STAR-Prompt ignores the backbone as it uses CLIP")
@@ -99,8 +96,7 @@ class FirstStageStarprompt(ContinualModel):
 
     def begin_task(self, dataset):
         # Disable transforms and set normalization as CLIP's preprocessing
-        if self.args.use_data_aug==0:
-            dataset.train_loader.dataset.transform = self.net.prompter.clip_preprocess
+        dataset.train_loader.dataset.transform = self.net.prompter.clip_preprocess
         dataset.test_loaders[-1].dataset.transform = self.net.prompter.clip_preprocess
 
         if hasattr(self, 'opt'):
@@ -108,7 +104,6 @@ class FirstStageStarprompt(ContinualModel):
             delattr(self, 'opt')
 
         self.opt = self.get_optimizer()
-
 
         torch.cuda.empty_cache()
 

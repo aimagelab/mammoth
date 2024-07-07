@@ -206,6 +206,9 @@ class GaussianMixture(torch.nn.Module):
             mu = self.get_kmeans_mu(x, n_centers=self.n_components)
             self.mu.data = mu
 
+        for p in self.parameters():
+            p.data = p.data.to(x.device)
+
         i = 0
         j = np.inf
 

@@ -47,18 +47,18 @@ class Prompter(torch.nn.Module):
 
             if not os.path.exists(self.keys_ckpt_path):
                 raise ValueError(f'Keys checkpoint `{self.keys_ckpt_path}` does not exist')
-            
+
             self.keys, first_stage_args = self.load_keys()
             print("Keys loaded. Loading CLIP version:", first_stage_args.clip_backbone)
             clip_backbone = first_stage_args.clip_backbone
             self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
-            self.clip_model = self.clip_model.float() # force fp32 when used for eval
-        else: # use prompt templates
+            self.clip_model = self.clip_model.float()  # force fp32 when used for eval
+        else:  # use prompt templates
             self.keys_ckpt_path = None
             print("No keys loaded. Using default CLIP version:", clip_backbone)
             self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
-            self.clip_model = self.clip_model.float() # force fp32 when used for eval
-            self.keys = self.load_default_prompt_templates(dataset.get_prompt_templates(), dataset.get_class_names())
+            self.clip_model = self.clip_model.float()  # force fp32 when used for eval
+            self.keys = self.load_default_prompt_templates(dataset.get_class_names())
 
         self.clip_normalization = Normalize(self.clip_preprocess.transforms[-1].mean,
                                             self.clip_preprocess.transforms[-1].std).to(self.device)
@@ -73,9 +73,9 @@ class Prompter(torch.nn.Module):
             else:
                 setattr(self, f'p_concat_{l}', self.get_parameter((self.num_classes, 2 * self.args.prefix_tuning_prompt_len,
                                                                    self.target_embed_dim)))
-                
+
             setattr(self, f'a_{l}', self.get_parameter((self.num_classes, self.clip_model.visual.output_dim)))
-                
+
     def get_parameter(self, shape, type_init: str = 'orto'):
         param = torch.nn.Parameter(torch.zeros(*shape, dtype=torch.float32, device=self.device))
         if type_init == 'orto':
@@ -85,14 +85,11 @@ class Prompter(torch.nn.Module):
         return param
 
     @torch.no_grad()
-    def load_default_prompt_templates(self, prompt_templates: List[str], dataset_classes: List[str]) -> torch.Tensor:
-        all_features = []
-        for t in prompt_templates:
-            text_inputs = torch.cat([clip.tokenize(t.format(c)) for c in dataset_classes]).to(self.device)
-            text_features = self.clip_model.encode_text(text_inputs)
-            all_features.append(text_features)
-        text_features = torch.stack(all_features).mean(dim=0)
-        return text_features
+    def load_default_prompt_templates(self, dataset_classes: List[str]) -> torch.Tensor:
+        text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in dataset_classes]).to(self.device)
+        text_features = self.clip_model.encode_text(text_inputs)
+        text_features /= text_features.norm(dim=-1, keepdim=True)
+        return text_features.float()
 
     @torch.no_grad()
     def load_keys(self):
@@ -144,12 +141,12 @@ class Prompter(torch.nn.Module):
     def get_prompts(self, layer_idx, clip_out, cur_classes: int, frozen_past_classes=0):
 
         if layer_idx in self.prompt_layers:
-            
+
             a: torch.Tensor = getattr(self, f'a_{layer_idx}')
             if self.prompt_mode == 'residual':
                 pv: torch.Tensor = getattr(self, f'p_{layer_idx}')
             else:
-                clip_out = clip_out[:, :1] # only use class token for prefix tuning
+                clip_out = clip_out[:, :1]  # only use class token for prefix tuning
                 p_concat: torch.Tensor = getattr(self, f'p_concat_{layer_idx}')
                 p_concat_k, p_concat_v = torch.split(p_concat, self.args.prefix_tuning_prompt_len, dim=1)
 
@@ -166,7 +163,7 @@ class Prompter(torch.nn.Module):
                     else:
                         sp_concat_k_past = self.compute_super_prompts(p_concat_k, clip_out, 0, frozen_past_classes).squeeze(2)
                         sp_concat_v_past = self.compute_super_prompts(p_concat_v, clip_out, 0, frozen_past_classes).squeeze(2)
-            
+
                 if self.prompt_mode == 'residual':
                     sp_curr = self.compute_super_prompts(pv, clip_out, frozen_past_classes, cur_classes)
                     super_prompt = sp_past.detach() + sp_curr
@@ -251,11 +248,11 @@ class Model(nn.Module):
         self.device = backbone.device
 
         # get feature encoder
-        vit_model = VisionTransformer(embed_dim=768, 
-                                      depth=12, 
-                                      num_heads=12, 
-                                      drop_path_rate=0, 
-                                      num_classes=num_classes, 
+        vit_model = VisionTransformer(embed_dim=768,
+                                      depth=12,
+                                      num_heads=12,
+                                      drop_path_rate=0,
+                                      num_classes=num_classes,
                                       prompt_mode=args.prompt_mode)
 
         # load pretrained weights
