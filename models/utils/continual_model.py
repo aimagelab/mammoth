@@ -53,19 +53,20 @@ class ContinualModel(nn.Module):
     COMPATIBILITY: List[str]
     AVAIL_OPTIMS = ['sgd', 'adam', 'adamw']
 
-    args: Namespace # The command line arguments
-    device: torch.device # The device to be used for training
-    net: nn.Module # The backbone of the model (defined by the `dataset`)
-    loss: nn.Module # The loss function to be used (defined by the `dataset`)
-    opt: optim.Optimizer # The optimizer to be used for training
-    scheduler: optim.lr_scheduler._LRScheduler # (optional) The scheduler for the optimizer. If defined, it will overwrite the one defined in the `dataset`
-    transform: transforms.Compose|kornia.augmentation.AugmentationSequential # The transformation to be applied to the input data. The model will try to convert it to a kornia transform to be applicable to a batch of samples at once
-    original_transform: transforms.Compose # The original transformation to be applied to the input data. This is the one defined by the `dataset`
-    task_iteration: int # Number of iterations in the current task
-    epoch_iteration: int # Number of iterations in the current epoch. Updated if `epoch` is passed to observe
-    dataset: ContinualDataset # The instance of the dataset. Used to update the number of classes in the current task
-    num_classes: int # Total number of classes in the dataset
-    n_tasks: int # Total number of tasks in the dataset
+    args: Namespace  # The command line arguments
+    device: torch.device  # The device to be used for training
+    net: nn.Module  # The backbone of the model (defined by the `dataset`)
+    loss: nn.Module  # The loss function to be used (defined by the `dataset`)
+    opt: optim.Optimizer  # The optimizer to be used for training
+    scheduler: optim.lr_scheduler._LRScheduler  # (optional) The scheduler for the optimizer. If defined, it will overwrite the one defined in the `dataset`
+    # The transformation to be applied to the input data. The model will try to convert it to a kornia transform to be applicable to a batch of samples at once
+    transform: transforms.Compose | kornia.augmentation.AugmentationSequential
+    original_transform: transforms.Compose  # The original transformation to be applied to the input data. This is the one defined by the `dataset`
+    task_iteration: int  # Number of iterations in the current task
+    epoch_iteration: int  # Number of iterations in the current epoch. Updated if `epoch` is passed to observe
+    dataset: ContinualDataset  # The instance of the dataset. Used to update the number of classes in the current task
+    num_classes: int  # Total number of classes in the dataset
+    n_tasks: int  # Total number of tasks in the dataset
 
     @staticmethod
     def get_parser() -> Namespace:
@@ -307,9 +308,17 @@ class ContinualModel(nn.Module):
         if 'wandb' in sys.modules and not self.args.nowand:
             pl = persistent_locals(self.observe)
             ret = pl(*args, **kwargs)
-            self.autolog_wandb(pl.locals)
+            extra = {}
+            if isinstance(ret, dict):
+                assert 'loss' in ret, "Loss not found in return dict"
+                extra = {k: v for k, v in ret.items() if k != 'loss'}
+                ret = ret['loss']
+            self.autolog_wandb(pl.locals, extra=extra)
         else:
             ret = self.observe(*args, **kwargs)
+            if isinstance(ret, dict):
+                assert 'loss' in ret, "Loss not found in return dict"
+                ret = ret['loss']
         self.task_iteration += 1
         self.epoch_iteration += 1
         return ret

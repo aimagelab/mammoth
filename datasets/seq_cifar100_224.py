@@ -72,7 +72,7 @@ class SequentialCIFAR100224(ContinualDataset):
         return transform
 
     @staticmethod
-    def get_backbone(hookme=False):
+    def get_backbone():
         return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=SequentialCIFAR100224.N_CLASSES_PER_TASK * SequentialCIFAR100224.N_TASKS)
 
     @staticmethod

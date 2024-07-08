@@ -272,9 +272,6 @@ class Model(nn.Module):
         assert len([m for m in missing if 'head' not in m]) == 0, f"Missing keys: {missing}"
         assert len(unexpected) == 0, f"Unexpected keys: {unexpected}"
 
-        # classifier
-        self.last = nn.Linear(768, num_classes)
-
         self.vit = vit_model
 
         self.prompt_layers = list(range(len(self.vit.blocks)))

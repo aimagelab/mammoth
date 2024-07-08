@@ -21,13 +21,14 @@ from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
 from backbone.vit import vit_base_patch16_224_prompt_prototype
 
-def load_and_preprocess_cars196(train_str='test', names_only=False) -> Tuple[torch.Tensor, torch.Tensor, dict] | dict:
+
+def load_and_preprocess_cars196(train_str='train', names_only=False) -> Tuple[torch.Tensor, torch.Tensor, dict] | dict:
     """
     Loads data from deeplake and preprocesses it to be stored locally.
 
     Args:
         train_str (str): 'train' or 'test'.
-        names_only (bool): If True, returns the class names only.   
+        names_only (bool): If True, returns the class names only.
 
     Returns:
         Tuple[torch.Tensor, torch.Tensor, dict] | dict: If names_only is False, returns a tuple of data, targets, and class_idx_to_name
@@ -39,23 +40,24 @@ def load_and_preprocess_cars196(train_str='test', names_only=False) -> Tuple[tor
     class_idx_to_name = {i: class_names[i] for i in range(len(class_names))}
     if names_only:
         return class_idx_to_name
-    
+
     # Pre-process dataset
     data = []
     targets = []
     for x in tqdm(loader, desc=f'Pre-processing {train_str} dataset'):
-        img = x['images'][0].permute(2, 0, 1) # load one image at a time
+        img = x['images'][0].permute(2, 0, 1)  # load one image at a time
         if len(img) < 3:
-            img = img.repeat(3, 1, 1) # fix rgb
-        img = MyCars196.PREPROCESSING_TRANSFORM(img) # resize
+            img = img.repeat(3, 1, 1)  # fix rgb
+        img = MyCars196.PREPROCESSING_TRANSFORM(img)  # resize
         data.append(img)
-        label = x['car_models'][0].item() # get label
+        label = x['car_models'][0].item()  # get label
         targets.append(label)
 
-    data = torch.stack(data) # stack all images
+    data = torch.stack(data)  # stack all images
     targets = torch.tensor(targets)
 
     return data, targets, class_idx_to_name
+
 
 class MyCars196(Dataset):
     N_CLASSES = 196
@@ -89,9 +91,9 @@ class MyCars196(Dataset):
 
         self.class_names = MyCars196.get_class_names()
 
-    def load_and_preprocess_dataset(self, root, train_str='test'):
+    def load_and_preprocess_dataset(self, root, train_str='train'):
         self.data, self.targets, class_idx_to_name = load_and_preprocess_cars196(train_str)
-        
+
         print(f"Saving pre-processed dataset in {root} ({train_str}_images.pt and {train_str}_labels.py)...", file=sys.stderr)
         if not os.path.exists(root):
             os.makedirs(root)
@@ -103,10 +105,10 @@ class MyCars196(Dataset):
         print('Done', file=sys.stderr)
 
     @staticmethod
-    def get_class_names(root=base_path() + 'cars196'):
+    def get_class_names():
         if not os.path.exists(base_path() + f'cars196/class_names.json'):
             print("Class names not found, performing pre-processing...")
-            class_idx_to_name = load_and_preprocess_cars196(root, names_only=True)
+            class_idx_to_name = load_and_preprocess_cars196(names_only=True)
             print('Done', file=sys.stderr)
         else:
             with open(base_path() + f'cars196/class_names.json', 'rt') as f:
@@ -123,13 +125,13 @@ class MyCars196(Dataset):
 
         Args:
             index: index of the element to be returned
-        
+
         Returns:
             tuple: (image, target) where target is index of the target class.
         """
         img, target = self.data[index], self.targets[index]
 
-        img = Image.fromarray(img.permute(1,2,0).numpy(), mode='RGB')
+        img = Image.fromarray(img.permute(1, 2, 0).numpy(), mode='RGB')
 
         not_aug_img = self.not_aug_transform(img.copy())
 
@@ -141,7 +143,7 @@ class MyCars196(Dataset):
 
         if not self.train:
             return img, target
-        
+
         if hasattr(self, 'logits'):
             return img, target, not_aug_img, self.logits[index]
 
@@ -159,14 +161,14 @@ class SequentialCars196(ContinualDataset):
     N_CLASSES = 196
     N_CLASSES_PER_TASK = [20] * 9 + [16]
     MEAN, STD = (0.0, 0.0, 0.0), (1.0, 1.0, 1.0)
-    SIZE=(224, 224)
+    SIZE = (224, 224)
 
     TRANSFORM = transforms.Compose([
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(mean=MEAN, std=STD),
     ])
-    TEST_TRANSFORM = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=MEAN, std=STD)]) # no transform for test
+    TEST_TRANSFORM = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=MEAN, std=STD)])  # no transform for test
 
     def __init__(self, args):
         super().__init__(args)
@@ -176,7 +178,7 @@ class SequentialCars196(ContinualDataset):
         train_dataset = MyCars196(base_path() + 'cars196', train=True,
                                   transform=self.TRANSFORM)
         test_dataset = MyCars196(base_path() + 'cars196', train=False,
-                                    transform=self.TEST_TRANSFORM)
+                                 transform=self.TEST_TRANSFORM)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
 
@@ -224,4 +226,3 @@ class SequentialCars196(ContinualDataset):
     @set_default_from_args('batch_size')
     def get_batch_size(self):
         return 128
-

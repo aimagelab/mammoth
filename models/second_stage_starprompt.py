@@ -242,6 +242,10 @@ class SecondStageStarprompt(ContinualModel):
         stream_inputs, stream_labels = inputs, labels
         stream_logits = self.net(stream_inputs, cur_classes=self.n_seen_classes, frozen_past_classes=self.n_past_classes)
 
+        with torch.no_grad():
+            stream_preds = stream_logits[:, :self.n_seen_classes].argmax(dim=1)
+            stream_acc = (stream_preds == stream_labels).sum().item() / stream_labels.shape[0]
+
         # mask old classes
         stream_logits[:, :self.n_past_classes] = -float('inf')
         loss = self.loss(stream_logits[:, :self.n_seen_classes], stream_labels)
@@ -261,4 +265,4 @@ class SecondStageStarprompt(ContinualModel):
 
         self.epoch_iteration += 1
 
-        return loss.item()
+        return {'loss': loss.item(), 'stream_accuracy': stream_acc}
