@@ -32,7 +32,8 @@ def load_and_preprocess_cars196(train_str='test', names_only=False) -> Tuple[tor
     Returns:
         Tuple[torch.Tensor, torch.Tensor, dict] | dict: If names_only is False, returns a tuple of data, targets, and class_idx_to_name
     """
-    ds = deeplake.load("hub://activeloop/stanford-cars-train")
+    assert train_str in ['train', 'test'], "train_str must be 'train' or 'test'"
+    ds = deeplake.load(f"hub://activeloop/stanford-cars-{train_str}")
     loader = ds.pytorch()
     class_names = ds['car_models'].info['class_names']
     class_idx_to_name = {i: class_names[i] for i in range(len(class_names))}

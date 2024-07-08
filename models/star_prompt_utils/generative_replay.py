@@ -20,6 +20,7 @@ class MixtureOfGaussiansModel(torch.nn.Module):
         self.gm = GaussianMixture(n_components, embed_dim, covariance_type='diag')
 
     def fit(self, x):
+        x = x.type(torch.float64)
         tries = 0
         while tries < 10:
             self.gm.fit(x, n_iter=self.n_iters)
