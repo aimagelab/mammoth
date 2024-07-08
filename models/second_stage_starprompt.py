@@ -136,7 +136,7 @@ class SecondStageStarprompt(ContinualModel):
 
         for i, (x, labels) in tqdm(enumerate(dl), total=len(dl), desc='GR epoch'):
             optim.zero_grad()
-            x, labels = x.to(self.device), labels.to(self.device)
+            x, labels = x.to(self.device, dtype=torch.float32), labels.to(self.device)
 
             logits = classifier(x)
 
