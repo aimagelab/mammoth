@@ -204,9 +204,3 @@ class SequentialResisc45(ContinualDataset):
     @set_default_from_args('batch_size')
     def get_batch_size(self):
         return 128
-
-
-if __name__ == '__main__':
-    d = Resisc45('../data/imagenet-r/imagenet-r', train=False)
-    d[0]
-    pass

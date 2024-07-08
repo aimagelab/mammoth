@@ -202,8 +202,3 @@ class SequentialEuroSatRgb(ContinualDataset):
     def get_prompt_templates():
         return templates['eurosat']
 
-
-if __name__ == '__main__':
-    d = MyEuroSat('../data/eurosat', train=True)
-    d[0]
-    pass

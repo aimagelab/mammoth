@@ -58,7 +58,7 @@ class Prompter(torch.nn.Module):
             print("No keys loaded. Using default CLIP version:", clip_backbone)
             self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
             self.clip_model = self.clip_model.float()  # force fp32 when used for eval
-            self.keys = self.load_default_prompt_templates(dataset.get_class_names())
+            self.keys = self.load_default_prompt_templates(dataset.get_prompt_templates(), dataset.get_class_names())
 
         self.clip_normalization = Normalize(self.clip_preprocess.transforms[-1].mean,
                                             self.clip_preprocess.transforms[-1].std).to(self.device)
@@ -85,9 +85,17 @@ class Prompter(torch.nn.Module):
         return param
 
     @torch.no_grad()
-    def load_default_prompt_templates(self, dataset_classes: List[str]) -> torch.Tensor:
-        text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in dataset_classes]).to(self.device)
-        text_features = self.clip_model.encode_text(text_inputs)
+    def load_default_prompt_templates(self, templates: List[str], dataset_classes: List[str]) -> torch.Tensor:
+        if self.args.statc_keys_use_templates:
+            all_features = []
+            for t in templates:
+                text_inputs = torch.cat([clip.tokenize(t.format(c)) for c in dataset_classes]).to(self.device)
+                text_features = self.clip_model.encode_text(text_inputs)
+                all_features.append(text_features)
+            text_features = torch.stack(all_features).mean(dim=0)
+        else:
+            text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in dataset_classes]).to(self.device)
+            text_features = self.clip_model.encode_text(text_inputs)
         text_features /= text_features.norm(dim=-1, keepdim=True)
         return text_features.float()
 

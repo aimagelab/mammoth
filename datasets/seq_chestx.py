@@ -175,8 +175,3 @@ class SequentialChestX(ContinualDataset):
     @set_default_from_args('batch_size')
     def get_batch_size(self):
         return 128
-
-
-if __name__ == '__main__':
-    d = ChestX('../data/chestx', train=False)
-    d[0]

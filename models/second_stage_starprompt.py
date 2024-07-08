@@ -46,6 +46,8 @@ class SecondStageStarprompt(ContinualModel):
 
         parser.add_argument('--keys_ckpt_path', type=str,
                             help="Path for first-stage keys. The keys can be saved by runninng `first_stage_starprompt` with `--save_first_stage_keys=1`.")
+        parser.add_argument('--statc_keys_use_templates', type=int, default=1, choices=[0, 1],
+                            help="Use templates for the second stage if no keys are loaded.")
 
         parser.add_argument('--batch_size_gr', type=int, default=128,
                             help="Batch size for Generative Replay.")

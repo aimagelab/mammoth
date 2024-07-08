@@ -64,7 +64,7 @@ class MyCars196(Dataset):
     """
 
     PREPROCESSING_TRANSFORM = transforms.Compose([
-        transforms.Resize(224, interpolation=InterpolationMode.BICUBIC),
+        transforms.Resize(224, interpolation=InterpolationMode.BICUBIC, antialias=True),
         transforms.CenterCrop(224),
     ])
 
@@ -224,7 +224,3 @@ class SequentialCars196(ContinualDataset):
     def get_batch_size(self):
         return 128
 
-if __name__ == '__main__':
-    d = MyCars196('../data/cars196', train=True)
-    d[0]
-    pass
