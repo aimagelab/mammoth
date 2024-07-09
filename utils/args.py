@@ -95,7 +95,7 @@ def add_management_args(parser: ArgumentParser) -> None:
 
     mng_group.add_argument('--seed', type=int, default=None,
                            help='The random seed. If not provided, a random seed will be used.')
-    mng_group.add_argument('--permute_classes', type=int, choices=[0, 1], default=0,
+    mng_group.add_argument('--permute_classes', type=int, choices=[0, 1], default=1,
                            help='Permute classes before splitting into tasks? This applies the seed before permuting if the `seed` argument is present.')
     mng_group.add_argument('--base_path', type=str, default="./data/",
                            help='The base path where to save datasets, logs, results.')
