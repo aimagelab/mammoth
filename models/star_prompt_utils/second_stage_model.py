@@ -35,15 +35,18 @@ class Prompter(torch.nn.Module):
         if args.keys_ckpt_path is not None:
             if args.keys_ckpt_path.endswith('.json'):
                 try:
-                    key_jobnum = json.load(open(os.path.join(os.path.dirname(__file__), 'first_stage_keys.json'), 'r'))[args.dataset][str(args.seed)]
+                    key_jobnum = json.load(open(args.keys_ckpt_path, 'r'))[args.dataset][str(args.seed)]
                 except BaseException:
                     print("key missing", args.dataset, args.seed, file=sys.stderr)
                     raise ValueError
 
                 t = dataset.N_TASKS - 1
                 self.keys_ckpt_path = f"coop_keys/coop_keys_{t}_{key_jobnum}.pt"
-            else:
+            elif args.keys_ckpt_path.endswith('.pt'):
                 self.keys_ckpt_path = args.keys_ckpt_path
+            else:
+                t = dataset.N_TASKS - 1
+                self.keys_ckpt_path = f"coop_keys/coop_keys_{t}_{self.keys_ckpt_path}.pt"
 
             if not os.path.exists(self.keys_ckpt_path):
                 raise ValueError(f'Keys checkpoint `{self.keys_ckpt_path}` does not exist')
@@ -104,10 +107,14 @@ class Prompter(torch.nn.Module):
         print(f'Loading keys from {self.keys_ckpt_path}', file=sys.stderr)
         st = torch.load(self.keys_ckpt_path)
         keys = st['keys'].to(self.device)
-        old_args = st['args']
+        self.old_args = st['args']
         assert self.num_classes == keys.shape[0]
+        assert self.args.dataset == self.old_args.dataset
+        assert self.args.permute_classes == self.old_args.permute_classes
+        if self.args.permute_classes:
+            assert self.args.seed == self.old_args.seed
         print('Keys loaded successfully', file=sys.stderr)
-        return keys.float(), old_args
+        return keys.float(), self.old_args
 
     @torch.no_grad()
     def get_query(self, x, disable_renorm=False):

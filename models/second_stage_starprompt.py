@@ -225,6 +225,11 @@ class SecondStageStarprompt(ContinualModel):
         return CosineSchedule(self.opt, K=self.args.n_epochs)
 
     def begin_task(self, dataset):
+        if self.args.permute_classes:
+            if hasattr(self.net.prompter, 'old_args'):
+                assert self.args.seed == self.net.prompter.old_args.seed
+                assert (self.args.class_order == self.net.prompter.old_args.class_order).all()
+
         self.recall()
 
         if hasattr(self, 'opt'):
