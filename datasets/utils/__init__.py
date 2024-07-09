@@ -38,7 +38,9 @@ def set_default_from_args(arg_name: str):
 
     def decorator_set_default_from_args(func):
         n_args = len(inspect.signature(func).parameters)
-        if n_args == 1: # has self
+        if arg_name in DEFAULT_ARGS[caller_name]:
+            raise ValueError(f"Argument `{arg_name}` already has a default value in `{caller_name}`")
+        if n_args == 1:  # has self
             DEFAULT_ARGS[caller_name][arg_name] = func(None)
         else:
             DEFAULT_ARGS[caller_name][arg_name] = func()

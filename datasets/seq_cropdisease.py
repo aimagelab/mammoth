@@ -16,6 +16,7 @@ from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
 from backbone.vit import vit_base_patch16_224_prompt_prototype
 
+
 class CropDisease(Dataset):
 
     LABELS = [
@@ -111,7 +112,7 @@ class CropDisease(Dataset):
 
         if not self.train:
             return img, target
-        
+
         if hasattr(self, 'logits'):
             return img, target, not_aug_img, self.logits[index]
 
@@ -127,7 +128,6 @@ class SequentialCropDisease(ContinualDataset):
     N_CLASSES_PER_TASK = N_CLASSES // N_TASKS
     SIZE = (224, 224)
     MEAN, STD = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
-    
 
     TRANSFORM = transforms.Compose([
         transforms.RandomResizedCrop(SIZE, interpolation=InterpolationMode.BICUBIC),
@@ -145,9 +145,9 @@ class SequentialCropDisease(ContinualDataset):
 
     def get_data_loaders(self):
         train_dataset = CropDisease(base_path() + 'cropdisease', train=True,
-                                 download=True, transform=self.TRANSFORM)
+                                    download=True, transform=self.TRANSFORM)
         test_dataset = CropDisease(base_path() + 'cropdisease', train=False,
-                                download=True, transform=self.TEST_TRANSFORM)
+                                   download=True, transform=self.TEST_TRANSFORM)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
 
@@ -156,7 +156,7 @@ class SequentialCropDisease(ContinualDataset):
     def get_class_names(self):
         if self.class_names is not None:
             return self.class_names
-        classes = [x.replace('_', ' ') for x in CropDisease.LABELS] # .split('___')[-1]
+        classes = [x.replace('_', ' ') for x in CropDisease.LABELS]  # .split('___')[-1]
         classes = fix_class_names_order(classes, self.args)
         self.class_names = classes
         return self.class_names
@@ -193,7 +193,6 @@ class SequentialCropDisease(ContinualDataset):
     def get_epochs(self):
         return 5
 
-    @set_default_from_args('n_epochs')
+    @set_default_from_args('batch_size')
     def get_batch_size(self):
         return 128
-

@@ -22,7 +22,7 @@ class DeNormalize(object):
             mean = torch.tensor(mean)
         elif isinstance(mean, np.ndarray):
             mean = torch.from_numpy(mean)
-        if isinstance(std, list):
+        if isinstance(std, (list, tuple)):
             std = torch.tensor(std)
         elif isinstance(std, np.ndarray):
             std = torch.from_numpy(std)
