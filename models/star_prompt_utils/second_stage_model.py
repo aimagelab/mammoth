@@ -147,6 +147,9 @@ class Prompter(torch.nn.Module):
         sim_act_map = sim_act_map[:, start_idx:end_idx]
         p = p[start_idx:end_idx]
 
+        if self.args.enable_confidence_modulation == 0:
+            sim_act_map = (sim_act_map != 0).float() # make it binary if not using confidence modulation
+
         if self.args.prompt_mode == 'residual':
             sp = torch.einsum('bc,cd->bd', sim_act_map, p)
         else:

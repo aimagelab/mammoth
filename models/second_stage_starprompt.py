@@ -61,6 +61,9 @@ class SecondStageStarprompt(ContinualModel):
                             "- `concat`: Prefix-Tuning style prompting.")
         parser.add_argument('--prefix_tuning_prompt_len', type=int, default=5,
                             help="Prompt length for prefix tuning. Used only if `--prompt_mode==concat`.")
+        
+        parser.add_argument("--enable_confidence_modulation", type=int, default=-1, choices=[0, 1],
+                            help="Enable confidence modulation with CLIP similarities (Eq. 5 of the main paper)?")
 
         return parser
 
@@ -96,20 +99,6 @@ class SecondStageStarprompt(ContinualModel):
 
     def norm(self, t):
         return torch.norm(t, p=2, dim=-1, keepdim=True) + 1e-7
-
-    def per_task_norms(self, logits):
-
-        per_task_norm = []
-
-        for _ti in range(self.current_task + 1):
-            prev_t_size, cur_t_size = self.compute_offsets(_ti)
-            temp_norm = self.norm(logits[:, prev_t_size:cur_t_size])
-            per_task_norm.append(temp_norm)
-
-        per_task_norm = torch.cat(per_task_norm, dim=-1)
-        norms = per_task_norm.mean(dim=-1, keepdim=True)
-
-        return norms
 
     @torch.no_grad()
     def create_features_dataset(self):
@@ -229,6 +218,21 @@ class SecondStageStarprompt(ContinualModel):
             if hasattr(self.net.prompter, 'old_args'):
                 assert self.args.seed == self.net.prompter.old_args.seed
                 assert (self.args.class_order == self.net.prompter.old_args.class_order).all()
+
+        tot, corr = 0, 0
+        for ts in dataset.test_loaders:
+            for data in ts:
+                inputs, labels = data
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
+                queries = self.net.prompter.get_query(inputs)
+
+                queries = torch.nn.functional.normalize(queries, dim=-1)
+
+                logits = torch.einsum('bd,cd->bc', queries, self.net.prompter.keys) * 5
+
+                corr += (logits.argmax(dim=-1) == labels).sum().item()
+                tot += labels.shape[0]
+        print(f"CLIP on test set: {corr / tot}")
 
         self.recall()
 
