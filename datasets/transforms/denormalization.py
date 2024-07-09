@@ -18,19 +18,19 @@ class DeNormalize(object):
             mean (list): List of mean values for each channel.
             std (list): List of standard deviation values for each channel.
         """
-        if isinstance(mean, list):
+        if isinstance(mean, (list, tuple)):
             mean = torch.tensor(mean)
         elif isinstance(mean, np.ndarray):
             mean = torch.from_numpy(mean)
         if isinstance(std, list):
             std = torch.tensor(std)
         elif isinstance(std, np.ndarray):
-            std = torch.from_numpy(std)        
+            std = torch.from_numpy(std)
 
         self.mean = mean
         self.std = std
 
-    def __call__(self, tensor: torch.Tensor|PIL.Image.Image):
+    def __call__(self, tensor: torch.Tensor | PIL.Image.Image):
         """
         Applies denormalization to the input tensor.
 
