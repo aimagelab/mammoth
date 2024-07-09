@@ -129,7 +129,7 @@ def add_management_args(parser: ArgumentParser) -> None:
     wandb_group.add_argument('--wandb_name', type=str, default=None,
                              help='Wandb name for this run. Overrides the default name (`args.model`).')
     wandb_group.add_argument('--wandb_entity', type=str, help='Wandb entity')
-    wandb_group.add_argument('--wandb_project', type=str, default='mammoth', help='Wandb project name')
+    wandb_group.add_argument('--wandb_project', type=str, help='Wandb project name')
 
 
 def add_rehearsal_args(parser: ArgumentParser) -> None:
