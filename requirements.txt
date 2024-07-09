@@ -6,3 +6,5 @@ Pillow
 timm==0.9.8
 tqdm
 onedrivedownloader
+ftfy
+regex
