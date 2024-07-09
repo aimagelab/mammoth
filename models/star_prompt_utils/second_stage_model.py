@@ -46,7 +46,7 @@ class Prompter(torch.nn.Module):
                 self.keys_ckpt_path = args.keys_ckpt_path
             else:
                 t = dataset.N_TASKS - 1
-                self.keys_ckpt_path = f"coop_keys/coop_keys_{t}_{self.keys_ckpt_path}.pt"
+                self.keys_ckpt_path = f"coop_keys/coop_keys_{t}_{args.keys_ckpt_path}.pt"
 
             if not os.path.exists(self.keys_ckpt_path):
                 raise ValueError(f'Keys checkpoint `{self.keys_ckpt_path}` does not exist')
@@ -117,7 +117,7 @@ class Prompter(torch.nn.Module):
         return keys.float(), self.old_args
 
     @torch.no_grad()
-    def get_query(self, x, disable_renorm=False):
+    def get_query(self, x, disable_renorm=True):
         if not disable_renorm:
             x = self.denorm_transform(x)
             x = self.clip_normalization(x)
@@ -148,7 +148,7 @@ class Prompter(torch.nn.Module):
         p = p[start_idx:end_idx]
 
         if self.args.enable_confidence_modulation == 0:
-            sim_act_map = (sim_act_map != 0).float() # make it binary if not using confidence modulation
+            sim_act_map = (sim_act_map != 0).float()  # make it binary if not using confidence modulation
 
         if self.args.prompt_mode == 'residual':
             sp = torch.einsum('bc,cd->bd', sim_act_map, p)
@@ -164,7 +164,8 @@ class Prompter(torch.nn.Module):
             if self.prompt_mode == 'residual':
                 pv: torch.Tensor = getattr(self, f'p_{layer_idx}')
             else:
-                clip_out = clip_out[:, :1]  # only use class token for prefix tuning
+                # clip_out = clip_out[:, :1]
+                # only use class token for prefix tuning
                 p_concat: torch.Tensor = getattr(self, f'p_concat_{layer_idx}')
                 p_concat_k, p_concat_v = torch.split(p_concat, self.args.prefix_tuning_prompt_len, dim=1)
 
@@ -304,8 +305,9 @@ class Model(nn.Module):
 
         return self
 
-    def forward(self, x, cur_classes: int, frozen_past_classes=0, return_features=False):
-        clip_out = self.prompter.get_query(x, disable_renorm=False)
+    def forward(self, x, query_x, cur_classes: int, frozen_past_classes=0, return_features=False):
+        assert query_x is not None, "Query is required for STAR-Prompt"
+        clip_out = self.prompter.get_query(query_x)
         features = self.vit.forward_features(x, first_stage_query=clip_out, prompter=self.prompter, cur_classes=cur_classes, frozen_past_classes=frozen_past_classes)
         if return_features:
             return features

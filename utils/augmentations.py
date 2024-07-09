@@ -35,6 +35,8 @@ def apply_transform(x: torch.Tensor, transform) -> torch.Tensor:
             x = torch.as_tensor(np.array(x, copy=True)).permute((2, 0, 1))
         return transform(x)
     else:
+        if isinstance(x, PIL.Image.Image):
+            return transform(x)
         return torch.stack([transform(xi) for xi in x.cpu()], dim=0).to(x.device)
 
 
@@ -234,6 +236,24 @@ class strong_aug():
             torch.stack(
                 [self.transform(a) for a in flip]
             )), self.mean, self.std)
+
+
+class RepeatedTransform(object):
+    """
+    This class applies a series of transforms to the same input.
+
+    Args:
+        transform_list: The list of transformations to be applied.
+    """
+
+    def __init__(self, transform_list: list):
+        self.transform_list = transform_list
+
+        assert len(self.transform_list) > 0, 'The list of transformations must not be empty.'
+
+    @torch.no_grad()
+    def __call__(self, input):
+        return torch.stack([apply_transform(input, t) for t in self.transform_list])
 
 
 class DoubleTransform(object):

@@ -4,6 +4,7 @@ from torch.utils.data import TensorDataset
 from tqdm import tqdm
 from argparse import ArgumentParser
 
+from utils.augmentations import RepeatedTransform
 from utils.conf import create_seeded_dataloader
 from utils.schedulers import CosineSchedule
 from models.utils.continual_model import ContinualModel
@@ -61,7 +62,7 @@ class SecondStageStarprompt(ContinualModel):
                             "- `concat`: Prefix-Tuning style prompting.")
         parser.add_argument('--prefix_tuning_prompt_len', type=int, default=5,
                             help="Prompt length for prefix tuning. Used only if `--prompt_mode==concat`.")
-        
+
         parser.add_argument("--enable_confidence_modulation", type=int, default=-1, choices=[0, 1],
                             help="Enable confidence modulation with CLIP similarities (Eq. 5 of the main paper)?")
 
@@ -167,7 +168,8 @@ class SecondStageStarprompt(ContinualModel):
                 for i, data in enumerate(dataset.train_loader):
                     x, labels = data[0], data[1]
                     x, labels = x.to(self.device), labels.to(self.device, dtype=torch.long)
-                    features = self.net(x, return_features=True, cur_classes=self.n_seen_classes, frozen_past_classes=self.n_past_classes)
+                    x, query_x = x[:, 0], x[:, 1]
+                    features = self.net(x, query_x=query_x, return_features=True, cur_classes=self.n_seen_classes, frozen_past_classes=self.n_past_classes)
                     features = features[:, 0]
 
                     for class_idx in labels.unique():
@@ -219,20 +221,29 @@ class SecondStageStarprompt(ContinualModel):
                 assert self.args.seed == self.net.prompter.old_args.seed
                 assert (self.args.class_order == self.net.prompter.old_args.class_order).all()
 
-        tot, corr = 0, 0
-        for ts in dataset.test_loaders:
-            for data in ts:
-                inputs, labels = data
-                inputs, labels = inputs.to(self.device), labels.to(self.device)
-                queries = self.net.prompter.get_query(inputs)
+        dataset.train_loader.dataset.transform = RepeatedTransform([dataset.train_loader.dataset.transform, self.net.prompter.clip_preprocess])
+        dataset.test_loaders[-1].dataset.transform = RepeatedTransform([dataset.test_loaders[-1].dataset.transform, self.net.prompter.clip_preprocess])
 
-                queries = torch.nn.functional.normalize(queries, dim=-1)
+        # Remove comment if you want to check if the keys are loaded correctly and results are the same as the first stage
+        # tot_data, tot_corr = 0, 0
+        # for i, ts in enumerate(dataset.test_loaders):
+        #     task_tot, task_corr = 0, 0
+        #     for data in ts:
+        #         inputs, labels = data
+        #         inputs, labels = inputs.to(self.device), labels.to(self.device)
+        #         _, inputs = inputs[:, 0], inputs[:, 1]
+        #         queries = self.net.prompter.get_query(inputs)
 
-                logits = torch.einsum('bd,cd->bc', queries, self.net.prompter.keys) * 5
+        #         queries = torch.nn.functional.normalize(queries, dim=-1)
 
-                corr += (logits.argmax(dim=-1) == labels).sum().item()
-                tot += labels.shape[0]
-        print(f"CLIP on test set: {corr / tot}")
+        #         logits = torch.einsum('bd,cd->bc', queries, self.net.prompter.keys.type(self.net.prompter.clip_model.dtype))
+
+        #         task_corr += (logits.argmax(dim=-1) == labels).sum().item()
+        #         task_tot += labels.shape[0]
+        #     print(f"CLIP on TASK {i+1}: {task_corr / task_tot}")
+        #     tot_corr += task_corr
+        #     tot_data += task_tot
+        # print(f"AVG CLIP ON TASKS: {tot_corr / tot_data}")  # the avg of the avg != the avg of the total
 
         self.recall()
 
@@ -243,13 +254,15 @@ class SecondStageStarprompt(ContinualModel):
         self.scheduler = self.get_scheduler()
 
     def forward(self, x):
-        logits = self.net(x, cur_classes=self.n_seen_classes)
+        x, query_x = x[:, 0], x[:, 1]  # from repeated transform
+        logits = self.net(x, query_x=query_x, cur_classes=self.n_seen_classes)
         logits = logits[:, :self.n_seen_classes]
         return logits
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         stream_inputs, stream_labels = inputs, labels
-        stream_logits = self.net(stream_inputs, cur_classes=self.n_seen_classes, frozen_past_classes=self.n_past_classes)
+        stream_inputs, query_stream_inputs = stream_inputs[:, 0], stream_inputs[:, 1]
+        stream_logits = self.net(stream_inputs, query_x=query_stream_inputs, cur_classes=self.n_seen_classes, frozen_past_classes=self.n_past_classes)
 
         with torch.no_grad():
             stream_preds = stream_logits[:, :self.n_seen_classes].argmax(dim=1)
