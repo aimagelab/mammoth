@@ -305,8 +305,8 @@ class Model(nn.Module):
 
         return self
 
-    def forward(self, x, query_x, cur_classes: int, frozen_past_classes=0, return_features=False):
-        assert query_x is not None, "Query is required for STAR-Prompt"
+    def forward(self, x, cur_classes: int, frozen_past_classes=0, query_x=None, return_features=False):
+        query_x = x if query_x is None else query_x
         clip_out = self.prompter.get_query(query_x)
         features = self.vit.forward_features(x, first_stage_query=clip_out, prompter=self.prompter, cur_classes=cur_classes, frozen_past_classes=frozen_past_classes)
         if return_features:
