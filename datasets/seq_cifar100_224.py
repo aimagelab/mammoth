@@ -5,6 +5,7 @@ from typing import Tuple
 import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
+from torchvision.transforms.functional import InterpolationMode
 from torchvision.datasets import CIFAR100
 
 from backbone.vit import vit_base_patch16_224_prompt_prototype
@@ -42,14 +43,16 @@ class SequentialCIFAR100224(ContinualDataset):
     SIZE = (224, 224)
     MEAN, STD = (0, 0, 0), (1, 1, 1)  # Normalized in [0,1] as in L2P paper
     TRANSFORM = transforms.Compose(
-        [transforms.Resize(224),
-         transforms.RandomCrop(224, padding=28),
-         transforms.RandomHorizontalFlip(),
+        [transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BICUBIC),
+         transforms.RandomHorizontalFlip(p=0.5),
          transforms.ToTensor(),
          transforms.Normalize(MEAN, STD)]
     )
-    TEST_TRANSFORM = transforms.Compose(
-        [transforms.Resize(224), transforms.ToTensor(), transforms.Normalize(MEAN, STD)])
+    TEST_TRANSFORM = transforms.Compose([
+        transforms.Resize(224, interpolation=InterpolationMode.BICUBIC),
+        transforms.ToTensor(),
+        transforms.Normalize(MEAN, STD)
+        ])
 
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = self.TRANSFORM
