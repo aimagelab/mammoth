@@ -4,6 +4,11 @@ from torch.utils.data import TensorDataset
 from tqdm import tqdm
 from argparse import ArgumentParser
 
+try:
+    import wandb
+except ImportError:
+    wandb = None
+
 from utils.augmentations import RepeatedTransform
 from utils.conf import create_seeded_dataloader
 from utils.schedulers import CosineSchedule
@@ -127,20 +132,26 @@ class SecondStageStarprompt(ContinualModel):
 
         dl = self.create_features_dataset()
 
-        for i, (x, labels) in tqdm(enumerate(dl), total=len(dl), desc='GR epoch'):
-            optim.zero_grad()
-            x, labels = x.to(self.device, dtype=torch.float32), labels.to(self.device)
+        with tqdm(enumerate(dl), total=len(dl), desc='GR epoch') as pbar:
+            for i, (x, labels) in pbar:
+                optim.zero_grad()
+                x, labels = x.to(self.device, dtype=torch.float32), labels.to(self.device)
 
-            logits = classifier(x)
+                logits = classifier(x)
 
-            logits = logits[:, :self.n_seen_classes]
+                logits = logits[:, :self.n_seen_classes]
 
-            norm = self.norm(logits)
-            logits = logits / (0.1 * norm)
+                norm = self.norm(logits)
+                logits = logits / (0.1 * norm)
 
-            loss = self.loss(logits, labels)
-            loss.backward()
-            optim.step()
+                loss = self.loss(logits, labels)
+                loss.backward()
+                optim.step()
+
+                if not self.args.nowand:
+                    assert wandb is not None, "wandb is not installed."
+                    wandb.log({'ca_loss': loss.item(), 'ca_lr': optim.param_groups[0]['lr']})
+                pbar.set_postfix({'loss': loss.item()})
 
     def align(self):
 
