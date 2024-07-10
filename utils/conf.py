@@ -36,12 +36,12 @@ def _get_gpu_memory_pynvml_all_processes(device_id: int = 0) -> int:
     Use pynvml to get the memory allocated on the GPU.
     Returns the memory allocated on the GPU in Bytes.
     """
-    if not hasattr(_get_gpu_memory_pynvml_all_processes, 'handle'):
+    if not hasattr(_get_gpu_memory_pynvml_all_processes, f'handle_{device_id}'):
         torch.cuda.pynvml.nvmlInit()  # only once
         handle = torch.cuda.pynvml.nvmlDeviceGetHandleByIndex(device_id)
-        setattr(_get_gpu_memory_pynvml_all_processes, 'handle', handle)
+        setattr(_get_gpu_memory_pynvml_all_processes, f'handle_{device_id}', handle)
 
-    handle = getattr(_get_gpu_memory_pynvml_all_processes, 'handle')
+    handle = getattr(_get_gpu_memory_pynvml_all_processes, f'handle_{device_id}')
 
     procs = torch.cuda.pynvml.nvmlDeviceGetComputeRunningProcesses(handle)
     return sum([proc.usedGpuMemory for proc in procs])
