@@ -240,8 +240,8 @@ class ContinualModel(nn.Module):
             offset1 = task * cpt
             offset2 = (task + 1) * cpt
         else:
-            offset1 = sum(self._cpt[:self._current_task])
-            offset2 = sum(self._cpt[:self._current_task + 1])
+            offset1 = sum(self._cpt[:task])
+            offset2 = sum(self._cpt[:task + 1])
 
         return offset1, offset2
 
