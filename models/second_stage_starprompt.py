@@ -63,8 +63,11 @@ class SecondStageStarprompt(ContinualModel):
         parser.add_argument('--prefix_tuning_prompt_len', type=int, default=5,
                             help="Prompt length for prefix tuning. Used only if `--prompt_mode==concat`.")
 
-        parser.add_argument("--enable_confidence_modulation", type=int, default=-1, choices=[0, 1],
+        parser.add_argument("--enable_confidence_modulation", type=int, default=1, choices=[0, 1],
                             help="Enable confidence modulation with CLIP similarities (Eq. 5 of the main paper)?")
+
+        parser.add_argument("--enable_data_aug_query", type=int, default=1, choices=[0, 1],
+                            help="Use default transform with data aug to generate the CLIP's response?")
 
         return parser
 
@@ -168,8 +171,10 @@ class SecondStageStarprompt(ContinualModel):
                 for i, data in enumerate(dataset.train_loader):
                     x, labels = data[0], data[1]
                     x, labels = x.to(self.device), labels.to(self.device, dtype=torch.long)
-                    #x, query_x = x[:, 0], x[:, 1]
-                    features = self.net(x, return_features=True, cur_classes=self.n_seen_classes, frozen_past_classes=self.n_past_classes)
+                    x, query_x = x[:, 0], x[:, 1]
+                    if self.args.enable_data_aug_query:
+                        query_x = None
+                    features = self.net(x, query_x=query_x, return_features=True, cur_classes=self.n_seen_classes, frozen_past_classes=self.n_past_classes)
                     features = features[:, 0]
 
                     for class_idx in labels.unique():
@@ -217,11 +222,11 @@ class SecondStageStarprompt(ContinualModel):
 
     def begin_task(self, dataset):
         if self.args.permute_classes:
-            if hasattr(self.net.prompter, 'old_args'):
+            if hasattr(self.net.prompter, 'old_args') and self.net.prompter.old_args is not None:
                 assert self.args.seed == self.net.prompter.old_args.seed
                 assert (self.args.class_order == self.net.prompter.old_args.class_order).all()
 
-        #dataset.train_loader.dataset.transform = RepeatedTransform([dataset.train_loader.dataset.transform, self.net.prompter.clip_preprocess])
+        dataset.train_loader.dataset.transform = RepeatedTransform([dataset.train_loader.dataset.transform, self.net.prompter.clip_preprocess])
         dataset.test_loaders[-1].dataset.transform = RepeatedTransform([dataset.test_loaders[-1].dataset.transform, self.net.prompter.clip_preprocess])
 
         # Remove comment if you want to check if the keys are loaded correctly and results are the same as the first stage
@@ -261,8 +266,10 @@ class SecondStageStarprompt(ContinualModel):
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         stream_inputs, stream_labels = inputs, labels
-        # stream_inputs, query_stream_inputs = stream_inputs[:, 0], stream_inputs[:, 1]
-        stream_logits = self.net(stream_inputs, cur_classes=self.n_seen_classes, frozen_past_classes=self.n_past_classes)
+        stream_inputs, query_stream_inputs = stream_inputs[:, 0], stream_inputs[:, 1]
+        if self.args.enable_data_aug_query:
+            query_stream_inputs = None
+        stream_logits = self.net(stream_inputs, query_x=query_stream_inputs, cur_classes=self.n_seen_classes, frozen_past_classes=self.n_past_classes)
 
         with torch.no_grad():
             stream_preds = stream_logits[:, :self.n_seen_classes].argmax(dim=1)

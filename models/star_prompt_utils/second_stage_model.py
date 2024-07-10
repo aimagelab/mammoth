@@ -52,8 +52,9 @@ class Prompter(torch.nn.Module):
                 raise ValueError(f'Keys checkpoint `{self.keys_ckpt_path}` does not exist')
 
             self.keys, first_stage_args = self.load_keys()
-            print("Keys loaded. Loading CLIP version:", first_stage_args.clip_backbone)
-            clip_backbone = first_stage_args.clip_backbone
+            if first_stage_args is not None:
+                print("Keys loaded. Loading CLIP version:", first_stage_args.clip_backbone)
+                clip_backbone = first_stage_args.clip_backbone 
             self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
             self.clip_model = self.clip_model.float()  # force fp32 when used for eval
         else:  # use prompt templates
@@ -106,13 +107,18 @@ class Prompter(torch.nn.Module):
     def load_keys(self):
         print(f'Loading keys from {self.keys_ckpt_path}', file=sys.stderr)
         st = torch.load(self.keys_ckpt_path)
-        keys = st['keys'].to(self.device)
-        self.old_args = st['args']
-        assert self.num_classes == keys.shape[0]
-        assert self.args.dataset == self.old_args.dataset
-        assert self.args.permute_classes == self.old_args.permute_classes
-        if self.args.permute_classes:
-            assert self.args.seed == self.old_args.seed
+        if isinstance(st, dict):
+            keys = st['keys'].to(self.device)
+            self.old_args = st['args']
+            assert self.num_classes == keys.shape[0]
+            assert self.args.dataset == self.old_args.dataset
+            assert self.args.permute_classes == self.old_args.permute_classes
+            if self.args.permute_classes:
+                assert self.args.seed == self.old_args.seed
+        else:
+            keys = st.to(self.device)
+            self.old_args = None
+            assert self.num_classes == keys.shape[0]
         print('Keys loaded successfully', file=sys.stderr)
         return keys.float(), self.old_args
 
@@ -306,8 +312,9 @@ class Model(nn.Module):
         return self
 
     def forward(self, x, cur_classes: int, frozen_past_classes=0, query_x=None, return_features=False):
+        enable_renorm = query_x is None
         query_x = x if query_x is None else query_x
-        clip_out = self.prompter.get_query(query_x)
+        clip_out = self.prompter.get_query(query_x, disable_renorm=not enable_renorm)
         features = self.vit.forward_features(x, first_stage_query=clip_out, prompter=self.prompter, cur_classes=cur_classes, frozen_past_classes=frozen_past_classes)
         if return_features:
             return features
