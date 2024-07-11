@@ -271,6 +271,8 @@ class SecondStageStarprompt(ContinualModel):
 
     def forward(self, x):
         x, query_x = x[:, 0], x[:, 1]  # from repeated transform
+        if self.args.enable_data_aug_query:
+            query_x = None
         logits = self.net(x, query_x=query_x, cur_classes=self.n_seen_classes)
         logits = logits[:, :self.n_seen_classes]
         return logits
