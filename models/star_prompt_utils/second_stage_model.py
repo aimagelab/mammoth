@@ -40,7 +40,7 @@ class Prompter(torch.nn.Module):
                     print("key missing", args.dataset, args.seed, file=sys.stderr)
                     raise ValueError
 
-                t = dataset.N_TASKS - 1 if self.args.joint == 0 else dataset.ORIGINAL_N_TASKS - 1
+                t = dataset.N_TASKS - 1
                 self.keys_ckpt_path = f"coop_keys/coop_keys_{t}_{key_jobnum}.pt"
             elif args.keys_ckpt_path.endswith('.pt'):
                 self.keys_ckpt_path = args.keys_ckpt_path
