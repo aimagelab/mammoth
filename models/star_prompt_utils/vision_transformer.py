@@ -28,11 +28,13 @@ class ResidualPromptAttention(nn.Module):
             prompts = prompts.reshape(B, -1, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
             v = v + prompts
 
-        x = F.scaled_dot_product_attention(q, k, v, scale=self.scale, dropout_p=self.attn_drop.p)
-        # attn = (q @ k.transpose(-2, -1)) * self.scale
-        # attn = attn.softmax(dim=-1)
-        # attn = self.attn_drop(attn)
-        # x = (attn @ v).transpose(1, 2).reshape(B, N, C)
+        if torch.__version__ >= '2.1.0':
+            x = F.scaled_dot_product_attention(q, k, v, scale=self.scale, dropout_p=self.attn_drop.p)
+        else:
+            attn = (q @ k.transpose(-2, -1)) * self.scale
+            attn = attn.softmax(dim=-1)
+            attn = self.attn_drop(attn)
+            x = (attn @ v).transpose(1, 2).reshape(B, N, C)
 
         x = x.transpose(1, 2).reshape(B, N, C)
 
