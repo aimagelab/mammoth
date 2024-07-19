@@ -25,54 +25,62 @@ class SecondStageStarprompt(ContinualModel):
     def get_parser() -> ArgumentParser:
         parser = ArgumentParser(description='Second-stage of StarPrompt. Requires the keys saved from the first stage.')
 
-        # Frozen hyperparameters
-        parser.add_argument("--virtual_bs_n", type=int, default=1,
-                            help="virtual batch size iterations")
-        parser.add_argument('--gr_mog_n_components', type=int, default=5,
-                            help="Number of components for GR with MOG.")
+        frozen_group = parser.add_argument_group('Frozen hyperparameters')
+        frozen_group.add_argument("--virtual_bs_n", type=int, default=1,
+                                  help="virtual batch size iterations")
+        frozen_group.add_argument("--enable_data_aug_query", type=int, default=1, choices=[0, 1],
+                                  help="Use default transform with data aug to generate the CLIP's response?")
+        frozen_group.add_argument("--use_clip_preprocess_eval", type=int, default=0, choices=[0, 1],
+                                  help="Use CLIP's transform during eval instead of the default test transform?")
+        frozen_group.add_argument("--ortho_split_val", type=int, default=0)
+        frozen_group.add_argument('--gr_mog_n_iters', type=int, default=500,
+                                  help="Number of EM iterations during fit for GR with MOG.")
+        frozen_group.add_argument('--gr_mog_n_components', type=int, default=5,
+                                  help="Number of components for GR with MOG.")
+        frozen_group.add_argument('--batch_size_gr', type=int, default=128,
+                                  help="Batch size for Generative Replay.")
+        frozen_group.add_argument('--num_samples_gr', type=int, default=256,
+                                  help="Number of samples for Generative Replay.")
+        frozen_group.add_argument('--prefix_tuning_prompt_len', type=int, default=5,
+                                  help="Prompt length for prefix tuning. Used only if `--prompt_mode==concat`.")
+
+        ablation_group = parser.add_argument_group('Frozen hyperparameters')
+        ablation_group.add_argument('--gr_model', type=str, default='mog', choices=['mog', 'gaussian'],
+                                    help="Type of distribution model for Generative Replay. "
+                                    "- `mog`: Mixture of Gaussian. "
+                                    "- `gaussian`: Single Gaussian distribution.")
+        ablation_group.add_argument("--enable_gr", type=int, default=1, choices=[0, 1],
+                                    help="Enable Generative Replay.")
+        ablation_group.add_argument('--statc_keys_use_templates', type=int, default=1, choices=[0, 1],
+                                    help="Use templates for the second stage if no keys are loaded.")
+        ablation_group.add_argument('--prompt_mode', type=str, default='residual', choices=['residual', 'concat'],
+                                    help="Prompt type for the second stage. "
+                                    "- `residual`: STAR-Prompt style prompting. "
+                                    "- `concat`: Prefix-Tuning style prompting.")
+        ablation_group.add_argument("--enable_confidence_modulation", type=int, default=1, choices=[0, 1],
+                                    help="Enable confidence modulation with CLIP similarities (Eq. 5 of the main paper)?")
 
         # Tunable hyperparameters
-        parser.add_argument("--ortho_split_val", type=int, default=0)
-        parser.add_argument("--lambda_ortho", type=float, default=10,
-                            help="orthogonality loss coefficient")
-        parser.add_argument("--num_monte_carlo_gr", type=int, default=1,
-                            help="how many times to sample from the dataset for alignment")
-        parser.add_argument("--num_epochs_gr", type=int, default=10,
-                            help="Num. of epochs for GR.")
-        parser.add_argument("--learning_rate_gr", type=float, default=0.001,
-                            help="Learning rate for GR.")
-        parser.add_argument('--gr_mog_n_iters', type=int, default=500,
-                            help="Number of EM iterations during fit for GR with MOG.")
-        parser.add_argument("--enable_gr", type=int, default=1, choices=[0, 1],
-                            help="Enable Generative Replay.")
-        parser.add_argument('--gr_model', type=str, default='mog', choices=['mog', 'gaussian'],
-                            help="Type of distribution model for Generative Replay. "
-                            "- `mog`: Mixture of Gaussian. "
-                            "- `gaussian`: Single Gaussian distribution.")
+        tunable_group = parser.add_argument_group('Tunable hyperparameters')
+        tunable_group.add_argument("--lambda_ortho", type=float, default=10,
+                                   help="orthogonality loss coefficient")
+        tunable_group.add_argument("--num_monte_carlo_gr", type=int, default=1,
+                                   help="how many times to sample from the dataset for alignment")
+        tunable_group.add_argument("--num_epochs_gr", type=int, default=10,
+                                   help="Num. of epochs for GR.")
+        tunable_group.add_argument("--learning_rate_gr", type=float, default=0.001,
+                                   help="Learning rate for GR.")
 
+        # Very important parameter
         parser.add_argument('--keys_ckpt_path', type=str,
-                            help="Path for first-stage keys. The keys can be saved by runninng `first_stage_starprompt` with `--save_first_stage_keys=1`.")
-        parser.add_argument('--statc_keys_use_templates', type=int, default=1, choices=[0, 1],
-                            help="Use templates for the second stage if no keys are loaded.")
-
-        parser.add_argument('--batch_size_gr', type=int, default=128,
-                            help="Batch size for Generative Replay.")
-        parser.add_argument('--num_samples_gr', type=int, default=256,
-                            help="Number of samples for Generative Replay.")
-
-        # prompt type
-        parser.add_argument('--prompt_mode', type=str, default='residual', choices=['residual', 'concat'],
-                            help="Prompt type for the second stage. "
-                            "- `residual`: STAR-Prompt style prompting. "
-                            "- `concat`: Prefix-Tuning style prompting.")
-        parser.add_argument('--prefix_tuning_prompt_len', type=int, default=5,
-                            help="Prompt length for prefix tuning. Used only if `--prompt_mode==concat`.")
-
-        parser.add_argument("--enable_confidence_modulation", type=int, default=1, choices=[0, 1],
-                            help="Enable confidence modulation with CLIP similarities (Eq. 5 of the main paper)?")
-
-        parser.add_argument("--enable_data_aug_query", type=int, default=1, choices=[0, 1],
-                            help="Use default transform with data aug to generate the CLIP's response?")
+                            help="Path for first-stage keys. "
+                            "The keys can be saved by runninng `first_stage_starprompt` with `--save_first_stage_keys=1`."
+                            "This can be:"
+                            "- A path to a checkpoint file (.pt) containing ONLY THE FIRST STAGE KEYS."
+                            "- A path to the checkpoint made by `first_stage_starprompt`"
+                            "- The job-id (`conf_jobnum`) of the `first_stage_starprompt` run that made the keys."
+                            "- A JSON file containing the job-id (`conf_jobnum`) of the `first_stage_starprompt` run that made the keys."
+                            "The JSON is expected to contain an entry for each dataset and seed: `{dataset: {seed: job-id}}`.")
 
         return parser
 
@@ -126,7 +134,9 @@ class SecondStageStarprompt(ContinualModel):
         features = torch.cat(features, dim=0)
         labels = torch.cat(labels, dim=0).long()
 
-        return create_seeded_dataloader(self.args, TensorDataset(features, labels), batch_size=self.args.batch_size_gr, shuffle=True, num_workers=0)
+        return create_seeded_dataloader(self.args, TensorDataset(features, labels),
+                                        verbose=False, batch_size=self.args.batch_size_gr,
+                                        shuffle=True, num_workers=0)
 
     def train_alignment_epoch(self, classifier: torch.nn.Module, optim: torch.optim.Optimizer):
 
@@ -179,7 +189,7 @@ class SecondStageStarprompt(ContinualModel):
 
         with tqdm(total=self.args.num_monte_carlo_gr * len(dataset.train_loader), desc='GR update statistics') as pbar:
             for _ in range(self.args.num_monte_carlo_gr):
-                for i, data in enumerate(dataset.train_loader):
+                for data in dataset.train_loader:
                     x, labels = data[0], data[1]
                     x, labels = x.to(self.device), labels.to(self.device, dtype=torch.long)
                     x, query_x = x[:, 0], x[:, 1]
@@ -240,27 +250,25 @@ class SecondStageStarprompt(ContinualModel):
         dataset.train_loader.dataset.transform = RepeatedTransform([dataset.train_loader.dataset.transform, self.net.prompter.clip_preprocess])
         dataset.test_loaders[-1].dataset.transform = RepeatedTransform([dataset.test_loaders[-1].dataset.transform, self.net.prompter.clip_preprocess])
 
-        # Remove comment if you want to check if the keys are loaded correctly and results are the same as the first stage
+        # NOTE: Remove these comments if you want to check if the keys are loaded correctly and results are the same as the first stage
+        # from utils.augmentations import RepeatedTransform
         # tot_data, tot_corr = 0, 0
         # for i, ts in enumerate(dataset.test_loaders):
         #     task_tot, task_corr = 0, 0
         #     for data in ts:
-        #         inputs, labels = data
-        #         inputs, labels = inputs.to(self.device), labels.to(self.device)
-        #         _, inputs = inputs[:, 0], inputs[:, 1]
+        #         inputs, labels = data[0], data[1]
+        #         inputs, labels = inputs[:, 1].to(self.device), labels.to(self.device) # only clip-preprocessed input
         #         queries = self.net.prompter.get_query(inputs)
-
         #         queries = torch.nn.functional.normalize(queries, dim=-1)
-
         #         logits = torch.einsum('bd,cd->bc', queries, self.net.prompter.keys.type(self.net.prompter.clip_model.dtype))
-
         #         task_corr += (logits.argmax(dim=-1) == labels).sum().item()
         #         task_tot += labels.shape[0]
         #     print(f"CLIP on TASK {i+1}: {task_corr / task_tot}")
         #     tot_corr += task_corr
         #     tot_data += task_tot
-        # print(f"AVG CLIP ON TASKS: {tot_corr / tot_data}")  # the avg of the avg != the avg of the total
+        # print(f"AVG CLIP ON TASKS: {tot_corr / tot_data}") # the avg of the avg != the avg of the total
 
+        # For later GR
         self.recall()
 
         if hasattr(self, 'opt'):
@@ -271,8 +279,8 @@ class SecondStageStarprompt(ContinualModel):
 
     def forward(self, x):
         x, query_x = x[:, 0], x[:, 1]  # from repeated transform
-        # if self.args.enable_data_aug_query:
-        #     query_x = None
+        if self.args.use_clip_preprocess_eval == 0:
+            query_x = None
         logits = self.net(x, query_x=query_x, cur_classes=self.n_seen_classes)
         logits = logits[:, :self.n_seen_classes]
         return logits
@@ -284,6 +292,7 @@ class SecondStageStarprompt(ContinualModel):
             query_stream_inputs = None
         stream_logits = self.net(stream_inputs, query_x=query_stream_inputs, cur_classes=self.n_seen_classes, frozen_past_classes=self.n_past_classes)
 
+        # Compute accuracy on current training batch for logging
         with torch.no_grad():
             stream_preds = stream_logits[:, :self.n_seen_classes].argmax(dim=1)
             stream_acc = (stream_preds == stream_labels).sum().item() / stream_labels.shape[0]
@@ -298,13 +307,13 @@ class SecondStageStarprompt(ContinualModel):
         if self.epoch_iteration == 0:
             self.opt.zero_grad()
 
-        loss.backward()
+        (loss / self.args.virtual_bs_n).backward()
         if (self.epoch_iteration > 0 or self.args.virtual_bs_n == 1) and \
                 self.epoch_iteration % self.args.virtual_bs_n == 0:
-            # NOTE: The virtual batch size is missing `loss = loss/self.virtual_bs_n`. We did not see any significant change with this as Adam will take care of it.
+            # NOTE: The virtual batch size is missing `loss = loss/self.virtual_bs_n`.
+            # We did not see any significant change with this as Adam will take care of it.
             self.opt.step()
             self.opt.zero_grad()
 
-        self.epoch_iteration += 1
-
-        return {'loss': loss.item(), 'stream_accuracy': stream_acc}
+        return {'loss': loss.item(),
+                'stream_accuracy': stream_acc}

@@ -89,7 +89,7 @@ class Prompter(torch.nn.Module):
 
         features = torch.cat(features, dim=0)
         labels = torch.cat(labels, dim=0).long()
-        return create_seeded_dataloader(self.args, TensorDataset(features, labels), num_workers=0, batch_size=self.args.batch_size_gr, shuffle=True)
+        return create_seeded_dataloader(self.args, TensorDataset(features, labels), verbose=False, num_workers=0, batch_size=self.args.batch_size_gr, shuffle=True)
 
     def train_alignment_epoch(self, optim: torch.optim.Optimizer, current_task: int, epoch: int = 0):
         offset_1, offset_2 = self.dataset.get_offsets(current_task)
@@ -162,6 +162,9 @@ class Prompter(torch.nn.Module):
             self.train()
 
     def compute_keys(self, start: int, end: int):
+        """
+        Compute the text-encoder features the CoOp way, but separately for each class.
+        """
         ctx = self.prompt_parameters[start:end]
         prefix = self.token_prefix[start:end]
         suffix = self.token_suffix[start:end]
@@ -171,7 +174,11 @@ class Prompter(torch.nn.Module):
         keys = torch.nn.functional.normalize(keys, dim=-1)
         return keys
 
-    def get_keys(self, cur_classes: int, frozen_past_classes=0):
+    def get_keys(self, cur_classes: int, frozen_past_classes=0) -> torch.Tensor:
+        """
+        Compute the text-encoder features for classes from 0 to `cur_classes`.
+        Features of classes before `frozen_past_classes` are frozen.
+        """
         if frozen_past_classes > 0:
             with torch.no_grad():
                 past_keys = self.compute_keys(0, frozen_past_classes)
@@ -182,6 +189,9 @@ class Prompter(torch.nn.Module):
         return keys
 
     def setup_text_prompting(self):
+        """
+        Initialize a singly prompt (length 1) for each class.
+        """
         self.text_encoder = TextEncoder(self.clip_model)
 
         text_prompts = ["X " + name + "." for name in self.class_names]
@@ -234,7 +244,13 @@ class Model(torch.nn.Module):
 
         return self
 
-    def forward(self, x: torch.Tensor, cur_classes: int, return_query=False, frozen_past_classes=0):
+    def forward(self, x: torch.Tensor, cur_classes: int, return_query=False, frozen_past_classes=0) -> torch.Tensor:
+        """
+        Compute the logits for the current task.
+        Logits of classes before `frozen_past_classes` are frozen.
+
+        If `return_query` is True, return the CLIP's visual encoder output instead of the logits.
+        """
         clip_out = self.prompter.get_query(x)
         if return_query:
             return clip_out

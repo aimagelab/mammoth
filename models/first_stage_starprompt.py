@@ -21,29 +21,29 @@ class FirstStageStarprompt(ContinualModel):
     def get_parser() -> ArgumentParser:
         parser = ArgumentParser()
 
-        # Frozen hyperparameters
-        parser.add_argument("--virtual_bs_n", type=int, default=1, help="Virtual batch size iterations")
+        frozen_group = parser.add_argument_group('Frozen hyperparameters')
+        frozen_group.add_argument("--virtual_bs_n", type=int, default=1, help="Virtual batch size iterations")
+        frozen_group.add_argument("--num_monte_carlo_gr", type=int, default=5,
+                                  help="How many times to sample from the dataset for Generative Replay")
+        frozen_group.add_argument('--gr_mog_n_iters', type=int, default=200,
+                                  help="Number of EM iterations during fit for GR with MOG.")
+        frozen_group.add_argument('--gr_mog_n_components', type=int, default=5,
+                                  help="Number of components for Generative Replay with MOG.")
+        frozen_group.add_argument("--enable_gr", type=int, default=1, choices=[0, 1],
+                                  help="Enable Generative Replay.")
+        frozen_group.add_argument('--batch_size_gr', type=int, default=128,
+                                  help="Batch size for Generative Replay.")
+        frozen_group.add_argument('--num_samples_gr', type=int, default=256,
+                                  help="Number of samples for Generative Replay.")
 
         # Tunable hyperparameters
-        parser.add_argument("--learning_rate_gr", type=float, default=0.05,
-                            help="Learning rate for Generative Replay.")
-        parser.add_argument("--lambda_ortho_coop", type=float, default=30,
-                            help="Orthogonality loss coefficient for coop")
-        parser.add_argument("--num_monte_carlo_gr", type=int, default=5,
-                            help="How many times to sample from the dataset for Generative Replay")
-        parser.add_argument("--num_epochs_gr", type=int, default=10,
-                            help="Num. of epochs for Generative Replay.")
-        parser.add_argument('--gr_mog_n_components', type=int, default=5,
-                            help="Number of components for Generative Replay with MOG.")
-        parser.add_argument('--gr_mog_n_iters', type=int, default=200,
-                            help="Number of EM iterations during fit for GR with MOG.")
-        parser.add_argument("--enable_gr", type=int, default=1, choices=[0, 1],
-                            help="Enable Generative Replay.")
-
-        parser.add_argument('--batch_size_gr', type=int, default=128,
-                            help="Batch size for Generative Replay.")
-        parser.add_argument('--num_samples_gr', type=int, default=256,
-                            help="Number of samples for Generative Replay.")
+        tunable_group = parser.add_argument_group('Tunable hyperparameters')
+        tunable_group.add_argument("--learning_rate_gr", type=float, default=0.05,
+                                   help="Learning rate for Generative Replay.")
+        tunable_group.add_argument("--lambda_ortho_coop", type=float, default=30,
+                                   help="Orthogonality loss coefficient for coop")
+        tunable_group.add_argument("--num_epochs_gr", type=int, default=10,
+                                   help="Num. of epochs for Generative Replay.")
 
         # Useful flags
         parser.add_argument("--save_first_stage_keys", type=int, default=1,

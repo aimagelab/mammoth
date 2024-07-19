@@ -56,7 +56,7 @@ class VisionTransformer(MammothVP):
         super().__init__(*args, **kwargs)
         assert prompt_mode in ['residual', 'concat'], 'prompt_mode should be either residual or concat'
 
-        attn_layer = ResidualPromptAttention if prompt_mode=='residual' else PrefixTuningAttention
+        attn_layer = ResidualPromptAttention if prompt_mode == 'residual' else PrefixTuningAttention
 
         self.blocks = nn.Sequential(*[
             Block(
@@ -84,9 +84,8 @@ class VisionTransformer(MammothVP):
         x = self._pos_embed(x)
         x = self.norm_pre(x)
         for idx, blk in enumerate(self.blocks):
-            ret = prompter.get_prompts(idx, first_stage_query, frozen_past_classes=frozen_past_classes, cur_classes=cur_classes)
-            if ret is not None:
-                prompts, _ = ret
+            prompts = prompter.get_prompts(idx, first_stage_query, frozen_past_classes=frozen_past_classes, cur_classes=cur_classes)
+            if prompts is not None:
                 x = blk(x, prompts)
             else:
                 x = blk(x)
