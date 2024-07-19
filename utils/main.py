@@ -75,8 +75,8 @@ def parse_args():
     parser = ArgumentParser(description='mammoth', allow_abbrev=False, add_help=False)
     parser.add_argument('--model', type=custom_str_underscore, help='Model name.', choices=list(get_all_models().keys()))
     parser.add_argument('--load_best_args', action='store_true',
-                        help='Loads the best arguments for each method, '
-                             'dataset and memory buffer.')
+                        help='(deprecated) Loads the best arguments for each method, dataset and memory buffer. '
+                        'NOTE: This option is deprecated and not up to date.')
 
     args = parser.parse_known_args()[0]
     models_dict = get_all_models()

@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 try:
     import clip
 except ImportError:
-    raise ImportError("Please install the CLIP package by running: pip install git+https://github.com/openai/CLIP.git")
+    raise ImportError("Please install the CLIP package by running: pip install git+https://github.com/openai/CLIP.git (requires also `huggingface-hub`)")
 
 from models.utils.continual_model import ContinualModel
 from models.star_prompt_utils.first_stage_model import Model
@@ -88,8 +88,9 @@ class FirstStageStarprompt(ContinualModel):
                 'keys': te_outputs,
                 'args': self.args,
             }
-            torch.save(st, f'./coop_keys/coop_keys_{self.current_task}_{self.args.conf_jobnum}.pt')
-            print('Done', file=sys.stderr)
+            fname = f'./coop_keys/coop_keys_{self.current_task}_{self.args.conf_jobnum}.pt'
+            torch.save(st, fname)
+            print('Saved text-encoder keys in:', fname, file=sys.stderr)
 
     def get_parameters(self):
         return [v for k, v in self.net.named_parameters() if 'prompt_parameters' in k]

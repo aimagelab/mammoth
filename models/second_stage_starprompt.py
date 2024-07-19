@@ -189,7 +189,10 @@ class SecondStageStarprompt(ContinualModel):
 
         with tqdm(total=self.args.num_monte_carlo_gr * len(dataset.train_loader), desc='GR update statistics') as pbar:
             for _ in range(self.args.num_monte_carlo_gr):
-                for data in dataset.train_loader:
+                for i, data in enumerate(dataset.train_loader):
+                    if self.args.debug_mode and i > 3 and min([len(v) for k, v in features_dict.items()]) > self.args.gr_mog_n_components:
+                        break
+
                     x, labels = data[0], data[1]
                     x, labels = x.to(self.device), labels.to(self.device, dtype=torch.long)
                     x, query_x = x[:, 0], x[:, 1]
@@ -307,11 +310,9 @@ class SecondStageStarprompt(ContinualModel):
         if self.epoch_iteration == 0:
             self.opt.zero_grad()
 
-        (loss / self.args.virtual_bs_n).backward()
+        loss.backward()
         if (self.epoch_iteration > 0 or self.args.virtual_bs_n == 1) and \
                 self.epoch_iteration % self.args.virtual_bs_n == 0:
-            # NOTE: The virtual batch size is missing `loss = loss/self.virtual_bs_n`.
-            # We did not see any significant change with this as Adam will take care of it.
             self.opt.step()
             self.opt.zero_grad()
 
