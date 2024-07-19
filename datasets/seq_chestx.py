@@ -16,6 +16,7 @@ from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
 from backbone.vit import vit_base_patch16_224_prompt_prototype
 
+
 class ChestX(Dataset):
     N_CLASSES = 6
 
@@ -78,8 +79,8 @@ class ChestX(Dataset):
         :returns: tuple: (image, target) where target is index of the target class.
         """
         img, target = self.data[index], self.targets[index]
-        img = np.repeat(img[np.newaxis,:,:], 3, axis=0)
-        img = Image.fromarray((img*255).astype(np.int8).transpose(1,2,0), mode='RGB')
+        img = np.repeat(img[np.newaxis, :, :], 3, axis=0)
+        img = Image.fromarray((img * 255).astype(np.int8).transpose(1, 2, 0), mode='RGB')
 
         original_img = img.copy()
 
@@ -107,7 +108,7 @@ class SequentialChestX(ContinualDataset):
     N_TASKS = 2
     N_CLASSES = 6
     N_CLASSES_PER_TASK = 3
-    SIZE=(224, 224)
+    SIZE = (224, 224)
     MEAN, STD = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
     normalize = transforms.Normalize(mean=MEAN,
                                      std=STD)
@@ -126,7 +127,7 @@ class SequentialChestX(ContinualDataset):
 
     def get_data_loaders(self):
         train_dataset = ChestX(base_path() + 'chestx', train=True,
-                                    download=True, transform=self.TRANSFORM)
+                               download=True, transform=self.TRANSFORM)
 
         test_dataset = ChestX(base_path() + 'chestx', train=False, download=True,
                               transform=self.TEST_TRANSFORM)
@@ -134,14 +135,14 @@ class SequentialChestX(ContinualDataset):
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
 
         return train, test
-    
+
     def get_class_names(self):
         if self.class_names is not None:
             return self.class_names
         classes = fix_class_names_order(ChestX.LABELS, self.args)
         self.class_names = classes
         return self.class_names
-    
+
     @staticmethod
     def get_prompt_templates():
         return templates['cifar100']

@@ -6,11 +6,12 @@ import copy
 
 import torch
 
+
 def gram_schmidt(vv, start_c, end_c, return_in_parameter=True):
     """
     Code for this function is modified from:
     https://github.com/legendongary/pytorch-gram-schmidt/blob/master/gram_schmidt.py
-    
+
     Perform Gram-Schmidt orthogonalization on the input matrix vv.
     """
 

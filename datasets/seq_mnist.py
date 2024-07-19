@@ -116,7 +116,7 @@ class SequentialMNIST(ContinualDataset):
     @set_default_from_args('n_epochs')
     def get_epochs(self):
         return 1
-    
+
     def get_class_names(self):
         if self.class_names is not None:
             return self.class_names

@@ -78,7 +78,7 @@ class MyCUB200(Dataset):
             img, target, not_aug_img]
 
         if self._return_segmask:
-            # TODO: add to the return tuple 
+            # TODO: add to the return tuple
             raise "Unsupported segmentation output in training set!"
 
         return ret_tuple
@@ -207,7 +207,8 @@ class SequentialCUB200(ContinualDataset):
         classes = fix_class_names_order(CLASS_NAMES, self.args)
         self.class_names = classes
         return self.class_names
-        
+
+
 CLASS_NAMES = [
     'black footed albatross',
     'laysan albatross',

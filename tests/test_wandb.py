@@ -5,6 +5,7 @@ from utils.main import main
 from utils.test_utils import init_test_environ
 import pytest
 
+
 @init_test_environ
 def test_wandb_log_erace():
     sys.argv = ['mammoth',
@@ -34,7 +35,7 @@ def test_wandb_log_erace():
                 'mammoth-test']
 
     os.environ['WANDB_MODE'] = 'disabled'
-    
+
     log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_wandb_log_erace.log')
 
     # log all outputs to file

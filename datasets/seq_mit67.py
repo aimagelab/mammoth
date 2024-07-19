@@ -17,7 +17,7 @@ from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
 from backbone.vit import vit_base_patch16_224_prompt_prototype
 
-idx_to_class_names ={
+idx_to_class_names = {
     0: 'airport_inside',
     1: 'artstudio',
     2: 'auditorium',
@@ -87,6 +87,7 @@ idx_to_class_names ={
     66: 'winecellar'
 }
 
+
 class MyMIT67(Dataset):
     NUM_CLASSES = 67
 
@@ -96,8 +97,8 @@ class MyMIT67(Dataset):
         self.transform = transform
         self.train = train
         self.target_transform = target_transform
-        self.not_aug_transform = transforms.Compose([transforms.Resize((256,256)),transforms.ToTensor()])
-        
+        self.not_aug_transform = transforms.Compose([transforms.Resize((256, 256)), transforms.ToTensor()])
+
         if not os.path.exists(self.root) and download:
             print('Downloading MIT67 dataset...')
             if not os.path.exists(self.root):
@@ -115,12 +116,12 @@ class MyMIT67(Dataset):
 
             r = requests.get(test_images_link)
             with open(os.path.join(self.root, 'TestImages.txt'), 'wb') as f:
-                f.write(r.content)            
-            print('MIT67 dataset downloaded')     
-        else: 
+                f.write(r.content)
+            print('MIT67 dataset downloaded')
+        else:
             print('MIT67 dataset already downloaded')
-            
-        folder_targets = {os.path.basename(f[:-1]):i for i, f in enumerate(sorted(glob.glob(os.path.join(self.root, 'Images/*/'))))}
+
+        folder_targets = {os.path.basename(f[:-1]): i for i, f in enumerate(sorted(glob.glob(os.path.join(self.root, 'Images/*/'))))}
 
         train_images_path = os.path.join(self.root, 'TrainImages.txt')
         test_images_path = os.path.join(self.root, 'TestImages.txt')
@@ -150,7 +151,7 @@ class MyMIT67(Dataset):
         target = self.targets[index]
         img = Image.open(self.data[index])
         img = img.convert('RGB')
-        
+
         original_img = img.copy()
         not_aug_img = self.not_aug_transform(original_img)
 
@@ -165,23 +166,24 @@ class MyMIT67(Dataset):
 
         return img, target, not_aug_img
 
+
 class SequentialMIT67(ContinualDataset):
-    
+
     NAME = 'seq-mit67'
     SETTING = 'class-il'
     N_TASKS = 10
     N_CLASSES = 67
     N_CLASSES_PER_TASK = [7] * 7 + [6] * 3
     SIZE = (224, 224)
-    MEAN=[0.485, 0.456, 0.406]
-    STD=[0.229, 0.224, 0.225]
+    MEAN = [0.485, 0.456, 0.406]
+    STD = [0.229, 0.224, 0.225]
     TRANSFORM = transforms.Compose([
-            transforms.Resize(256, interpolation=InterpolationMode.BICUBIC),
-            transforms.RandomCrop(SIZE),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize(MEAN, STD)
-        ])
+        transforms.Resize(256, interpolation=InterpolationMode.BICUBIC),
+        transforms.RandomCrop(SIZE),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(MEAN, STD)
+    ])
     TEST_TRANSFORM = transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(SIZE),
@@ -190,15 +192,15 @@ class SequentialMIT67(ContinualDataset):
     ])
 
     def get_data_loaders(self):
-        train_dataset = MyMIT67(base_path() + 'MIT67', train=True, 
-                                 download=True, transform=self.TRANSFORM)
+        train_dataset = MyMIT67(base_path() + 'MIT67', train=True,
+                                download=True, transform=self.TRANSFORM)
         test_dataset = MyMIT67(base_path() + 'MIT76', train=False,
-                                download=True, transform=self.TEST_TRANSFORM)
+                               download=True, transform=self.TEST_TRANSFORM)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
 
         return train, test
-    
+
     def get_class_names(self):
         if self.class_names is not None:
             return self.class_names

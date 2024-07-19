@@ -154,13 +154,14 @@ def worker_init_fn(worker_id, num_workers, seed, rank=1):
     random.seed(worker_seed)
 
 
-def create_seeded_dataloader(args, dataset, **dataloader_args) -> DataLoader:
+def create_seeded_dataloader(args, dataset, verbose=True, **dataloader_args) -> DataLoader:
     """
     Creates a dataloader object from a dataset, setting the seeds for the workers (if `--seed` is set).
 
     Args:
         args: the arguments of the program
         dataset: the dataset to be loaded
+        verbose: whether to print the number of workers
         dataloader_args: external arguments of the dataloader
 
     Returns:
@@ -169,8 +170,9 @@ def create_seeded_dataloader(args, dataset, **dataloader_args) -> DataLoader:
 
     n_cpus = 4 if not hasattr(os, 'sched_getaffinity') else len(os.sched_getaffinity(0))
     num_workers = n_cpus if args.num_workers is None else args.num_workers
-    print(f'INFO: Using {num_workers} workers for the dataloader.')
     dataloader_args['num_workers'] = num_workers if 'num_workers' not in dataloader_args else dataloader_args['num_workers']
+    if verbose:
+        print(f'INFO: Using {dataloader_args["num_workers"]} workers for the dataloader.')
     if args.seed is not None:
         worker_generator = torch.Generator()
         worker_generator.manual_seed(args.seed)

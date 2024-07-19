@@ -16,6 +16,7 @@ from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
 from backbone.vit import vit_base_patch16_224_prompt_prototype
 
+
 class Isic(Dataset):
     N_CLASSES = 6
 
@@ -37,7 +38,7 @@ class Isic(Dataset):
         self.train = train
         self.transform = transform
         self.target_transform = target_transform
-        
+
         split = 'train' if train else 'test'
         if not os.path.exists(f'{root}/{split}_images.pkl'):
             if download:
@@ -46,7 +47,7 @@ class Isic(Dataset):
                 download(ln, filename=smart_joint(root, 'isic.tar.gz'), unzip=True, unzip_path=root.rstrip('isic'), clean=True)
             else:
                 raise FileNotFoundError(f'File not found: {root}/{split}_images.pkl')
-            
+
         filename_labels = f'{self.root}/{split}_labels.pkl'
         filename_images = f'{self.root}/{split}_images.pkl'
 
@@ -68,7 +69,7 @@ class Isic(Dataset):
         :returns: tuple: (image, target) where target is index of the target class.
         """
         img, target = self.data[index], self.targets[index]
-        img = Image.fromarray((img*255).astype(np.int8), mode='RGB')
+        img = Image.fromarray((img * 255).astype(np.int8), mode='RGB')
 
         original_img = img.copy()
 
@@ -116,10 +117,10 @@ class SequentialIsic(ContinualDataset):
 
     def get_data_loaders(self):
         train_dataset = Isic(base_path() + 'isic', train=True,
-                                    download=True, transform=self.TRANSFORM)
+                             download=True, transform=self.TRANSFORM)
 
         test_dataset = Isic(base_path() + 'isic', train=False, download=True,
-                              transform=self.TEST_TRANSFORM)
+                            transform=self.TEST_TRANSFORM)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
 
@@ -140,7 +141,7 @@ class SequentialIsic(ContinualDataset):
     def get_transform():
         transform = transforms.Compose([
             transforms.ToPILImage(),
-             SequentialIsic.TRANSFORM])
+            SequentialIsic.TRANSFORM])
         return transform
 
     @staticmethod

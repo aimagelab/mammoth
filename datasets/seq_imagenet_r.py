@@ -122,9 +122,9 @@ class SequentialImagenetR(ContinualDataset):
     ])
     TEST_TRANSFORM = transforms.Compose([transforms.Resize(size=(256, 256),
                                                            interpolation=InterpolationMode.BICUBIC),
-                                                           transforms.CenterCrop(SIZE[0]),
-                                                           transforms.ToTensor(),
-                                                           transforms.Normalize(mean=MEAN, std=STD)])
+                                         transforms.CenterCrop(SIZE[0]),
+                                         transforms.ToTensor(),
+                                         transforms.Normalize(mean=MEAN, std=STD)])
 
     def get_data_loaders(self):
         train_dataset = MyImagenetR(base_path() + 'imagenet-r/', train=True,
@@ -139,7 +139,7 @@ class SequentialImagenetR(ContinualDataset):
     def get_class_names(self):
         if self.class_names is not None:
             return self.class_names
-        
+
         pwd = os.path.dirname(os.path.abspath(__file__))
         with open(pwd + '/imagenet_r_utils/label_to_class_name.pkl', 'rb') as f:
             label_to_class_name = pickle.load(f)

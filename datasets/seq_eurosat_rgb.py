@@ -52,7 +52,7 @@ class MyEuroSat(Dataset):
 
             # downlaod split file form https://drive.google.com/file/d/1Ip7yaCWFi0eaOFUGga0lUdVi_DDQth1o/
             gdd.download_file_from_google_drive(file_id='1Ip7yaCWFi0eaOFUGga0lUdVi_DDQth1o',
-                                                                      dest_path=self.root + '/split.json')
+                                                dest_path=self.root + '/split.json')
 
             print('Done', file=sys.stderr)
 
@@ -66,7 +66,7 @@ class MyEuroSat(Dataset):
     def get_class_names():
         if not os.path.exists(base_path() + f'eurosat/DONE'):
             gdd.download_file_from_google_drive(file_id='1Ip7yaCWFi0eaOFUGga0lUdVi_DDQth1o',
-                                                                      dest_path=base_path() + 'eurosat/split.json')
+                                                dest_path=base_path() + 'eurosat/split.json')
         return pd.DataFrame(json.load(open(base_path() + 'eurosat/split.json', 'r'))['train'])[2].unique()
 
     def __len__(self):
@@ -92,7 +92,7 @@ class MyEuroSat(Dataset):
 
         if self.split != 'train':
             return img, target
-        
+
         if hasattr(self, 'logits'):
             return img, target, not_aug_img, self.logits[index]
 
@@ -124,14 +124,14 @@ class SequentialEuroSatRgb(ContinualDataset):
     MEAN, STD = [0.48145466, 0.4578275, 0.40821073], [0.26862954, 0.26130258, 0.27577711]
 
     TRANSFORM = transforms.Compose([
-        transforms.RandomResizedCrop(SIZE[0], scale=(0.08, 1.0), interpolation=InterpolationMode.BICUBIC), # from https://github.dev/KaiyangZhou/Dassl.pytorch defaults
+        transforms.RandomResizedCrop(SIZE[0], scale=(0.08, 1.0), interpolation=InterpolationMode.BICUBIC),  # from https://github.dev/KaiyangZhou/Dassl.pytorch defaults
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(mean=MEAN, std=STD),
     ])
 
     TEST_TRANSFORM = transforms.Compose([
-        transforms.Resize(SIZE[0], interpolation=InterpolationMode.BICUBIC), # bicubic
+        transforms.Resize(SIZE[0], interpolation=InterpolationMode.BICUBIC),  # bicubic
         transforms.CenterCrop(SIZE[0]),
         transforms.ToTensor(),
         transforms.Normalize(mean=MEAN, std=STD),
@@ -140,7 +140,7 @@ class SequentialEuroSatRgb(ContinualDataset):
     def get_class_names(self):
         if self.class_names is not None:
             return self.class_names
-        
+
         try:
             classes = MyEuroSat.get_class_names()
         except BaseException:
@@ -161,7 +161,7 @@ class SequentialEuroSatRgb(ContinualDataset):
         train_dataset = MyEuroSat(base_path() + 'eurosat', split='train',
                                   transform=self.TRANSFORM)
         test_dataset = MyEuroSat(base_path() + 'eurosat', split='test',
-                                    transform=self.TEST_TRANSFORM)
+                                 transform=self.TEST_TRANSFORM)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
 
@@ -201,4 +201,3 @@ class SequentialEuroSatRgb(ContinualDataset):
     @staticmethod
     def get_prompt_templates():
         return templates['eurosat']
-

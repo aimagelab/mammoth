@@ -301,7 +301,7 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     train_dataset, test_dataset = _prepare_data_loaders(train_dataset, test_dataset, setting)
 
     train_loader = create_seeded_dataloader(setting.args, train_dataset,
-                                            batch_size=setting.args.batch_size, shuffle=True)
+                                            batch_size=setting.args.batch_size, shuffle=True, drop_last=True)
     test_loader = create_seeded_dataloader(setting.args, test_dataset,
                                            batch_size=setting.args.batch_size, shuffle=False)
     setting.test_loaders.append(test_loader)

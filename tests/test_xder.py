@@ -5,6 +5,7 @@ from utils.main import main
 from utils.test_utils import init_test_environ
 import pytest
 
+
 @init_test_environ
 @pytest.mark.parametrize('model', ['xder', 'xder_rpc', 'xder_ce'])
 def test_xder(model):

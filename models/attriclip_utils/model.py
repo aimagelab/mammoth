@@ -24,27 +24,27 @@ class PromptLearner(nn.Module):
         n_cls = len(class_names)
         self.dtype = dtype
 
-        prompt_prefix =' '.join(['x'] * n_ctx * self.args.text_prompt)
-        prompts = [prompt_prefix + ' ' + name + '.' for name in class_names]# xxxxxx classe
+        prompt_prefix = ' '.join(['x'] * n_ctx * self.args.text_prompt)
+        prompts = [prompt_prefix + ' ' + name + '.' for name in class_names]  # xxxxxx classe
         classnames = [name.replace('_', ' ') for name in class_names]
         self.name_lens = [len(_tokenizer.encode(name)) for name in class_names]
         self.prompt_pos = prompt_pos
 
         self.text_prompt = text_prompt
-        tokenized_prompts = torch.cat([tokenize(p) for p in prompts])# conversione frase testuale in numeri
-        self.tokenized_prompts = tokenized_prompts # token
+        tokenized_prompts = torch.cat([tokenize(p) for p in prompts])  # conversione frase testuale in numeri
+        self.tokenized_prompts = tokenized_prompts  # token
         with torch.no_grad():
-            embedding = clip_model.token_embedding(tokenized_prompts.to(self.device)).type(self.dtype)#
-        self.register_buffer( 'token_prefix', embedding[:, :1, :])# prende token del SOS (start of sequence)
-        self.register_buffer( 'token_suffix', embedding[:, 1+(n_ctx*self.args.text_prompt):,:]) # prende token CLS, EOS
+            embedding = clip_model.token_embedding(tokenized_prompts.to(self.device)).type(self.dtype)
+        self.register_buffer('token_prefix', embedding[:, :1, :])  # prende token del SOS (start of sequence)
+        self.register_buffer('token_suffix', embedding[:, 1 + (n_ctx * self.args.text_prompt):, :])  # prende token CLS, EOS
 
-        nc_prompts = [prompt_prefix+'.' ]#xxxxxxxxxxxxxxxxxxxxx.
-        nc_tokenized_prompts = torch.cat([tokenize(p) for p in nc_prompts])# conversione della frase senza la classe
+        nc_prompts = [prompt_prefix + '.']  # xxxxxxxxxxxxxxxxxxxxx.
+        nc_tokenized_prompts = torch.cat([tokenize(p) for p in nc_prompts])  # conversione della frase senza la classe
         self.nc_tokenized_prompts = nc_tokenized_prompts
         with torch.no_grad():
             embedding = clip_model.token_embedding(nc_tokenized_prompts.to(self.device)).type(self.dtype)
-        self.register_buffer('nc_token_prefix', embedding[:, :1,:])
-        self.register_buffer('nc_token_suffix', embedding[:, 1+n_ctx:,:])
+        self.register_buffer('nc_token_prefix', embedding[:, :1, :])
+        self.register_buffer('nc_token_suffix', embedding[:, 1 + n_ctx:, :])
 
         self.n_cls = n_cls
         self.n_ctx = n_ctx
@@ -52,7 +52,7 @@ class PromptLearner(nn.Module):
 
     def forward(self, indices, test_class=None, infer=False):
         if test_class is not None:
-            prompt_prefix =' '.join(['x'] * self.n_ctx*self.args.text_prompt)
+            prompt_prefix = ' '.join(['x'] * self.n_ctx * self.args.text_prompt)
             prompts = [prompt_prefix + ' ' + name + '.' for name in test_class]
             self.name_lens = [len(_tokenizer.encode(name)) for name in test_class]
 
@@ -62,46 +62,46 @@ class PromptLearner(nn.Module):
             self.tokenized_prompts = tokenized_prompts
             with torch.no_grad():
                 embedding = self.clip_model.token_embedding(tokenized_prompts.to(self.device)).type(self.dtype)
-            self.register_buffer( 'token_prefix', embedding[:, :1, :]) # SOS, [n_cls, 1, ctx_dim]
-            self.register_buffer( 'token_suffix', embedding[:, 1+(self.n_ctx*self.args.text_prompt):,:]) # CLS, EOS, [n_cls, -1, ctx_dim]
+            self.register_buffer('token_prefix', embedding[:, :1, :])  # SOS, [n_cls, 1, ctx_dim]
+            self.register_buffer('token_suffix', embedding[:, 1 + (self.n_ctx * self.args.text_prompt):, :])  # CLS, EOS, [n_cls, -1, ctx_dim]
             self.n_cls = len(test_class)
         batch = indices.shape[0]
-        ctx=self.text_prompt[indices].view(batch, self.n_ctx*self.args.text_prompt, self.ctx_dim)
-        tokenized_prompts = self.tokenized_prompts.view(self.n_cls,-1)
+        ctx = self.text_prompt[indices].view(batch, self.n_ctx * self.args.text_prompt, self.ctx_dim)
+        tokenized_prompts = self.tokenized_prompts.view(self.n_cls, -1)
         n_cls = self.n_cls
 
         if self.prompt_pos == 2:
-            prefix = self.token_prefix.unsqueeze(0).repeat(batch,1,1,1)
-            suffix = self.token_suffix.unsqueeze(0).repeat(batch,1,1,1)
+            prefix = self.token_prefix.unsqueeze(0).repeat(batch, 1, 1, 1)
+            suffix = self.token_suffix.unsqueeze(0).repeat(batch, 1, 1, 1)
             ctx = ctx.unsqueeze(1).repeat(1, n_cls, 1, 1)
-            prompts = torch.cat([prefix, ctx, suffix],dim=2)
+            prompts = torch.cat([prefix, ctx, suffix], dim=2)
         elif self.prompt_pos == 1:
-            prompts =[]
+            prompts = []
             half_n_ctx = self.n_ctx // 2
             for i in range(n_cls):
                 name_len = self.name_lens[i]
-                prefix_i = self.token_prefix[i:i+1, :,:].unsqueeze(1)
-                class_i = self.token_suffix[i:i+1,:name_len, :].unsqueeze(1)
-                suffix_i = self.token_suffix[i:i+1, name_len:,:].unsqueeze(1)
-                ctx_i_half1 = ctx[:,:half_n_ctx, :].unsqueeze(0)
-                ctx_i_half2 = ctx[:, half_n_ctx:,:].unsqueeze(0)
-                prompt = torch.cat([prefix_i, ctx_i_half1, class_i, ctx_i_half2, suffix_i],dim=2)
+                prefix_i = self.token_prefix[i:i + 1, :, :].unsqueeze(1)
+                class_i = self.token_suffix[i:i + 1, :name_len, :].unsqueeze(1)
+                suffix_i = self.token_suffix[i:i + 1, name_len:, :].unsqueeze(1)
+                ctx_i_half1 = ctx[:, :half_n_ctx, :].unsqueeze(0)
+                ctx_i_half2 = ctx[:, half_n_ctx:, :].unsqueeze(0)
+                prompt = torch.cat([prefix_i, ctx_i_half1, class_i, ctx_i_half2, suffix_i], dim=2)
                 prompts.append(prompt)
             prompts = torch.cat(prompts, dim=0)
         elif self.prompt_pos == 0:
-            prompts =[]
+            prompts = []
             for i in range(self.n_cls):
                 name_len = self.name_lens[i]
-                prefix_i = self.token_prefix[i:i+1,:,:].unsqueeze(1)
-                class_i = self.token_suffix[i:i+1, :name_len,:].unsqueeze(1)
-                suffix_i = self.token_suffix[i:i+1, name_len:,:].unsqueeze(1)
+                prefix_i = self.token_prefix[i:i + 1, :, :].unsqueeze(1)
+                class_i = self.token_suffix[i:i + 1, :name_len, :].unsqueeze(1)
+                suffix_i = self.token_suffix[i:i + 1, name_len:, :].unsqueeze(1)
                 ctx_i = ctx.unsqueeze(0)
                 prompt = torch.cat([prefix_i, class_i, ctx_i, suffix_i], dim=2)
                 prompts.append(prompt)
             prompts = torch.cat(prompts, dim=0)
 
-        prompts = prompts.squeeze(2).view(batch*self.n_cls, -1, self.ctx_dim)
-        tokenized_prompts = tokenized_prompts.unsqueeze(0).repeat(batch,1,1).view(batch*self.n_cls, -1)
+        prompts = prompts.squeeze(2).view(batch * self.n_cls, -1, self.ctx_dim)
+        tokenized_prompts = tokenized_prompts.unsqueeze(0).repeat(batch, 1, 1).view(batch * self.n_cls, -1)
         self.prompts = prompts
         self.prompts_token = tokenized_prompts
         if infer:
@@ -116,7 +116,7 @@ class PromptLearner(nn.Module):
         nc_tokenized_prompts = self.nc_tokenized_prompts.repeat(prompt_size, 1)
         prefix = self.nc_token_prefix.repeat(prompt_size, 1, 1)
         suffix = self.nc_token_suffix.repeat(prompt_size, 1, 1)
-        nc_prompts = torch.cat([prefix, ctx, suffix],dim=1)
+        nc_prompts = torch.cat([prefix, ctx, suffix], dim=1)
         return nc_prompts, nc_tokenized_prompts
 
 
@@ -167,9 +167,9 @@ class CLIP(nn.Module):
         if test:
             n_test = len(test_class)
             probability = image_features @ self.text_key.t()
-            _, indices = probability.topk(k=min(self.args.text_prompt,probability.shape[1]), dim=1, largest=True)
-            text_prompt, tokenized_prompts = self.prompt_learner(indices,test_class,test)
-            text_features = self.text_encoder(text_prompt,tokenized_prompts)
+            _, indices = probability.topk(k=min(self.args.text_prompt, probability.shape[1]), dim=1, largest=True)
+            text_prompt, tokenized_prompts = self.prompt_learner(indices, test_class, test)
+            text_features = self.text_encoder(text_prompt, tokenized_prompts)
             text_features = text_features / text_features.norm(dim=-1, keepdim=True)
             logit_scale = self.logit_scale.exp()
             text_features = text_features.view(image_features.shape[0], n_test, -1)
@@ -184,7 +184,7 @@ class CLIP(nn.Module):
             _, indices = probability.topk(k=min(self.args.text_prompt, probability.shape[1]), dim=1, largest=True)
             key_choose = self.text_key[indices]
             text_prompt, tokenized_prompts, nc_prompts, nc_tokenized_prompts = self.prompt_learner(indices)
-            text_features = self.text_encoder(text_prompt,tokenized_prompts)
+            text_features = self.text_encoder(text_prompt, tokenized_prompts)
             text_features = text_features / text_features.norm(dim=-1, keepdim=True)
             text_features = text_features.view(image_features.shape[0], n_class, -1)
             image_features = image_features.unsqueeze(1)
@@ -197,7 +197,6 @@ class CLIP(nn.Module):
             loss_m = dis[~torch.eye(self.args.num_prompt, dtype=torch.bool, device=self.device)].abs().mean()
 
             return logits, image_features, key_choose, loss_m
-
 
     @property
     def dtype(self):
@@ -213,16 +212,16 @@ class CoOp:
         clip_model.eval()
         if use_float32:
             clip_model.float()
-        
+
         if self.args.freeze_clip:
             for param in clip_model.parameters():
                 param.requires_grad = False
-        
+
         self.clip_model = clip_model
         self.use_grad_checkpoint = use_grad_checkpoint
         self.num_prompt = args.num_prompt
         self.n_ctx = n_ctx
-        self.lr = args.lr*args.batch_size/20
+        self.lr = args.lr * args.batch_size / 20
         self.wd = args.optim_wd
         self.epochs = args.n_epochs
         self.train_batch = args.batch_size
@@ -235,7 +234,7 @@ class CoOp:
         nn.init.normal_(text_key, std=0.02)
         text_prompt = torch.empty(self.num_prompt, n_ctx, ctx_dim, dtype=self.dtype).to(self.device)
         nn.init.normal_(text_prompt, std=0.02)
-        if  keep == True :
+        if keep == True:
             self.text_key = nn.Parameter(prev_key)
             self.text_prompt = nn.Parameter(prev_prompt)
         else:
@@ -251,19 +250,19 @@ class CoOp:
         if self.use_grad_checkpoint:
             try:
                 self.model.text_encoder.transformer.use_gradient_checkpoint = True
-            except:
+            except BaseException:
                 self.model.text_encoder.module.transformer.use_gradient_checkpoint = True
 
     def get_optimizer(self, per_epoch_steps):
         Other_params = [param for name, param in self.model.named_parameters() if 'text_key' in name]
         param_dict = [{'params': [p for p in self.model.prompt_learner.parameters() if p.requires_grad]},
-                        {'params': Other_params}]
+                      {'params': Other_params}]
 
         optimizer = torch.optim.SGD(param_dict, lr=self.lr, weight_decay=self.wd)
         scheduler = build_cosine_scheduler(
             optimizer,
             lr=self.lr,
-            total_step=self.epochs*per_epoch_steps)
+            total_step=self.epochs * per_epoch_steps)
 
         return optimizer, scheduler
 
@@ -273,12 +272,12 @@ class CoOp:
 
     def train(self, mode=True):
         self.model.train(mode)
-    
+
     def eval(self):
         self.model.eval()
-    
+
     def to(self, device):
         self.model.to(device)
-    
+
     def parameters(self):
         return self.model.parameters()

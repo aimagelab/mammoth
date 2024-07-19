@@ -35,8 +35,8 @@ def test_datasets(dataset):
                 '1']
 
     # clean all downloaded datasets
-    dataset_paths = ['CUB200', 'CIFAR10', 'CIFAR100', 'MNIST', 
-                     'TINYIMG', 'imagenet-r', 'cars196', 'chestx', 
+    dataset_paths = ['CUB200', 'CIFAR10', 'CIFAR100', 'MNIST',
+                     'TINYIMG', 'imagenet-r', 'cars196', 'chestx',
                      'cropdisease', 'eurosat', 'isic', 'MIT67',
                      'NWPU-RESISC45']
     basepath = os.path.dirname(os.path.abspath(__file__))

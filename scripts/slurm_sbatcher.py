@@ -1,7 +1,7 @@
 import os
 if os.getcwd().split('/')[-1] == 'scripts':
     os.chdir('..')
-    
+
 import argparse
 import math
 

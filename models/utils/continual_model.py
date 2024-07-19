@@ -82,6 +82,20 @@ class ContinualModel(nn.Module):
         return parser
 
     @property
+    def task_iteration(self):
+        """
+        Returns the number of iterations in the current task.
+        """
+        return self._task_iteration
+
+    @property
+    def epoch_iteration(self):
+        """
+        Returns the number of iterations in the current epoch.
+        """
+        return self._epoch_iteration
+
+    @property
     def current_task(self):
         """
         Returns the index of current task.
@@ -298,13 +312,14 @@ class ContinualModel(nn.Module):
             epoch = kwargs['epoch']
             if self._past_epoch != epoch:
                 self._past_epoch = epoch
-                self.epoch_iteration = 0
+                self._epoch_iteration = 0
 
         if 'cssl' not in self.COMPATIBILITY:  # drop unlabeled data if not supported
             labeled_mask = args[1] != -1
-            if labeled_mask.sum() == 0:
-                return 0
-            args = [arg[labeled_mask] if isinstance(arg, torch.Tensor) and arg.shape[0] == args[0].shape[0] else arg for arg in args]
+            if (~labeled_mask).any():  # if there are any unlabeled samples
+                if labeled_mask.sum() == 0:  # if all samples are unlabeled
+                    return 0
+                args = [arg[labeled_mask] if isinstance(arg, torch.Tensor) and arg.shape[0] == args[0].shape[0] else arg for arg in args]
         if 'wandb' in sys.modules and not self.args.nowand:
             pl = persistent_locals(self.observe)
             ret = pl(*args, **kwargs)
@@ -319,8 +334,8 @@ class ContinualModel(nn.Module):
             if isinstance(ret, dict):
                 assert 'loss' in ret, "Loss not found in return dict"
                 ret = ret['loss']
-        self.task_iteration += 1
-        self.epoch_iteration += 1
+        self._task_iteration += 1
+        self._epoch_iteration += 1
         return ret
 
     def meta_begin_task(self, dataset):
@@ -332,8 +347,8 @@ class ContinualModel(nn.Module):
         Args:
             dataset: the current task's dataset
         """
-        self.task_iteration = 0
-        self.epoch_iteration = 0
+        self._task_iteration = 0
+        self._epoch_iteration = 0
         self._past_epoch = 0
         self._n_classes_current_task = self._cpt if isinstance(self._cpt, int) else self._cpt[self._current_task]
         self._n_past_classes, self._n_seen_classes = self.compute_offsets(self._current_task)

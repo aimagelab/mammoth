@@ -137,6 +137,7 @@ class LayerScale(nn.Module):
     def forward(self, x):
         return x.mul_(self.gamma) if self.inplace else x * self.gamma
 
+
 class Block(nn.Module):
 
     def __init__(
@@ -242,7 +243,7 @@ class VisionTransformer(MammothBackbone):
         use_fc_norm = global_pool == 'avg' if fc_norm is None else fc_norm
         norm_layer = norm_layer or partial(nn.LayerNorm, eps=1e-6)
         self.act_layer = act_layer or nn.GELU
-        
+
         attn_layer = attn_layer if attn_layer is not None else (Attention if not use_lora else LoRAAttention)
         mlp_layer = mlp_layer if mlp_layer is not None else (Mlp if not use_lora else LoRAMlp)
         self.attn_layer = attn_layer

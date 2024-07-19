@@ -52,7 +52,7 @@ class SequentialCIFAR100224(ContinualDataset):
         transforms.Resize(224, interpolation=InterpolationMode.BICUBIC),
         transforms.ToTensor(),
         transforms.Normalize(MEAN, STD)
-        ])
+    ])
 
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = self.TRANSFORM

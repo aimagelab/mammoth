@@ -193,6 +193,7 @@ class SequentialTinyImagenet(ContinualDataset):
         self.class_names = classes
         return self.class_names
 
+
 CLASS_NAMES = [
     'egyptian_cat',
     'reel',

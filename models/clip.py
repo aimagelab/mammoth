@@ -44,14 +44,14 @@ class FinalModel(nn.Module):
             for t in templates:
                 t_inputs = torch.cat([clip.tokenize(t.format(c)) for c in self.classes]).to(get_device())
                 t_inputs = self.clip_model.encode_text(t_inputs)
-                t_inputs /= t_inputs.norm(dim=-1, keepdim=True) # double normalization if use templates is expected (see https://github.dev/KaiyangZhou/CoOp)
+                t_inputs /= t_inputs.norm(dim=-1, keepdim=True)  # double normalization if use templates is expected (see https://github.dev/KaiyangZhou/CoOp)
                 text_inputs.append(t_inputs)
             self.text_features = torch.stack(text_inputs).mean(0)
         else:
             text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in self.classes]).to(get_device())
             self.text_features = self.clip_model.encode_text(text_inputs)
 
-        self.text_features /= self.text_features.norm(dim=-1, keepdim=True) # double normalization if use templates is expected
+        self.text_features /= self.text_features.norm(dim=-1, keepdim=True)  # double normalization if use templates is expected
         self.task_id = 0
 
     @torch.no_grad()

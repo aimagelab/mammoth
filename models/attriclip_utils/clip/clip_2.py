@@ -18,7 +18,7 @@ try:
 except ImportError:
     BICUBIC = Image.BICUBIC
 
-if torch.__version__.split(".") < ["1","7","1"]:
+if torch.__version__.split(".") < ["1", "7", "1"]:
     warnings.warn("PyTorch version 1.7.1 or higher is recommended")
 
 __all__ = ["available_models", "load", "tokenize"]
@@ -34,18 +34,19 @@ _MODELS = {
     "ViT-B/16": "https://openaipublic.azureedge.net/clip/models/5806e77cd80f8b59890b7e101eabd078d9fb84e6937f9e85e4ecb61988df416f/ViT-B-16.pt",
     "ViT-L/14": "https://openaipublic.azureedge.net/clip/models/b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836/ViT-L-14.pt",
     "ViT-L/14@336px": "https://openaipublic.azureedge.net/clip/models/3035c92b350959924f9f00213499208652fc7ea050643e8b385c2dac08641f02/ViT-L-14-336px.pt",
-    }
+}
 
-def _download(url:str,root:str):
-    os.makedirs(root,exist_ok=True)
+
+def _download(url: str, root: str):
+    os.makedirs(root, exist_ok=True)
     filename = os.path.basename(url)
 
     expected_sha256 = url.split("/")[-2]
-    download_target = os.path.join(root,filename)
+    download_target = os.path.join(root, filename)
 
     if os.path.exists(download_target) and not os.path.isfile(download_target):
         raise RuntimeError(f"{download_target} exists and is not a regular file")
-        
+
     if os.path.isfile(download_target):
         if hashlib.sha256(open(download_target, "rb").read()).hexdigest() == expected_sha256:
             return download_target
@@ -62,7 +63,7 @@ def _download(url:str,root:str):
                 output.write(buffer)
                 loop.update(len(buffer))
 
-    if hashlib.sha256(open(download_target,"rb").read()).hexdigest()!= expected_sha256:
+    if hashlib.sha256(open(download_target, "rb").read()).hexdigest() != expected_sha256:
         raise RuntimeError(f"Model has been downloaded but the SHA256 checksum does not not match")
 
     return download_target
@@ -70,17 +71,18 @@ def _download(url:str,root:str):
 
 def _transform(n_px):
     return Compose([
-        Resize(n_px,interpolation=BICUBIC),
+        Resize(n_px, interpolation=BICUBIC),
         CenterCrop(n_px),
         lambda image: image.convert("RGB"),
         ToTensor(),
-        Normalize((0.48145466, 0.4578275, 0.40821073),(0.26862954, 0.26130258, 0.27577711)),
+        Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
     ])
 
 
 def available_models() -> List[str]:
     """Returns the names of available CLIP models"""
     return list(_MODELS.keys())
+
 
 def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_available() else "cpu", jit: bool = False, download_root: str = None):
     """Load a CLIP model
@@ -111,7 +113,7 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
     if name in _MODELS:
         model_path = _download(_MODELS[name], download_root or os.path.expanduser("~/.cache/clip"))
     elif os.path.isfile(name):
-        model_path = name 
+        model_path = name
     else:
         raise RuntimeError(f"Model {name} not found; available models = {available_models()}")
     try:
@@ -132,14 +134,14 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
         return model, _transform(model.visual.input_resolution)
 
     # patch the device names
-    device_holder = torch.jit.trace(lambda:torch.ones([]).to(torch.device(device)), example_inputs=[])
+    device_holder = torch.jit.trace(lambda: torch.ones([]).to(torch.device(device)), example_inputs=[])
     device_node = [n for n in device_holder.graph.findAllNodes("prim: :Constant") if "Device" in repr(n)][-1]
 
     def patch_device(module):
         try:
             graphs = [module.graph] if hasattr(module, "graph") else []
         except RuntimeError:
-            graphs =[]
+            graphs = []
 
         if hasattr(module, "forward1"):
             graphs.append(module.forward1.graph)
@@ -154,11 +156,10 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
     patch_device(model.encode_text)
 
     # patch dtype to float32 on CPU
-    if str(device)=="cpu":
+    if str(device) == "cpu":
         float_holder = torch.jit.trace(lambda: torch.ones([]).float(), example_inputs=[])
         float_input = list(float_holder.graph.findNode("aten::to").inputs())[1]
         float_node = float_input.node()
-
 
         def patch_float(module):
             try:
@@ -172,7 +173,7 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
             for graph in graphs:
                 for node in graph.findAllNodes("aten::to"):
                     inputs = list(node.inputs())
-                    for i in [1, 2]: # dtype can be the second or third argument to aten::to()
+                    for i in [1, 2]:  # dtype can be the second or third argument to aten::to()
                         if inputs[i].node()["value"] == 5:
                             inputs[i].node().copyAttributes(float_node)
 
@@ -183,6 +184,7 @@ def load(name: str, device: Union[str, torch.device] = "cuda" if torch.cuda.is_a
         model.float()
 
     return model, _transform(model.input_resolution.item())
+
 
 def tokenize(texts: Union[str, List[str]], context_length: int = 77, truncate: bool = False) -> torch.LongTensor:
     """

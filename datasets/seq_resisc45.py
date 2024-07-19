@@ -16,6 +16,7 @@ from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
 from backbone.vit import vit_base_patch16_224_prompt_prototype
 
+
 class Resisc45(Dataset):
 
     N_CLASSES = 45
@@ -148,11 +149,11 @@ class SequentialResisc45(ContinualDataset):
     ])
 
     TEST_TRANSFORM = transforms.Compose([
-            transforms.Resize(size=(256, 256), interpolation=InterpolationMode.BICUBIC),
-            transforms.CenterCrop(SIZE),
-            transforms.ToTensor(),
-            transforms.Normalize(MEAN, STD)
-            ])
+        transforms.Resize(size=(256, 256), interpolation=InterpolationMode.BICUBIC),
+        transforms.CenterCrop(SIZE),
+        transforms.ToTensor(),
+        transforms.Normalize(MEAN, STD)
+    ])
 
     def get_data_loaders(self):
         train_dataset = Resisc45(base_path() + 'NWPU-RESISC45', train=True,
@@ -179,7 +180,7 @@ class SequentialResisc45(ContinualDataset):
     @staticmethod
     def get_transform():
         return transforms.Compose([transforms.ToPILImage(),
-                                        SequentialResisc45.TRANSFORM])
+                                   SequentialResisc45.TRANSFORM])
 
     @staticmethod
     def get_backbone():
@@ -200,7 +201,7 @@ class SequentialResisc45(ContinualDataset):
     @set_default_from_args('n_epochs')
     def get_epochs(self):
         return 30
-    
+
     @set_default_from_args('batch_size')
     def get_batch_size(self):
         return 128

@@ -5,9 +5,10 @@ from utils.main import main
 from utils.test_utils import init_test_environ
 import pytest
 
+
 @init_test_environ
-@pytest.mark.parametrize('validation', ['0.2','0','20'])
-@pytest.mark.parametrize('validation_mode', ['complete','current'])
+@pytest.mark.parametrize('validation', ['0.2', '0', '20'])
+@pytest.mark.parametrize('validation_mode', ['complete', 'current'])
 def test_validation_classil(validation, validation_mode):
     sys.argv = ['mammoth',
                 '--model',
@@ -43,8 +44,8 @@ def test_validation_classil(validation, validation_mode):
 
 
 @init_test_environ
-@pytest.mark.parametrize('dataset', ['mnist-360','perm-mnist'])
-@pytest.mark.parametrize('validation', ['0.2','0','20'])
+@pytest.mark.parametrize('dataset', ['mnist-360', 'perm-mnist'])
+@pytest.mark.parametrize('validation', ['0.2', '0', '20'])
 @pytest.mark.parametrize('validation_mode', ['complete'])
 def test_validation_domainil(dataset, validation, validation_mode):
     sys.argv = ['mammoth',
