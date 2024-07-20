@@ -76,7 +76,6 @@ class ContinualDataset(object):
 
         if args.joint:
             self.N_CLASSES_PER_TASK = self.N_CLASSES
-            self.ORIGINAL_N_TASKS = self.N_TASKS
             self.N_TASKS = 1
 
         if not all((self.NAME, self.SETTING, self.N_CLASSES_PER_TASK, self.N_TASKS, self.SIZE, self.N_CLASSES)):
