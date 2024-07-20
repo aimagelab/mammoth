@@ -23,10 +23,10 @@ class FirstStageStarprompt(ContinualModel):
 
         frozen_group = parser.add_argument_group('Frozen hyperparameters')
         frozen_group.add_argument("--virtual_bs_n", type=int, default=1, help="Virtual batch size iterations")
-        frozen_group.add_argument("--num_monte_carlo_gr", type=int, default=5,
-                                  help="How many times to sample from the dataset for Generative Replay")
-        frozen_group.add_argument('--gr_mog_n_iters', type=int, default=200,
-                                  help="Number of EM iterations during fit for GR with MOG.")
+        frozen_group.add_argument("--num_monte_carlo_gr", "--num_monte_carlo_gr_first_stage", dest="num_monte_carlo_gr_first_stage",
+                                  type=int, default=5, help="How many times to sample from the dataset for Generative Replay")
+        frozen_group.add_argument('--gr_mog_n_iters', '--gr_mog_n_iters_first_stage', dest='gr_mog_n_iters_first_stage',
+                                  type=int, default=200, help="Number of EM iterations during fit for GR with MOG.")
         frozen_group.add_argument('--gr_mog_n_components', type=int, default=5,
                                   help="Number of components for Generative Replay with MOG.")
         frozen_group.add_argument("--enable_gr", type=int, default=1, choices=[0, 1],
@@ -38,12 +38,12 @@ class FirstStageStarprompt(ContinualModel):
 
         # Tunable hyperparameters
         tunable_group = parser.add_argument_group('Tunable hyperparameters')
-        tunable_group.add_argument("--learning_rate_gr", type=float, default=0.05,
-                                   help="Learning rate for Generative Replay.")
+        tunable_group.add_argument("--learning_rate_gr", "--learning_rate_gr_first_stage", dest="learning_rate_gr_first_stage",
+                                   type=float, default=0.05, help="Learning rate for Generative Replay.")
         tunable_group.add_argument("--lambda_ortho_coop", type=float, default=30,
                                    help="Orthogonality loss coefficient for coop")
-        tunable_group.add_argument("--num_epochs_gr", type=int, default=10,
-                                   help="Num. of epochs for Generative Replay.")
+        tunable_group.add_argument("--num_epochs_gr", "--num_epochs_gr_first_stage", dest="num_epochs_gr_first_stage",
+                                   type=int, default=10, help="Num. of epochs for Generative Replay.")
 
         # Useful flags
         parser.add_argument("--save_first_stage_keys", type=int, default=1,
@@ -129,7 +129,7 @@ class FirstStageStarprompt(ContinualModel):
 
         if self.epoch_iteration == 0:
             self.opt.zero_grad()
-        loss.backward()
+        (loss / self.args.virtual_bs_n).backward()
         if (self.epoch_iteration > 0 or self.args.virtual_bs_n == 1) and self.epoch_iteration % self.args.virtual_bs_n == 0:
             self.opt.step()
             self.opt.zero_grad()

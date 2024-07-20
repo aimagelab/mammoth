@@ -20,20 +20,25 @@ class Prompter(torch.nn.Module):
 
     def __init__(self, args, dataset: ContinualDataset,
                  num_classes: int, target_embed_len: int,
-                 target_embed_dim: int, prompt_layers: List[int]):
+                 target_embed_dim: int, prompt_layers: List[int],
+                 clip_model: clip.model.CLIP = None, clip_preprocess=None,
+                 device='cpu'):
         super().__init__()
         assert args.prompt_mode in ['residual', 'concat'], 'This prompter supports only STAR-Prompt residual-style prompts (`residual`) or Prefix tuning-style prompts (`concat`).'
         self.args = args
         self.prompt_layers = prompt_layers
         self.target_embed_len = target_embed_len
         self.target_embed_dim = target_embed_dim
-        self.device = args.device
+        self.device = device
         self.num_classes = num_classes
         self.prompt_mode = args.prompt_mode
 
+        if clip_model is not None:
+            assert clip_preprocess is not None, 'Preprocess must be provided if the model is provided'
+
         print("Loading CLIP visual encoder and the pre-computed text features...")
-        clip_backbone = 'ViT-L/14'
-        if args.keys_ckpt_path is not None:
+        clip_backbone = 'ViT-L/14' if not hasattr(args, 'clip_backbone') else args.clip_backbone
+        if hasattr(args, 'keys_ckpt_path') and args.keys_ckpt_path is not None:
             if args.keys_ckpt_path.endswith('.json'):
                 try:
                     key_jobnum = json.load(open(args.keys_ckpt_path, 'r'))[args.dataset][str(args.seed)]
@@ -56,13 +61,21 @@ class Prompter(torch.nn.Module):
             if first_stage_args is not None:
                 print("Keys loaded. Loading CLIP version:", first_stage_args.clip_backbone)
                 clip_backbone = first_stage_args.clip_backbone
-            self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
-            self.clip_model = self.clip_model.float()  # force fp32 when used for eval
+            if clip_model is None:
+                self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
+                self.clip_model = self.clip_model.float()  # force fp32 when used for eval
+            else:
+                self.clip_model = clip_model
+                self.clip_preprocess = clip_preprocess
         else:  # use prompt templates
             self.keys_ckpt_path = None
             print("No keys loaded. Using default CLIP version:", clip_backbone)
-            self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
-            self.clip_model = self.clip_model.float()  # force fp32 when used for eval
+            if clip_model is None:
+                self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
+                self.clip_model = self.clip_model.float()  # force fp32 when used for eval
+            else:
+                self.clip_model = clip_model
+                self.clip_preprocess = clip_preprocess
             self.keys = self.load_default_prompt_templates(dataset.get_prompt_templates(), dataset.get_class_names())
 
         self.clip_normalization = Normalize(self.clip_preprocess.transforms[-1].mean,
@@ -89,6 +102,14 @@ class Prompter(torch.nn.Module):
 
             setattr(self, f'a_{l}', self.get_parameter((self.num_classes, self.clip_model.visual.output_dim)))
 
+    def set_keys(self, keys: torch.Tensor, start_class: int, end_class: int):
+        """
+        Set the keys for the classes in the range `[start_class, end_class)`.
+        """
+        assert end_class - start_class == keys.shape[0], 'Number of classes in the keys tensor does not match the range'
+
+        self.keys[start_class:end_class] = keys
+
     def get_parameter(self, shape, type_init: str = 'orto') -> torch.nn.Parameter:
         """
         Create and initialize a parameter tensor. Code courtesy from CODA-Prompt.
@@ -105,7 +126,7 @@ class Prompter(torch.nn.Module):
         """
         Pre-computes the CLIP's text-encoder features if the keys are not loaded from a checkpoint.
         """
-        if self.args.statc_keys_use_templates:
+        if hasattr(self.args, 'statc_keys_use_templates') and self.args.statc_keys_use_templates:
             all_features = []
             for t in templates:
                 text_inputs = torch.cat([clip.tokenize(t.format(c)) for c in dataset_classes]).to(self.device)
@@ -335,14 +356,15 @@ containing the similarity value for the most similar class for each image.
 class Model(nn.Module):
     prompter: Prompter
 
-    def __init__(self, args, backbone: nn.Module, dataset: ContinualDataset, num_classes):
+    def __init__(self, args, backbone: nn.Module, dataset: ContinualDataset, num_classes, device='cpu',
+                 clip_model: clip.model.CLIP = None, clip_preprocess=None):
         super().__init__()
 
         assert 'resnet' not in str(type(backbone)).lower(), "ResNet not supported"
 
         self.args = args
         self.num_classes = num_classes
-        self.device = backbone.device
+        self.device = device
 
         # get feature encoder
         vit_model = VisionTransformer(embed_dim=768,
@@ -350,7 +372,7 @@ class Model(nn.Module):
                                       num_heads=12,
                                       drop_path_rate=0,
                                       num_classes=num_classes,
-                                      prompt_mode=args.prompt_mode)
+                                      prompt_mode=args.prompt_mode).to(device)
 
         print("Loading the Vision Transformer backbone...")
         load_dict = backbone.state_dict()
@@ -371,7 +393,10 @@ class Model(nn.Module):
                                  num_classes=num_classes,
                                  target_embed_len=self.vit.patch_embed.num_patches,
                                  target_embed_dim=self.vit.embed_dim,
-                                 prompt_layers=self.prompt_layers)
+                                 prompt_layers=self.prompt_layers,
+                                 clip_model=clip_model,
+                                 clip_preprocess=clip_preprocess,
+                                 device=device)
 
         # freeze the backbone
         for n, p in self.vit.named_parameters():

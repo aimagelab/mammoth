@@ -33,8 +33,8 @@ class SecondStageStarprompt(ContinualModel):
         frozen_group.add_argument("--use_clip_preprocess_eval", type=int, default=0, choices=[0, 1],
                                   help="Use CLIP's transform during eval instead of the default test transform?")
         frozen_group.add_argument("--ortho_split_val", type=int, default=0)
-        frozen_group.add_argument('--gr_mog_n_iters', type=int, default=500,
-                                  help="Number of EM iterations during fit for GR with MOG.")
+        frozen_group.add_argument('--gr_mog_n_iters', '--gr_mog_n_iters_second_stage', dest='gr_mog_n_iters_second_stage',
+                                  type=int, default=500, help="Number of EM iterations during fit for GR with MOG.")
         frozen_group.add_argument('--gr_mog_n_components', type=int, default=5,
                                   help="Number of components for GR with MOG.")
         frozen_group.add_argument('--batch_size_gr', type=int, default=128,
@@ -44,7 +44,7 @@ class SecondStageStarprompt(ContinualModel):
         frozen_group.add_argument('--prefix_tuning_prompt_len', type=int, default=5,
                                   help="Prompt length for prefix tuning. Used only if `--prompt_mode==concat`.")
 
-        ablation_group = parser.add_argument_group('Frozen hyperparameters')
+        ablation_group = parser.add_argument_group('Ablations hyperparameters')
         ablation_group.add_argument('--gr_model', type=str, default='mog', choices=['mog', 'gaussian'],
                                     help="Type of distribution model for Generative Replay. "
                                     "- `mog`: Mixture of Gaussian. "
@@ -64,12 +64,12 @@ class SecondStageStarprompt(ContinualModel):
         tunable_group = parser.add_argument_group('Tunable hyperparameters')
         tunable_group.add_argument("--lambda_ortho", type=float, default=10,
                                    help="orthogonality loss coefficient")
-        tunable_group.add_argument("--num_monte_carlo_gr", type=int, default=1,
-                                   help="how many times to sample from the dataset for alignment")
-        tunable_group.add_argument("--num_epochs_gr", type=int, default=10,
+        tunable_group.add_argument("--num_monte_carlo_gr", "--num_monte_carlo_gr_second_stage", dest="num_monte_carlo_gr_second_stage",
+                                   type=int, default=1, help="how many times to sample from the dataset for alignment")
+        tunable_group.add_argument("--num_epochs_gr", "--num_epochs_gr_second_stage", type=int, default=10,
                                    help="Num. of epochs for GR.")
-        tunable_group.add_argument("--learning_rate_gr", type=float, default=0.001,
-                                   help="Learning rate for GR.")
+        tunable_group.add_argument("--learning_rate_gr", "--learning_rate_gr_second_stage", dest="learning_rate_gr_second_stage",
+                                   type=float, default=0.001, help="Learning rate for GR.")
 
         # Very important parameter
         parser.add_argument('--keys_ckpt_path', type=str,
@@ -92,7 +92,8 @@ class SecondStageStarprompt(ContinualModel):
         self.net = Model(args,
                          backbone=self.net,
                          dataset=self.dataset,
-                         num_classes=self.num_classes)
+                         num_classes=self.num_classes,
+                         device=self.device)
 
         # REMOVE ALL TRACK RUNNING STATS FROM CLIP
         for m in self.net.modules():
@@ -110,7 +111,7 @@ class SecondStageStarprompt(ContinualModel):
 
         if self.args.gr_model == 'mog':
             return MixtureOfGaussiansModel(embed_dim, n_components=self.args.gr_mog_n_components,
-                                           n_iters=self.args.gr_mog_n_iters)
+                                           n_iters=self.args.gr_mog_n_iters_second_stage)
         else:
             return Gaussian(embed_dim)
 
@@ -167,12 +168,12 @@ class SecondStageStarprompt(ContinualModel):
 
         classifier = deepcopy(self.net.vit.head)
 
-        optim = torch.optim.SGD(lr=self.args.learning_rate_gr,
+        optim = torch.optim.SGD(lr=self.args.learning_rate_gr_second_stage,
                                 params=classifier.parameters(),
                                 momentum=0.0,
                                 weight_decay=0.0)
 
-        num_epochs = self.args.num_epochs_gr + (5 * self.current_task)
+        num_epochs = self.args.num_epochs_gr_second_stage + (5 * self.current_task)
 
         for e in range(num_epochs):
             self.train_alignment_epoch(classifier, optim)
@@ -187,8 +188,8 @@ class SecondStageStarprompt(ContinualModel):
 
         self.net.eval()
 
-        with tqdm(total=self.args.num_monte_carlo_gr * len(dataset.train_loader), desc='GR update statistics') as pbar:
-            for _ in range(self.args.num_monte_carlo_gr):
+        with tqdm(total=self.args.num_monte_carlo_gr_second_stage * len(dataset.train_loader), desc='GR update statistics') as pbar:
+            for _ in range(self.args.num_monte_carlo_gr_second_stage):
                 for i, data in enumerate(dataset.train_loader):
                     if self.args.debug_mode and i > 3 and min([len(v) for k, v in features_dict.items()]) > self.args.gr_mog_n_components:
                         break
@@ -310,7 +311,7 @@ class SecondStageStarprompt(ContinualModel):
         if self.epoch_iteration == 0:
             self.opt.zero_grad()
 
-        loss.backward()
+        (loss / self.args.virtual_bs_n).backward()
         if (self.epoch_iteration > 0 or self.args.virtual_bs_n == 1) and \
                 self.epoch_iteration % self.args.virtual_bs_n == 0:
             self.opt.step()

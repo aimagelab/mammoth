@@ -58,14 +58,14 @@ class Prompter(torch.nn.Module):
 
         embed_dim = self.clip_model.visual.output_dim
         self.distributions = torch.nn.ModuleList([MixtureOfGaussiansModel(embed_dim, n_components=self.args.gr_mog_n_components,
-                                                                          n_iters=self.args.gr_mog_n_iters)
+                                                                          n_iters=self.args.gr_mog_n_iters_first_stage)
                                                   for _ in range(self.num_classes)]).to(self.device)
 
     def compute_ortho_loss(self, cur_classes: int, frozen_past_classes=0) -> torch.Tensor:
 
         # (num_classes, 1, clip_size)
         cur_coop_p = self.prompt_parameters[frozen_past_classes:cur_classes]
-        ortho_loss_coop = 0
+        ortho_loss_coop = torch.tensor(0.0, device=self.device)
         if frozen_past_classes > 0:
             past_coop_p = self.prompt_parameters[:frozen_past_classes].detach()
             ortho_loss_coop = (torch.matmul(cur_coop_p.permute(1, 0, 2), past_coop_p.permute(1, 2, 0))**2).mean()
@@ -96,7 +96,7 @@ class Prompter(torch.nn.Module):
 
         dl = self.create_features_dataset(current_task)
 
-        with tqdm(enumerate(dl), total=len(dl), desc=f'GR epoch {epoch + 1}/{self.args.num_epochs_gr}') as pbar:
+        with tqdm(enumerate(dl), total=len(dl), desc=f'GR epoch {epoch + 1}/{self.args.num_epochs_gr_first_stage}') as pbar:
             for i, (image_features, labels) in pbar:
                 if self.args.debug_mode and i > 3:
                     break
@@ -122,10 +122,10 @@ class Prompter(torch.nn.Module):
                 pbar.set_postfix({'loss': loss.item()})
 
     def align(self, current_task: int):
-        optim = torch.optim.SGD(lr=self.args.learning_rate_gr, params=[self.prompt_parameters],
+        optim = torch.optim.SGD(lr=self.args.learning_rate_gr_first_stage, params=[self.prompt_parameters],
                                 momentum=0.0, weight_decay=0.0)
 
-        for e in range(self.args.num_epochs_gr):
+        for e in range(self.args.num_epochs_gr_first_stage):
             self.train_alignment_epoch(optim, current_task=current_task, epoch=e)
 
     @torch.no_grad()
@@ -137,9 +137,9 @@ class Prompter(torch.nn.Module):
         was_training = self.training
         self.eval()
 
-        with tqdm(total=self.args.num_monte_carlo_gr * len(dataset.train_loader),
+        with tqdm(total=self.args.num_monte_carlo_gr_first_stage * len(dataset.train_loader),
                   desc='Updating statistics for first stage Generative Replay') as pbar:
-            for _ in range(self.args.num_monte_carlo_gr):
+            for _ in range(self.args.num_monte_carlo_gr_first_stage):
                 for i, data in enumerate(dataset.train_loader):
                     if self.args.debug_mode == 1 and i > 3 and min([len(v) for k, v in features_dict.items()]) > self.args.gr_mog_n_components:
                         break
