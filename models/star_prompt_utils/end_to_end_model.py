@@ -126,9 +126,9 @@ class STARPromptModel(nn.Module):
                                         verbose=False, batch_size=self.args.batch_size_gr,
                                         shuffle=True, num_workers=0)
 
-    def train_alignment_epoch(self, classifier: torch.nn.Module, optim: torch.optim.Optimizer, n_seen_classes: int, loss_fn):
+    def train_alignment_epoch(self, classifier: torch.nn.Module, optim: torch.optim.Optimizer, n_seen_classes: int, current_task: int, loss_fn):
 
-        dl = self.create_features_dataset()
+        dl = self.create_features_dataset(current_task)
 
         with tqdm(enumerate(dl), total=len(dl), desc='GR epoch') as pbar:
             for i, (x, labels) in pbar:
@@ -163,7 +163,7 @@ class STARPromptModel(nn.Module):
         num_epochs = self.args.num_epochs_gr_second_stage + (5 * current_task)
 
         for e in range(num_epochs):
-            self.train_alignment_epoch(classifier, optim, n_seen_classes=n_seen_classes, loss_fn=loss_fn)
+            self.train_alignment_epoch(classifier, optim, n_seen_classes=n_seen_classes, current_task=current_task, loss_fn=loss_fn)
 
         self.second_stage.vit.head.weight.data.copy_(classifier.weight.data)
         self.second_stage.vit.head.bias.data.copy_(classifier.bias.data)

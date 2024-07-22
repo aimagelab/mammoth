@@ -84,10 +84,15 @@ class STARPrompt(ContinualModel):
         first_stage_optim_group.add_argument("--first_stage_lr", type=float, default=0.002, help="First stage learning rate")
         first_stage_optim_group.add_argument("--first_stage_momentum", type=float, default=0, help="First stage momentum")
         first_stage_optim_group.add_argument("--first_stage_weight_decay", type=float, default=0, help="First stage weight decay")
+        first_stage_optim_group.add_argument("--first_stage_epochs", type=float, help="First stage epochs. If not set, it will be the same as `n_epochs`.")
 
         return parser
 
     def __init__(self, backbone, loss, args, transform):
+        if not hasattr(args, 'first_stage_epochs') or args.first_stage_epochs is None:
+            print("INFO: `first_stage_epochs` not set. Setting it to `n_epochs`.")
+            args.first_stage_epochs = args.n_epochs
+
         super().__init__(backbone, loss, args, transform)
 
         self.net = STARPromptModel(args,
