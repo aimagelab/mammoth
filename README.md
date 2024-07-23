@@ -37,7 +37,7 @@ Join our Discord Server for all your Mammoth-related questions → ![Discord Shi
 
 ## Models
 
-Mammoth currently supports **40** models, with new releases covering the main competitors in literature.
+Mammoth currently supports **41** models, with new releases covering the main competitors in literature.
 
 - Efficient Lifelong Learning with A-GEM (A-GEM, A-GEM-R - A-GEM with reservoir buffer): `agem`, `agem_r`
 - Bias Correction (BiC): `bic`.
@@ -68,7 +68,7 @@ Mammoth currently supports **40** models, with new releases covering the main co
 - eXtended-DER (X-DER): `xder` (full version), `xder_ce` (X-DER with CE), `xder_rpc` (X-DER with RPC).
 - AttriCLIP: `attriclip`.
 - Slow Learner with Classifier Alignment (SLCA): `slca`.
-- Semantic Two-level Additive Residual Prompt (STAR-Prompt): `first_stage_starprompt` and `second_stage_starprompt`. *(stay tuned for the end-to-end model version)*
+- Semantic Two-level Additive Residual Prompt (STAR-Prompt): `starprompt`. Also includes the first-stage only (`first_stage_starprompt`) and second-stage only (`second_stage_starprompt`) versions.
 
 ## Datasets
 

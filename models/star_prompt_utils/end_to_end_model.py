@@ -242,7 +242,7 @@ class STARPromptModel(nn.Module):
                                    weight_decay=self.args.first_stage_weight_decay)
 
         # mini train loop
-        for epoch in range(self.args.n_epochs):
+        for epoch in range(self.args.first_stage_epochs):
             for i, data in enumerate(dataset.train_loader):
                 inputs, labels = data[0].to(self.device), data[1].to(self.device, dtype=torch.long)
                 loss = torch.tensor(0.).to(self.device)

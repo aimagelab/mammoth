@@ -79,7 +79,7 @@ def get_alloc_memory_all_devices(return_all=False) -> list[int]:
         return gpu_memory_allocated
 
 
-def get_device() -> torch.device:
+def get_device(avail_devices: str = None) -> torch.device:
     """
     Returns the least used GPU device if available else MPS or CPU.
     """

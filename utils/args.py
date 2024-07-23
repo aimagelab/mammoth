@@ -99,6 +99,12 @@ def add_management_args(parser: ArgumentParser) -> None:
                            help='Permute classes before splitting into tasks? This applies the seed before permuting if the `seed` argument is present.')
     mng_group.add_argument('--base_path', type=str, default="./data/",
                            help='The base path where to save datasets, logs, results.')
+    mng_group.add_argument('--device', type=str,
+                           help='The device (or devices) available to use for training. '
+                           'More than one device can be specified by separating them with a comma. '
+                           'If not provided, the code will use the least used GPU available (if there are any), otherwise the CPU. '
+                           'MPS is supported and is automatically used if no GPU is available and MPS is supported. '
+                           'If more than one GPU is available, Mammoth will use the least used one if `--distributed=no`.')
     mng_group.add_argument('--notes', type=str, default=None,
                            help='Helper argument to include notes for this run. Example: distinguish between different versions of a model and allow separation of results')
     mng_group.add_argument('--eval_epochs', type=int, default=None,

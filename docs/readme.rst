@@ -71,7 +71,7 @@ Setup
 Models
 ------
 
-Mammoth currently supports **40** models, with new releases covering the main competitors in literature.
+Mammoth currently supports **41** models, with new releases covering the main competitors in literature.
 
 Datasets
 --------
