@@ -43,7 +43,8 @@ for experiment in grid_combinations:
             for k, v in zip(combos.keys(), c):
                 if v is None:
                     continue
-if isinstance(k,                 if )                    for i in range(len(k)):
+                if isinstance(k, (list, tuple)):
+                    for i in range(len(k)):
                         ll += f" --{k[i]}={v[i]}"
                 else:
                     ll += f" --{k}={v}"

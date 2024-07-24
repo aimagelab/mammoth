@@ -20,7 +20,7 @@ with suppress(ImportError):
     import wandb
 
 
-def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
+def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT", future=False):
     """
     Logs the accuracy values and other metrics.
 
@@ -35,7 +35,10 @@ def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
         epoch: The epoch number (optional).
         prefix: The prefix for the metrics (default="RESULT").
     """
-    mean_acc = print_mean_accuracy(accs, t + 1 if isinstance(t, (float, int)) else t, setting, joint=args.joint, epoch=epoch)
+
+    mean_acc = print_mean_accuracy(accs, t + 1 if isinstance(t, (float, int)) else t,
+                                   setting, joint=args.joint,
+                                   epoch=epoch, future=future)
 
     if not args.disable_log:
         logger.log(mean_acc)
@@ -43,6 +46,8 @@ def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
 
     if not args.nowand:
         postfix = "" if epoch is None else f"_epoch_{epoch}"
+        if future:
+            prefix += "_transf"
         if isinstance(mean_acc, float):  # domain or gcl
             d2 = {f'{prefix}_domain_mean_accs{postfix}': mean_acc,
                   **{f'{prefix}_domain_acc_{i}{postfix}': a for i, a in enumerate(accs[0])},
@@ -57,7 +62,7 @@ def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
 
 
 def print_mean_accuracy(accs: np.ndarray, task_number: int,
-                        setting: str, joint=False, epoch=None) -> None:
+                        setting: str, joint=False, epoch=None, future=False) -> None:
     """
     Prints the mean accuracy on stderr.
 
@@ -86,6 +91,7 @@ def print_mean_accuracy(accs: np.ndarray, task_number: int,
             print('\tRaw accuracy values: Class-IL {} | Task-IL {}'.format(accs[0], accs[1]), file=sys.stderr)
     else:
         prefix = "Accuracy" if epoch is None else f"Accuracy (epoch {epoch})"
+        prefix = "Future " + prefix if future else prefix
         if setting == 'domain-il' or setting == 'general-continual':
             mean_acc, _ = mean_acc
             print('{} for {} task(s): [Domain-IL]: {} %'.format(prefix,
@@ -96,7 +102,7 @@ def print_mean_accuracy(accs: np.ndarray, task_number: int,
             print('{} for {} task(s): \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, task_number, round(
                 mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
             print('\tRaw accuracy values: Class-IL {} | Task-IL {}'.format(accs[0], accs[1]), file=sys.stderr)
-
+    print('\n', file=sys.stderr)
     return mean_acc
 
 

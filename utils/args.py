@@ -35,7 +35,8 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     exp_group.add_argument('--lr', type=float, required=True, help='Learning rate.')
     exp_group.add_argument('--batch_size', type=int, help='Batch size.')
     exp_group.add_argument('--label_perc', type=float, default=1, help='Percentage in (0-1] of labeled examples per task.')
-    exp_group.add_argument('--joint', type=int, choices=[0, 1], default=0, help='Train model on Joint (single task)?')
+    exp_group.add_argument('--joint', type=int, choices=(0, 1), default=0, help='Train model on Joint (single task)?')
+    exp_group.add_argument('--eval_future', type=int, choices=(0, 1), default=0, help='Evaluate future tasks?')
 
     validation_group = parser.add_argument_group('Validation and fitting arguments', 'Arguments used to define the validation strategy and the method used to fit the model.')
 

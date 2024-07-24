@@ -16,6 +16,7 @@ To run the script, execute it directly or import it as a module and call the `ma
 # LICENSE file in the root directory of this source tree.
 
 # needed (don't change it)
+import logging
 import numpy  # noqa
 import os
 import sys
@@ -150,8 +151,8 @@ def parse_args():
     assert 0 < args.label_perc <= 1, "label_perc must be in (0, 1]"
 
     if args.validation is not None:
-        print(f"INFO: Using {args.validation}% of the training set as validation set.", file=sys.stderr)
-        print(f"INFO: Validation will be computed with mode `{args.validation_mode}`.", file=sys.stderr)
+        logging.info(f"Using {args.validation}% of the training set as validation set.")
+        logging.info(f"Validation will be computed with mode `{args.validation_mode}`.")
 
     return args
 
@@ -160,6 +161,7 @@ def main(args=None):
     from models import get_model
     from datasets import ContinualDataset, get_dataset
     from utils.training import train
+    from models.utils.future_model import FutureModel
 
     lecun_fix()
     if args is None:
@@ -173,8 +175,8 @@ def main(args=None):
 
     if args.code_optimization != 0:
         torch.set_float32_matmul_precision('high' if args.code_optimization == 1 else 'medium')
-        print("INFO: code_optimization is set to", args.code_optimization, file=sys.stderr)
-        print(f"Using {torch.get_float32_matmul_precision()} precision for matmul.", file=sys.stderr)
+        logging.info("Code_optimization is set to", args.code_optimization)
+        logging.info(f"Using {torch.get_float32_matmul_precision()} precision for matmul.")
 
         if args.code_optimization == 2:
             if not torch.cuda.is_bf16_supported():
@@ -218,6 +220,7 @@ def main(args=None):
     loss = dataset.get_loss()
     model = get_model(args, backbone, loss, dataset.get_transform())
     # model = torch.compile(model)
+    assert isinstance(model, FutureModel) or not args.eval_future, "Model does not support future_forward."
 
     if args.distributed == 'dp':
         if args.batch_size < torch.cuda.device_count():
