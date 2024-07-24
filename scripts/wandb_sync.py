@@ -1,10 +1,11 @@
 import argparse
-from functools import partial
+import logging
 import os
+from functools import partial
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
 from tqdm import tqdm
-from multiprocessing.pool import ThreadPool
 
 if 'scripts' in os.path.dirname(os.path.abspath(__file__)):
     mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -58,7 +59,7 @@ if __name__ == "__main__":
         print("Limiting to", args.limit, "runs")
 
     if args.clean_after:
-        print("INFO: Cleaning after syncing")
+        logging.info("Cleaning after syncing")
 
     print(len(runlist), "runs to sync")
 

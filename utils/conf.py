@@ -7,12 +7,14 @@ This module contains utility functions for configuration settings.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from functools import partial
+import logging
 import os
-import sys
 import random
-import torch
+import sys
+from functools import partial
+
 import numpy as np
+import torch
 from torch.utils.data import DataLoader
 
 
@@ -154,7 +156,7 @@ def worker_init_fn(worker_id, num_workers, seed, rank=1):
     random.seed(worker_seed)
 
 
-def create_seeded_dataloader(args, dataset, verbose=True, **dataloader_args) -> DataLoader:
+def create_seeded_dataloader(args, dataset, **dataloader_args) -> DataLoader:
     """
     Creates a dataloader object from a dataset, setting the seeds for the workers (if `--seed` is set).
 
@@ -171,8 +173,7 @@ def create_seeded_dataloader(args, dataset, verbose=True, **dataloader_args) -> 
     n_cpus = 4 if not hasattr(os, 'sched_getaffinity') else len(os.sched_getaffinity(0))
     num_workers = n_cpus if args.num_workers is None else args.num_workers
     dataloader_args['num_workers'] = num_workers if 'num_workers' not in dataloader_args else dataloader_args['num_workers']
-    if verbose:
-        print(f'INFO: Using {dataloader_args["num_workers"]} workers for the dataloader.')
+    logging.info(f'Using {dataloader_args["num_workers"]} workers for the dataloader.')
     if args.seed is not None:
         worker_generator = torch.Generator()
         worker_generator.manual_seed(args.seed)

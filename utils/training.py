@@ -8,9 +8,11 @@ import math
 import os
 import sys
 from argparse import Namespace
+from time import time
 from typing import Iterable, Tuple
 
 import torch
+from tqdm import tqdm
 from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
 from datasets.utils.gcl_dataset import GCLDataset
@@ -19,7 +21,6 @@ from models.utils.continual_model import ContinualModel
 from utils.checkpoints import mammoth_load_checkpoint
 from utils.loggers import *
 from utils.stats import track_system_stats
-from utils.status import ProgressBar
 
 try:
     import wandb
@@ -66,6 +67,8 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, retur
     n_classes = dataset.get_offsets()[1]
     loss_fn = dataset.get_loss()
     avg_loss = 0
+    total_len = sum(len(x) for x in dataset.test_loaders) if hasattr(dataset.test_loaders[0], '__len__') else None
+    pbar = tqdm(dataset.test_loaders, total=total_len, desc='Evaluating')
     for k, test_loader in enumerate(dataset.test_loaders):
         if last and k < len(dataset.test_loaders) - 1:
             continue
@@ -84,7 +87,10 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, retur
             if 'class-il' not in model.COMPATIBILITY and 'general-continual' not in model.COMPATIBILITY:
                 outputs = model(inputs, k)
             else:
-                outputs = model(inputs)
+                if model.args.eval_future and k >= model.current_task:
+                    outputs = model.future_forward(inputs)
+                else:
+                    outputs = model(inputs)
 
             if return_loss:
                 loss = loss_fn(outputs, labels)
@@ -94,6 +100,9 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, retur
             correct += torch.sum(pred == labels).item()
             total += labels.shape[0]
             i += 1
+            pbar.set_postfix({f'acc_task_{k+1}': max(0, correct / total * 100)})
+            pbar.set_description(f"Evaluating Task {k+1}")
+            pbar.update(1)
 
             if dataset.SETTING == 'class-il':
                 mask_classes(outputs, dataset, k)
@@ -103,6 +112,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, retur
         accs.append(correct / total * 100
                     if 'class-il' in model.COMPATIBILITY or 'general-continual' in model.COMPATIBILITY else 0)
         accs_mask_classes.append(correct_mask_classes / total * 100)
+    pbar.close()
 
     model.net.train(status)
     if return_loss:
@@ -129,7 +139,6 @@ def initialize_wandb(args: Namespace) -> None:
 
 def train_single_epoch(model: ContinualModel,
                        train_loader: Iterable,
-                       progress_bar: ProgressBar,
                        args: Namespace,
                        epoch: int,
                        current_task: int,
@@ -142,7 +151,6 @@ def train_single_epoch(model: ContinualModel,
     Args:
         model: the model to be trained
         train_loader: the data loader for the training set
-        progress_bar: the progress bar for the current epoch
         args: the arguments from the command line
         epoch: the current epoch
         current_task: the current task index
@@ -156,6 +164,9 @@ def train_single_epoch(model: ContinualModel,
     train_iter = iter(train_loader)
 
     i = 0
+    previous_time = time()
+
+    pbar = tqdm(train_iter, total=data_len, desc=f"Task {current_task + 1} - Epoch {epoch + 1}")
     while True:
         try:
             data = next(train_iter)
@@ -163,7 +174,7 @@ def train_single_epoch(model: ContinualModel,
             break
         if args.debug_mode and i > model.get_debug_iters():
             break
-        if args.fitting_mode == 'iters' and progress_bar.current_task_iter >= model.args.n_iters:
+        if args.fitting_mode == 'iters' and model.task_iteration >= model.args.n_iters:
             break
 
         if hasattr(train_loader.dataset, 'logits'):
@@ -182,14 +193,17 @@ def train_single_epoch(model: ContinualModel,
 
         if args.code_optimization == 0 and 'cuda' in str(args.device):
             torch.cuda.synchronize()
-        progress_bar.prog(i, data_len, epoch, current_task, loss)
         system_tracker()
         i += 1
 
+        time_diff = time() - previous_time
+        previous_time = time()
+        ep_h = 3600 / (data_len * time_diff) if data_len else 'N/A'
+        pbar.set_postfix({'loss': loss} if ep_h == 'N/A' else {'loss': loss, 'ep/h': ep_h})
+        pbar.update()
+
     if scheduler is not None:
         scheduler.step()
-
-    return i
 
 
 def train(model: ContinualModel, dataset: ContinualDataset,
@@ -216,6 +230,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     with track_system_stats(logger) as system_tracker:
         results, results_mask_classes = [], []
 
+        if args.eval_future:
+            results_transf, results_mask_classes_transf = [], []
+
         if args.start_from is not None:
             for i in range(args.start_from):
                 train_loader, _ = dataset.get_data_loaders()
@@ -231,8 +248,6 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             print('Checkpoint Loaded!')
 
-        progress_bar = ProgressBar(joint=args.joint, verbose=not args.non_verbose)
-
         if args.enable_other_metrics:
             dataset_copy = get_dataset(args)
             for t in range(dataset.N_TASKS):
@@ -245,15 +260,25 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         start_task = 0 if args.start_from is None else args.start_from
         end_task = dataset.N_TASKS if args.stop_after is None else args.stop_after
 
+        if args.eval_future:
+            eval_dataset = get_dataset(args)
+            for _ in range(dataset.N_TASKS):
+                eval_dataset.get_data_loaders()
+                model.change_transform(eval_dataset)
+                del eval_dataset.train_loader
+        else:
+            eval_dataset = dataset
+
         torch.cuda.empty_cache()
         for t in range(start_task, end_task):
             model.net.train()
-            train_loader, test_loader = dataset.get_data_loaders()
+            train_loader, _ = dataset.get_data_loaders()
+
             model.meta_begin_task(dataset)
 
             if not args.inference_only and args.n_epochs > 0:
                 if t and args.enable_other_metrics:
-                    accs = evaluate(model, dataset, last=True)
+                    accs = evaluate(model, eval_dataset, last=True)
                     results[t - 1] = results[t - 1] + accs[0]
                     if dataset.SETTING == 'class-il':
                         results_mask_classes[t - 1] = results_mask_classes[t - 1] + accs[1]
@@ -269,16 +294,16 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     if not isinstance(dataset, GCLDataset):
                         data_len = len(train_loader)
 
-                    train_single_epoch(model, train_loader, progress_bar, args, current_task=t, epoch=epoch,
+                    train_single_epoch(model, train_loader, args, current_task=t, epoch=epoch,
                                        system_tracker=system_tracker, data_len=data_len, scheduler=scheduler)
 
                     epoch += 1
                     if args.fitting_mode == 'epochs' and epoch >= model.args.n_epochs:
                         break
-                    elif args.fitting_mode == 'iters' and progress_bar.current_task_iter >= model.args.n_iters:
+                    elif args.fitting_mode == 'iters' and model.task_iteration >= model.args.n_iters:
                         break
                     elif args.fitting_mode == 'early_stopping' and epoch % args.early_stopping_freq == 0 and epoch > 0:
-                        epoch_accs, _, epoch_loss = evaluate(model, dataset, return_loss=True, last=True)
+                        epoch_accs, _, epoch_loss = evaluate(model, eval_dataset, return_loss=True, last=True)
 
                         if args.early_stopping_metric == 'accuracy':
                             ea_metric = np.mean(epoch_accs)  # Higher accuracy is better
@@ -304,19 +329,30 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                             cur_stopping_patience = args.early_stopping_patience
 
                     if args.eval_epochs is not None and (epoch > 0 or args.eval_epochs == 1) and epoch % args.eval_epochs == 0 and epoch < model.args.n_epochs:
-                        epoch_accs = evaluate(model, dataset)
+                        epoch_accs = evaluate(model, eval_dataset)
 
                         log_accs(args, logger, epoch_accs, t, dataset.SETTING, epoch=epoch)
 
-            progress_bar.reset()
-
             model.meta_end_task(dataset)
 
-            accs = evaluate(model, dataset)
+            accs = evaluate(model, eval_dataset)
+
+            if args.eval_future and t < dataset.N_TASKS - 1:
+                transf_accs = accs[0][t + 1:], accs[1][t + 1:]
+                accs = accs[0][:t + 1], accs[1][:t + 1]
+                results_transf.append(transf_accs[0])
+                results_mask_classes_transf.append(transf_accs[1])
+
             results.append(accs[0])
             results_mask_classes.append(accs[1])
 
             log_accs(args, logger, accs, t, dataset.SETTING)
+
+            if args.eval_future:
+                avg_transf = np.mean([np.mean(task_) for task_ in results_transf])
+                print(f"Transfer Metrics  -  AVG Transfer {avg_transf:.2f}")
+                if t < dataset.N_TASKS - 1:
+                    log_accs(args, logger, transf_accs, t, dataset.SETTING, future=True)
 
             if args.savecheck:
                 save_obj = {
@@ -337,8 +373,6 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     checkpoint_name = f'checkpoints/{args.ckpt_name}_joint.pt' if args.joint else f'checkpoints/{args.ckpt_name}_last.pt'
                 if checkpoint_name is not None:
                     torch.save(save_obj, checkpoint_name)
-
-        del progress_bar
 
         if args.validation:
             # Final evaluation on the real test set

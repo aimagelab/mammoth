@@ -89,7 +89,7 @@ class Prompter(torch.nn.Module):
 
         features = torch.cat(features, dim=0)
         labels = torch.cat(labels, dim=0).long()
-        return create_seeded_dataloader(self.args, TensorDataset(features, labels), verbose=False, num_workers=0, batch_size=self.args.batch_size_gr, shuffle=True)
+        return create_seeded_dataloader(self.args, TensorDataset(features, labels), num_workers=0, batch_size=self.args.batch_size_gr, shuffle=True)
 
     def train_alignment_epoch(self, optim: torch.optim.Optimizer, current_task: int, epoch: int = 0):
         offset_1, offset_2 = self.dataset.get_offsets(current_task)

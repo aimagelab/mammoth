@@ -1,18 +1,16 @@
-import torch
+import logging
 from argparse import ArgumentParser
 
-try:
-    import wandb
-except ImportError:
-    wandb = None
+import torch
+
+from models.star_prompt_utils.end_to_end_model import STARPromptModel
+from models.utils.continual_model import ContinualModel
+from utils.schedulers import CosineSchedule
+
 try:
     import clip
 except ImportError:
     raise ImportError("Please install the CLIP package by running: pip install git+https://github.com/openai/CLIP.git (requires also `huggingface-hub`)")
-
-from utils.schedulers import CosineSchedule
-from models.utils.continual_model import ContinualModel
-from models.star_prompt_utils.end_to_end_model import STARPromptModel
 
 
 class STARPrompt(ContinualModel):
@@ -90,7 +88,7 @@ class STARPrompt(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform):
         if not hasattr(args, 'first_stage_epochs') or args.first_stage_epochs is None:
-            print("INFO: `first_stage_epochs` not set. Setting it to `n_epochs`.")
+            logging.info("`first_stage_epochs` not set. Setting it to `n_epochs`.")
             args.first_stage_epochs = args.n_epochs
 
         super().__init__(backbone, loss, args, transform)

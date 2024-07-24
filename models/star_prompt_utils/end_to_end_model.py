@@ -123,7 +123,7 @@ class STARPromptModel(nn.Module):
         labels = torch.cat(labels, dim=0).long()
 
         return create_seeded_dataloader(self.args, TensorDataset(features, labels),
-                                        verbose=False, batch_size=self.args.batch_size_gr,
+                                        batch_size=self.args.batch_size_gr,
                                         shuffle=True, num_workers=0)
 
     def train_alignment_epoch(self, classifier: torch.nn.Module, optim: torch.optim.Optimizer, n_seen_classes: int, current_task: int, loss_fn):
