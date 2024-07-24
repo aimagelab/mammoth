@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 import torch
@@ -23,10 +24,8 @@ class FirstStageStarprompt(ContinualModel):
 
         frozen_group = parser.add_argument_group('Frozen hyperparameters')
         frozen_group.add_argument("--virtual_bs_n", type=int, default=1, help="Virtual batch size iterations")
-        frozen_group.add_argument("--num_monte_carlo_gr", "--num_monte_carlo_gr_first_stage", dest="num_monte_carlo_gr_first_stage",
-                                  type=int, default=5, help="How many times to sample from the dataset for Generative Replay")
         frozen_group.add_argument('--gr_mog_n_iters', '--gr_mog_n_iters_first_stage', dest='gr_mog_n_iters_first_stage',
-                                  type=int, default=200, help="Number of EM iterations during fit for GR with MOG.")
+                                  type=int, default=500, help="Number of EM iterations during fit for GR with MOG.")
         frozen_group.add_argument('--gr_mog_n_components', type=int, default=5,
                                   help="Number of components for Generative Replay with MOG.")
         frozen_group.add_argument("--enable_gr", type=int, default=1, choices=[0, 1],
@@ -38,6 +37,8 @@ class FirstStageStarprompt(ContinualModel):
 
         # Tunable hyperparameters
         tunable_group = parser.add_argument_group('Tunable hyperparameters')
+        tunable_group.add_argument("--num_monte_carlo_gr", "--num_monte_carlo_gr_first_stage", dest="num_monte_carlo_gr_first_stage",
+                                   type=int, default=2, help="How many times to sample from the dataset for Generative Replay")
         tunable_group.add_argument("--learning_rate_gr", "--learning_rate_gr_first_stage", dest="learning_rate_gr_first_stage",
                                    type=float, default=0.05, help="Learning rate for Generative Replay.")
         tunable_group.add_argument("--lambda_ortho_coop", type=float, default=30,
@@ -56,7 +57,7 @@ class FirstStageStarprompt(ContinualModel):
         return parser
 
     def __init__(self, backbone, loss, args, transform):
-        print("WARNING: The first stage of STAR-Prompt ignores the backbone as it uses CLIP")
+        logging.warning("The first stage of STAR-Prompt ignores the backbone as it uses CLIP")
         del backbone
 
         super().__init__(None, loss, args, transform)

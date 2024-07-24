@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 import os
 import sys
 import zipfile
@@ -144,7 +145,7 @@ class SequentialEuroSatRgb(ContinualDataset):
         try:
             classes = MyEuroSat.get_class_names()
         except BaseException:
-            print("WARNING: dataset not loaded yet -- loading dataset...")
+            logging.warning("dataset not loaded yet -- loading dataset...")
             MyEuroSat(base_path() + 'eurosat', train=True,
                                     transform=None)
             classes = MyEuroSat.get_class_names()

@@ -10,6 +10,10 @@ try:
     import clip
 except ImportError:
     raise ImportError("Please install the CLIP package by running: pip install git+https://github.com/openai/CLIP.git")
+try:
+    import wandb
+except ImportError:
+    wandb = None
 
 from datasets.utils.continual_dataset import ContinualDataset
 from models.star_prompt_utils.generative_replay import MixtureOfGaussiansModel
@@ -120,6 +124,10 @@ class Prompter(torch.nn.Module):
                 optim.step()
 
                 pbar.set_postfix({'loss': loss.item()})
+
+                if not self.args.nowand:
+                    assert wandb is not None, "wandb is not installed."
+                    wandb.log({'ca_loss': loss.item(), 'ca_lr': optim.param_groups[0]['lr']})
 
     def align(self, current_task: int):
         optim = torch.optim.SGD(lr=self.args.learning_rate_gr_first_stage, params=[self.prompt_parameters],

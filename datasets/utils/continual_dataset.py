@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from argparse import Namespace
+import logging
 import sys
 from typing import List, Tuple
 
@@ -100,7 +101,7 @@ class ContinualDataset(object):
                 setattr(self.args, k, v)
             else:
                 if getattr(self.args, k) != v:
-                    print('Warning: {} set to {} instead of {}.'.format(k, getattr(self.args, k), v), file=sys.stderr)
+                    logging.warning('{} set to {} instead of {}.'.format(k, getattr(self.args, k), v))
 
         return self.args
 

@@ -66,8 +66,8 @@ class SecondStageStarprompt(ContinualModel):
                                    help="orthogonality loss coefficient")
         tunable_group.add_argument("--num_monte_carlo_gr", "--num_monte_carlo_gr_second_stage", dest="num_monte_carlo_gr_second_stage",
                                    type=int, default=1, help="how many times to sample from the dataset for alignment")
-        tunable_group.add_argument("--num_epochs_gr", "--num_epochs_gr_second_stage", type=int, default=10,
-                                   help="Num. of epochs for GR.")
+        tunable_group.add_argument("--num_epochs_gr", "--num_epochs_gr_second_stage", dest="num_epochs_gr_second_stage",
+                                   type=int, default=10, help="Num. of epochs for GR.")
         tunable_group.add_argument("--learning_rate_gr", "--learning_rate_gr_second_stage", dest="learning_rate_gr_second_stage",
                                    type=float, default=0.001, help="Learning rate for GR.")
 
@@ -255,7 +255,6 @@ class SecondStageStarprompt(ContinualModel):
         dataset.test_loaders[-1].dataset.transform = RepeatedTransform([dataset.test_loaders[-1].dataset.transform, self.net.prompter.clip_preprocess])
 
         # NOTE: Remove these comments if you want to check if the keys are loaded correctly and results are the same as the first stage
-        # from utils.augmentations import RepeatedTransform
         # tot_data, tot_corr = 0, 0
         # for i, ts in enumerate(dataset.test_loaders):
         #     task_tot, task_corr = 0, 0
@@ -312,6 +311,7 @@ class SecondStageStarprompt(ContinualModel):
             self.opt.zero_grad()
 
         (loss / self.args.virtual_bs_n).backward()
+        # loss.backward()
         if (self.epoch_iteration > 0 or self.args.virtual_bs_n == 1) and \
                 self.epoch_iteration % self.args.virtual_bs_n == 0:
             self.opt.step()

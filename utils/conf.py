@@ -13,6 +13,7 @@ import random
 import sys
 from functools import partial
 
+from typing import List
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
@@ -30,7 +31,7 @@ def warn_once(*msg):
         warn_once.warned = set()
     if msg not in warn_once.warned:
         warn_once.warned.add(msg)
-        print(msg, file=sys.stderr)
+        logging.warning(msg)
 
 
 def _get_gpu_memory_pynvml_all_processes(device_id: int = 0) -> int:
@@ -85,24 +86,29 @@ def get_device(avail_devices: str = None) -> torch.device:
     """
     Returns the least used GPU device if available else MPS or CPU.
     """
-    def _get_device():
+    def _get_device(avail_devices: List[int] = None) -> torch.device:
         # get least used gpu by used memory
-        if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+        if torch.cuda.is_available() and torch.cuda.device_count() > 0 and len(avail_devices) > 0:
             gpu_memory = get_alloc_memory_all_devices()
-            device = torch.device(f'cuda:{np.argmin(gpu_memory)}')
+            gpu_memory = [gpu_memory[i] for i in avail_devices]
+            device = torch.device(f'cuda:{avail_devices[np.argmin(gpu_memory)]}')
             return device
         try:
             if torch.backends.mps.is_available() and torch.backends.mps.is_built():
-                print("WARNING: MSP support is still experimental. Use at your own risk!")
+                logging.warning("MSP support is still experimental. Use at your own risk!")
                 return torch.device("mps")
         except BaseException:
-            print("WARNING: Something went wrong with MPS. Using CPU.")
+            logging.error("Something went wrong with MPS. Using CPU.")
 
         return torch.device("cpu")
 
     # Permanently store the chosen device
     if not hasattr(get_device, 'device'):
-        get_device.device = _get_device()
+        if avail_devices is not None:
+            avail_devices = [int(d) for d in avail_devices.split(',')]
+        else:
+            avail_devices = list(range(torch.cuda.device_count())) if torch.cuda.is_available() else []
+        get_device.device = _get_device(avail_devices=avail_devices)
         print(f'Using device {get_device.device}')
 
     return get_device.device

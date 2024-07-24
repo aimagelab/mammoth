@@ -410,7 +410,7 @@ class Model(nn.Module):
 
         return self
 
-    def forward(self, x: torch.Tensor, cur_classes: int, frozen_past_classes=0, query_x=None, return_features=False) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, cur_classes: int, frozen_past_classes=0, query_x=None, return_features=False, return_query=False) -> torch.Tensor:
         """
         Compute the forward of the second-stage of STAR-Prompt.
         Classes from `frozen_past_classes` to `cur_classes` will have a gradient, while all those before `frozen_past_classes` will be detached.
@@ -424,6 +424,7 @@ class Model(nn.Module):
             frozen_past_classes: the number of classes from the past tasks that will be frozen
             query_x: (optional) the query tensor for the CLIP's visual encoder
             return_features: if True, the features from the Vision Transformer will be returned instead of the classification output
+            return_query: if True, the query tensor will be returned with the output
         """
         enable_renorm = query_x is None
         query_x = x if query_x is None else query_x
@@ -433,4 +434,6 @@ class Model(nn.Module):
             return features
 
         out = self.vit.forward_head(features)
+        if return_query:
+            return out, clip_query
         return out

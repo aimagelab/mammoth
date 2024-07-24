@@ -6,6 +6,7 @@ Note:
     The backbone is a ViT-B/16 pretrained on Imagenet 21k and finetuned on ImageNet 1k.
 """
 
+import logging
 import timm
 from utils.args import *
 from models.utils.continual_model import ContinualModel
@@ -32,7 +33,7 @@ class CodaPrompt(ContinualModel):
     def __init__(self, backbone, loss, args, transform):
         del backbone
         print("-" * 20)
-        print(f"WARNING: CODA-Prompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
+        logging.warning(f"CODA-Prompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
         print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
         print("-" * 20)
 

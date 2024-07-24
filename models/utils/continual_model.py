@@ -24,6 +24,7 @@ The `autolog_wandb` method is used to automatically log to wandb all variables s
 # LICENSE file in the root directory of this source tree.
 
 from abc import abstractmethod
+import logging
 import sys
 from argparse import ArgumentParser, Namespace
 from contextlib import suppress
@@ -183,14 +184,14 @@ class ContinualModel(nn.Module):
             self.transform = to_kornia_transform(transform.transforms[-1].transforms)
             self.normalization_transform = to_kornia_transform(self.dataset.get_normalization_transform())
         except BaseException:
-            print("Warning: could not initialize kornia transforms.")
+            logging.error("could not initialize kornia transforms.")
             self.normalization_transform = transforms.Compose([transforms.ToPILImage(), self.dataset.TEST_TRANSFORM]) if hasattr(
                 self.dataset, 'TEST_TRANSFORM') else transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), self.dataset.get_normalization_transform()])
 
         if self.net is not None:
             self.opt = self.get_optimizer()
         else:
-            print("Warning: no default model for this dataset. You will have to specify the optimizer yourself.")
+            logging.warning("no default model for this dataset. You will have to specify the optimizer yourself.")
             self.opt = None
         self.device = get_device()
 
@@ -198,7 +199,7 @@ class ContinualModel(nn.Module):
             raise NotImplementedError('Please specify the name and the compatibility of the model.')
 
         if self.args.label_perc != 1 and 'cssl' not in self.COMPATIBILITY:
-            print('WARNING: label_perc is not explicitly supported by this model -> training may break')
+            logging.info('label_perc is not explicitly supported by this model -> training may break')
 
     def to(self, device):
         """

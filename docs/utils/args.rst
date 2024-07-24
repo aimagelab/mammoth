@@ -13,12 +13,12 @@ Arguments
 	*Help*: Which dataset to perform experiments on.
 
 	- *Default*: None
-	- *Choices*: seq-mnist, seq-cub200, seq-chestx, seq-cifar100-224, seq-tinyimg, seq-tinyimg-r, seq-cropdisease, seq-eurosat-rgb, perm-mnist, seq-cifar100, seq-isic, seq-mit67, seq-cifar10-224-rs, seq-cifar10, mnist-360, seq-imagenet-r, rot-mnist, seq-resisc45, seq-cifar10-224, seq-cars196, seq-cifar100-224-rs
+	- *Choices*: seq-tinyimg, seq-mit67, seq-cars196, seq-cifar100-224-rs, seq-cifar100-224, seq-chestx, seq-cifar10-224-rs, mnist-360, seq-cropdisease, seq-eurosat-rgb, seq-imagenet-r, seq-cifar100, seq-cifar10-224, perm-mnist, seq-cub200, seq-cifar10, rot-mnist, seq-resisc45, seq-mnist, seq-isic, seq-tinyimg-r
 **\-\-model** : custom_str_underscore
 	*Help*: Model name.
 
 	- *Default*: None
-	- *Choices*: twf, derpp-lider, l2p, der, icarl, xder-rpc, rpc, pnn, bic, second-stage-starprompt, slca, gdumb-lider, xder-ce, mer, coda-prompt, joint-gcl, ccic, gss, gem, agem, ewc-on, clip, er-ace, derpp, lwf, er, lwf-mc, icarl-lider, first-stage-starprompt, lucir, agem-r, fdr, gdumb, dualprompt, xder, sgd, er-ace-lider, hal, si
+	- *Choices*: joint-gcl, second-stage-starprompt, lwf-mc, gdumb-lider, ewc-on, xder, hal, sgd, si, first-stage-starprompt, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, attriclip, starprompt, coda-prompt, clip, pnn, er-ace, xder-ce, dualprompt, twf, mer, er-ace-lider, gdumb, l2p, ccic, slca, agem-r, rpc, xder-rpc, gss, lwf, er, agem
 **\-\-lr** : float
 	*Help*: Learning rate.
 
@@ -128,12 +128,16 @@ Arguments
 **\-\-permute_classes** : int
 	*Help*: Permute classes before splitting into tasks? This applies the seed before permuting if the `seed` argument is present.
 
-	- *Default*: 0
+	- *Default*: 1
 	- *Choices*: 0, 1
 **\-\-base_path** : str
 	*Help*: The base path where to save datasets, logs, results.
 
 	- *Default*: ./data/
+**\-\-device** : str
+	*Help*: The device (or devices) available to use for training. More than one device can be specified by separating them with a comma. If not provided, the code will use the least used GPU available (if there are any), otherwise the CPU. MPS is supported and is automatically used if no GPU is available and MPS is supported. If more than one GPU is available, Mammoth will use the least used one if `--distributed=no`.
+
+	- *Default*: None
 **\-\-notes** : str
 	*Help*: Helper argument to include notes for this run. Example: distinguish between different versions of a model and allow separation of results
 
@@ -218,7 +222,7 @@ Arguments
 **\-\-wandb_project** : str
 	*Help*: Wandb project name
 
-	- *Default*: mammoth
+	- *Default*: None
 
 .. rubric:: REEHARSAL-ONLY ARGS
 

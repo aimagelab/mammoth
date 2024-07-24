@@ -2,6 +2,7 @@
 Base class for all models that use the Lipschitz regularization in LiDER (https://arxiv.org/pdf/2210.06443.pdf).
 """
 
+import logging
 import torch
 import torch.nn.functional as F
 from tqdm import tqdm
@@ -33,7 +34,7 @@ class LiderOptimizer(ContinualModel):
         super().__init__(backbone, loss, args, transform)
 
         if self.args.alpha_lip_lambda == 0 and self.args.beta_lip_lambda == 0:
-            print("WARNING: LiDER is enabled but both `alpha_lip_lambda` and `beta_lip_lambda` are 0. LiDER will not be used.")
+            logging.error("LiDER is enabled but both `alpha_lip_lambda` and `beta_lip_lambda` are 0. LiDER will not be used.")
 
     def transmitting_matrix(self, fm1: torch.Tensor, fm2: torch.Tensor):
         if fm1.size(2) > fm2.size(2):

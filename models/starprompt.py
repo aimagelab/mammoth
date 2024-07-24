@@ -1,4 +1,5 @@
 import logging
+import torch
 from argparse import ArgumentParser
 
 import torch
@@ -108,6 +109,8 @@ class STARPrompt(ContinualModel):
             self.net.backup(self.current_task, self.n_past_classes, self.n_seen_classes)
 
             if self.current_task > 0:
+                if self.args.seed is not None:
+                    torch.manual_seed(self.args.seed)
                 self.net.align(self.current_task, self.n_seen_classes, self.loss)
 
     def get_parameters(self):
@@ -127,6 +130,7 @@ class STARPrompt(ContinualModel):
 
         # adapt CLIP on current task
         self.net.train_first_stage_on_task(dataset, self.current_task, self.n_past_classes, self.n_seen_classes, self.loss)
+        self.net.update_keys(self.n_past_classes, self.n_seen_classes)
         self.net.second_stage.train()
 
         # initialize second stage

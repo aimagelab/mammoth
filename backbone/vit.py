@@ -669,7 +669,7 @@ def vit_base_patch16_224_prompt_prototype(pretrained=False, pretrain_type='in21k
     """
     assert pretrain_type in ['in21k', 'in21k_old', 'in21k-ft-in1k'], f"Invalid pretrain_type: {pretrain_type}"
     if not pretrained:
-        print("WARNING: creating a ViT without pre-trained weights. This is not recommended.")
+        logging.warning("creating a ViT without pre-trained weights. This is not recommended.")
 
     model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12)
     if kwargs is None:

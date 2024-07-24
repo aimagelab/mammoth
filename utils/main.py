@@ -123,7 +123,7 @@ def parse_args():
     args.model = models_dict[args.model]
 
     if args.lr_scheduler is not None:
-        print('Warning: lr_scheduler set to {}, overrides default from dataset.'.format(args.lr_scheduler), file=sys.stderr)
+        logging.info('`lr_scheduler` set to {}, overrides default from dataset.'.format(args.lr_scheduler))
 
     if args.seed is not None:
         set_random_seed(args.seed)
@@ -132,6 +132,15 @@ def parse_args():
     args.conf_jobnum = str(uuid.uuid4())
     args.conf_timestamp = str(datetime.datetime.now())
     args.conf_host = socket.gethostname()
+
+    # Add the current git commit hash to the arguments if available
+    try:
+        import git
+        repo = git.Repo(path=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        args.conf_git_hash = repo.head.object.hexsha
+    except Exception:
+        logging.error("Could not retrieve git hash.")
+        args.conf_git_hash = None
 
     if args.savecheck:
         assert args.inference_only == 0, "Should not save checkpoint in inference only mode"
@@ -167,7 +176,7 @@ def main(args=None):
     if args is None:
         args = parse_args()
 
-    device = get_device()
+    device = get_device(avail_devices=args.device)
     args.device = device
 
     # set base path
@@ -206,7 +215,7 @@ def main(args=None):
         # from https://pytorch.org/tutorials/intermediate/torch_compile_tutorial.html
         if torch.cuda.get_device_capability()[0] >= 7 and os.name != 'nt':
             print("================ Compiling model with torch.compile ================")
-            print("WARNING: `torch.compile` may break your code if you change the model after the first run!")
+            logging.warning("`torch.compile` may break your code if you change the model after the first run!")
             print("This includes adding classifiers for new tasks, changing the backbone, etc.")
             print("ALSO: some models CHANGE the backbone during initialization. Remember to call `torch.compile` again after that.")
             print("====================================================================")
@@ -243,7 +252,7 @@ def main(args=None):
         args.wandb_project = os.getenv('WANDB_PROJECT', None)
 
     if args.wandb_entity is None or args.wandb_project is None:
-        print('Warning: wandb_entity and wandb_project not set. Disabling wandb.')
+        logging.warning('`wandb_entity` and `wandb_project` not set. Disabling wandb.')
         args.nowand = 1
     else:
         print('Logging to wandb: {}/{}'.format(args.wandb_entity, args.wandb_project))
