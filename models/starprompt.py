@@ -83,7 +83,7 @@ class STARPrompt(ContinualModel):
         first_stage_optim_group.add_argument("--first_stage_lr", type=float, default=0.002, help="First stage learning rate")
         first_stage_optim_group.add_argument("--first_stage_momentum", type=float, default=0, help="First stage momentum")
         first_stage_optim_group.add_argument("--first_stage_weight_decay", type=float, default=0, help="First stage weight decay")
-        first_stage_optim_group.add_argument("--first_stage_epochs", type=float, help="First stage epochs. If not set, it will be the same as `n_epochs`.")
+        first_stage_optim_group.add_argument("--first_stage_epochs", type=int, help="First stage epochs. If not set, it will be the same as `n_epochs`.")
 
         return parser
 
