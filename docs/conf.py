@@ -135,10 +135,10 @@ def get_headling_module(fullname):
         fs = open(f'./docs/{ module }/{ name }.rst', 'r').read()
         return fs
     else:
-        if os.path.isdir('./' + '/'.join(paths)):
-            name = name.capitalize()
+        if os.path.isdir('./' + '/'.join(paths)) or os.path.dirname(module) == 'models':
+            name = name.replace('_', ' ')
         else:
-            name = name
+            name = name.upper().replace('_', ' ')
         return f".. _module-{name}:\n{name}\n" + "=" * (len(name) + 1)
 
 

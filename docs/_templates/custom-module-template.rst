@@ -2,11 +2,14 @@
 
 .. currentmodule:: {{ fullname }}
 
+.. include:: ../models/{{ name }}_args.rst   
+
 .. automodule:: {{ fullname }}
 
    {% block attributes %}
    {% if attributes %}
-   .. rubric:: {{ _('Module Attributes') }}
+Module Attributes
+~~~~~~~~~~~~~~~~~~
 
    {% for item in attributes %}
    .. autoattribute:: {{ item }}
@@ -17,7 +20,8 @@
 
    {% block classes %}
    {% if classes %}
-   .. rubric:: {{ _('Classes') }}
+Classes
+~~~~~~~~
 
    {% for item in classes %}
    .. autoclass:: {{ item }}
@@ -30,7 +34,8 @@
 
    {% block functions %}
    {% if functions %}
-   .. rubric:: {{ _('Functions') }}
+Functions
+~~~~~~~~~~
       
    {% for item in functions %}
    .. autofunction:: {{ item }}
@@ -47,7 +52,8 @@
 
    {% block exceptions %}
    {% if exceptions %}
-   .. rubric:: {{ _('Exceptions') }}
+Exceptions
+~~~~~~~~~~
 
    {% for item in exceptions %}
    .. autoexception:: {{ item }}

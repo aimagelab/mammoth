@@ -175,7 +175,7 @@ class _DocsArgs:
         return ', '.join([c.keys() if isinstance(c, dict) else str(c) for c in self.choices])
 
     def __str__(self):
-        tb = f"""**\\-\\-{self.name}** : {self.type.__name__}
+        tb = f"""**\\-\\-{self.name}** : {self.type.__name__ if self.type is not None else 'unknown'}
 \t*Help*: {self.help}\n
 \t- *Default*: {self.default}"""
         if self.choices is not None:
@@ -195,7 +195,11 @@ class _DocArgsGroup:
 
     def __str__(self):
         args_str = '\n'.join([arg.__str__() for arg in self.doc_args])
-        return f""".. rubric:: {self.group_name.capitalize()}\n\n*{self.group_desc}*\n\n{args_str}"""
+        s = f""".. rubric:: {self.group_name.capitalize()}\n\n"""
+        if self.group_desc:
+            s += f"*{self.group_desc}*\n\n"
+        s += args_str
+        return s
 
 
 def _parse_actions(actions: list, group_name: str, group_desc: str) -> _DocArgsGroup:
@@ -225,7 +229,9 @@ if __name__ == '__main__':
     add_experiment_args(parser)
 
     docs_args = []
-    for group in parser._action_groups[2:]:  # first two groups are the positional and optional arguments
+    for group in parser._action_groups:
+        if len(group._group_actions) == 0:
+            continue
         docs_args.append(_parse_actions(group._group_actions, group.title, group.description))
 
     with open('docs/utils/args.rst', 'w') as f:
@@ -239,7 +245,9 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     add_management_args(parser)
     docs_args = []
-    for group in parser._action_groups[2:]:  # first two groups are the positional and optional arguments
+    for group in parser._action_groups:
+        if len(group._group_actions) == 0:
+            continue
         docs_args.append(_parse_actions(group._group_actions, group.title, group.description))
 
     with open('docs/utils/args.rst', 'a') as f:
@@ -262,3 +270,21 @@ if __name__ == '__main__':
 
     print("Saving documentation in docs/utils/args.rst")
     print("Done!")
+
+    from models import get_model_names
+
+    for model_name, model_class in get_model_names().items():
+        parser = model_class.get_parser()
+
+        model_args_groups = []
+        for group in parser._action_groups:
+            if len(group._group_actions) == 0:
+                continue
+            model_args_groups.append(_parse_actions(group._group_actions, group.title, group.description))
+        model_filename = model_name.replace("-", "_")
+        with open(f'docs/models/{model_filename}_args.rst', 'w') as f:
+            f.write(f'Arguments\n')
+            f.write(f'~~~~~~~~~~~\n\n')
+            for arg in model_args_groups:
+                f.write(str(arg) + '\n\n')
+        print(f"Saving documentation in docs/models/{model_filename}_args.rst")

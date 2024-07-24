@@ -100,7 +100,7 @@ class Prompter(torch.nn.Module):
 
         dl = self.create_features_dataset(current_task)
 
-        with tqdm(enumerate(dl), total=len(dl), desc=f'GR epoch {epoch + 1}/{self.args.num_epochs_gr_first_stage}') as pbar:
+        with tqdm(enumerate(dl), total=len(dl), desc=f'GR first stage epoch {epoch + 1}/{self.args.num_epochs_gr_first_stage}', leave=False) as pbar:
             for i, (image_features, labels) in pbar:
                 if self.args.debug_mode and i > 3:
                     break

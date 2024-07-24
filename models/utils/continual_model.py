@@ -70,7 +70,7 @@ class ContinualModel(nn.Module):
     n_tasks: int  # Total number of tasks in the dataset
 
     @staticmethod
-    def get_parser() -> Namespace:
+    def get_parser() -> ArgumentParser:
         """
         Returns the parser of the model.
 

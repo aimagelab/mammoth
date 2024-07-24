@@ -3,7 +3,7 @@ How to run STAR-Prompt
 
 .. important::
 
-    You can find the complete paper at this `link <https://arxiv.org/abs/2403.06870>`_.
+    You can find the complete paper at this `link <https://arxiv.org/abs/2403.06870>`_. The hyperparameters reported in Tab. D and E are the ones used to obtain the results in the paper. Here we report the best hyperparameters we found for each dataset after a more thorough search. The results are very similar to the ones reported in the paper.
 
 First stage only
 ----------------
@@ -46,3 +46,17 @@ Second stage only
 -----------------
 
 The *second stage* of STAR-Prompt can take either the class-specific embeddings learned during the first stage or the pre-existing templates of CLIP. This is controlled by the ``--keys_ckpt_path`` argument. If supplied (see :ref:`module-second_stage_starprompt`), it will load the pre-trained embeddings from the first stage. If not supplied, it will use the pre-existing templates of CLIP. The most important Hyperparameters are:
+
+* ``lambda_ortho``: the weight of the orthogonality loss. :math:`\lambda` in the main paper (Alg 1, Tab D, E).
+* ``learning_rate_gr``: the learning rate of the Generative Replay. :math:`lr` in the main paper (Alg 1, Tab D, E).
+* ``num_epochs_gr``: the number of epochs for the Generative Replay. :math:`E_2` in the main paper (Alg 1, Tab D, E).
+
+.. list-table:: Hyperparameter table
+   :header-rows: 1
+
+   * - Dataset
+     - Command
+   * - ISIC
+     - ``--model=second_stage_starprompt --lr=0.001 --optimizer=adam --n_epochs=30 --num_epochs_gr=50 --num_monte_carlo_gr=5 --learning_rate_gr=0.01 --dataset=seq-isic --lambda_ortho=50 --keys_ckpt_path=<path_to_keys_checkpoint>``
+   * - CUB-200
+     - ``--model=second_stage_starprompt --dataset=seq-cub200 --n_epochs=50 --batch_size=64 --virtual_bs_n=2 --lr=0.001 --optimizer=adam --lambda_ortho=30 --learning_rate_gr=0.01 --num_monte_carlo_gr=5``

@@ -139,11 +139,11 @@ class SecondStageStarprompt(ContinualModel):
                                         batch_size=self.args.batch_size_gr,
                                         shuffle=True, num_workers=0)
 
-    def train_alignment_epoch(self, classifier: torch.nn.Module, optim: torch.optim.Optimizer):
+    def train_alignment_epoch(self, classifier: torch.nn.Module, optim: torch.optim.Optimizer, epoch: int):
 
         dl = self.create_features_dataset()
 
-        with tqdm(enumerate(dl), total=len(dl), desc='GR epoch') as pbar:
+        with tqdm(enumerate(dl), total=len(dl), desc=f'GR second stage epoch {epoch + 1}/{self.args.num_epochs_gr_second_stage}', leave=False) as pbar:
             for i, (x, labels) in pbar:
                 optim.zero_grad()
                 x, labels = x.to(self.device, dtype=torch.float32), labels.to(self.device)
@@ -176,7 +176,7 @@ class SecondStageStarprompt(ContinualModel):
         num_epochs = self.args.num_epochs_gr_second_stage + (5 * self.current_task)
 
         for e in range(num_epochs):
-            self.train_alignment_epoch(classifier, optim)
+            self.train_alignment_epoch(classifier, optim, e)
 
         self.net.vit.head.weight.data.copy_(classifier.weight.data)
         self.net.vit.head.bias.data.copy_(classifier.bias.data)

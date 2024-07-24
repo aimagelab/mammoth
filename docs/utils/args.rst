@@ -5,6 +5,10 @@ Arguments
 
 .. rubric:: EXPERIMENT-RELATED ARGS
 
+.. rubric:: Options
+
+
+
 .. rubric:: Experiment arguments
 
 *Arguments used to define the experiment settings.*
@@ -18,7 +22,7 @@ Arguments
 	*Help*: Model name.
 
 	- *Default*: None
-	- *Choices*: joint-gcl, second-stage-starprompt, lwf-mc, gdumb-lider, ewc-on, xder, hal, sgd, si, first-stage-starprompt, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, attriclip, starprompt, coda-prompt, clip, pnn, er-ace, xder-ce, dualprompt, twf, mer, er-ace-lider, gdumb, l2p, ccic, slca, agem-r, rpc, xder-rpc, gss, lwf, er, agem
+	- *Choices*: joint-gcl, second-stage-starprompt, lwf-mc, gdumb-lider, ewc-on, xder, hal, sgd, si, first-stage-starprompt, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, attriclip, starprompt, coda-prompt, clip, pnn, er-ace, xder-ce, dualprompt, twf, mer, er-ace-lider, gdumb, l2p, ccic, slca, agem-r, rpc, xder-rpc, gss, lwf, cgil, er, agem
 **\-\-lr** : float
 	*Help*: Learning rate.
 
@@ -33,6 +37,11 @@ Arguments
 	- *Default*: 1
 **\-\-joint** : int
 	*Help*: Train model on Joint (single task)?
+
+	- *Default*: 0
+	- *Choices*: 0, 1
+**\-\-eval_future** : int
+	*Help*: Evaluate future tasks?
 
 	- *Default*: 0
 	- *Choices*: 0, 1
@@ -116,6 +125,10 @@ Arguments
 	- *Default*: 0.1
 
 .. rubric:: MANAGEMENT ARGS
+
+.. rubric:: Options
+
+
 
 .. rubric:: Management arguments
 
