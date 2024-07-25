@@ -69,6 +69,10 @@ The *second stage* of STAR-Prompt can take either the class-specific embeddings 
 * ``learning_rate_gr_first_stage``: the learning rate of the Generative Replay. :math:`lr` in the main paper (Alg 1, Tab D, E).
 * ``num_epochs_gr_second_stage``: the number of epochs for the Generative Replay. :math:`E_2` in the main paper (Alg 1, Tab D, E).
 
+.. important::
+
+  Remember to set the ``--keys_ckpt_path`` argument to the path of the checkpoint of the first stage. Otherwise, the second stage will not be able to load the class-specific embeddings and will use the pre-existing templates of CLIP.
+
 .. list-table:: Hyperparameter table
    :header-rows: 1
 
@@ -89,6 +93,6 @@ The *second stage* of STAR-Prompt can take either the class-specific embeddings 
    * - Cars-196
      - ``--model=second_stage_starprompt --dataset=seq-cars196 --n_epochs=50 --lr=0.001 --optimizer=adam --lambda_ortho_second_stage=10 --learning_rate_gr_second_stage=0.01``
    * - Resisc45
-     - ``--model=second_stage_starprompt --lr=0.001 --optimizer=adam --dataset=seq-resisc45 --n_epochs=30 --lambda_ortho_second_stage=5 --learning_rate_gr_second_stage=0.01 --num_monte_carlo_gr_second_stage=1 --num_epochs_gr_second_stage=10``
+     - ``--model=second_stage_starprompt --lr=0.001 --optimizer=adam --dataset=seq-resisc45 --n_epochs=30 --lambda_ortho_second_stage=5 --learning_rate_gr_second_stage=0.01 --num_monte_carlo_gr_second_stage=1 --num_epochs_gr_second_stage=50``
    * - Cars-196
      - ``--model=second_stage_starprompt --num_monte_carlo_gr_second_stage=2 --optimizer=adam --dataset=seq-eurosat-rgb --lr=0.001 --lambda_ortho_second_stage=5.0 --learning_rate_gr_second_stage=0.1``

@@ -1,10 +1,7 @@
 import torch
 import torch.nn as nn
-from torch.nn import functional as F
 
-from tqdm import tqdm
 from copy import deepcopy
-import numpy as np
 
 from models.attriclip_utils.clip.clip_2 import load, tokenize
 from models.attriclip_utils.clip.simple_tokenizer import SimpleTokenizer as _Tokenizer

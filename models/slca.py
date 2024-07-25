@@ -11,7 +11,6 @@ Arguments:
 from utils.args import *
 from models.utils.continual_model import ContinualModel
 
-import timm
 import torch
 from utils.conf import get_device
 from models.slca_utils.slca import SLCA_Model

@@ -3,15 +3,7 @@
 from utils.args import *
 from models.utils.continual_model import ContinualModel
 
-import timm
 from datasets import get_dataset
-from torchvision import transforms
-from copy import deepcopy
-import torch
-import sys
-import pickle
-import os
-import numpy as np
 import wandb
 from models.attriclip_utils.model import CoOp
 from models.attriclip_utils.utils import cosine_loss

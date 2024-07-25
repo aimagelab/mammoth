@@ -7,7 +7,6 @@ Note:
 """
 
 import logging
-import timm
 from utils.args import *
 from models.utils.continual_model import ContinualModel
 import torch

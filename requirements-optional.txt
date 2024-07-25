@@ -4,3 +4,9 @@ pytest==7.4.2
 quadprog==0.1.11
 setproctitle==1.3.2
 wandb
+deeplake
+pandas
+timm==0.9.8
+clip @ git+https://github.com/openai/CLIP.git
+scikit-learn
+decorator
