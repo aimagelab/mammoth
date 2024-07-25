@@ -1,21 +1,28 @@
+import logging
+try:
+    import requests
+except ImportError as e:
+    logging.error("Please install requests using 'pip install requests'")
+    raise e
+
 import os
-from requests import request
 import torchvision.transforms as transforms
-from torchvision.models import resnet18
 import torch.nn.functional as F
-import numpy as np
-from utils.conf import base_path
-from PIL import Image
-from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
-from typing import Tuple
-from datasets.transforms.denormalization import DeNormalize
 from torch.utils.data import Dataset
-import torch.nn as nn
-import yaml
+import numpy as np
 import pickle
-from torchvision.transforms.functional import InterpolationMode
-from utils.prompt_templates import templates
+from PIL import Image
+from typing import Tuple
+
+import yaml
+
 from datasets.utils import set_default_from_args
+from utils import smart_joint
+from utils.conf import base_path
+from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
+from datasets.transforms.denormalization import DeNormalize
+from torchvision.transforms.functional import InterpolationMode
+from backbone.vit import vit_base_patch16_224_prompt_prototype
 
 
 class MyImagenetR(Dataset):
@@ -40,10 +47,10 @@ class MyImagenetR(Dataset):
                 # download from https://people.eecs.berkeley.edu/~hendrycks/imagenet-r.tar
                 print("Downloading imagenet-r dataset...")
                 url = 'https://people.eecs.berkeley.edu/~hendrycks/imagenet-r.tar'
-                r = request('GET', url, allow_redirects=True)
+                r = requests.get(url, allow_redirects=True)
                 if not os.path.exists(self.root):
                     os.makedirs(self.root)
-                print("Saving tar...")
+                print("Writing tar on disk...")
                 open(self.root + 'imagenet-r.tar', 'wb').write(r.content)
                 print("Extracting tar...")
                 os.system('tar -xf ' + self.root + 'imagenet-r.tar -C ' + self.root.rstrip('imagenet-r'))
@@ -74,7 +81,7 @@ class MyImagenetR(Dataset):
     def __len__(self):
         return len(self.targets)
 
-    def __getitem__(self, index: int) -> Tuple[type(Image), int, type(Image)]:
+    def __getitem__(self, index: int) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
         :param index: index of the element to be returned
@@ -110,54 +117,44 @@ class SequentialImagenetR(ContinualDataset):
     N_TASKS = 10
     N_CLASSES = 200
     N_CLASSES_PER_TASK = N_CLASSES // N_TASKS
-    normalize = transforms.Normalize(mean=(0.0, 0.0, 0.0), std=(1.0, 1.0, 1.0))
+    MEAN, STD = (0.0, 0.0, 0.0), (1.0, 1.0, 1.0)
     SIZE = (224, 224)
 
     TRANSFORM = transforms.Compose([
-        transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BICUBIC),
+        transforms.RandomResizedCrop(SIZE[0], interpolation=InterpolationMode.BICUBIC),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
-        normalize,
+        transforms.Normalize(mean=MEAN, std=STD),
     ])
-    TEST_TRANSFORM = transforms.Compose([
-        transforms.Resize((224, 224), interpolation=InterpolationMode.BICUBIC),
-        transforms.ToTensor(),
-        normalize,
-    ])
-
-    def __init__(self, args):
-        super().__init__(args)
-        self.args = args
-        self.label_to_class_name = self.get_class_names()
+    TEST_TRANSFORM = transforms.Compose([transforms.Resize(size=(256, 256),
+                                                           interpolation=InterpolationMode.BICUBIC),
+                                         transforms.CenterCrop(SIZE[0]),
+                                         transforms.ToTensor(),
+                                         transforms.Normalize(mean=MEAN, std=STD)])
 
     def get_data_loaders(self):
-        transform = self.TRANSFORM
-
-        test_transform = transforms.Compose(
-            [transforms.Resize(size=(256, 256), interpolation=InterpolationMode.BICUBIC), transforms.CenterCrop(224), transforms.ToTensor(), self.normalize])
-
         train_dataset = MyImagenetR(base_path() + 'imagenet-r/', train=True,
-                                    download=True, transform=transform)
+                                    download=True, transform=self.TRANSFORM)
 
         test_dataset = MyImagenetR(base_path() + 'imagenet-r/', train=False,
-                                    download=True, transform=test_transform)
+                                   download=True, transform=self.TEST_TRANSFORM)
 
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
 
     def get_class_names(self):
+        if self.class_names is not None:
+            return self.class_names
+
         pwd = os.path.dirname(os.path.abspath(__file__))
         with open(pwd + '/imagenet_r_utils/label_to_class_name.pkl', 'rb') as f:
             label_to_class_name = pickle.load(f)
         class_names = label_to_class_name.values()
         class_names = [x.replace('_', ' ') for x in class_names]
-        if hasattr(self.args, 'class_order'):
-            class_names = [class_names[i] for i in self.class_order]
-        return class_names
 
-    @staticmethod
-    def get_prompt_templates():
-        return templates['imagenet']
+        class_names = fix_class_names_order(class_names, self.args)
+        self.class_names = class_names
+        return self.class_names
 
     @staticmethod
     def get_transform():
@@ -166,11 +163,8 @@ class SequentialImagenetR(ContinualDataset):
         return transform
 
     @staticmethod
-    def get_backbone(hookme=False):
-        backbone = resnet18()
-        num_classes = SequentialImagenetR.N_CLASSES_PER_TASK * SequentialImagenetR.N_TASKS
-        backbone.fc = nn.Linear(in_features=512, out_features=num_classes, bias=True)
-        return backbone
+    def get_backbone():
+        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=SequentialImagenetR.N_CLASSES)
 
     @staticmethod
     def get_loss():
@@ -178,12 +172,11 @@ class SequentialImagenetR(ContinualDataset):
 
     @staticmethod
     def get_normalization_transform():
-        return transforms.Normalize(mean=(0.0, 0.0, 0.0), std=(1.0, 1.0, 1.0))
+        return transforms.Normalize(mean=SequentialImagenetR.MEAN, std=SequentialImagenetR.STD)
 
     @staticmethod
     def get_denormalization_transform():
-        transform = DeNormalize((0, 0, 0),
-                                (1, 1, 1))
+        transform = DeNormalize(SequentialImagenetR.MEAN, SequentialImagenetR.STD)
         return transform
 
     @set_default_from_args('n_epochs')
@@ -192,12 +185,4 @@ class SequentialImagenetR(ContinualDataset):
 
     @set_default_from_args('batch_size')
     def get_batch_size(self):
-        return 32
-
-    @staticmethod
-    def get_virtual_bn_num():
-        return 4
-
-    @staticmethod
-    def get_n_epochs_first_stage():
-        return 50
+        return 128

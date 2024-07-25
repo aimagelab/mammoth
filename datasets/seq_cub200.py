@@ -1,21 +1,19 @@
 import os
-from typing import Tuple
-
 import numpy as np
 import torch
-import torch.nn.functional as F
 import torchvision.transforms as transforms
+import torch.nn.functional as F
 from PIL import Image
-from torch.utils.data.dataset import Dataset
+from typing import Tuple
 
-
-from backbone.ResNetBottleneck import resnet50
+from datasets.utils import set_default_from_args
+from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
 from datasets.transforms.denormalization import DeNormalize
-from datasets.utils.continual_dataset import (ContinualDataset,
-                                              store_masked_loaders)
 from utils import smart_joint
 from utils.conf import base_path
-from datasets.utils import set_default_from_args
+from torch.utils.data import Dataset
+from torchvision.transforms.functional import InterpolationMode
+from backbone.vit import vit_base_patch16_224_prompt_prototype
 
 
 class MyCUB200(Dataset):
@@ -24,12 +22,12 @@ class MyCUB200(Dataset):
     """
     IMG_SIZE = 224
     N_CLASSES = 200
-    MEAN, STD = (0.4856, 0.4994, 0.4324), (0.2272, 0.2226, 0.2613)
-    TEST_TRANSFORM = transforms.Compose([transforms.Resize(IMG_SIZE), transforms.ToTensor(), transforms.Normalize(MEAN, STD)])
 
     def __init__(self, root, train=True, transform=None,
                  target_transform=None, download=True) -> None:
-        self.not_aug_transform = transforms.Compose([transforms.ToTensor()])
+        self.not_aug_transform = transforms.Compose([
+            transforms.Resize(MyCUB200.IMG_SIZE, interpolation=InterpolationMode.BICUBIC),
+            transforms.ToTensor()])
         self.root = root
         self.train = train
         self.transform = transform
@@ -53,7 +51,7 @@ class MyCUB200(Dataset):
         self.segs = data_file['segs']
         self._return_segmask = False
 
-    def __getitem__(self, index: int) -> Tuple[type(Image), int, type(Image)]:
+    def __getitem__(self, index: int) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
 
@@ -67,9 +65,8 @@ class MyCUB200(Dataset):
 
         # to return a PIL Image
         img = Image.fromarray(img, mode='RGB')
-        original_img = img.copy()
 
-        not_aug_img = self.not_aug_transform(original_img)
+        not_aug_img = self.not_aug_transform(img.copy())
 
         if self.transform is not None:
             img = self.transform(img)
@@ -81,6 +78,7 @@ class MyCUB200(Dataset):
             img, target, not_aug_img]
 
         if self._return_segmask:
+            # TODO: add to the return tuple
             raise "Unsupported segmentation output in training set!"
 
         return ret_tuple
@@ -96,7 +94,7 @@ class CUB200(MyCUB200):
         super().__init__(root, train=train, transform=transform,
                          target_transform=target_transform, download=download)
 
-    def __getitem__(self, index: int, ret_segmask=False) -> Tuple[type(Image), int, type(Image)]:
+    def __getitem__(self, index: int, ret_segmask=False) -> Tuple[Image.Image, int, Image.Image]:
         """
         Gets the requested element from the dataset.
 
@@ -120,6 +118,7 @@ class CUB200(MyCUB200):
         ret_tuple = [img, target, self.logits[index]] if hasattr(self, 'logits') else [img, target]
 
         if ret_segmask or self._return_segmask:
+            # TODO: does not work with the current implementation
             seg = self.segs[index]
             seg = Image.fromarray(seg, mode='L')
             seg = transforms.ToTensor()(transforms.CenterCrop((MyCUB200.IMG_SIZE, MyCUB200.IMG_SIZE))(seg))[0]
@@ -147,25 +146,23 @@ class SequentialCUB200(ContinualDataset):
     N_CLASSES_PER_TASK = 20
     N_TASKS = 10
     SIZE = (MyCUB200.IMG_SIZE, MyCUB200.IMG_SIZE)
-    MEAN, STD = (0.4856, 0.4994, 0.4324), (0.2272, 0.2226, 0.2613)
+    MEAN, STD = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
     TRANSFORM = transforms.Compose([
-        transforms.Resize(MyCUB200.IMG_SIZE),
-        transforms.RandomCrop(MyCUB200.IMG_SIZE, padding=4),
+        transforms.Resize((300, 300), interpolation=InterpolationMode.BICUBIC),
+        transforms.RandomCrop(SIZE),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(MEAN, STD)])
-    TEST_TRANSFORM = MyCUB200.TEST_TRANSFORM
+    TEST_TRANSFORM = transforms.Compose([transforms.Resize(256, interpolation=InterpolationMode.BICUBIC),
+                                         transforms.CenterCrop(MyCUB200.IMG_SIZE),
+                                         transforms.ToTensor(),
+                                         transforms.Normalize(MEAN, STD)])
 
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
-        transform = self.TRANSFORM
-
-        test_transform = transforms.Compose(
-            [transforms.Resize((MyCUB200.IMG_SIZE, MyCUB200.IMG_SIZE)), transforms.ToTensor(), self.get_normalization_transform()])
-
         train_dataset = MyCUB200(base_path() + 'CUB200', train=True,
-                                 download=True, transform=transform)
+                                 download=True, transform=SequentialCUB200.TRANSFORM)
         test_dataset = CUB200(base_path() + 'CUB200', train=False,
-                              download=True, transform=test_transform)
+                              download=True, transform=SequentialCUB200.TEST_TRANSFORM)
 
         train, test = store_masked_loaders(
             train_dataset, test_dataset, self)
@@ -179,9 +176,9 @@ class SequentialCUB200(ContinualDataset):
         return transform
 
     @staticmethod
-    def get_backbone(hookme=False):
+    def get_backbone():
         num_classes = SequentialCUB200.N_CLASSES_PER_TASK * SequentialCUB200.N_TASKS
-        return resnet50(num_classes, pretrained=True)
+        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=num_classes)
 
     @staticmethod
     def get_loss():
@@ -189,9 +186,7 @@ class SequentialCUB200(ContinualDataset):
 
     @staticmethod
     def get_normalization_transform():
-        transform = transforms.Normalize(
-            SequentialCUB200.MEAN, SequentialCUB200.STD)
-        return transform
+        return transforms.Normalize(SequentialCUB200.MEAN, SequentialCUB200.STD)
 
     @staticmethod
     def get_denormalization_transform():
@@ -200,8 +195,219 @@ class SequentialCUB200(ContinualDataset):
 
     @set_default_from_args('batch_size')
     def get_batch_size(self):
-        return 16
+        return 128
 
     @set_default_from_args('n_epochs')
     def get_epochs(self):
-        return 30
+        return 50
+
+    def get_class_names(self):
+        if self.class_names is not None:
+            return self.class_names
+        classes = fix_class_names_order(CLASS_NAMES, self.args)
+        self.class_names = classes
+        return self.class_names
+
+
+CLASS_NAMES = [
+    'black footed albatross',
+    'laysan albatross',
+    'sooty albatross',
+    'groove billed ani',
+    'crested auklet',
+    'least auklet',
+    'parakeet auklet',
+    'rhinoceros auklet',
+    'brewer blackbird',
+    'red winged blackbird',
+    'rusty blackbird',
+    'yellow headed blackbird',
+    'bobolink',
+    'indigo bunting',
+    'lazuli bunting',
+    'painted bunting',
+    'cardinal',
+    'spotted catbird',
+    'gray catbird',
+    'yellow breasted chat',
+    'eastern towhee',
+    'chuck will widow',
+    'brandt cormorant',
+    'red faced cormorant',
+    'pelagic cormorant',
+    'bronzed cowbird',
+    'shiny cowbird',
+    'brown creeper',
+    'american crow',
+    'fish crow',
+    'black billed cuckoo',
+    'mangrove cuckoo',
+    'yellow billed cuckoo',
+    'gray crowned rosy finch',
+    'purple finch',
+    'northern flicker',
+    'acadian flycatcher',
+    'great crested flycatcher',
+    'least flycatcher',
+    'olive sided flycatcher',
+    'scissor tailed flycatcher',
+    'vermilion flycatcher',
+    'yellow bellied flycatcher',
+    'frigatebird',
+    'northern fulmar',
+    'gadwall',
+    'american goldfinch',
+    'european goldfinch',
+    'boat tailed grackle',
+    'eared grebe',
+    'horned grebe',
+    'pied billed grebe',
+    'western grebe',
+    'blue grosbeak',
+    'evening grosbeak',
+    'pine grosbeak',
+    'rose breasted grosbeak',
+    'pigeon guillemot',
+    'california gull',
+    'glaucous winged gull',
+    'heermann gull',
+    'herring gull',
+    'ivory gull',
+    'ring billed gull',
+    'slaty backed gull',
+    'western gull',
+    'anna hummingbird',
+    'ruby throated hummingbird',
+    'rufous hummingbird',
+    'green violetear',
+    'long tailed jaeger',
+    'pomarine jaeger',
+    'blue jay',
+    'florida jay',
+    'green jay',
+    'dark eyed junco',
+    'tropical kingbird',
+    'gray kingbird',
+    'belted kingfisher',
+    'green kingfisher',
+    'pied kingfisher',
+    'ringed kingfisher',
+    'white breasted kingfisher',
+    'red legged kittiwake',
+    'horned lark',
+    'pacific loon',
+    'mallard',
+    'western meadowlark',
+    'hooded merganser',
+    'red breasted merganser',
+    'mockingbird',
+    'nighthawk',
+    'clark nutcracker',
+    'white breasted nuthatch',
+    'baltimore oriole',
+    'hooded oriole',
+    'orchard oriole',
+    'scott oriole',
+    'ovenbird',
+    'brown pelican',
+    'white pelican',
+    'western wood pewee',
+    'sayornis',
+    'american pipit',
+    'whip poor will',
+    'horned puffin',
+    'common raven',
+    'white necked raven',
+    'american redstart',
+    'geococcyx',
+    'loggerhead shrike',
+    'great grey shrike',
+    'baird sparrow',
+    'black throated sparrow',
+    'brewer sparrow',
+    'chipping sparrow',
+    'clay colored sparrow',
+    'house sparrow',
+    'field sparrow',
+    'fox sparrow',
+    'grasshopper sparrow',
+    'harris sparrow',
+    'henslow sparrow',
+    'le conte sparrow',
+    'lincoln sparrow',
+    'nelson sharp tailed sparrow',
+    'savannah sparrow',
+    'seaside sparrow',
+    'song sparrow',
+    'tree sparrow',
+    'vesper sparrow',
+    'white crowned sparrow',
+    'white throated sparrow',
+    'cape glossy starling',
+    'bank swallow',
+    'barn swallow',
+    'cliff swallow',
+    'tree swallow',
+    'scarlet tanager',
+    'summer tanager',
+    'artic tern',
+    'black tern',
+    'caspian tern',
+    'common tern',
+    'elegant tern',
+    'forsters tern',
+    'least tern',
+    'green tailed towhee',
+    'brown thrasher',
+    'sage thrasher',
+    'black capped vireo',
+    'blue headed vireo',
+    'philadelphia vireo',
+    'red eyed vireo',
+    'warbling vireo',
+    'white eyed vireo',
+    'yellow throated vireo',
+    'bay breasted warbler',
+    'black and white warbler',
+    'black throated blue warbler',
+    'blue winged warbler',
+    'canada warbler',
+    'cape may warbler',
+    'cerulean warbler',
+    'chestnut sided warbler',
+    'golden winged warbler',
+    'hooded warbler',
+    'kentucky warbler',
+    'magnolia warbler',
+    'mourning warbler',
+    'myrtle warbler',
+    'nashville warbler',
+    'orange crowned warbler',
+    'palm warbler',
+    'pine warbler',
+    'prairie warbler',
+    'prothonotary warbler',
+    'swainson warbler',
+    'tennessee warbler',
+    'wilson warbler',
+    'worm eating warbler',
+    'yellow warbler',
+    'northern waterthrush',
+    'louisiana waterthrush',
+    'bohemian waxwing',
+    'cedar waxwing',
+    'american three toed woodpecker',
+    'pileated woodpecker',
+    'red bellied woodpecker',
+    'red cockaded woodpecker',
+    'red headed woodpecker',
+    'downy woodpecker',
+    'bewick wren',
+    'cactus wren',
+    'carolina wren',
+    'house wren',
+    'marsh wren',
+    'rock wren',
+    'winter wren',
+    'common yellowthroat'
+]

@@ -39,7 +39,7 @@ jobs:
           python-version: "3.10"
       - name: Install dependencies
         run: |
-          pip install -r docs/requirements.txt -r requirements.txt
+          pip install -r docs/requirements.txt -r requirements.txt -r requirements-optional.txt
           pip install quadprog==0.1.11
       - name: Sphinx build
         run: |

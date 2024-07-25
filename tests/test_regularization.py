@@ -2,9 +2,11 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.main import main
+from utils.test_utils import init_test_environ
 import pytest
 
 
+@init_test_environ
 @pytest.mark.parametrize('dataset', ['seq-cifar10', 'seq-mnist'])
 @pytest.mark.parametrize('model', ['ewc_on'])
 def test_ewc(dataset, model):
@@ -40,6 +42,7 @@ def test_ewc(dataset, model):
     main()
 
 
+@init_test_environ
 @pytest.mark.parametrize('dataset', ['seq-cifar10', 'seq-mnist'])
 @pytest.mark.parametrize('model', ['si'])
 def test_si(dataset, model):
@@ -75,6 +78,7 @@ def test_si(dataset, model):
     main()
 
 
+@init_test_environ
 @pytest.mark.parametrize('dataset', ['seq-cifar10', 'seq-mnist'])
 @pytest.mark.parametrize('model', ['lwf_mc', 'lwf'])
 def test_lwf(dataset, model):

@@ -5,14 +5,17 @@ from typing import Tuple
 import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
+from torchvision.transforms.functional import InterpolationMode
+from torchvision.datasets import CIFAR100
 
 from backbone.vit import vit_base_patch16_224_prompt_prototype
 from datasets.seq_cifar100 import TCIFAR100, MyCIFAR100
 from datasets.transforms.denormalization import DeNormalize
-from datasets.utils.continual_dataset import (ContinualDataset,
+from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
                                               store_masked_loaders)
 from utils.conf import base_path
 from datasets.utils import set_default_from_args
+from utils.prompt_templates import templates
 
 
 class SequentialCIFAR100224(ContinualDataset):
@@ -40,14 +43,16 @@ class SequentialCIFAR100224(ContinualDataset):
     SIZE = (224, 224)
     MEAN, STD = (0, 0, 0), (1, 1, 1)  # Normalized in [0,1] as in L2P paper
     TRANSFORM = transforms.Compose(
-        [transforms.Resize(224),
-         transforms.RandomCrop(224, padding=28),
-         transforms.RandomHorizontalFlip(),
+        [transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BICUBIC),
+         transforms.RandomHorizontalFlip(p=0.5),
          transforms.ToTensor(),
          transforms.Normalize(MEAN, STD)]
     )
-    TEST_TRANSFORM = transforms.Compose(
-        [transforms.Resize(224), transforms.ToTensor(), transforms.Normalize(MEAN, STD)])
+    TEST_TRANSFORM = transforms.Compose([
+        transforms.Resize(224, interpolation=InterpolationMode.BICUBIC),
+        transforms.ToTensor(),
+        transforms.Normalize(MEAN, STD)
+    ])
 
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = self.TRANSFORM
@@ -70,7 +75,7 @@ class SequentialCIFAR100224(ContinualDataset):
         return transform
 
     @staticmethod
-    def get_backbone(hookme=False):
+    def get_backbone():
         return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=SequentialCIFAR100224.N_CLASSES_PER_TASK * SequentialCIFAR100224.N_TASKS)
 
     @staticmethod
@@ -89,8 +94,20 @@ class SequentialCIFAR100224(ContinualDataset):
 
     @set_default_from_args('n_epochs')
     def get_epochs(self):
-        return 5
+        return 20
 
     @set_default_from_args('batch_size')
     def get_batch_size(self):
         return 128
+
+    def get_class_names(self):
+        if self.class_names is not None:
+            return self.class_names
+        classes = CIFAR100(base_path() + 'CIFAR100', train=True, download=True).classes
+        classes = fix_class_names_order(classes, self.args)
+        self.class_names = classes
+        return self.class_names
+
+    @staticmethod
+    def get_prompt_templates():
+        return templates['cifar100']

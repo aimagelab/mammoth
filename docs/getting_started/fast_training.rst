@@ -17,7 +17,7 @@ Mammoth provides a number of optimizations to speed up training. These are **dis
     - It may not give a significant speedup for small models.
 
 Distributed training
-====================
+--------------------
 
 Mammoth supports distributed training via `DataParallel <https://pytorch.org/docs/stable/nn.html#dataparallel-layers-multi-gpu-distributed>`_. To use it, simply pass the `--distributed=dp` argument to ``utils/main.py``. This will automatically use all available GPUs on the machine using the **make_dp** function in :ref:`module-distributed`.
 

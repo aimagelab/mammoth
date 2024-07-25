@@ -4,8 +4,9 @@
 # LICENSE file in the root directory of this source tree.
 
 from argparse import Namespace
+import logging
 import sys
-from typing import Tuple
+from typing import List, Tuple
 
 import torch
 import numpy as np
@@ -16,6 +17,7 @@ from torch.utils.data import DataLoader, Dataset
 from datasets.utils.validation import get_validation_indexes
 from utils.conf import create_seeded_dataloader
 from datasets.utils import DEFAULT_ARGS
+from utils.prompt_templates import templates
 
 
 class ContinualDataset(object):
@@ -29,6 +31,8 @@ class ContinualDataset(object):
         N_TASKS (int): the number of tasks
         N_CLASSES (int): the number of classes
         SIZE (Tuple[int]): the size of the dataset
+        AVAIL_SCHEDS (List[str]): the available schedulers
+        class_names (List[str]): list of the class names of the dataset (should be populated by `get_class_names`)
         train_loader (DataLoader): the training loader
         test_loaders (List[DataLoader]): the test loaders
         i (int): the current task
@@ -43,6 +47,7 @@ class ContinualDataset(object):
     N_CLASSES: int
     SIZE: Tuple[int]
     AVAIL_SCHEDS = ['multisteplr']
+    class_names: List[str] = None
 
     def __init__(self, args: Namespace) -> None:
         """
@@ -53,7 +58,6 @@ class ContinualDataset(object):
         """
         self.train_loader = None
         self.test_loaders = []
-        self.i = 0
         self.c_task = -1
         self.args = args
         if self.SETTING == 'class-il':
@@ -66,15 +70,10 @@ class ContinualDataset(object):
             if not hasattr(self.args, 'class_order'):  # set only once
                 if self.args.seed is not None:
                     np.random.seed(self.args.seed)
-                if isinstance(self.N_CLASSES_PER_TASK, int):
-                    self.args.class_order = np.random.permutation(self.N_CLASSES_PER_TASK * self.N_TASKS)
-                else:
-                    self.args.class_order = np.random.permutation(sum(self.N_CLASSES_PER_TASK))
-
-        if self.args.validation:
-            self._c_seed = self.args.seed if self.args.seed is not None else torch.initial_seed()
+                self.args.class_order = np.random.permutation(self.N_CLASSES)
 
         if args.joint:
+            assert self.SETTING in ['class-il', 'task-il'], 'Joint training is only supported for class-il and task'
             self.N_CLASSES_PER_TASK = self.N_CLASSES
             self.N_TASKS = 1
 
@@ -100,7 +99,7 @@ class ContinualDataset(object):
                 setattr(self.args, k, v)
             else:
                 if getattr(self.args, k) != v:
-                    print('Warning: {} set to {} instead of {}.'.format(k, getattr(self.args, k), v), file=sys.stderr)
+                    logging.warning('{} set to {} instead of {}.'.format(k, getattr(self.args, k), v))
 
         return self.args
 
@@ -121,6 +120,8 @@ class ContinualDataset(object):
 
         start_c = self.N_CLASSES_PER_TASK * task_idx if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK[:task_idx])
         end_c = self.N_CLASSES_PER_TASK * (task_idx + 1) if isinstance(self.N_CLASSES_PER_TASK, int) else sum(self.N_CLASSES_PER_TASK[:task_idx + 1])
+
+        assert end_c > start_c, 'End class index must be greater than start class index.'
 
         return start_c, end_c
 
@@ -160,7 +161,7 @@ class ContinualDataset(object):
     def get_scheduler(model, args: Namespace, reload_optim=True) -> torch.optim.lr_scheduler._LRScheduler:
         """
         Returns the scheduler to be used for the current dataset.
-        If `reload_optim` is True, the optimizer is reloaded from the model. This should be done at least ONCE every task 
+        If `reload_optim` is True, the optimizer is reloaded from the model. This should be done at least ONCE every task
         to ensure that the learning rate is reset to the initial value.
         """
         if args.lr_scheduler is not None:
@@ -196,6 +197,17 @@ class ContinualDataset(object):
     def get_minibatch_size(self):
         """Returns the minibatch size to be used for the current dataset."""
         return self.get_batch_size()
+
+    def get_class_names(self) -> List[str]:
+        """Returns the class names for the current dataset."""
+        raise NotImplementedError('The dataset does not implement the method `get_class_names` to get the class names.')
+
+    def get_prompt_templates(self) -> List[str]:
+        """
+        Returns the prompt templates for the current dataset.
+        By default, it returns the ImageNet prompt templates.
+        """
+        return templates['imagenet']
 
 
 def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):
@@ -242,6 +254,9 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     Returns:
         the training and test loaders
     """
+    if setting.SETTING == 'task-il' or setting.SETTING == 'class-il':
+        setting.c_task += 1
+
     if not isinstance(train_dataset.targets, np.ndarray):
         train_dataset.targets = np.array(train_dataset.targets)
     if not isinstance(test_dataset.targets, np.ndarray):
@@ -260,16 +275,18 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
         train_dataset.data = train_dataset.data[train_idxs]
         train_dataset.targets = train_dataset.targets[train_idxs]
 
+    start_c, end_c = setting.get_offsets()
+
     if setting.SETTING == 'class-il' or setting.SETTING == 'task-il':
-        train_mask = np.logical_and(train_dataset.targets >= setting.i,
-                                    train_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
+        train_mask = np.logical_and(train_dataset.targets >= start_c,
+                                    train_dataset.targets < end_c)
 
         if setting.args.validation_mode == 'current':
-            test_mask = np.logical_and(test_dataset.targets >= setting.i,
-                                       test_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
+            test_mask = np.logical_and(test_dataset.targets >= start_c,
+                                       test_dataset.targets < end_c)
         elif setting.args.validation_mode == 'complete':
             test_mask = np.logical_and(test_dataset.targets >= 0,
-                                       test_dataset.targets < setting.i + setting.N_CLASSES_PER_TASK)
+                                       test_dataset.targets < end_c)
         else:
             raise ValueError('Unknown validation mode: {}'.format(setting.args.validation_mode))
 
@@ -288,7 +305,21 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     setting.test_loaders.append(test_loader)
     setting.train_loader = train_loader
 
-    if setting.SETTING == 'task-il' or setting.SETTING == 'class-il':
-        setting.i += setting.N_CLASSES_PER_TASK
-        setting.c_task += 1
     return train_loader, test_loader
+
+
+def fix_class_names_order(class_names: List[str], args: Namespace) -> List[str]:
+    """
+    Permutes the order of the class names according to the class order specified in the arguments.
+    The order reflects that of `store_masked_loaders`.
+
+    Args:
+        class_names: the list of class names. This should contain all classes in the dataset (not just the current task's ones).
+        args: the command line arguments
+
+    Returns:
+        List[str]: the class names in the correct order
+    """
+    if args.permute_classes:
+        class_names = [class_names[np.where(args.class_order == i)[0][0]] for i in range(len(class_names))]
+    return class_names

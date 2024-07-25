@@ -1,7 +1,9 @@
-import argparse
+import logging
 import os
-import socket
-import time
+if os.getcwd().split('/')[-1] == 'scripts':
+    os.chdir('..')
+
+import argparse
 import math
 
 if __name__ == '__main__':
@@ -32,7 +34,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.ddp:
-        print("Warning: distributed stuff not yet supported in mammoth (problems with buffer synchronization). Use at your own risk!")
+        logging.error("distributed stuff not yet supported in mammoth (problems with buffer synchronization). Use at your own risk!")
 
     with open(args.file, 'r') as f:
         all_com = f.read().splitlines()

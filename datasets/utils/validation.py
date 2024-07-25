@@ -48,10 +48,11 @@ class ValidationDataset(Dataset):
 
         return img, target
 
+
 def get_validation_indexes(validation_size: float, dataset: Dataset, seed=None) -> Tuple[Dataset, Dataset]:
     """
     Returns the indexes of train and validation datasets from the given dataset, according to the validation size.
-    
+
     Args:
         validation_size (float): percentage of samples for each class to be used for validation (between 0 and 100)
         dataset (Dataset): the dataset to split
@@ -74,11 +75,12 @@ def get_validation_indexes(validation_size: float, dataset: Dataset, seed=None) 
         idxs = torch.randperm(n_samples, generator=torch.Generator().manual_seed(seed)).numpy()
         val_idxs.append(cls_idxs[idxs[:n_samples_val]])
         train_idxs.append(cls_idxs[idxs[n_samples_val:]])
-        
+
     train_idxs = np.concatenate(train_idxs)
     val_idxs = np.concatenate(val_idxs)
 
     return train_idxs, val_idxs
+
 
 def get_train_val(train: Dataset, test_transform: nn.Module,
                   dataset: str, val_perc: float = 0.1):

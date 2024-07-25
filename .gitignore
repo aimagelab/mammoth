@@ -96,3 +96,8 @@ logs
 _autosummary
 generated
 val_permutations
+
+# Other prepare grid scripts except the example one
+scripts/prepare_grid*
+
+docs/models/*_args.rst

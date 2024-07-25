@@ -16,12 +16,13 @@ To run the script, execute it directly or import it as a module and call the `ma
 # LICENSE file in the root directory of this source tree.
 
 # needed (don't change it)
+import logging
 import numpy  # noqa
+import os
+import sys
 import time
 import importlib
-import os
 import socket
-import sys
 import datetime
 import uuid
 from argparse import ArgumentParser
@@ -34,6 +35,18 @@ sys.path.append(mammoth_path + '/backbone')
 sys.path.append(mammoth_path + '/models')
 
 from utils import create_if_not_exists, custom_str_underscore
+from utils.conf import warn_once
+
+if __name__ == '__main__':
+    try:
+        if os.getenv('MAMMOTH_TEST', '0') == '0':
+            from dotenv import load_dotenv
+            load_dotenv()
+        else:
+            warn_once("Running in test mode. Ignoring .env file.")
+    except ImportError:
+        warn_once("Warning: python-dotenv not installed. Ignoring .env file.")
+
 from utils.args import add_management_args, add_experiment_args
 from utils.conf import base_path, get_device
 from utils.distributed import make_dp
@@ -63,8 +76,8 @@ def parse_args():
     parser = ArgumentParser(description='mammoth', allow_abbrev=False, add_help=False)
     parser.add_argument('--model', type=custom_str_underscore, help='Model name.', choices=list(get_all_models().keys()))
     parser.add_argument('--load_best_args', action='store_true',
-                        help='Loads the best arguments for each method, '
-                             'dataset and memory buffer.')
+                        help='(deprecated) Loads the best arguments for each method, dataset and memory buffer. '
+                        'NOTE: This option is deprecated and not up to date.')
 
     args = parser.parse_known_args()[0]
     models_dict = get_all_models()
@@ -110,10 +123,24 @@ def parse_args():
     args.model = models_dict[args.model]
 
     if args.lr_scheduler is not None:
-        print('Warning: lr_scheduler set to {}, overrides default from dataset.'.format(args.lr_scheduler), file=sys.stderr)
+        logging.info('`lr_scheduler` set to {}, overrides default from dataset.'.format(args.lr_scheduler))
 
     if args.seed is not None:
         set_random_seed(args.seed)
+
+    # Add uuid, timestamp and hostname for logging
+    args.conf_jobnum = str(uuid.uuid4())
+    args.conf_timestamp = str(datetime.datetime.now())
+    args.conf_host = socket.gethostname()
+
+    # Add the current git commit hash to the arguments if available
+    try:
+        import git
+        repo = git.Repo(path=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        args.conf_git_hash = repo.head.object.hexsha
+    except Exception:
+        logging.error("Could not retrieve git hash.")
+        args.conf_git_hash = None
 
     if args.savecheck:
         assert args.inference_only == 0, "Should not save checkpoint in inference only mode"
@@ -121,9 +148,9 @@ def parse_args():
             create_if_not_exists("checkpoints")
 
         now = time.strftime("%Y%m%d-%H%M%S")
+        uid = args.conf_jobnum.split('-')[0]
         extra_ckpt_name = "" if args.ckpt_name is None else f"{args.ckpt_name}_"
-        args.ckpt_name = f"{extra_ckpt_name}{args.model}_{args.dataset}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}_{args.n_epochs}_{str(now)}"
-        args.ckpt_name_replace = f"{extra_ckpt_name}{args.model}_{args.dataset}_{'{}'}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}__{args.n_epochs}_{str(now)}"
+        args.ckpt_name = f"{extra_ckpt_name}{args.model}_{args.dataset}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}_{args.n_epochs}_{str(now)}_{uid}"
         print("Saving checkpoint into", args.ckpt_name, file=sys.stderr)
 
     if args.joint:
@@ -133,8 +160,8 @@ def parse_args():
     assert 0 < args.label_perc <= 1, "label_perc must be in (0, 1]"
 
     if args.validation is not None:
-        print(f"INFO: Using {args.validation}% of the training set as validation set.", file=sys.stderr)
-        print(f"INFO: Validation will be computed with mode `{args.validation_mode}`.", file=sys.stderr)
+        logging.info(f"Using {args.validation}% of the training set as validation set.")
+        logging.info(f"Validation will be computed with mode `{args.validation_mode}`.")
 
     return args
 
@@ -143,12 +170,13 @@ def main(args=None):
     from models import get_model
     from datasets import ContinualDataset, get_dataset
     from utils.training import train
+    from models.utils.future_model import FutureModel
 
     lecun_fix()
     if args is None:
         args = parse_args()
 
-    device = get_device()
+    device = get_device(avail_devices=args.device)
     args.device = device
 
     # set base path
@@ -156,17 +184,13 @@ def main(args=None):
 
     if args.code_optimization != 0:
         torch.set_float32_matmul_precision('high' if args.code_optimization == 1 else 'medium')
-        print("INFO: code_optimization is set to", args.code_optimization, file=sys.stderr)
-        print(f"Using {torch.get_float32_matmul_precision()} precision for matmul.", file=sys.stderr)
+        logging.info("Code_optimization is set to", args.code_optimization)
+        logging.info(f"Using {torch.get_float32_matmul_precision()} precision for matmul.")
 
         if args.code_optimization == 2:
             if not torch.cuda.is_bf16_supported():
                 raise NotImplementedError('BF16 is not supported on this machine.')
 
-    # Add uuid, timestamp and hostname for logging
-    args.conf_jobnum = str(uuid.uuid4())
-    args.conf_timestamp = str(datetime.datetime.now())
-    args.conf_host = socket.gethostname()
     dataset = get_dataset(args)
 
     if args.fitting_mode == 'epochs' and args.n_epochs is None and isinstance(dataset, ContinualDataset):
@@ -191,7 +215,7 @@ def main(args=None):
         # from https://pytorch.org/tutorials/intermediate/torch_compile_tutorial.html
         if torch.cuda.get_device_capability()[0] >= 7 and os.name != 'nt':
             print("================ Compiling model with torch.compile ================")
-            print("WARNING: `torch.compile` may break your code if you change the model after the first run!")
+            logging.warning("`torch.compile` may break your code if you change the model after the first run!")
             print("This includes adding classifiers for new tasks, changing the backbone, etc.")
             print("ALSO: some models CHANGE the backbone during initialization. Remember to call `torch.compile` again after that.")
             print("====================================================================")
@@ -205,6 +229,7 @@ def main(args=None):
     loss = dataset.get_loss()
     model = get_model(args, backbone, loss, dataset.get_transform())
     # model = torch.compile(model)
+    assert isinstance(model, FutureModel) or not args.eval_future, "Model does not support future_forward."
 
     if args.distributed == 'dp':
         if args.batch_size < torch.cuda.device_count():
@@ -221,8 +246,13 @@ def main(args=None):
         print('Debug mode enabled: running only a few forward steps per epoch with W&B disabled.')
         args.nowand = 1
 
+    if args.wandb_entity is None:
+        args.wandb_entity = os.getenv('WANDB_ENTITY', None)
+    if args.wandb_project is None:
+        args.wandb_project = os.getenv('WANDB_PROJECT', None)
+
     if args.wandb_entity is None or args.wandb_project is None:
-        print('Warning: wandb_entity and wandb_project not set. Disabling wandb.')
+        logging.warning('`wandb_entity` and `wandb_project` not set. Disabling wandb.')
         args.nowand = 1
     else:
         print('Logging to wandb: {}/{}'.format(args.wandb_entity, args.wandb_project))

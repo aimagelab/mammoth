@@ -1,4 +1,4 @@
-torch
+torch>=2.1.0
 numpy
 torchvision
 kornia>=0.7.0
@@ -6,3 +6,5 @@ Pillow
 timm==0.9.8
 tqdm
 onedrivedownloader
+ftfy
+regex

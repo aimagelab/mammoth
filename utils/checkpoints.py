@@ -1,6 +1,7 @@
 
 import random
 import string
+import numpy as np
 import torch
 from torch import distributed as dist
 import os
@@ -170,10 +171,20 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
 
 
 def _check_loaded_args(args, loaded_args):
+    def _check_arg(arg, loaded_arg):
+        if isinstance(arg, (list, tuple)):
+            return any([a != la for a, la in zip(arg, loaded_arg)])
+        elif isinstance(arg, dict):
+            return any([k not in loaded_arg or _check_arg(v, loaded_arg[k]) for k, v in arg.items()])
+        elif isinstance(arg, (torch.Tensor, np.ndarray)):
+            return (arg != loaded_arg).any()
+        return arg != loaded_arg
+
     ignored_args = ['loadcheck', 'start_from', 'stop_after', 'conf_jobnum', 'conf_host', 'conf_timestamp', 'distributed', 'examples_log', 'examples_full_log',
-                    'intensive_savecheck', 'job_number', 'conf_git_commit', 'loss_log', 'tensorboard', 'seed', 'savecheck', 'notes', 'non_verbose', 'autorelaunch', 'force_compat', 'conf_external_path']
+                    'intensive_savecheck', 'job_number', 'conf_git_commit', 'loss_log', 'tensorboard', 'seed', 'savecheck', 'notes', 'non_verbose', 'autorelaunch',
+                    'force_compat', 'conf_external_path', 'ckpt_name']
     mismatched_args = [x for x in vars(args) if x not in ignored_args and (
-        x not in vars(loaded_args) or getattr(args, x) != getattr(loaded_args, x))]
+        x not in vars(loaded_args) or _check_arg(getattr(args, x), getattr(loaded_args, x)))]
 
     if len(mismatched_args):
         if 'force_compat' not in vars(args) or args.force_compat:

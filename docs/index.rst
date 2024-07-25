@@ -39,4 +39,12 @@
    generated/backbone.rst
    generated/utils.rst
 
+.. toctree::
+   :glob:
+   :maxdepth: 1
+   :hidden:
+   :caption: How to run:
+
+   how_to_run/starprompt.rst
+   
 .. include:: readme.rst

@@ -6,7 +6,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from functools import partial
 
 from timm.models.layers import trunc_normal_, DropPath
 
@@ -51,11 +50,13 @@ class Attention(nn.Module):
             k = torch.cat((pk, k), dim=2)
             v = torch.cat((pv, v), dim=2)
 
-        x = F.scaled_dot_product_attention(q, k, v, scale=self.scale, dropout_p=self.attn_drop.p)
-        # attn = (q @ k.transpose(-2, -1)) * self.scale
-        # attn = attn.softmax(dim=-1)
-        # attn = self.attn_drop(attn)
-        # x = (attn @ v)
+        if torch.__version__ >= '2.1.0':
+            x = F.scaled_dot_product_attention(q, k, v, scale=self.scale, dropout_p=self.attn_drop.p)
+        else:
+            attn = (q @ k.transpose(-2, -1)) * self.scale
+            attn = attn.softmax(dim=-1)
+            attn = self.attn_drop(attn)
+            x = (attn @ v)
 
         x = x.transpose(1, 2).reshape(B, N, C)
         x = self.proj(x)

@@ -20,7 +20,7 @@ with suppress(ImportError):
     import wandb
 
 
-def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
+def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT", future=False):
     """
     Logs the accuracy values and other metrics.
 
@@ -35,7 +35,10 @@ def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
         epoch: The epoch number (optional).
         prefix: The prefix for the metrics (default="RESULT").
     """
-    mean_acc = print_mean_accuracy(accs, t + 1 if isinstance(t, (float, int)) else t, setting, joint=args.joint, epoch=epoch)
+
+    mean_acc = print_mean_accuracy(accs, t + 1 if isinstance(t, (float, int)) else t,
+                                   setting, joint=args.joint,
+                                   epoch=epoch, future=future)
 
     if not args.disable_log:
         logger.log(mean_acc)
@@ -43,16 +46,23 @@ def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT"):
 
     if not args.nowand:
         postfix = "" if epoch is None else f"_epoch_{epoch}"
-        d2 = {f'{prefix}_class_mean_accs{postfix}': mean_acc[0], f'{prefix}_task_mean_accs{postfix}': mean_acc[1],
-              **{f'{prefix}_class_acc_{i}{postfix}': a for i, a in enumerate(accs[0])},
-              **{f'{prefix}_task_acc_{i}{postfix}': a for i, a in enumerate(accs[1])},
-              'Task': t}
+        if future:
+            prefix += "_transf"
+        if isinstance(mean_acc, float):  # domain or gcl
+            d2 = {f'{prefix}_domain_mean_accs{postfix}': mean_acc,
+                  **{f'{prefix}_domain_acc_{i}{postfix}': a for i, a in enumerate(accs[0])},
+                  'Task': t}
+        else:
+            d2 = {f'{prefix}_class_mean_accs{postfix}': mean_acc[0], f'{prefix}_task_mean_accs{postfix}': mean_acc[1],
+                  **{f'{prefix}_class_acc_{i}{postfix}': a for i, a in enumerate(accs[0])},
+                  **{f'{prefix}_task_acc_{i}{postfix}': a for i, a in enumerate(accs[1])},
+                  'Task': t}
 
         wandb.log(d2)
 
 
 def print_mean_accuracy(accs: np.ndarray, task_number: int,
-                        setting: str, joint=False, epoch=None) -> None:
+                        setting: str, joint=False, epoch=None, future=False) -> None:
     """
     Prints the mean accuracy on stderr.
 
@@ -81,6 +91,7 @@ def print_mean_accuracy(accs: np.ndarray, task_number: int,
             print('\tRaw accuracy values: Class-IL {} | Task-IL {}'.format(accs[0], accs[1]), file=sys.stderr)
     else:
         prefix = "Accuracy" if epoch is None else f"Accuracy (epoch {epoch})"
+        prefix = "Future " + prefix if future else prefix
         if setting == 'domain-il' or setting == 'general-continual':
             mean_acc, _ = mean_acc
             print('{} for {} task(s): [Domain-IL]: {} %'.format(prefix,
@@ -91,7 +102,7 @@ def print_mean_accuracy(accs: np.ndarray, task_number: int,
             print('{} for {} task(s): \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, task_number, round(
                 mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
             print('\tRaw accuracy values: Class-IL {} | Task-IL {}'.format(accs[0], accs[1]), file=sys.stderr)
-
+    print('\n', file=sys.stderr)
     return mean_acc
 
 
@@ -265,9 +276,12 @@ class Logger:
             self.cpu_res.append(cpu_res)
         if gpu_res is not None:
             self.gpu_res.append(gpu_res)
+            gpu_res = {f'GPU_{i}_memory_usage': r for i, r in gpu_res.items()}
+        else:
+            gpu_res = {}
 
         if not self.args.nowand:
-            wandb.log({'CPU_memory_usage': cpu_res, **{f'GPU_{i}_memory_usage': r for i, r in gpu_res.items()}})
+            wandb.log({'CPU_memory_usage': cpu_res, **gpu_res})
 
     def write(self, args: Dict[str, Any]) -> None:
         """

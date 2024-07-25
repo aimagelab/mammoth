@@ -112,10 +112,6 @@ class ResNet(MammothBackbone):
 
         self.feature_dim = nf * 8 * block.expansion
 
-    def to(self, device, **kwargs):
-        self.device = device
-        return super().to(device, **kwargs)
-
     def set_return_prerelu(self, enable=True):
         self.return_prerelu = enable
         for c in self.modules():

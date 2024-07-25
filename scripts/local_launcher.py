@@ -1,6 +1,14 @@
-import functools
 import os
-import random
+import sys
+
+if 'scripts' in os.path.dirname(os.path.abspath(__file__)):
+    mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+else:
+    mammoth_path = os.getcwd()
+os.chdir(mammoth_path)
+sys.path.append(mammoth_path)
+
+import functools
 import subprocess
 import sys
 import time
@@ -31,7 +39,7 @@ def parse_args():
     assert args.redundancy >= 1, "redundancy must be at least 1"
     assert args.start_from >= 0, "start_from must be at least 0"
 
-    jobs_list = [l for l in open(args.file, "r").read().splitlines() if l.strip() != "" and not l.startswith("#")][args.start_from:] * args.redundancy
+    jobs_list = [l for l in open(args.file, "r").read().splitlines() if l.strip() != "" and not l.strip().startswith("#")][args.start_from:] * args.redundancy
     if args.reverse:
         jobs_list = list(reversed(jobs_list))
     jobname = args.file.strip().split("/")[-1].split("\\")[-1].split(".")[0]
@@ -95,9 +103,11 @@ def main():
     def signal_handler(sig, frame):
         print('Killing all processes')
         if os.name == 'nt':
-            os.system("taskkill /F /T /PID {}".format(os.getpid()))
+            for job_index, (jobname, pid) in active_jobs.items():
+                os.system("taskkill /F /PID {}".format(pid))
         else:
-            os.system("kill -9 -1")
+            for job_index, (jobname, pid) in active_jobs.items():
+                os.system("kill -9 {}".format(pid))
         sys.exit(0)
     signal.signal(signal.SIGINT, signal_handler)
 

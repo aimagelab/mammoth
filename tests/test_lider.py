@@ -2,9 +2,11 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.main import main
+from utils.test_utils import init_test_environ
 import pytest
 
 
+@init_test_environ
 def test_gdumb_lider():
     sys.argv = ['mammoth',
                 '--model',
@@ -40,6 +42,7 @@ def test_gdumb_lider():
     main()
 
 
+@init_test_environ
 def test_icarl_lider():
     sys.argv = ['mammoth',
                 '--model',
@@ -75,6 +78,7 @@ def test_icarl_lider():
     main()
 
 
+@init_test_environ
 def test_erace_lider():
     sys.argv = ['mammoth',
                 '--model',
@@ -110,6 +114,7 @@ def test_erace_lider():
     main()
 
 
+@init_test_environ
 def test_derpp_lider():
     sys.argv = ['mammoth',
                 '--model',

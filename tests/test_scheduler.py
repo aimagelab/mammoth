@@ -29,10 +29,10 @@ def test_der_cifar100_defaultscheduler():
                 '--debug_mode',
                 '1',
                 '--savecheck',
-                '1',
+                'task',
                 '--seed',
                 '0']
-    
+
     log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_der_cifar100_defaultscheduler.log')
     # log all outputs to file
     if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
@@ -50,17 +50,16 @@ def test_der_cifar100_defaultscheduler():
         ckpt_base_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip()
         ckpt_paths = [os.path.join('checkpoints', ckpt_base_name + f'_{i}.pt') for i in range(N_TASKS)]
 
-    
     for ckpt_path in ckpt_paths:
         assert os.path.exists(ckpt_path), f'Checkpoint file {ckpt_path} not found'
 
         ckpt = torch.load(ckpt_path)
         opt, sched = ckpt['optimizer']['param_groups'][0], ckpt['scheduler']
         assert opt['initial_lr'] == 0.03, f'Learning rate not updated correctly in {ckpt_path}'
-        assert opt['lr']==opt['initial_lr']*0.1*0.1, f'Learning rate not updated correctly in {ckpt_path}'
+        assert opt['lr'] == opt['initial_lr'] * 0.1 * 0.1, f'Learning rate not updated correctly in {ckpt_path}'
         assert list(sched['milestones'].keys()) == [35, 45], f'Milestones not updated correctly in {ckpt_path}'
-        assert sched['base_lrs']==[0.03], f'Base learning rate not updated correctly in {ckpt_path}'
-        
+        assert sched['base_lrs'] == [0.03], f'Base learning rate not updated correctly in {ckpt_path}'
+
 
 def test_der_cifar100_customscheduler():
     N_TASKS = 10
@@ -84,14 +83,14 @@ def test_der_cifar100_customscheduler():
                 '--debug_mode',
                 '1',
                 '--savecheck',
-                '1',
+                'task',
                 '--lr_scheduler',
                 'multisteplr',
                 '--lr_milestones',
-                '2','4','6','8',
+                '2', '4', '6', '8',
                 '--seed',
                 '0']
-    
+
     log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_der_cifar100_customscheduler.der.cifar100.log')
     # log all outputs to file
     if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
@@ -109,13 +108,12 @@ def test_der_cifar100_customscheduler():
         ckpt_base_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip()
         ckpt_paths = [os.path.join('checkpoints', ckpt_base_name + f'_{i}.pt') for i in range(N_TASKS)]
 
-    
     for ckpt_path in ckpt_paths:
         assert os.path.exists(ckpt_path), f'Checkpoint file {ckpt_path} not found'
-        
+
         ckpt = torch.load(ckpt_path)
         opt, sched = ckpt['optimizer']['param_groups'][0], ckpt['scheduler']
         assert opt['initial_lr'] == 0.1, f'Learning rate not updated correctly in {ckpt_path}'
-        assert opt['lr']==opt['initial_lr']*0.1*0.1*0.1*0.1, f'Learning rate not updated correctly in {ckpt_path}'
-        assert list(sched['milestones'].keys()) == [2,4,6,8], f'Milestones not updated correctly in {ckpt_path}'
-        assert sched['base_lrs']==[0.1], f'Base learning rate not updated correctly in {ckpt_path}'
+        assert opt['lr'] == opt['initial_lr'] * 0.1 * 0.1 * 0.1 * 0.1, f'Learning rate not updated correctly in {ckpt_path}'
+        assert list(sched['milestones'].keys()) == [2, 4, 6, 8], f'Milestones not updated correctly in {ckpt_path}'
+        assert sched['base_lrs'] == [0.1], f'Base learning rate not updated correctly in {ckpt_path}'

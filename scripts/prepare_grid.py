@@ -1,6 +1,8 @@
 import os
+if os.getcwd().split('/')[-1] == 'scripts':
+    os.chdir('..')
+
 import itertools
-import numpy as np
 import argparse
 
 parser = argparse.ArgumentParser(description='Prepare grid')
@@ -41,11 +43,12 @@ for experiment in grid_combinations:
             for k, v in zip(combos.keys(), c):
                 if v is None:
                     continue
-if isinstance(k,                 if)                    for i in range(len(k)):
+                if isinstance(k, (list, tuple)):
+                    for i in range(len(k)):
                         ll += f" --{k[i]}={v[i]}"
                 else:
                     ll += f" --{k}={v}"
-            f.write(ll +'\n')
+            f.write(ll + '\n')
             all_configs.append(ll)
 
             clines += 1

@@ -6,7 +6,7 @@
 import os
 import sys
 from argparse import Namespace
-from typing import List
+from typing import Dict, List
 from torch import nn
 import importlib
 import inspect
@@ -69,16 +69,16 @@ def get_model_class(args: Namespace) -> ContinualModel:
     return names[model_name]
 
 
-def get_model_names() -> List[str]:
+def get_model_names() -> Dict[str, ContinualModel]:
     """
-    Return the list of the available continual model names.
+    Return the available continual model names and classes.
 
     Returns:
-        the list of the available continual model names
+        A dictionary containing the names of the available continual models and their classes.
     """
 
     def _get_names():
-        names = {}
+        names: Dict[str, ContinualModel] = {}
         for model_name, model in get_all_models().items():
             try:
                 mod = importlib.import_module('models.' + model)
@@ -88,7 +88,6 @@ def get_model_names() -> List[str]:
                 names[c.NAME.replace('_', '-')] = c
             except Exception as e:
                 warn_once("Error in model", model)
-                warn_once("\t-", e)
                 names[model.replace('_', '-')] = e
         return names
 
