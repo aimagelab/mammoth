@@ -8,8 +8,8 @@
 
    {% block attributes %}
    {% if attributes %}
-Module Attributes
-~~~~~~~~~~~~~~~~~~
+   Module Attributes
+   ~~~~~~~~~~~~~~~~~~
 
    {% for item in attributes %}
    .. autoattribute:: {{ item }}
@@ -20,8 +20,8 @@ Module Attributes
 
    {% block classes %}
    {% if classes %}
-Classes
-~~~~~~~~
+   Classes
+   ~~~~~~~~
 
    {% for item in classes %}
    .. autoclass:: {{ item }}
@@ -34,9 +34,9 @@ Classes
 
    {% block functions %}
    {% if functions %}
-Functions
-~~~~~~~~~~
-      
+   Functions
+   ~~~~~~~~~~
+   
    {% for item in functions %}
    .. autofunction:: {{ item }}
       :members:
@@ -52,8 +52,8 @@ Functions
 
    {% block exceptions %}
    {% if exceptions %}
-Exceptions
-~~~~~~~~~~
+   Exceptions
+   ~~~~~~~~~~
 
    {% for item in exceptions %}
    .. autoexception:: {{ item }}
@@ -76,7 +76,7 @@ Exceptions
 .. toctree::
    :hidden:
 {% for item in modules | reorder_modules %}
-   {{ item }}
+   {{ item | get_item_name }} <{{ item }}>
 {%- endfor %}
 
 {% endif %}

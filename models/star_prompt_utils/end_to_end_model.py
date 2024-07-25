@@ -278,7 +278,7 @@ class STARPromptModel(nn.Module):
                     loss += loss_clip
 
                     loss_ortho_coop = self.first_stage.prompter.compute_ortho_loss(frozen_past_classes=n_past_classes, cur_classes=n_seen_classes)
-                    loss += self.args.lambda_ortho_coop * loss_ortho_coop
+                    loss += self.args.lambda_ortho_first_stage * loss_ortho_coop
 
                     if i == 0:
                         opt.zero_grad()

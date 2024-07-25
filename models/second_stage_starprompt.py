@@ -62,7 +62,7 @@ class SecondStageStarprompt(ContinualModel):
 
         # Tunable hyperparameters
         tunable_group = parser.add_argument_group('Tunable hyperparameters')
-        tunable_group.add_argument("--lambda_ortho", type=float, default=10,
+        tunable_group.add_argument("--lambda_ortho_second_stage", type=float, default=10,
                                    help="orthogonality loss coefficient")
         tunable_group.add_argument("--num_monte_carlo_gr", "--num_monte_carlo_gr_second_stage", dest="num_monte_carlo_gr_second_stage",
                                    type=int, default=1, help="how many times to sample from the dataset for alignment")
@@ -305,7 +305,7 @@ class SecondStageStarprompt(ContinualModel):
         loss = self.loss(stream_logits[:, :self.n_seen_classes], stream_labels)
 
         loss_ortho = self.net.prompter.compute_ortho_loss(frozen_past_classes=self.n_past_classes, cur_classes=self.n_seen_classes)
-        loss += self.args.lambda_ortho * loss_ortho
+        loss += self.args.lambda_ortho_second_stage * loss_ortho
 
         if self.epoch_iteration == 0:
             self.opt.zero_grad()

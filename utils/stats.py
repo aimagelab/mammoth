@@ -8,8 +8,7 @@ try:
         Returns:
             dict: A dictionary containing the memory usage of the current process and its children.
 
-            The dictionary has the following
-            keys:
+            The dictionary has the following keys:
                 - self: The memory usage of the current process.
                 - children: The memory usage of the children of the current process.
                 - total: The total memory usage of the current process and its children.
@@ -49,12 +48,15 @@ class track_system_stats:
     Tracks both CPU and GPU memory usage if available.
 
     Usage:
-    with track_system_stats() as t:
-        for i in range(100):
-            ... # Do something
-            t()
 
-    cpu_res, gpu_res = t.cpu_res, t.gpu_res
+    .. code-block:: python
+
+        with track_system_stats() as t:
+            for i in range(100):
+                ... # Do something
+                t()
+
+            cpu_res, gpu_res = t.cpu_res, t.gpu_res
 
     Args:
         logger (Logger): external logger.

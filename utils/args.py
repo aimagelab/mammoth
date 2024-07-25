@@ -177,9 +177,9 @@ class _DocsArgs:
     def __str__(self):
         tb = f"""**\\-\\-{self.name}** : {self.type.__name__ if self.type is not None else 'unknown'}
 \t*Help*: {self.help}\n
-\t- *Default*: {self.default}"""
+\t- *Default*: ``{self.default}``"""
         if self.choices is not None:
-            tb += f"\n\t- *Choices*: {self.parse_choices()}"
+            tb += f"\n\t- *Choices*: ``{self.parse_choices()}``"
         return tb
 
 
@@ -230,7 +230,7 @@ if __name__ == '__main__':
 
     docs_args = []
     for group in parser._action_groups:
-        if len(group._group_actions) == 0:
+        if len([a for a in group._group_actions if a.dest != 'help']) == 0:
             continue
         docs_args.append(_parse_actions(group._group_actions, group.title, group.description))
 
@@ -246,7 +246,7 @@ if __name__ == '__main__':
     add_management_args(parser)
     docs_args = []
     for group in parser._action_groups:
-        if len(group._group_actions) == 0:
+        if len([a for a in group._group_actions if a.dest != 'help']) == 0:
             continue
         docs_args.append(_parse_actions(group._group_actions, group.title, group.description))
 
@@ -278,7 +278,7 @@ if __name__ == '__main__':
 
         model_args_groups = []
         for group in parser._action_groups:
-            if len(group._group_actions) == 0:
+            if len([a for a in group._group_actions if a.dest != 'help']) == 0:
                 continue
             model_args_groups.append(_parse_actions(group._group_actions, group.title, group.description))
         model_filename = model_name.replace("-", "_")

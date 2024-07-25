@@ -45,11 +45,11 @@ each dataset **must statically define** all the necessary information to run a c
 
     - **get_class_names** (``callable``): returns the class names for the dataset. This method is not implemented by default, but is expected for some methods (e.g., `clip`). The method *should* populate the **class_names** attribute of the dataset to cache the result and call the ``fix_class_names_order`` method to ensure that the class names are in the correct order.
 
-See :ref:`continual_dataset` for more details or **SequentialCIFAR10** in :ref:`seq_cifar10` for an example.
+See :ref:`module-continual_dataset` for more details or **SequentialCIFAR10** in :ref:`module-seq_cifar10` for an example.
 
 .. note::
     Datasets are downloaded by default in the **data** folder. You can change this
-    default location by setting the **base_path** function in :ref:`conf`. 
+    default location by setting the **base_path** function in :ref:`module-conf`. 
 
 .. _settings:
 
@@ -95,9 +95,9 @@ This is done with the **set_default_from_args** decorator, which takes the name 
 Steps to create a new dataset:
 ------------------------------
     
-All datasets must inherit from the **ContinualDataset** class, which is defined in :ref:`continual_dataset`. The only
-exception are datasets that follow the `general-continual` setting, which inherit from the **GCLDataset** class, (defined in :ref:`gcl_dataset`).
-These classes provide some useful methods to create data loaders and store masked data loaders for continual learning experiments. See more in section :ref:`Utils`.
+All datasets must inherit from the **ContinualDataset** class, which is defined in :ref:`module-continual_dataset`. The only
+exception are datasets that follow the `general-continual` setting, which inherit from the **GCLDataset** class, (defined in :ref:`module-gcl_dataset`).
+These classes provide some useful methods to create data loaders and store masked data loaders for continual learning experiments. See more in section :ref:`module-utils`.
 
     1. Create a new file in the `datasets` folder, e.g. ``my_dataset.py``.
 
@@ -107,7 +107,7 @@ These classes provide some useful methods to create data loaders and store maske
 
     .. tip::
         For convenience, most datasets are initially created with all classes and then masked appropriately by the **store_masked_loaders** function. 
-        For example, in :ref:`seq_cifar10` the **get_data_loaders** function of **SequentialCIFAR10** dataset first inizializes the **MyCIFAR10** and **TCIFAR10** 
+        For example, in :ref:`module-seq_cifar10` the **get_data_loaders** function of **SequentialCIFAR10** dataset first inizializes the **MyCIFAR10** and **TCIFAR10** 
         datasets with train and test data for all classes respectively, and then masks the data loaders to return only the data for the current task.
 
     .. important::
@@ -123,7 +123,7 @@ Utils
 - **get_data_loaders**: This function should take care of downloading the dataset if necessary, make sure that it contains samples and labels for 
 **only** the current task (you can use the **store_masked_loaders** function), and create the data loaders.
 
-- **store_masked_loaders**: This function is defined in :ref:`continual_dataset` and takes care of masking the data loaders to return only the data for the current task.
+- **store_masked_loaders**: This function is defined in :ref:`module-continual_dataset` and takes care of masking the data loaders to return only the data for the current task.
 It is used by most datasets to create the data loaders for each task. 
     - If the ``--permute_classes`` flag is set to ``1``, it also applies the appropriate permutation to the classes before splitting the data.
 

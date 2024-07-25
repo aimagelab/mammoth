@@ -20,7 +20,7 @@ class IncrementalCoopVAE(FutureModel):
         parser.add_argument("--learning_rate_alignment", type=float, default=0.05, help="Learning rate for GR.")
         parser.add_argument("--optim_alignment", type=str, default='adamw', choices=('sgd', 'adam', 'adamw'), help="Optimizer for GR.")
         parser.add_argument("--optim_alignment_wd", type=float, default=0, help="Weight decay for GR.")
-        parser.add_argument("--lambda_ortho_coop", type=float, default=1, help="Orthogonality loss coefficient for coop")
+        parser.add_argument("--lambda_ortho_first_stage", type=float, default=1, help="Orthogonality loss coefficient for coop")
         parser.add_argument("--num_epochs_alignment", type=int, default=30, help="Num. of epochs for GR.")
         parser.add_argument("--batch_size_alignment", type=int, default=128, help="Batch size for alignment.")
         parser.add_argument('--gr_mog_n_components', type=int, default=5, help="Number of components for GR with MOG.")

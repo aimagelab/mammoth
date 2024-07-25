@@ -41,7 +41,7 @@ class FirstStageStarprompt(ContinualModel):
                                    type=int, default=2, help="How many times to sample from the dataset for Generative Replay")
         tunable_group.add_argument("--learning_rate_gr", "--learning_rate_gr_first_stage", dest="learning_rate_gr_first_stage",
                                    type=float, default=0.05, help="Learning rate for Generative Replay.")
-        tunable_group.add_argument("--lambda_ortho_coop", type=float, default=30,
+        tunable_group.add_argument("--lambda_ortho_first_stage", type=float, default=30,
                                    help="Orthogonality loss coefficient for coop")
         tunable_group.add_argument("--num_epochs_gr", "--num_epochs_gr_first_stage", dest="num_epochs_gr_first_stage",
                                    type=int, default=10, help="Num. of epochs for Generative Replay.")
@@ -126,7 +126,7 @@ class FirstStageStarprompt(ContinualModel):
         loss += loss_clip
 
         loss_ortho_coop = self.net.prompter.compute_ortho_loss(frozen_past_classes=self.n_past_classes, cur_classes=self.n_seen_classes)
-        loss += self.args.lambda_ortho_coop * loss_ortho_coop
+        loss += self.args.lambda_ortho_first_stage * loss_ortho_coop
 
         if self.epoch_iteration == 0:
             self.opt.zero_grad()

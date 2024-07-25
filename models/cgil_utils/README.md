@@ -6,7 +6,7 @@ It may be required to add the root directory to the python path. if you are usin
 export PYTHONPATH=$PYTHONPATH:/path/to/mammoth
 ```
 
-In the paper we employ the following hyperparameters for the different datasets accross the seeds `1992`, `1996` and `1997` (we report only the seed `1992` for brevity). The hyperparameters are the same for the other seeds:
+In the [[paper](https://arxiv.org/abs/2407.15793)] we employ the following hyperparameters for the different datasets accross the seeds `1992`, `1996` and `1997` (we report only the seed `1992` for brevity). The hyperparameters are the same for the other seeds:
 
 - **Imagenet-R**
 

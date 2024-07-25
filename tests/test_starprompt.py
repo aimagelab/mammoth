@@ -83,3 +83,37 @@ def test_first_and_second_stage():
 
     # REMOVE CHECKPOINT FILE
     os.remove(ckpt_path)
+
+
+@init_test_environ
+def test_full_starprompt():
+    sys.argv = ['mammoth',
+                '--model',
+                'starprompt',
+                '--dataset',
+                'seq-cifar10-224',
+                '--lr',
+                '1e-4',
+                '--optimizer',
+                'adam',
+                '--n_epochs',
+                '1',
+                '--batch_size',
+                '4',
+                '--non_verbose',
+                '1',
+                '--num_workers',
+                '0',
+                '--seed',
+                '1993',
+                '--debug_mode',
+                '1']
+
+    fn = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_full_starprompt.log')
+
+    # log all outputs to file
+    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
+        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
+    sys.stdout = open(fn, 'w', encoding='utf-8')
+    sys.stderr = sys.stdout
+    main()

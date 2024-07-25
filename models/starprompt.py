@@ -56,7 +56,7 @@ class STARPrompt(ContinualModel):
 
         tunable_group = parser.add_argument_group('Tunable hyperparameters')
         # second stage
-        tunable_group.add_argument("--lambda_ortho", type=float, default=10,
+        tunable_group.add_argument("--lambda_ortho_second_stage", type=float, default=10,
                                    help="orthogonality loss coefficient")
         tunable_group.add_argument("--num_monte_carlo_gr_second_stage", type=int, default=1,
                                    help="how many times to sample from the dataset for alignment")
@@ -69,7 +69,7 @@ class STARPrompt(ContinualModel):
                                    help="how many times to sample from the dataset for alignment")
         tunable_group.add_argument("--learning_rate_gr_first_stage", type=float, default=0.05,
                                    help="Learning rate for Generative Replay.")
-        tunable_group.add_argument("--lambda_ortho_coop", type=float, default=30,
+        tunable_group.add_argument("--lambda_ortho_first_stage", type=float, default=30,
                                    help="Orthogonality loss coefficient for coop")
         tunable_group.add_argument("--num_epochs_gr_first_stage", type=int, default=10,
                                    help="Num. of epochs for Generative Replay.")
@@ -160,7 +160,7 @@ class STARPrompt(ContinualModel):
         loss = self.loss(stream_logits[:, :self.n_seen_classes], stream_labels)
 
         loss_ortho = self.net.second_stage.prompter.compute_ortho_loss(frozen_past_classes=self.n_past_classes, cur_classes=self.n_seen_classes)
-        loss += self.args.lambda_ortho * loss_ortho
+        loss += self.args.lambda_ortho_second_stage * loss_ortho
 
         if self.epoch_iteration == 0:
             self.opt.zero_grad()

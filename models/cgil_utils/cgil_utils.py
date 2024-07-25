@@ -209,7 +209,7 @@ class Prompter(torch.nn.Module):
 
             if self.args.align_with_ortholoss and not self.args.generated_context:
                 ortho_loss = self.compute_ortho_loss()
-                loss += self.args.lambda_ortho_coop * ortho_loss
+                loss += self.args.lambda_ortho_first_stage * ortho_loss
                 wandb_log['alignment_loss_ortho'] = ortho_loss.item()
 
             wandb_log['alignment_loss'] = loss.item()
