@@ -59,7 +59,7 @@ def test_twf_random_init(dataset, resize_maps):
 @init_test_environ
 @pytest.mark.parametrize(('dataset', 'loadcheck'),
                          [('seq-cifar100', 'https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EeWEOSls505AsMCTXAxWoLUBmeIjCiplFl40zDOCmB_lEw?e=Izv0jh'),
-                          ('seq-cub200', 'https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EV7I5BpJvURIhMMk95r3x5YBAZKch-NPFEJ9hhPQghcWCw?e=dt8wp3'),
+                          ('seq-cub200-rs', 'https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EV7I5BpJvURIhMMk95r3x5YBAZKch-NPFEJ9hhPQghcWCw?e=dt8wp3'),
                          ('seq-cifar10', 'https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EWttSkmKfkNEpEWNiPoS3zUB6uzZydc0irOW0Xbu3jtr3Q?e=JQ6Fay')])
 @pytest.mark.parametrize('resize_maps', ['0', '1'])
 def test_twf_with_checkpoint(dataset, loadcheck, resize_maps):

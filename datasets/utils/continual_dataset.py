@@ -70,12 +70,10 @@ class ContinualDataset(object):
             if not hasattr(self.args, 'class_order'):  # set only once
                 if self.args.seed is not None:
                     np.random.seed(self.args.seed)
-                if isinstance(self.N_CLASSES_PER_TASK, int):
-                    self.args.class_order = np.random.permutation(self.N_CLASSES_PER_TASK * self.N_TASKS)
-                else:
-                    self.args.class_order = np.random.permutation(sum(self.N_CLASSES_PER_TASK))
+                self.args.class_order = np.random.permutation(self.N_CLASSES)
 
         if args.joint:
+            assert self.SETTING in ['class-il', 'task-il'], 'Joint training is only supported for class-il and task'
             self.N_CLASSES_PER_TASK = self.N_CLASSES
             self.N_TASKS = 1
 

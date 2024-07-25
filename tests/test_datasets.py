@@ -9,9 +9,9 @@ import pytest
 @init_test_environ
 @pytest.mark.parametrize('dataset', ['seq-mnist', 'seq-cifar10', 'seq-cifar100', 'seq-tinyimg',
                                      'rot-mnist', 'perm-mnist', 'mnist-360', 'seq-cifar100-224',
-                                     'seq-cifar10-224', 'seq-cifar100-224-rs',
+                                     'seq-cifar10-224', 'seq-cifar100-224-rs', 'seq-cub200-rs',
                                      'seq-cifar100-224-rs', 'seq-tinyimg-r', 'seq-cub200', 'seq-imagenet-r',
-                                     'seq-cafr196', 'seq-chestx', 'seq-cropdisease', 'seq-eurosat-rgb',
+                                     'seq-cars196', 'seq-chestx', 'seq-cropdisease', 'seq-eurosat-rgb',
                                      'seq-isic', 'seq-mit67', 'seq-resisc45'])
 def test_datasets(dataset):
     sys.argv = ['mammoth',

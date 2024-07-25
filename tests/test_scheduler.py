@@ -29,7 +29,7 @@ def test_der_cifar100_defaultscheduler():
                 '--debug_mode',
                 '1',
                 '--savecheck',
-                '1',
+                'task',
                 '--seed',
                 '0']
 
@@ -83,7 +83,7 @@ def test_der_cifar100_customscheduler():
                 '--debug_mode',
                 '1',
                 '--savecheck',
-                '1',
+                'task',
                 '--lr_scheduler',
                 'multisteplr',
                 '--lr_milestones',

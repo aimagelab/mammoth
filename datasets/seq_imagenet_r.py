@@ -1,5 +1,11 @@
+import logging
+try:
+    import requests
+except ImportError as e:
+    logging.error("Please install requests using 'pip install requests'")
+    raise e
+
 import os
-from urllib import request
 import torchvision.transforms as transforms
 import torch.nn.functional as F
 from torch.utils.data import Dataset
@@ -41,7 +47,7 @@ class MyImagenetR(Dataset):
                 # download from https://people.eecs.berkeley.edu/~hendrycks/imagenet-r.tar
                 print("Downloading imagenet-r dataset...")
                 url = 'https://people.eecs.berkeley.edu/~hendrycks/imagenet-r.tar'
-                r = request('GET', url, allow_redirects=True)
+                r = requests.get(url, allow_redirects=True)
                 if not os.path.exists(self.root):
                     os.makedirs(self.root)
                 print("Writing tar on disk...")

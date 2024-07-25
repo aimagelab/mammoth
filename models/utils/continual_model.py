@@ -250,15 +250,7 @@ class ContinualModel(nn.Module):
         Returns:
             the start and end offset
         """
-        if isinstance(self._cpt, int):
-            cpt = self.N_CLASSES // self.N_TASKS
-            offset1 = task * cpt
-            offset2 = (task + 1) * cpt
-        else:
-            offset1 = sum(self._cpt[:task])
-            offset2 = sum(self._cpt[:task + 1])
-
-        return offset1, offset2
+        return self.dataset.get_offsets(task)
 
     def get_debug_iters(self):
         """
