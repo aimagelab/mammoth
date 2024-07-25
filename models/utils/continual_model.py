@@ -24,11 +24,13 @@ The `autolog_wandb` method is used to automatically log to wandb all variables s
 # LICENSE file in the root directory of this source tree.
 
 from abc import abstractmethod
+import logging
 import sys
 from argparse import ArgumentParser, Namespace
 from contextlib import suppress
-from typing import List
+from typing import List, Tuple
 
+import kornia
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -52,8 +54,23 @@ class ContinualModel(nn.Module):
     COMPATIBILITY: List[str]
     AVAIL_OPTIMS = ['sgd', 'adam', 'adamw']
 
+    args: Namespace  # The command line arguments
+    device: torch.device  # The device to be used for training
+    net: nn.Module  # The backbone of the model (defined by the `dataset`)
+    loss: nn.Module  # The loss function to be used (defined by the `dataset`)
+    opt: optim.Optimizer  # The optimizer to be used for training
+    scheduler: optim.lr_scheduler._LRScheduler  # (optional) The scheduler for the optimizer. If defined, it will overwrite the one defined in the `dataset`
+    # The transformation to be applied to the input data. The model will try to convert it to a kornia transform to be applicable to a batch of samples at once
+    transform: transforms.Compose | kornia.augmentation.AugmentationSequential
+    original_transform: transforms.Compose  # The original transformation to be applied to the input data. This is the one defined by the `dataset`
+    task_iteration: int  # Number of iterations in the current task
+    epoch_iteration: int  # Number of iterations in the current epoch. Updated if `epoch` is passed to observe
+    dataset: ContinualDataset  # The instance of the dataset. Used to update the number of classes in the current task
+    num_classes: int  # Total number of classes in the dataset
+    n_tasks: int  # Total number of tasks in the dataset
+
     @staticmethod
-    def get_parser() -> Namespace:
+    def get_parser() -> ArgumentParser:
         """
         Returns the parser of the model.
 
@@ -64,6 +81,20 @@ class ContinualModel(nn.Module):
         """
         parser = ArgumentParser(description='Base CL model')
         return parser
+
+    @property
+    def task_iteration(self):
+        """
+        Returns the number of iterations in the current task.
+        """
+        return self._task_iteration
+
+    @property
+    def epoch_iteration(self):
+        """
+        Returns the number of iterations in the current epoch.
+        """
+        return self._epoch_iteration
 
     @property
     def current_task(self):
@@ -153,14 +184,14 @@ class ContinualModel(nn.Module):
             self.transform = to_kornia_transform(transform.transforms[-1].transforms)
             self.normalization_transform = to_kornia_transform(self.dataset.get_normalization_transform())
         except BaseException:
-            print("Warning: could not initialize kornia transforms.")
+            logging.error("could not initialize kornia transforms.")
             self.normalization_transform = transforms.Compose([transforms.ToPILImage(), self.dataset.TEST_TRANSFORM]) if hasattr(
                 self.dataset, 'TEST_TRANSFORM') else transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), self.dataset.get_normalization_transform()])
 
         if self.net is not None:
             self.opt = self.get_optimizer()
         else:
-            print("Warning: no default model for this dataset. You will have to specify the optimizer yourself.")
+            logging.warning("no default model for this dataset. You will have to specify the optimizer yourself.")
             self.opt = None
         self.device = get_device()
 
@@ -168,7 +199,7 @@ class ContinualModel(nn.Module):
             raise NotImplementedError('Please specify the name and the compatibility of the model.')
 
         if self.args.label_perc != 1 and 'cssl' not in self.COMPATIBILITY:
-            print('WARNING: label_perc is not explicitly supported by this model -> training may break')
+            logging.info('label_perc is not explicitly supported by this model -> training may break')
 
     def to(self, device):
         """
@@ -191,7 +222,7 @@ class ContinualModel(nn.Module):
         """
         return self.net.parameters()
 
-    def get_optimizer(self):
+    def get_optimizer(self) -> optim.Optimizer:
         # check if optimizer is in torch.optim
         supported_optims = {optim_name.lower(): optim_name for optim_name in dir(optim) if optim_name.lower() in self.AVAIL_OPTIMS}
         opt = None
@@ -209,11 +240,17 @@ class ContinualModel(nn.Module):
             raise ValueError('Unknown optimizer: {}'.format(self.args.optimizer))
         return opt
 
-    def _compute_offsets(self, task):
-        cpt = self.N_CLASSES // self.N_TASKS
-        offset1 = task * cpt
-        offset2 = (task + 1) * cpt
-        return offset1, offset2
+    def compute_offsets(self, task: int) -> Tuple[int, int]:
+        """
+        Compute the start and end offset given the task.
+
+        Args:
+            task: the task index
+
+        Returns:
+            the start and end offset
+        """
+        return self.dataset.get_offsets(task)
 
     def get_debug_iters(self):
         """
@@ -264,19 +301,34 @@ class ContinualModel(nn.Module):
         Returns:
             the value of the loss function
         """
+        if 'epoch' in kwargs and kwargs['epoch'] is not None:
+            epoch = kwargs['epoch']
+            if self._past_epoch != epoch:
+                self._past_epoch = epoch
+                self._epoch_iteration = 0
 
         if 'cssl' not in self.COMPATIBILITY:  # drop unlabeled data if not supported
             labeled_mask = args[1] != -1
-            if labeled_mask.sum() == 0:
-                return 0
-            args = [arg[labeled_mask] if isinstance(arg, torch.Tensor) and arg.shape[0] == args[0].shape[0] else arg for arg in args]
+            if (~labeled_mask).any():  # if there are any unlabeled samples
+                if labeled_mask.sum() == 0:  # if all samples are unlabeled
+                    return 0
+                args = [arg[labeled_mask] if isinstance(arg, torch.Tensor) and arg.shape[0] == args[0].shape[0] else arg for arg in args]
         if 'wandb' in sys.modules and not self.args.nowand:
             pl = persistent_locals(self.observe)
             ret = pl(*args, **kwargs)
-            self.autolog_wandb(pl.locals)
+            extra = {}
+            if isinstance(ret, dict):
+                assert 'loss' in ret, "Loss not found in return dict"
+                extra = {k: v for k, v in ret.items() if k != 'loss'}
+                ret = ret['loss']
+            self.autolog_wandb(pl.locals, extra=extra)
         else:
             ret = self.observe(*args, **kwargs)
-        self.task_iteration += 1
+            if isinstance(ret, dict):
+                assert 'loss' in ret, "Loss not found in return dict"
+                ret = ret['loss']
+        self._task_iteration += 1
+        self._epoch_iteration += 1
         return ret
 
     def meta_begin_task(self, dataset):
@@ -288,11 +340,12 @@ class ContinualModel(nn.Module):
         Args:
             dataset: the current task's dataset
         """
-        self.task_iteration = 0
+        self._task_iteration = 0
+        self._epoch_iteration = 0
+        self._past_epoch = 0
         self._n_classes_current_task = self._cpt if isinstance(self._cpt, int) else self._cpt[self._current_task]
-        self._n_seen_classes = self._cpt * (self._current_task + 1) if isinstance(self._cpt, int) else sum(self._cpt[:self._current_task + 1])
+        self._n_past_classes, self._n_seen_classes = self.compute_offsets(self._current_task)
         self._n_remaining_classes = self.N_CLASSES - self._n_seen_classes
-        self._n_past_classes = self._cpt * self._current_task if isinstance(self._cpt, int) else sum(self._cpt[:self._current_task])
         self.begin_task(dataset)
 
     def meta_end_task(self, dataset):

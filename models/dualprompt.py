@@ -6,6 +6,7 @@ Note:
     The backbone is a ViT-B/16 pretrained on Imagenet 21k and finetuned on ImageNet 1k.
 """
 
+import logging
 import torch
 from models.dualprompt_utils.model import Model
 
@@ -70,7 +71,7 @@ class DualPrompt(ContinualModel):
     def __init__(self, backbone, loss, args, transform):
         del backbone
         print("-" * 20)
-        print(f"WARNING: DualPrompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
+        logging.warning(f"DualPrompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
         print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
         print("-" * 20)
 

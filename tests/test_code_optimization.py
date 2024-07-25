@@ -2,9 +2,11 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.main import main
+from utils.test_utils import init_test_environ
 import pytest
 
 
+@init_test_environ
 @pytest.mark.parametrize('code_optimization', [0, 1, 2, 3])
 def test_code_optim_erace(code_optimization):
     sys.argv = ['mammoth',
@@ -39,6 +41,7 @@ def test_code_optim_erace(code_optimization):
     main()
 
 
+@init_test_environ
 @pytest.mark.parametrize('code_optimization', [0, 1, 2, 3])
 def test_code_optimization_slca(code_optimization):
     sys.argv = ['mammoth',

@@ -7,6 +7,7 @@ import torch.nn.functional as F
 
 from utils.conditional_bn import ConditionalBatchNorm1d
 from utils.conditional_bn import ConditionalBatchNorm2d
+from utils.conf import warn_once
 
 
 def get_rnd_weight(num_tasks, fin, fout=None, nonlinearity='relu'):
@@ -110,9 +111,7 @@ class BinaryGumbelSoftmax(nn.Module):
 
         if self.training:
             if str(logits.device) == 'cpu':
-                if not hasattr(self, 'warned') or not self.warned:
-                    print('Warning: GumbelSoftmax may be unstable in CPU (see https://github.com/pytorch/pytorch/issues/101620)')
-                    self.warned = True
+                warn_once('GumbelSoftmax may be unstable in CPU (see https://github.com/pytorch/pytorch/issues/101620)')
             h = nn.functional.gumbel_softmax(logits, tau=self.tau, hard=True)
             h = h[..., 0]
             return h

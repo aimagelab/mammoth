@@ -69,7 +69,7 @@ Besides the **observe** and **forward** methods, the **ContinualModel** provides
 Automatic attributes
 ~~~~~~~~~~~~~~~~~~~~
 
-The base class **ContinualModel** provides a few properties that are automatically set during the incremental training (see :ref:`continual_model` for more details). The most important attributes are:
+The base class **ContinualModel** provides a few properties that are automatically set during the incremental training (see :ref:`module-continual_model` for more details). The most important attributes are:
 
 .. admonition:: Task-related attributes:
 
@@ -112,7 +112,7 @@ The base class **ContinualModel** provides a few properties that are automatical
     - **args**: the arguments passed to the framework.
 
 .. note::
-    The automatic conversion between `PIL <https://pillow.readthedocs.io/en/stable/>`_ and `kornia <https://github.com/kornia/kornia>`_ is handeled by the **to_kornia_transform** function in :ref:`kornia_utils`, which converts (*most*) PIL transforms to kornia transforms. However, not all the transforms are supported, and thus this function *may not be always available*. If you want to use a custom transform, you have to extend the **to_kornia_transform** function.
+    The automatic conversion between `PIL <https://pillow.readthedocs.io/en/stable/>`_ and `kornia <https://github.com/kornia/kornia>`_ is handeled by the **to_kornia_transform** function in :ref:`module-kornia_utils`, which converts (*most*) PIL transforms to kornia transforms. However, not all the transforms are supported, and thus this function *may not be always available*. If you want to use a custom transform, you have to extend the **to_kornia_transform** function.
 
 Model parameters
 ~~~~~~~~~~~~~~~~~

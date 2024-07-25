@@ -72,8 +72,3 @@ class MNISTMLP(MammothBackbone):
             return (out, feats)
 
         raise NotImplementedError("Unknown return type")
-
-    def to(self, device):
-        super().to(device)
-        self.device = device
-        return self

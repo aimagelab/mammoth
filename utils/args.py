@@ -2,7 +2,6 @@
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-
 if __name__ == '__main__':
     import os
     import sys
@@ -36,7 +35,8 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     exp_group.add_argument('--lr', type=float, required=True, help='Learning rate.')
     exp_group.add_argument('--batch_size', type=int, help='Batch size.')
     exp_group.add_argument('--label_perc', type=float, default=1, help='Percentage in (0-1] of labeled examples per task.')
-    exp_group.add_argument('--joint', type=int, choices=[0, 1], default=0, help='Train model on Joint (single task)?')
+    exp_group.add_argument('--joint', type=int, choices=(0, 1), default=0, help='Train model on Joint (single task)?')
+    exp_group.add_argument('--eval_future', type=int, choices=(0, 1), default=0, help='Evaluate future tasks?')
 
     validation_group = parser.add_argument_group('Validation and fitting arguments', 'Arguments used to define the validation strategy and the method used to fit the model.')
 
@@ -96,10 +96,16 @@ def add_management_args(parser: ArgumentParser) -> None:
 
     mng_group.add_argument('--seed', type=int, default=None,
                            help='The random seed. If not provided, a random seed will be used.')
-    mng_group.add_argument('--permute_classes', type=int, choices=[0, 1], default=0,
+    mng_group.add_argument('--permute_classes', type=int, choices=[0, 1], default=1,
                            help='Permute classes before splitting into tasks? This applies the seed before permuting if the `seed` argument is present.')
     mng_group.add_argument('--base_path', type=str, default="./data/",
                            help='The base path where to save datasets, logs, results.')
+    mng_group.add_argument('--device', type=str,
+                           help='The device (or devices) available to use for training. '
+                           'More than one device can be specified by separating them with a comma. '
+                           'If not provided, the code will use the least used GPU available (if there are any), otherwise the CPU. '
+                           'MPS is supported and is automatically used if no GPU is available and MPS is supported. '
+                           'If more than one GPU is available, Mammoth will use the least used one if `--distributed=no`.')
     mng_group.add_argument('--notes', type=str, default=None,
                            help='Helper argument to include notes for this run. Example: distinguish between different versions of a model and allow separation of results')
     mng_group.add_argument('--eval_epochs', type=int, default=None,
@@ -119,7 +125,7 @@ def add_management_args(parser: ArgumentParser) -> None:
                            '2: Use BF16, if available.'
                            '3: Use BF16 and `torch.compile`. BEWARE: torch.compile may break your code if you change the model after the first run! Use with caution.')
     mng_group.add_argument('--distributed', type=str, default='no', choices=['no', 'dp', 'ddp'], help='Enable distributed training?')
-    mng_group.add_argument('--savecheck', default=0, choices=[0, 1], type=int, help='Save checkpoint?')
+    mng_group.add_argument('--savecheck', choices=['last', 'task'], type=str, help='Save checkpoint every `task` or at the end of the training (`last`).')
     mng_group.add_argument('--loadcheck', type=str, default=None, help='Path of the checkpoint to load (.pt file for the specific task)')
     mng_group.add_argument('--ckpt_name', type=str, required=False, help='(optional) checkpoint save name.')
     mng_group.add_argument('--start_from', type=int, default=None, help="Task to start from")
@@ -130,7 +136,7 @@ def add_management_args(parser: ArgumentParser) -> None:
     wandb_group.add_argument('--wandb_name', type=str, default=None,
                              help='Wandb name for this run. Overrides the default name (`args.model`).')
     wandb_group.add_argument('--wandb_entity', type=str, help='Wandb entity')
-    wandb_group.add_argument('--wandb_project', type=str, default='mammoth', help='Wandb project name')
+    wandb_group.add_argument('--wandb_project', type=str, help='Wandb project name')
 
 
 def add_rehearsal_args(parser: ArgumentParser) -> None:
@@ -169,11 +175,12 @@ class _DocsArgs:
         return ', '.join([c.keys() if isinstance(c, dict) else str(c) for c in self.choices])
 
     def __str__(self):
-        tb = '\t'
-        return f"""**\\-\\-{self.name}** : {self.type}
-            *Help*: {self.help}\n
-            - Default: {self.default}\n
-            - Choices: {self.parse_choices() if self.choices is not None else ''}"""
+        tb = f"""**\\-\\-{self.name}** : {self.type.__name__ if self.type is not None else 'unknown'}
+\t*Help*: {self.help}\n
+\t- *Default*: ``{self.default}``"""
+        if self.choices is not None:
+            tb += f"\n\t- *Choices*: ``{self.parse_choices()}``"
+        return tb
 
 
 class _DocArgsGroup:
@@ -188,7 +195,11 @@ class _DocArgsGroup:
 
     def __str__(self):
         args_str = '\n'.join([arg.__str__() for arg in self.doc_args])
-        return f""".. rubric:: {self.group_name.capitalize()}\n\n*{self.group_desc}*\n\n{args_str}"""
+        s = f""".. rubric:: {self.group_name.capitalize()}\n\n"""
+        if self.group_desc:
+            s += f"*{self.group_desc}*\n\n"
+        s += args_str
+        return s
 
 
 def _parse_actions(actions: list, group_name: str, group_desc: str) -> _DocArgsGroup:
@@ -218,7 +229,9 @@ if __name__ == '__main__':
     add_experiment_args(parser)
 
     docs_args = []
-    for group in parser._action_groups[2:]:  # first two groups are the positional and optional arguments
+    for group in parser._action_groups:
+        if len([a for a in group._group_actions if a.dest != 'help']) == 0:
+            continue
         docs_args.append(_parse_actions(group._group_actions, group.title, group.description))
 
     with open('docs/utils/args.rst', 'w') as f:
@@ -232,7 +245,9 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     add_management_args(parser)
     docs_args = []
-    for group in parser._action_groups[2:]:  # first two groups are the positional and optional arguments
+    for group in parser._action_groups:
+        if len([a for a in group._group_actions if a.dest != 'help']) == 0:
+            continue
         docs_args.append(_parse_actions(group._group_actions, group.title, group.description))
 
     with open('docs/utils/args.rst', 'a') as f:
@@ -255,3 +270,21 @@ if __name__ == '__main__':
 
     print("Saving documentation in docs/utils/args.rst")
     print("Done!")
+
+    from models import get_model_names
+
+    for model_name, model_class in get_model_names().items():
+        parser = model_class.get_parser()
+
+        model_args_groups = []
+        for group in parser._action_groups:
+            if len([a for a in group._group_actions if a.dest != 'help']) == 0:
+                continue
+            model_args_groups.append(_parse_actions(group._group_actions, group.title, group.description))
+        model_filename = model_name.replace("-", "_")
+        with open(f'docs/models/{model_filename}_args.rst', 'w') as f:
+            f.write(f'Arguments\n')
+            f.write(f'~~~~~~~~~~~\n\n')
+            for arg in model_args_groups:
+                f.write(str(arg) + '\n\n')
+        print(f"Saving documentation in docs/models/{model_filename}_args.rst")

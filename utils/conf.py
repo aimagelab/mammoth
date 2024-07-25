@@ -7,11 +7,16 @@ This module contains utility functions for configuration settings.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import logging
 import os
-import sys
 import random
-import torch
+import sys
+from functools import partial
+
+from typing import List
 import numpy as np
+import torch
+from torch.utils.data import DataLoader
 
 
 def warn_once(*msg):
@@ -26,49 +31,84 @@ def warn_once(*msg):
         warn_once.warned = set()
     if msg not in warn_once.warned:
         warn_once.warned.add(msg)
-        print(msg, file=sys.stderr)
+        logging.warning(msg)
 
 
-def get_alloc_memory_all_devices() -> list[int]:
+def _get_gpu_memory_pynvml_all_processes(device_id: int = 0) -> int:
+    """
+    Use pynvml to get the memory allocated on the GPU.
+    Returns the memory allocated on the GPU in Bytes.
+    """
+    if not hasattr(_get_gpu_memory_pynvml_all_processes, f'handle_{device_id}'):
+        torch.cuda.pynvml.nvmlInit()  # only once
+        handle = torch.cuda.pynvml.nvmlDeviceGetHandleByIndex(device_id)
+        setattr(_get_gpu_memory_pynvml_all_processes, f'handle_{device_id}', handle)
+
+    handle = getattr(_get_gpu_memory_pynvml_all_processes, f'handle_{device_id}')
+
+    procs = torch.cuda.pynvml.nvmlDeviceGetComputeRunningProcesses(handle)
+    return sum([proc.usedGpuMemory for proc in procs])
+
+
+def get_alloc_memory_all_devices(return_all=False) -> list[int]:
     """
     Returns the memory allocated on all the available devices.
+    By default, tries to return the memory read from pynvml, if available.
+    Else, it returns the memory `reserved` by torch.
+
+    If `return_all` is set to True, it returns a tuple with the memory reserved, allocated and from pynvml.
+
+    Values are in Bytes.
     """
-    gpu_memory = []
+    gpu_memory_reserved = []
+    gpu_memory_allocated = []
+    gpu_memory_nvidiasmi = []
     for i in range(torch.cuda.device_count()):
-        _ = torch.tensor([1]).to(i)
-        gpu_memory.append(torch.cuda.memory_allocated(i))
-    if all(memory == 0 for memory in gpu_memory):
-        print("WARNING: some weird GPU memory issue. "
-              "Using trick from https://discuss.pytorch.org/t/torch-cuda-memory-allocated-returns-0-if-pytorch-no-cuda-memory-caching-1/188796")
-        for i in range(torch.cuda.device_count()):
-            torch.zeros(1).to(i)
-            free_memory, total_memory = torch.cuda.mem_get_info(i)
-            gpu_memory[i] = total_memory - free_memory
-    return gpu_memory
+        _ = torch.tensor([1]).to(i)  # allocate memory to get more accurate reading from torch
+        gpu_memory_reserved.append(torch.cuda.max_memory_reserved(i))
+        gpu_memory_allocated.append(torch.cuda.max_memory_allocated(i))
+
+        try:
+            gpu_memory_nvidiasmi.append(_get_gpu_memory_pynvml_all_processes(i))
+        except BaseException as e:
+            warn_once('Could not get memory from pynvml. Maybe try `pip install --force-reinstall gpustat`.', str(e))
+            gpu_memory_nvidiasmi.append(-1)
+
+    if return_all:
+        return gpu_memory_reserved, gpu_memory_allocated, gpu_memory_nvidiasmi
+    else:
+        if any([g > 0 for g in gpu_memory_nvidiasmi]):
+            return gpu_memory_nvidiasmi
+        return gpu_memory_allocated
 
 
-def get_device() -> torch.device:
+def get_device(avail_devices: str = None) -> torch.device:
     """
     Returns the least used GPU device if available else MPS or CPU.
     """
-    def _get_device():
+    def _get_device(avail_devices: List[int] = None) -> torch.device:
         # get least used gpu by used memory
-        if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+        if torch.cuda.is_available() and torch.cuda.device_count() > 0 and len(avail_devices) > 0:
             gpu_memory = get_alloc_memory_all_devices()
-            device = torch.device(f'cuda:{np.argmin(gpu_memory)}')
+            gpu_memory = [gpu_memory[i] for i in avail_devices]
+            device = torch.device(f'cuda:{avail_devices[np.argmin(gpu_memory)]}')
             return device
         try:
             if torch.backends.mps.is_available() and torch.backends.mps.is_built():
-                print("WARNING: MSP support is still experimental. Use at your own risk!")
+                logging.warning("MSP support is still experimental. Use at your own risk!")
                 return torch.device("mps")
         except BaseException:
-            print("WARNING: Something went wrong with MPS. Using CPU.")
+            logging.error("Something went wrong with MPS. Using CPU.")
 
         return torch.device("cpu")
 
     # Permanently store the chosen device
     if not hasattr(get_device, 'device'):
-        get_device.device = _get_device()
+        if avail_devices is not None:
+            avail_devices = [int(d) for d in avail_devices.split(',')]
+        else:
+            avail_devices = list(range(torch.cuda.device_count())) if torch.cuda.is_available() else []
+        get_device.device = _get_device(avail_devices=avail_devices)
         print(f'Using device {get_device.device}')
 
     return get_device.device
@@ -112,22 +152,24 @@ def set_random_seed(seed: int) -> None:
         print('Could not set cuda seed.')
 
 
-def set_random_seed_worker(worker_id) -> None:
+def worker_init_fn(worker_id, num_workers, seed, rank=1):
     """
     Sets the seeds for a worker of a dataloader.
+    The seed of each worker is set to: `num_worker * rank + worker_id + seed`
     """
-    worker_seed = torch.initial_seed() % 2**32
+    worker_seed = num_workers * rank + worker_id + seed
     np.random.seed(worker_seed)
     random.seed(worker_seed)
 
 
-def create_seeded_dataloader(args, dataset, **dataloader_args) -> torch.utils.data.DataLoader:
+def create_seeded_dataloader(args, dataset, **dataloader_args) -> DataLoader:
     """
     Creates a dataloader object from a dataset, setting the seeds for the workers (if `--seed` is set).
 
     Args:
         args: the arguments of the program
         dataset: the dataset to be loaded
+        verbose: whether to print the number of workers
         dataloader_args: external arguments of the dataloader
 
     Returns:
@@ -137,11 +179,14 @@ def create_seeded_dataloader(args, dataset, **dataloader_args) -> torch.utils.da
     n_cpus = 4 if not hasattr(os, 'sched_getaffinity') else len(os.sched_getaffinity(0))
     num_workers = n_cpus if args.num_workers is None else args.num_workers
     dataloader_args['num_workers'] = num_workers if 'num_workers' not in dataloader_args else dataloader_args['num_workers']
+    logging.info(f'Using {dataloader_args["num_workers"]} workers for the dataloader.')
     if args.seed is not None:
         worker_generator = torch.Generator()
         worker_generator.manual_seed(args.seed)
     else:
         worker_generator = None
     dataloader_args['generator'] = worker_generator if 'generator' not in dataloader_args else dataloader_args['generator']
-    dataloader_args['worker_init_fn'] = set_random_seed_worker if 'worker_init_fn' not in dataloader_args else dataloader_args['worker_init_fn']
-    return torch.utils.data.DataLoader(dataset, **dataloader_args)
+    init_fn = partial(worker_init_fn, num_workers=num_workers, seed=args.seed) if args.seed is not None else None
+    dataloader_args['worker_init_fn'] = init_fn if 'worker_init_fn' not in dataloader_args else dataloader_args['worker_init_fn']
+
+    return DataLoader(dataset, **dataloader_args)

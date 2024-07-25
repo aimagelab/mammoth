@@ -135,11 +135,12 @@ def get_headling_module(fullname):
         fs = open(f'./docs/{ module }/{ name }.rst', 'r').read()
         return fs
     else:
-        if os.path.isdir('./' + '/'.join(paths)):
-            name = name.capitalize()
+        ref_name = name
+        if os.path.isdir('./' + '/'.join(paths)):  # or os.path.dirname(module).lower() in ['models', 'datasets', 'utils', 'backbone']:
+            name = name.replace('_', ' ')
         else:
-            name = name
-        return f".. _module-{name}:\n{name}\n" + "=" * (len(name) + 1)
+            name = name.upper().replace('_', ' ')
+        return f".. _module-{ref_name}:\n{name}\n" + "=" * (len(name) + 1)
 
 
 def reorder_modules(modules):
@@ -178,3 +179,4 @@ FILTERS["get_headling_module"] = get_headling_module
 FILTERS["has_items"] = has_items
 FILTERS["drop_torch_items"] = drop_torch_items
 FILTERS["get_attributes"] = get_attributes
+FILTERS["get_item_name"] = lambda x: x.split('.')[-1].lower()

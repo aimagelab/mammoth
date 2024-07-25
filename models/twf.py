@@ -1,3 +1,4 @@
+import logging
 import torch
 from models.twf_utils.utils import init_twf
 from utils.augmentations import CustomRandomCrop, CustomRandomHorizontalFlip, DoubleCompose, DoubleTransform, apply_transform
@@ -56,13 +57,13 @@ class TwF(ContinualModel):
         self.buf_transform = self.get_custom_double_transform(self.original_transform.transforms)
 
         if self.args.loadcheck is None:
-            print("Warning: no checkpoint loaded!")
+            logging.warning("no checkpoint loaded!")
 
         if self.args.lambda_fp_replay == 0:
-            print('Warning: lambda_fp_replay is 0, so no replay of attention masks will be used')
+            logging.warning('lambda_fp_replay is 0, so no replay of attention masks will be used')
 
         if self.args.lambda_diverse_loss == 0:
-            print('Warning: lambda_diverse_loss is 0, so no diverse loss will be used')
+            logging.warning('lambda_diverse_loss is 0, so no diverse loss will be used')
 
     def get_custom_double_transform(self, transform):
         tfs = []

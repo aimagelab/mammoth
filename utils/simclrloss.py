@@ -21,14 +21,15 @@ class SupConLoss(nn.Module):
         self.reduction = reduction
 
     def forward(self, features, labels=None, mask=None):
-        """Compute loss for model. If both `labels` and `mask` are None,
-        it degenerates to SimCLR unsupervised loss:
-        https://arxiv.org/pdf/2002.05709.pdf
+        """
+        Compute loss for model. If both `labels` and `mask` are None,
+        it degenerates to SimCLR unsupervised loss: https://arxiv.org/pdf/2002.05709.pdf .
+
         Args:
             features: hidden vector of shape [bsz, n_views, ...].
             labels: ground truth of shape [bsz].
-            mask: contrastive mask of shape [bsz, bsz], mask_{i,j}=1 if sample j
-                has the same class as sample i. Can be asymmetric.
+            mask: contrastive mask of shape [bsz, bsz], mask_{i,j}=1 if sample j has the same class as sample i. Can be asymmetric.
+
         Returns:
             A loss scalar.
         """

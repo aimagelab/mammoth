@@ -1,14 +1,18 @@
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.main import main, parse_args
+from utils.main import main
+from utils.test_utils import init_test_environ
 import pytest
 
 
+@init_test_environ
 @pytest.mark.parametrize('dataset', ['seq-mnist', 'seq-cifar10', 'seq-cifar100', 'seq-tinyimg',
                                      'rot-mnist', 'perm-mnist', 'mnist-360', 'seq-cifar100-224',
-                                     'seq-cifar10-224', 'seq-cifar100-224-rs',
-                                     'seq-cifar100-224-rs', 'seq-tinyimg-r', 'seq-cub200', 'seq-imagenet-r'])
+                                     'seq-cifar10-224', 'seq-cifar100-224-rs', 'seq-cub200-rs',
+                                     'seq-cifar100-224-rs', 'seq-tinyimg-r', 'seq-cub200', 'seq-imagenet-r',
+                                     'seq-cars196', 'seq-chestx', 'seq-cropdisease', 'seq-eurosat-rgb',
+                                     'seq-isic', 'seq-mit67', 'seq-resisc45'])
 def test_datasets(dataset):
     sys.argv = ['mammoth',
                 '--model',
@@ -31,7 +35,10 @@ def test_datasets(dataset):
                 '1']
 
     # clean all downloaded datasets
-    dataset_paths = ['CUB200', 'CIFAR10', 'CIFAR100', 'MNIST', 'TINYIMG', 'imagenet-r']
+    dataset_paths = ['CUB200', 'CIFAR10', 'CIFAR100', 'MNIST',
+                     'TINYIMG', 'imagenet-r', 'cars196', 'chestx',
+                     'cropdisease', 'eurosat', 'isic', 'MIT67',
+                     'NWPU-RESISC45']
     basepath = os.path.dirname(os.path.abspath(__file__))
     dt_dir = os.path.join(os.path.dirname(basepath), 'data')
     for path in dataset_paths:
@@ -47,6 +54,7 @@ def test_datasets(dataset):
     main()
 
 
+@init_test_environ
 def test_dataset_workers():
     sys.argv = ['mammoth',
                 '--model',

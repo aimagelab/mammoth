@@ -1,10 +1,12 @@
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.main import main, parse_args
+from utils.main import main
+from utils.test_utils import init_test_environ
 import pytest
 
 
+@init_test_environ
 @pytest.mark.parametrize('dataset', ['seq-cifar10'])
 @pytest.mark.parametrize('label_perc', ['0.1', '0.08'])
 def test_ccic(dataset, label_perc):
