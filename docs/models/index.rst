@@ -3,8 +3,8 @@
 Models
 ========
 
-A **model** is a class that contains a few requires methods and attributes to be used in the continual learning framework.
-To be compatible with the auto-detection mechanism (the **get_model** function below), a model must:
+A **model** is defined as a Python class that defines a few methods and attributes to be used in the continual learning framework.
+To be compatible with the *auto-detection* mechanism (the **get_model** function below), a model must:
 
 * extend the base class **ContinualModel** in :ref:`module-continual_model`, which implements most of the required methods, leaving to the user the definition of the **observe** method (see in :ref:`training and testing`). In addition, the model must define the **NAME** and **COMPATIBILITY** attributes (see below).
 
@@ -87,7 +87,7 @@ The base class **ContinualModel** provides a few properties that are automatical
 
     - **task_iteration**: the number of iterations performed during the current task. This attribute is automatically updated *after* each **observe** call and is reset at the beginning of each task (*before* the **begin_task**). Can be used to implement a virtual batch size (see :ref:`module-twf`).
 
-    - **cpt**: the *raw* amount of classes for each task. This could be either an integer (i.e., the number of classes for each task is the same) or a list of integers (i.e., the number of classes for each task is different).
+    - **classes_per_task** (alias **cpt**): the *raw* amount of classes for each task. This could be either an integer (i.e., the number of classes for each task is the same) or a list of integers (i.e., the number of classes for each task is different).
 
 .. admonition:: Transforms and dataset-related Attributes
 

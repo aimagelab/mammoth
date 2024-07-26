@@ -6,11 +6,11 @@ Training, Validation, and Testing
 During each task, Mammoth trains on the current data until some stopping criterion is met. 
 Currently, Mammoth supports 3 types of stopping criteria, which can be chosen using the ``--fitting_mode`` command line argument. The three types are ``epochs``, ``iters``, and ``early_stopping``. The default is ``epochs``.
 
-.. rubric:: Criterion by epochs (``--fitting_modeepochs``)
+.. rubric:: Criterion by epochs (``--fitting_mode=epochs``)
 
 This is the default option, for which training stops after a fixed number of **epochs**. The number of epochs can be set using the ``--n_epochs`` command line argument. Note that most datasets indicate the default number of epochs via the `set_default_from_args` decorator (see :ref:`module-datasets` for more information).
 
-.. rubric:: Criterion by iterations (``--fitting_modeiters``)
+.. rubric:: Criterion by iterations (``--fitting_mode=iters``)
 
 This option stops training after a fixed number of **iterations**. The number of iterations can be set using the ``--n_iters`` command line argument. In addition, a default value for each dataset can be set using the `set_default_from_args` decorator. For example, to set the default number of iterations to 1000 for a particular dataset you can use the following code, adding it to the dataset class definition:
 
