@@ -37,7 +37,7 @@ import torch.optim as optim
 from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
 
-from utils.conf import get_device
+from utils.conf import get_device, warn_once
 from utils.kornia_utils import to_kornia_transform
 from utils.magic import persistent_locals
 from torchvision import transforms
@@ -150,8 +150,16 @@ class ContinualModel(nn.Module):
     @property
     def cpt(self):
         """
+        Alias of `classes_per_task`: returns the raw number of classes per task.
+        Warning: return value might be either an integer or a list of integers depending on the dataset.
+        """
+        return self._cpt
+
+    @property
+    def classes_per_task(self):
+        """
         Returns the raw number of classes per task.
-        Warning: return value might be either an integer or a list of integers.
+        Warning: return value might be either an integer or a list of integers depending on the dataset.
         """
         return self._cpt
 
@@ -160,6 +168,7 @@ class ContinualModel(nn.Module):
         """
         Sets the number of classes per task.
         """
+        warn_once("Setting the number of classes per task is not recommended.")
         self._cpt = value
 
     def __init__(self, backbone: nn.Module, loss: nn.Module,

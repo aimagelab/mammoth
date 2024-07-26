@@ -8,7 +8,7 @@ Mammoth includes a couple of scripts (under the ``scripts`` folder) to help you 
 - ``scripts/local_launcher.py``: this script will launch all the experiments in the ``data/jobs/<experiment_name>.txt`` file in paralel on your local machine. Logs for each experiment will be stored in the ``logs`` folder. It accepts the following arguments:
     - ``--file``: path to the file containing the experiments to run (default: ``data/jobs/<experiment_name>.txt``)
 
-    - ``--redundancy``: number of times each experiment should be repeated (default: 1)
+    - ``--cycles``: number of times each experiment should be repeated (default: 1)
 
     - ``--at_a_time``: number of experiments to run in parallel (default: 1)
 

@@ -13,7 +13,7 @@ Arguments
 	*Help*: Which dataset to perform experiments on.
 
 	- *Default*: ``None``
-	- *Choices*: ``seq-tinyimg, seq-mit67, seq-cars196, seq-cifar100-224-rs, seq-cifar100-224, seq-chestx, seq-cifar10-224-rs, mnist-360, seq-cropdisease, seq-eurosat-rgb, seq-imagenet-r, seq-cifar100, seq-cifar10-224, perm-mnist, seq-cub200, seq-cifar10, rot-mnist, seq-resisc45, seq-mnist, seq-isic, seq-tinyimg-r``
+	- *Choices*: ``seq-tinyimg, seq-mit67, seq-cars196, seq-cifar100-224-rs, seq-cifar100-224, seq-chestx, seq-cifar10-224-rs, mnist-360, seq-cropdisease, seq-eurosat-rgb, seq-imagenet-r, seq-cifar100, seq-cifar10-224, perm-mnist, seq-cub200, seq-cifar10, rot-mnist, seq-resisc45, seq-mnist, seq-cub200-rs, seq-isic, seq-tinyimg-r``
 **\-\-model** : custom_str_underscore
 	*Help*: Model name.
 
