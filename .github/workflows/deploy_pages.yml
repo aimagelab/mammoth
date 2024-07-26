@@ -42,7 +42,7 @@ jobs:
           pip install -r docs/requirements.txt -r requirements.txt -r requirements-optional.txt
       - name: Sphinx build
         run: |
-          python ../utils/args.py && sphinx-build -j auto docs _build
+          python ./utils/args.py && sphinx-build -j auto docs _build
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
