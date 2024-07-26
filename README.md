@@ -2,18 +2,26 @@
   <img width="230" height="230" src="logo.png" alt="logo">
 </p>
 
+<p align="center">
+  <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/aimagelab/mammoth">
+  <a href="https://aimagelab.github.io/mammoth/index.html"><img alt="Static Badge" src="https://img.shields.io/badge/wiki-gray?style=flat&logo=readthedocs&link=https%3A%2F%2Faimagelab.github.io%2Fmammoth%2Findex.html"></a>
+  <img alt="Discord" src="https://img.shields.io/discord/1164956257392799860">
+</p>
+
 # Mammoth - An Extendible (General) Continual Learning Framework for Pytorch
 
-Official repository of [Class-Incremental Continual Learning into the eXtended DER-verse](https://arxiv.org/abs/2201.00766), [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html), and [Semantic Residual Prompts for Continual Learning](https://arxiv.org/abs/2403.06870)
+Official repository of:
+- [Class-Incremental Continual Learning into the eXtended DER-verse](https://arxiv.org/abs/2201.00766)
+- [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html)
+- [Semantic Residual Prompts for Continual Learning](https://arxiv.org/abs/2403.06870)
+- [CLIP with Generative Latent Replay: a Strong Baseline for Incremental Learning](https://arxiv.org/abs/2407.15793)
 
-Mammoth is a framework for continual learning research. With **40 methods and 21 datasets**, it includes the most complete list competitors and benchmarks for research purposes.
+Mammoth is a framework for continual learning research. With **more than 40 methods and 20 datasets**, it includes the most complete list competitors and benchmarks for research purposes.
 
 The core idea of Mammoth is that it is designed to be modular, easy to extend, and - most importantly - _easy to debug_.
 Ideally, all the code necessary to run the experiments is included _in the repository_, without needing to check out other repositories or install additional packages.
 
 With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
-
-Join our Discord Server for all your Mammoth-related questions → ![Discord Shield](https://discordapp.com/api/guilds/1164956257392799860/widget.png?style=shield)
 
 ## Documentation
 
@@ -37,7 +45,7 @@ Join our Discord Server for all your Mammoth-related questions → ![Discord Shi
 
 ## Models
 
-Mammoth currently supports **42** models, with new releases covering the main competitors in literature.
+Mammoth currently supports **more than 40** models, with new releases covering the main competitors in literature.
 
 - Efficient Lifelong Learning with A-GEM (A-GEM, A-GEM-R - A-GEM with reservoir buffer): `agem`, `agem_r`
 - Bias Correction (BiC): `bic`.
@@ -74,10 +82,10 @@ Mammoth currently supports **42** models, with new releases covering the main co
 ## Datasets
 
 **NOTE**: Datasets are automatically downloaded in `data/`.
-- This can be changes by changing the `base_path` function in `utils/conf.py` or using the `--base_path` argument.
-- The `data/` folder should not tracked by git and is craeted automatically if missing.
+- This can be changed by changing the `base_path` function in `utils/conf.py` or using the `--base_path` argument.
+- The `data/` folder should not be tracked by git and is craeted automatically if missing.
 
-Mammoth includes **21** datasets, covering *toy classification problems* (different versions of MNIST), *standard domains* (CIFAR, Imagenet-R, TinyImagenet, MIT-67), *fine-grained classification domains* (Cars-196, CUB-200), *aerial domains* (EuroSAT-RGB, Resisc45), *medical domains* (CropDisease, ISIC, ChestX).
+Mammoth currently includes **21** datasets, covering *toy classification problems* (different versions of MNIST), *standard domains* (CIFAR, Imagenet-R, TinyImagenet, MIT-67), *fine-grained classification domains* (Cars-196, CUB-200), *aerial domains* (EuroSAT-RGB, Resisc45), *medical domains* (CropDisease, ISIC, ChestX).
 
 - Sequential MNIST (_Class-Il / Task-IL_): `seq-mnist`.
 - Permuted MNIST (_Domain-IL_): `perm-mnist`.
@@ -135,7 +143,121 @@ Mammoth includes **21** datasets, covering *toy classification problems* (differ
 
 ### Our Papers
 
+Expand to see the BibTex!
+
 <ul>
+<li><details><summary>CLIP with Generative Latent Replay: a Strong Baseline for Incremental Learning (<b>BMVC 2024</b>) <a href=https://arxiv.org/abs/2407.15793>paper</a></summary>
+
+<pre><code>@inproceedings{heng2022enhancing,
+  title={CLIP with Generative Latent Replay: a Strong Baseline for Incremental Learning},
+  author={Frascaroli, Emanuele and Panariello, Aniello and Buzzega, Pietro and Bonicelli, Lorenzo and Porrello, Angelo and Calderara, Simone},
+  booktitle={35th British Machine Vision Conference},
+  year={2024}
+}</code></pre>
+
+</li>
+
+<li><details><summary>Semantic Residual Prompts for Continual Learning (<b>ECCV 2024</b>) <a href=https://arxiv.org/abs/2403.06870>paper</a></summary>
+
+<pre><code>@inproceedings{menabue2024semantic,
+  title={Semantic Residual Prompts for Continual Learning},
+  author={Menabue, Martin and Frascaroli, Emanuele and Boschini, Matteo and Sangineto, Enver and Bonicelli, Lorenzo and Porrello, Angelo and Calderara, Simone},
+  booktitle={18th European Conference on Computer Vision},
+  year={202},
+  organization={Springer}
+}</code></pre>
+
+</li>
+
+<li><details><summary>Mask and Compress: Efficient Skeleton-based Action Recognition in Continual Learning (<b>ICPR 2024</b>) <a href=https://arxiv.org/pdf/2407.01397>paper</a> <a href=https://github.com/Sperimental3/CHARON>code</a></summary>
+
+<pre><code>@inproceedings{mosconi2024mask,
+  title={Mask and Compress: Efficient Skeleton-based Action Recognition in Continual Learning},
+  author={Mosconi, Matteo and Sorokin, Andriy and Panariello, Aniello and Porrello, Angelo and Bonato, Jacopo and Cotogni, Marco and Sabetta, Luigi and Calderara, Simone and Cucchiara, Rita},
+  booktitle={International Conference on Pattern Recognition},
+  year={2024}
+}</code></pre>
+
+</li>
+
+<li><details><summary>On the Effectiveness of Lipschitz-Driven Rehearsal in Continual Learning (<b>NeurIPS 2022</b>) <a href=https://arxiv.org/abs/2210.06443>paper</a> <a href=https://github.com/aimagelab/lider>code</a> (Also available here)</summary>
+
+<pre><code>@article{bonicelli2022effectiveness,
+  title={On the effectiveness of lipschitz-driven rehearsal in continual learning},
+  author={Bonicelli, Lorenzo and Boschini, Matteo and Porrello, Angelo and Spampinato, Concetto and Calderara, Simone},
+  journal={Advances in Neural Information Processing Systems},
+  volume={35},
+  pages={31886--31901},
+  year={2022}
+}</code></pre>
+
+</li>
+
+<li><details><summary>Continual semi-supervised learning through contrastive interpolation consistency (<b>PRL 2022</b>) <a href=https://arxiv.org/abs/2108.06552>paper</a> <a href=https://github.com/aimagelab/CSSL>code</a> (Also available here)</summary>
+
+<pre><code>@article{boschini2022continual,
+  title={Continual semi-supervised learning through contrastive interpolation consistency},
+  author={Boschini, Matteo and Buzzega, Pietro and Bonicelli, Lorenzo and Porrello, Angelo and Calderara, Simone},
+  journal={Pattern Recognition Letters},
+  volume={162},
+  pages={9--14},
+  year={2022},
+  publisher={Elsevier}
+}</code></pre>
+
+</li>
+
+<li><details><summary>Transfer without Forgetting (<b>ECCV 2022</b>) <a href=https://arxiv.org/abs/2206.00388>paper</a> <a href=https://github.com/mbosc/twf>code</a> (Also available here)</summary>
+
+<pre><code>@inproceedings{boschini2022transfer,
+  title={Transfer without forgetting},
+  author={Boschini, Matteo and Bonicelli, Lorenzo and Porrello, Angelo and Bellitto, Giovanni and Pennisi, Matteo and Palazzo, Simone and Spampinato, Concetto and Calderara, Simone},
+  booktitle={17th European Conference on Computer Vision},
+  pages={692--709},
+  year={2022},
+  organization={Springer}
+}</code></pre>
+
+</li>
+
+<li><details><summary>Effects of Auxiliary Knowledge on Continual Learning (<b>ICPR 2022</b>) <a href=https://arxiv.org/abs/2206.02577>paper</a></summary>
+
+<pre><code>@inproceedings{bellitto2022effects,
+  title={Effects of auxiliary knowledge on continual learning},
+  author={Bellitto, Giovanni and Pennisi, Matteo and Palazzo, Simone and Bonicelli, Lorenzo and Boschini, Matteo and Calderara, Simone},
+  booktitle={26th International Conference on Pattern Recognition},
+  pages={1357--1363},
+  year={2022},
+  organization={IEEE}
+}</code></pre>
+
+</li>
+
+<li><details><summary>Class-Incremental Continual Learning into the eXtended DER-verse (<b>TPAMI 2022</b>) <a href=https://arxiv.org/abs/2201.00766>paper</a></summary>
+
+<pre><code>@article{boschini2022class,
+  title={Class-Incremental Continual Learning into the eXtended DER-verse},
+  author={Boschini, Matteo and Bonicelli, Lorenzo and Buzzega, Pietro and Porrello, Angelo and Calderara, Simone},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  year={2022},
+  publisher={IEEE}
+}</code></pre>
+
+</li>
+
+<li><details><summary>Rethinking Experience Replay: a Bag of Tricks for Continual Learning (<b>ICPR 2020</b>) <a href=https://arxiv.org/abs/2010.05595>paper</a> <a href=https://github.com/hastings24/rethinking_er>code</a></summary>
+
+<pre><code>@inproceedings{buzzega2021rethinking,
+  title={Rethinking experience replay: a bag of tricks for continual learning},
+  author={Buzzega, Pietro and Boschini, Matteo and Porrello, Angelo and Calderara, Simone},
+  booktitle={25th International Conference on Pattern Recognition},
+  pages={2180--2187},
+  year={2021},
+  organization={IEEE}
+}</code></pre>
+
+</li>
+
 <li><details><summary>Dark Experience for General Continual Learning: a Strong, Simple Baseline (<b>NeurIPS 2020</b>) <a href=https://arxiv.org/abs/2004.07211>paper</a></summary>
 
 <pre><code>@inproceedings{buzzega2020dark,
@@ -151,110 +273,6 @@ Mammoth includes **21** datasets, covering *toy classification problems* (differ
 
 </details>
 </li>
-<li><details><summary>Rethinking Experience Replay: a Bag of Tricks for Continual Learning (<b>ICPR 2020</b>) <a href=https://arxiv.org/abs/2010.05595>paper</a> <a href=https://github.com/hastings24/rethinking_er>code</a></summary>
-
-<pre><code>@inproceedings{buzzega2021rethinking,
-  title={Rethinking experience replay: a bag of tricks for continual learning},
-  author={Buzzega, Pietro and Boschini, Matteo and Porrello, Angelo and Calderara, Simone},
-  booktitle={25th International Conference on Pattern Recognition},
-  pages={2180--2187},
-  year={2021},
-  organization={IEEE}
-}</code></pre>
-
-</li>
-<li><details><summary>Class-Incremental Continual Learning into the eXtended DER-verse (<b>TPAMI 2022</b>) <a href=https://arxiv.org/abs/2201.00766>paper</a></summary>
-
-<pre><code>@article{boschini2022class,
-  title={Class-Incremental Continual Learning into the eXtended DER-verse},
-  author={Boschini, Matteo and Bonicelli, Lorenzo and Buzzega, Pietro and Porrello, Angelo and Calderara, Simone},
-  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
-  year={2022},
-  publisher={IEEE}
-}</code></pre>
-
-</li>
-<li><details><summary>Effects of Auxiliary Knowledge on Continual Learning (<b>ICPR 2022</b>) <a href=https://arxiv.org/abs/2206.02577>paper</a></summary>
-
-<pre><code>@inproceedings{bellitto2022effects,
-  title={Effects of auxiliary knowledge on continual learning},
-  author={Bellitto, Giovanni and Pennisi, Matteo and Palazzo, Simone and Bonicelli, Lorenzo and Boschini, Matteo and Calderara, Simone},
-  booktitle={26th International Conference on Pattern Recognition},
-  pages={1357--1363},
-  year={2022},
-  organization={IEEE}
-}</code></pre>
-
-</li>
-<li><details><summary>Transfer without Forgetting (<b>ECCV 2022</b>) <a href=https://arxiv.org/abs/2206.00388>paper</a> <a href=https://github.com/mbosc/twf>code</a> (Also available here)</summary>
-
-<pre><code>@inproceedings{boschini2022transfer,
-  title={Transfer without forgetting},
-  author={Boschini, Matteo and Bonicelli, Lorenzo and Porrello, Angelo and Bellitto, Giovanni and Pennisi, Matteo and Palazzo, Simone and Spampinato, Concetto and Calderara, Simone},
-  booktitle={17th European Conference on Computer Vision},
-  pages={692--709},
-  year={2022},
-  organization={Springer}
-}</code></pre>
-
-</li>
-<li><details><summary>Continual semi-supervised learning through contrastive interpolation consistency (<b>PRL 2022</b>) <a href=https://arxiv.org/abs/2108.06552>paper</a> <a href=https://github.com/aimagelab/CSSL>code</a> (Also available here)</summary>
-
-<pre><code>@article{boschini2022continual,
-  title={Continual semi-supervised learning through contrastive interpolation consistency},
-  author={Boschini, Matteo and Buzzega, Pietro and Bonicelli, Lorenzo and Porrello, Angelo and Calderara, Simone},
-  journal={Pattern Recognition Letters},
-  volume={162},
-  pages={9--14},
-  year={2022},
-  publisher={Elsevier}
-}</code></pre>
-
-</li>
-<li><details><summary>On the Effectiveness of Lipschitz-Driven Rehearsal in Continual Learning (<b>NeurIPS 2022</b>) <a href=https://arxiv.org/abs/2210.06443>paper</a> <a href=https://github.com/aimagelab/lider>code</a> (Also available here)</summary>
-
-<pre><code>@article{bonicelli2022effectiveness,
-  title={On the effectiveness of lipschitz-driven rehearsal in continual learning},
-  author={Bonicelli, Lorenzo and Boschini, Matteo and Porrello, Angelo and Spampinato, Concetto and Calderara, Simone},
-  journal={Advances in Neural Information Processing Systems},
-  volume={35},
-  pages={31886--31901},
-  year={2022}
-}</code></pre>
-
-</li>
-<li><details><summary>Mask and Compress: Efficient Skeleton-based Action Recognition in Continual Learning (<b>ICPR 2024</b>) <a href=https://arxiv.org/pdf/2407.01397>paper</a> <a href=https://github.com/Sperimental3/CHARON>code</a></summary>
-
-<pre><code>@inproceedings{mosconi2024mask,
-  title={Mask and Compress: Efficient Skeleton-based Action Recognition in Continual Learning},
-  author={Mosconi, Matteo and Sorokin, Andriy and Panariello, Aniello and Porrello, Angelo and Bonato, Jacopo and Cotogni, Marco and Sabetta, Luigi and Calderara, Simone and Cucchiara, Rita},
-  booktitle={International Conference on Pattern Recognition},
-  year={2024}
-}</code></pre>
-
-</li>
-<li><details><summary>Semantic Residual Prompts for Continual Learning (<b>ECCV 2024</b>) <a href=https://arxiv.org/abs/2403.06870>paper</a></summary>
-
-<pre><code>@inproceedings{menabue2024semantic,
-  title={Semantic Residual Prompts for Continual Learning},
-  author={Menabue, Martin and Frascaroli, Emanuele and Boschini, Matteo and Sangineto, Enver and Bonicelli, Lorenzo and Porrello, Angelo and Calderara, Simone},
-  booktitle={18th European Conference on Computer Vision},
-  year={202},
-  organization={Springer}
-}</code></pre>
-
-</li>
-<li><details><summary>CLIP with Generative Latent Replay: a Strong Baseline for Incremental Learning (<b>BMVC 2024</b>) <a href=https://arxiv.org/abs/2407.15793>paper</a></summary>
-
-<pre><code>@inproceedings{heng2022enhancing,
-  title={CLIP with Generative Latent Replay: a Strong Baseline for Incremental Learning},
-  author={Frascaroli, Emanuele and Panariello, Aniello and Buzzega, Pietro and Bonicelli, Lorenzo and Porrello, Angelo and Calderara, Simone},
-  booktitle={35th British Machine Vision Conference},
-  year={2024}
-}</code></pre>
-
-</li>
-
 </ul>
 
 ### Other Awesome CL works using Mammoth

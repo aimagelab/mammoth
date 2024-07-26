@@ -40,10 +40,9 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r docs/requirements.txt -r requirements.txt -r requirements-optional.txt
-          pip install quadprog==0.1.11
       - name: Sphinx build
         run: |
-          sphinx-build -j auto docs _build
+          python ./utils/args.py && sphinx-build -j auto docs _build
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
