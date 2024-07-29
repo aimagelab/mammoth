@@ -132,8 +132,9 @@ class MNIST360(GCLDataset):
     def get_train_data(self) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Ensembles the next examples of the current classes in a single batch.
-        :return: the augmented and not aumented version of the examples of the
-                 current batch, along with their labels.
+
+        Returns:
+            the augmented and not aumented version of the examples of the current batch, along with their labels.
         """
         assert not self.train_over
         batch_size_0 = min(int(round(self.active_remaining_training_items[0] /
@@ -173,7 +174,9 @@ class MNIST360(GCLDataset):
     def get_test_data(self) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Ensembles the next examples of the current class in a batch.
-        :return: the batch of examples along with its label.
+
+        Returns:
+            the batch of examples along with its label.
         """
         assert not self.test_over
         x_test, y_test = next(iter(self.test_loaders[self.test_class]))

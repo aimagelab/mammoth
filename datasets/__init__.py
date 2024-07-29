@@ -68,7 +68,7 @@ def get_dataset_class(args: Namespace) -> ContinualDataset:
 
 def get_dataset_names():
     """
-    Return the names of the selected continual dataset among those that are available.
+    Return the names of the available continual dataset.
     If an error was detected while loading the available datasets, it raises the appropriate error message.
 
     Args:
@@ -79,7 +79,7 @@ def get_dataset_names():
         Exception: if an error is detected in the dataset
 
     Returns:
-        the continual dataset class names
+        the named of the available continual datasets
     """
 
     def _dataset_names():

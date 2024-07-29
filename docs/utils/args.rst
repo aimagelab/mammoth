@@ -18,9 +18,9 @@ Arguments
 	*Help*: Model name.
 
 	- *Default*: ``None``
-	- *Choices*: ``joint-gcl, second-stage-starprompt, lwf-mc, gdumb-lider, ewc-on, xder, hal, sgd, si, first-stage-starprompt, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, attriclip, starprompt, coda-prompt, clip, pnn, er-ace, xder-ce, dualprompt, twf, mer, er-ace-lider, gdumb, l2p, ccic, slca, agem-r, rpc, xder-rpc, gss, lwf, cgil, er, agem``
+	- *Choices*: ``joint-gcl, second-stage-starprompt, lwf-mc, gdumb-lider, ewc-on, xder, hal, sgd, si, moe-adapters, first-stage-starprompt, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, attriclip, starprompt, coda-prompt, clip, pnn, er-ace, xder-ce, dualprompt, twf, mer, er-ace-lider, gdumb, l2p, ccic, slca, agem-r, rpc, xder-rpc, gss, lwf, cgil, er, agem``
 **\-\-lr** : float
-	*Help*: Learning rate.
+	*Help*: Learning rate. This should either be set as default by the model (with `set_defaults <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.set_defaults>`_), by the dataset (with `set_default_from_args`, see :ref:`module-datasets.utils`), or with `--lr=<value>`.
 
 	- *Default*: ``None``
 **\-\-batch_size** : int
@@ -111,6 +111,11 @@ Arguments
 	*Help*: Learning rate scheduler.
 
 	- *Default*: ``None``
+**\-\-scheduler_mode** : str
+	*Help*: Scheduler mode. Possible values: - `epoch`: the scheduler is called at the end of each epoch. - `iter`: the scheduler is called at the end of each iteration.
+
+	- *Default*: ``epoch``
+	- *Choices*: ``epoch, iter``
 **\-\-lr_milestones** : int
 	*Help*: Learning rate scheduler milestones (used if `lr_scheduler=multisteplr`).
 
@@ -133,7 +138,7 @@ Arguments
 **\-\-permute_classes** : int
 	*Help*: Permute classes before splitting into tasks? This applies the seed before permuting if the `seed` argument is present.
 
-	- *Default*: ``1``
+	- *Default*: ``0``
 	- *Choices*: ``0, 1``
 **\-\-base_path** : str
 	*Help*: The base path where to save datasets, logs, results.

@@ -45,11 +45,11 @@ each dataset **must statically define** all the necessary information to run a c
 
     - **get_class_names** (``callable``): returns the class names for the dataset. This method is not implemented by default, but is expected for some methods (e.g., `clip`). The method *should* populate the **class_names** attribute of the dataset to cache the result and call the ``fix_class_names_order`` method to ensure that the class names are in the correct order.
 
-See :ref:`module-continual_dataset` for more details or **SequentialCIFAR10** in :ref:`module-seq_cifar10` for an example.
+See :ref:`Continual Dataset <module-datasets.utils.continual_dataset>` for more details or **SequentialCIFAR10** in :ref:`Seq CIFAR-10 <module-datasets.seq_cifar10>` for an example.
 
 .. note::
     Datasets are downloaded by default in the **data** folder. You can change this
-    default location by setting the **base_path** function in :ref:`module-conf`. 
+    default location by setting the **base_path** function in :ref:`conf <module-utils.conf>`. 
 
 .. _settings:
 
@@ -95,19 +95,19 @@ This is done with the **set_default_from_args** decorator, which takes the name 
 Steps to create a new dataset:
 ------------------------------
     
-All datasets must inherit from the **ContinualDataset** class, which is defined in :ref:`module-continual_dataset`. The only
-exception are datasets that follow the `general-continual` setting, which inherit from the **GCLDataset** class, (defined in :ref:`module-gcl_dataset`).
-These classes provide some useful methods to create data loaders and store masked data loaders for continual learning experiments. See more in section :ref:`module-utils`.
+All datasets must inherit from the **ContinualDataset** class, which is defined in :ref:`Continual Dataset <module-datasets.utils.continual_dataset>`. The only
+exception are datasets that follow the `general-continual` setting, which inherit from the **GCLDataset** class, (defined in :ref:`GCL Dataset <module-datasets.utils.gcl_dataset>`).
+These classes provide some useful methods to create data loaders and store masked data loaders for continual learning experiments. See more in the next section.
 
     1. Create a new file in the `datasets` folder, e.g. ``my_dataset.py``.
 
     2. Define a new class that inherits from `ContinualDataset` or `GCLDataset` and implements all the required methods and attributes.
 
-    3. Define the **get_data_loaders** method, which returns a list of train and test data loaders for each task (see more in section :ref:`Utils`). 
+    3. Define the **get_data_loaders** method, which returns a list of train and test data loaders for each task (see more in section :ref:`Utils <dataset-index-utils>`). 
 
     .. tip::
         For convenience, most datasets are initially created with all classes and then masked appropriately by the **store_masked_loaders** function. 
-        For example, in :ref:`module-seq_cifar10` the **get_data_loaders** function of **SequentialCIFAR10** dataset first inizializes the **MyCIFAR10** and **TCIFAR10** 
+        For example, in :ref:`Seq CIFAR-10 <module-datasets.seq_cifar10>` the **get_data_loaders** function of **SequentialCIFAR10** dataset first inizializes the **MyCIFAR10** and **TCIFAR10** 
         datasets with train and test data for all classes respectively, and then masks the data loaders to return only the data for the current task.
 
     .. important::
@@ -117,13 +117,14 @@ These classes provide some useful methods to create data loaders and store maske
 
     4. If all goes well, your dataset should be picked up by the **get_dataset** function and you should be able to run an experiment with it.
 
+.. _dataset-index-utils:
 Utils
 --------
 
 - **get_data_loaders**: This function should take care of downloading the dataset if necessary, make sure that it contains samples and labels for 
 **only** the current task (you can use the **store_masked_loaders** function), and create the data loaders.
 
-- **store_masked_loaders**: This function is defined in :ref:`module-continual_dataset` and takes care of masking the data loaders to return only the data for the current task.
+- **store_masked_loaders**: This function is defined in :ref:`Continual Dataset <module-datasets.utils.continual_dataset>` and takes care of masking the data loaders to return only the data for the current task.
 It is used by most datasets to create the data loaders for each task. 
     - If the ``--permute_classes`` flag is set to ``1``, it also applies the appropriate permutation to the classes before splitting the data.
 

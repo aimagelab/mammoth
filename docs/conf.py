@@ -135,12 +135,11 @@ def get_headling_module(fullname):
         fs = open(f'./docs/{ module }/{ name }.rst', 'r').read()
         return fs
     else:
-        ref_name = name
         if os.path.isdir('./' + '/'.join(paths)):  # or os.path.dirname(module).lower() in ['models', 'datasets', 'utils', 'backbone']:
             name = name.replace('_', ' ')
         else:
             name = name.upper().replace('_', ' ')
-        return f".. _module-{ref_name}:\n{name}\n" + "=" * (len(name) + 1)
+        return f".. _module-{fullname}:\n{name}\n" + "=" * (len(name) + 1)
 
 
 def reorder_modules(modules):

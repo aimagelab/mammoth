@@ -21,7 +21,11 @@ The best configurations can be found in the tables below by merging the tables o
 
 .. note::
 
-  In the paper we report the results with 3 different choices of random seeds: ``1993``, ``1996``, and ``1997``. We to not report the seed in the commands below for brevity but the seed can be set with the ``--seed`` argument.
+  In the paper we report the results with 3 different choices of random seeds: ``1993``, ``1996``, and ``1997``. We to not report the seed in the commands below for brevity but it can be set with ``--seed=<seed>``. We also set ``--permute_classes=1`` to shuffle the classes before splitting them into tasks. For example, to run STAR-Prompt on the CIFAR-100 with a seed of ``1993``, run the following command
+  
+  .. code-block:: bash
+
+    python utils/main.py --model starprompt --dataset seq-cifar100-224 --seed 1993 --permute_classes=1
   
 First stage only
 ~~~~~~~~~~~~~~~~
@@ -63,7 +67,7 @@ Other hyperparameters such as ``gr_mog_n_iters`` and ``num_monte_carlo_gr`` have
 Second stage only
 ~~~~~~~~~~~~~~~~~
 
-The *second stage* of STAR-Prompt can take either the class-specific embeddings learned during the first stage or the pre-existing templates of CLIP. This is controlled by the ``--keys_ckpt_path`` argument. If supplied (see :ref:`module-second_stage_starprompt`), it will load the pre-trained embeddings from the first stage. If not supplied, it will use the pre-existing templates of CLIP. The most important Hyperparameters are:
+The *second stage* of STAR-Prompt can take either the class-specific embeddings learned during the first stage or the pre-existing templates of CLIP. This is controlled by the ``--keys_ckpt_path`` argument. If supplied (see :ref:`module-models.second_stage_starprompt`), it will load the pre-trained embeddings from the first stage. If not supplied, it will use the pre-existing templates of CLIP. The most important Hyperparameters are:
 
 * ``lambda_ortho_second_stage``: the weight of the orthogonality loss. :math:`\lambda` in the main paper (Alg 1, Tab D, E).
 * ``learning_rate_gr_first_stage``: the learning rate of the Generative Replay. :math:`lr` in the main paper (Alg 1, Tab D, E).

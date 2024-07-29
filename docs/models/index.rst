@@ -6,7 +6,7 @@ Models
 A **model** is defined as a Python class that defines a few methods and attributes to be used in the continual learning framework.
 To be compatible with the *auto-detection* mechanism (the **get_model** function below), a model must:
 
-* extend the base class **ContinualModel** in :ref:`module-continual_model`, which implements most of the required methods, leaving to the user the definition of the **observe** method (see in :ref:`training and testing`). In addition, the model must define the **NAME** and **COMPATIBILITY** attributes (see below).
+* extend the base class :ref:`ContinualModel <module-models.utils.continual_model>`, which implements most of the required methods, leaving to the user the definition of the **observe** method (see in :ref:`training and testing`). In addition, the model must define the **NAME** and **COMPATIBILITY** attributes (see below).
 
 * be defined in a file named **<model_name>.py** and placed in the **models** folder. 
 
@@ -54,7 +54,7 @@ The **forward** method is used to evaluate the model on the test set. By default
 Attributes and utility methods
 -------------------------------
 
-The base class **ContinualModel** (:ref:`module-continual_model`) includes the **NAME** and **COMPATIBILITY** attributes, which are used to identify the model and to check its compatibility with the chosen **setting** (see :ref:`module-datasets` for more details). The **NAME** attribute is a string that identifies the model, while the **COMPATIBILITY** attribute is a list of strings that identify the compatible settings. For example, the **DER** model (:ref:`module-der`) includes compatibility with ``['class-il', 'domain-il', 'task-il', 'general-continual']`` settings, and thus is compatible with all the datasets included in the framework. However, as it includes no compatibility with the ``'cssl'`` setting, it cannot take advantage of unlabeled samples (available if ``--label_perc`` is set to a value between ``0`` and ``1``).
+The base class (:ref:`ContinualModel <module-models.utils.continual_model>`) includes the **NAME** and **COMPATIBILITY** attributes, which are used to identify the model and to check its compatibility with the chosen **setting** (see :ref:`module-datasets` for more details). The **NAME** attribute is a string that identifies the model, while the **COMPATIBILITY** attribute is a list of strings that identify the compatible settings. For example, :ref:`module-models.der` includes compatibility with ``['class-il', 'domain-il', 'task-il', 'general-continual']`` settings, and thus is compatible with all the datasets included in the framework. However, as it includes no compatibility with the ``'cssl'`` setting, it cannot take advantage of unlabeled samples (available if ``--label_perc`` is set to a value between ``0`` and ``1``).
 
 Backbone model
 ~~~~~~~~~~~~~~
@@ -69,7 +69,7 @@ Besides the **observe** and **forward** methods, the **ContinualModel** provides
 Automatic attributes
 ~~~~~~~~~~~~~~~~~~~~
 
-The base class **ContinualModel** provides a few properties that are automatically set during the incremental training (see :ref:`module-continual_model` for more details). The most important attributes are:
+The base class **ContinualModel** provides a few properties that are automatically set during the incremental training (see :ref:`ContinualModel <module-models.utils.continual_model>` for more details). The most important attributes are:
 
 .. admonition:: Task-related attributes:
 
@@ -85,13 +85,13 @@ The base class **ContinualModel** provides a few properties that are automatical
 
     - **n_tasks**: the total number of tasks.
 
-    - **task_iteration**: the number of iterations performed during the current task. This attribute is automatically updated *after* each **observe** call and is reset at the beginning of each task (*before* the **begin_task**). Can be used to implement a virtual batch size (see :ref:`module-twf`).
+    - **task_iteration**: the number of iterations performed during the current task. This attribute is automatically updated *after* each **observe** call and is reset at the beginning of each task (*before* the **begin_task**). Can be used to implement a virtual batch size (see :ref:`module-models.twf`).
 
     - **classes_per_task** (alias **cpt**): the *raw* amount of classes for each task. This could be either an integer (i.e., the number of classes for each task is the same) or a list of integers (i.e., the number of classes for each task is different).
 
 .. admonition:: Transforms and dataset-related Attributes
 
-    - **transform**: the transform applied to the input data. This attribute is automatically set during the initialization of the model and is defined by the chosen **dataset** (see :ref:`module-datasets` for more details). In most cases, this is implemented as a `kornia <https://github.com/kornia/kornia>`_ transform (translated from PIL thanks to `to_kornia_transform` in :ref:`module-kornia_utils`). However, if a transform is not supported by the **to_kornia_transform**, it is implemented as `PIL <https://pillow.readthedocs.io/en/stable/>`_.
+    - **transform**: the transform applied to the input data. This attribute is automatically set during the initialization of the model and is defined by the chosen **dataset** (see :ref:`module-datasets` for more details). In most cases, this is implemented as a `kornia <https://github.com/kornia/kornia>`_ transform (translated from PIL thanks to `to_kornia_transform` in :ref:`Kornia Utils <module-utils.kornia_utils>`). However, if a transform is not supported by the **to_kornia_transform**, it is implemented as `PIL <https://pillow.readthedocs.io/en/stable/>`_.
 
     - **original_transform**: the original transform defined by the chosen **dataset**. This is implemented as a `PIL <https://pillow.readthedocs.io/en/stable/>`_ transform (and not translated into `kornia` as the **transform**).
 
@@ -112,12 +112,12 @@ The base class **ContinualModel** provides a few properties that are automatical
     - **args**: the arguments passed to the framework.
 
 .. note::
-    The automatic conversion between `PIL <https://pillow.readthedocs.io/en/stable/>`_ and `kornia <https://github.com/kornia/kornia>`_ is handeled by the **to_kornia_transform** function in :ref:`module-kornia_utils`, which converts (*most*) PIL transforms to kornia transforms. However, not all the transforms are supported, and thus this function *may not be always available*. If you want to use a custom transform, you have to extend the **to_kornia_transform** function.
+    The automatic conversion between `PIL <https://pillow.readthedocs.io/en/stable/>`_ and `kornia <https://github.com/kornia/kornia>`_ is handeled by the **to_kornia_transform** function in :ref:`Kornia Utils <module-utils.kornia_utils>`, which converts (*most*) PIL transforms to kornia transforms. However, not all the transforms are supported, and thus this function *may not be always available*. If you want to use a custom transform, you have to extend the **to_kornia_transform** function.
 
 Model parameters
 ~~~~~~~~~~~~~~~~~
 
-The **get_parser** method is used to define the model-specific hyper-parameters. It is defined as a static method (see :ref:`module-continual_model`) that returns a `argparse.ArgumentParser <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser>`_ object. This method is called during the initialization of the model and it is used to parse the command line arguments. The **get_parser** method must have the following signature:
+The **get_parser** method is used to define the model-specific hyper-parameters. It is defined as a static method (see :ref:`ContinualModel <module-models.utils.continual_model>`) that returns a `argparse.ArgumentParser <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser>`_ object. This method is called during the initialization of the model and it is used to parse the command line arguments. The **get_parser** method must have the following signature:
 
 .. code-block:: python
 
@@ -142,7 +142,7 @@ Other utility methods
 
 * **get_debug_iters**: used if ``--debug_mode`` is set to ``1``, it returns the number of iterations to perform during each task. By default, it returns ``5``.
 
-* **autolog_wandb**: called after each observe, it relies on the :ref:`magic` module to log all the variables created in the **observe** that start with *loss* or *_wandb_*. This method can also be called manually to log custom variables by providing the ``extra`` parameter. 
+* **autolog_wandb**: called after each observe, it relies on the :ref:`Magic <module-utils.magic>` module to log all the variables created in the **observe** that start with *loss* or *_wandb_*. This method can also be called manually to log custom variables by providing the ``extra`` parameter. 
     .. note::
         This method is called only if ``--debug_mode`` is set to ``0`` (i.e, it is not called during the debug mode). 
 

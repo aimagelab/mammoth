@@ -128,7 +128,9 @@ class ContinualDataset(object):
     def get_data_loaders(self) -> Tuple[DataLoader, DataLoader]:
         """Creates and returns the training and test loaders for the current task.
         The current training loader and all test loaders are stored in self.
-        :return: the current training and test loaders
+
+        Returns:
+            the current training and test loaders
         """
         raise NotImplementedError
 
