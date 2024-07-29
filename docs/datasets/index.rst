@@ -52,7 +52,6 @@ See :ref:`Continual Dataset <module-datasets.utils.continual_dataset>` for more 
     default location by setting the **base_path** function in :ref:`conf <module-utils.conf>`. 
 
 .. _settings:
-
 Experimental settings
 ---------------------
 
@@ -78,6 +77,14 @@ and are defined in the **SETTING** attribute of each dataset. The following sett
 
     Mammoth datasets support the **joint** setting, which is a special case of the `class-il` setting where all the classes are available at each task. This is useful to compare the performance of a method on what is usually considered the *upper bound* for the `class-il` setting. To run an experiment on the **joint** setting, simply set the ``--joint`` to ``1``. This will automatically set the **N_CLASSES_PER_TASK** attribute to the total number of classes in the dataset and the **TASKS** attribute to ``1``.
 
+Evaluate on Future Tasks
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, the evaluation is done up to the current task. However, some models also support evaluation on future tasks (e.g., :ref:`CGIL <module-models.cgil>`). In this case, you can set the ``--eval_future`` to ``1`` to evaluate the model on future tasks. 
+
+.. important::
+
+    In order to be able to evaluate on future tasks, the method must extend the :ref:`FutureModel <module-models.future_model>` class. Notably, this function includes the ``future_forward`` method, which performs inference on all classes, and the ``change_transform`` method, which allows to change the transform to be applied to the data during inference.
 
 Default arguments and command line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -92,8 +99,8 @@ This is done with the **set_default_from_args** decorator, which takes the name 
         return 0.5
 
 
-Steps to create a new dataset:
-------------------------------
+Steps to create a new dataset
+-----------------------------
     
 All datasets must inherit from the **ContinualDataset** class, which is defined in :ref:`Continual Dataset <module-datasets.utils.continual_dataset>`. The only
 exception are datasets that follow the `general-continual` setting, which inherit from the **GCLDataset** class, (defined in :ref:`GCL Dataset <module-datasets.utils.gcl_dataset>`).
