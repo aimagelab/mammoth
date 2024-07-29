@@ -32,6 +32,7 @@ class STARPromptModel(nn.Module):
         self.num_classes = num_classes
         self.device = device
         self.dataset = dataset
+        print("Loading first stage...")
         self.first_stage = FirstStageModel(args=args, num_classes=num_classes, dataset=dataset, device=device)
 
         # REMOVE ALL TRACK RUNNING STATS FROM CLIP
@@ -39,6 +40,7 @@ class STARPromptModel(nn.Module):
             if isinstance(m, (torch.nn.BatchNorm2d, torch.nn.BatchNorm1d)):
                 m.track_running_stats = False
 
+        print("Loading second stage...")
         self.second_stage = SecondStageModel(args=args, num_classes=num_classes,
                                              dataset=dataset, backbone=backbone,
                                              clip_model=self.first_stage.prompter.clip_model,
@@ -50,6 +52,7 @@ class STARPromptModel(nn.Module):
         self.second_stage_distributions = torch.nn.ModuleList([self._get_dist(embed_dim)
                                                                for _ in range(self.num_classes)]).to(self.device)
         self.classifier_state_dict = None
+        print("Done.")
 
     def _get_dist(self, embed_dim):
         assert self.args.gr_model in ['mog', 'gaussian'], f"Invalid GR model: {self.args.gr_model}"
@@ -160,7 +163,7 @@ class STARPromptModel(nn.Module):
 
                 if not self.args.nowand:
                     assert wandb is not None, "wandb is not installed."
-                    wandb.log({'ca_loss': loss.item(), 'ca_lr': optim.param_groups[0]['lr']})
+                    wandb.log({'ca_loss_second_stage': loss.item(), 'ca_lr_second_stage': optim.param_groups[0]['lr']})
                 pbar.set_postfix({'loss': loss.item()})
 
     def align(self, current_task: int, n_seen_classes: int, loss_fn):

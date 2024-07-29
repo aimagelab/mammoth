@@ -47,7 +47,7 @@ if __name__ == '__main__':
     except ImportError:
         warn_once("Warning: python-dotenv not installed. Ignoring .env file.")
 
-from utils.args import add_management_args, add_experiment_args
+from utils.args import add_management_args, add_experiment_args, fix_argparse_default_priority
 from utils.conf import base_path, get_device
 from utils.distributed import make_dp
 from utils.best_args import best_args
@@ -108,6 +108,7 @@ def parse_args():
         parser = get_model_class(args).get_parser()
         add_management_args(parser)
         add_experiment_args(parser)
+        fix_argparse_default_priority(parser)
         to_parse = sys.argv[1:] + ['--' + k + '=' + str(v) for k, v in best.items()]
         to_parse.remove('--load_best_args')
         args = parser.parse_args(to_parse)
@@ -117,9 +118,11 @@ def parse_args():
         parser = get_model_class(args).get_parser()
         add_management_args(parser)
         add_experiment_args(parser)
+        fix_argparse_default_priority(parser)
         args = parser.parse_args()
 
     get_dataset(args).update_default_args()
+
     args.model = models_dict[args.model]
 
     if args.lr_scheduler is not None:

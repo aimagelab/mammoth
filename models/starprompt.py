@@ -166,6 +166,7 @@ class STARPrompt(ContinualModel):
             self.opt.zero_grad()
 
         (loss / self.args.virtual_bs_n).backward()
+        # loss.backward()
         if (self.epoch_iteration > 0 or self.args.virtual_bs_n == 1) and \
                 self.epoch_iteration % self.args.virtual_bs_n == 0:
             self.opt.step()

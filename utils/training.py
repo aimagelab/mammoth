@@ -17,6 +17,7 @@ from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
 from datasets.utils.gcl_dataset import GCLDataset
 from models.utils.continual_model import ContinualModel
+from models.utils.future_model import FutureModel
 
 from utils.checkpoints import mammoth_load_checkpoint
 from utils.loggers import *
@@ -191,6 +192,9 @@ def train_single_epoch(model: ContinualModel,
             loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch)
         assert not math.isnan(loss)
 
+        if scheduler is not None and args.scheduler_mode == 'iter':
+            scheduler.step()
+
         if args.code_optimization == 0 and 'cuda' in str(args.device):
             torch.cuda.synchronize()
         system_tracker()
@@ -202,7 +206,7 @@ def train_single_epoch(model: ContinualModel,
         pbar.set_postfix({'loss': loss} if ep_h == 'N/A' else {'loss': loss, 'ep/h': ep_h})
         pbar.update()
 
-    if scheduler is not None:
+    if scheduler is not None and args.scheduler_mode == 'epoch':
         scheduler.step()
 
 
@@ -261,6 +265,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         end_task = dataset.N_TASKS if args.stop_after is None else args.stop_after
 
         if args.eval_future:
+            assert isinstance(model, FutureModel), "Model must be an instance of FutureModel to evaluate on future tasks"
             eval_dataset = get_dataset(args)
             for _ in range(dataset.N_TASKS):
                 eval_dataset.get_data_loaders()

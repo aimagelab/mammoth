@@ -161,7 +161,7 @@ class SecondStageStarprompt(ContinualModel):
 
                 if not self.args.nowand:
                     assert wandb is not None, "wandb is not installed."
-                    wandb.log({'ca_loss': loss.item(), 'ca_lr': optim.param_groups[0]['lr']})
+                    wandb.log({'ca_loss_second_stage': loss.item(), 'ca_lr_second_stage': optim.param_groups[0]['lr']})
                 pbar.set_postfix({'loss': loss.item()})
 
     def align(self):

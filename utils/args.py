@@ -32,7 +32,9 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                            help='Which dataset to perform experiments on.')
     exp_group.add_argument('--model', type=custom_str_underscore, required=True,
                            help='Model name.', choices=list(get_all_models().keys()))
-    exp_group.add_argument('--lr', type=float, required=True, help='Learning rate.')
+    exp_group.add_argument('--lr', required=True, type=float, help='Learning rate. This should either be set as default by the model '
+                           '(with `set_defaults <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.set_defaults>`_),'
+                           ' by the dataset (with `set_default_from_args`, see :ref:`module-datasets.utils`), or with `--lr=<value>`.')
     exp_group.add_argument('--batch_size', type=int, help='Batch size.')
     exp_group.add_argument('--label_perc', type=float, default=1, help='Percentage in (0-1] of labeled examples per task.')
     exp_group.add_argument('--joint', type=int, choices=(0, 1), default=0, help='Train model on Joint (single task)?')
@@ -76,6 +78,10 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     opt_group.add_argument('--optim_nesterov', type=int, default=0,
                            help='optimizer nesterov momentum.')
     opt_group.add_argument('--lr_scheduler', type=str, help='Learning rate scheduler.')
+    opt_group.add_argument('--scheduler_mode', type=str, choices=['epoch', 'iter'], default='epoch',
+                           help='Scheduler mode. Possible values:'
+                           ' - `epoch`: the scheduler is called at the end of each epoch.'
+                           ' - `iter`: the scheduler is called at the end of each iteration.')
     opt_group.add_argument('--lr_milestones', type=int, nargs='+', default=[],
                            help='Learning rate scheduler milestones (used if `lr_scheduler=multisteplr`).')
     opt_group.add_argument('--sched_multistep_lr_gamma', type=float, default=0.1,
@@ -96,7 +102,7 @@ def add_management_args(parser: ArgumentParser) -> None:
 
     mng_group.add_argument('--seed', type=int, default=None,
                            help='The random seed. If not provided, a random seed will be used.')
-    mng_group.add_argument('--permute_classes', type=int, choices=[0, 1], default=1,
+    mng_group.add_argument('--permute_classes', type=int, choices=[0, 1], default=0,
                            help='Permute classes before splitting into tasks? This applies the seed before permuting if the `seed` argument is present.')
     mng_group.add_argument('--base_path', type=str, default="./data/",
                            help='The base path where to save datasets, logs, results.')
@@ -127,7 +133,7 @@ def add_management_args(parser: ArgumentParser) -> None:
     mng_group.add_argument('--distributed', type=str, default='no', choices=['no', 'dp', 'ddp'], help='Enable distributed training?')
     mng_group.add_argument('--savecheck', choices=['last', 'task'], type=str, help='Save checkpoint every `task` or at the end of the training (`last`).')
     mng_group.add_argument('--loadcheck', type=str, default=None, help='Path of the checkpoint to load (.pt file for the specific task)')
-    mng_group.add_argument('--ckpt_name', type=str, required=False, help='(optional) checkpoint save name.')
+    mng_group.add_argument('--ckpt_name', type=str, help='(optional) checkpoint save name.')
     mng_group.add_argument('--start_from', type=int, default=None, help="Task to start from")
     mng_group.add_argument('--stop_after', type=int, default=None, help="Task limit")
 
@@ -155,6 +161,20 @@ def add_rehearsal_args(parser: ArgumentParser) -> None:
                        help='The size of the memory buffer.')
     group.add_argument('--minibatch_size', type=int,
                        help='The batch size of the memory buffer.')
+
+
+def fix_argparse_default_priority(parser: ArgumentParser) -> None:
+    """
+    Fix the priority of the default of the arguments, where the value set by the `set_defaults` method is ignored if the argument is set afterwards.
+    (see `https://bugs.python.org/issue23814` for more details).
+    """
+
+    set_defaults_args = parser._defaults
+
+    for action in parser._actions:
+        if action.dest in set_defaults_args:
+            action.default = set_defaults_args[action.dest]
+            action.required = False
 
 
 class _DocsArgs:
