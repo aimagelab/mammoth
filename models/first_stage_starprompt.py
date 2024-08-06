@@ -22,6 +22,8 @@ class FirstStageStarprompt(ContinualModel):
     def get_parser() -> ArgumentParser:
         parser = ArgumentParser()
 
+        parser.set_defaults(batch_size=128, optimizer='sgd', lr=0.002)
+
         frozen_group = parser.add_argument_group('Frozen hyperparameters')
         frozen_group.add_argument("--virtual_bs_n", type=int, default=1, help="Virtual batch size iterations")
         frozen_group.add_argument('--gr_mog_n_iters', '--gr_mog_n_iters_first_stage', dest='gr_mog_n_iters_first_stage',

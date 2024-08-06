@@ -56,7 +56,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
 
-from timm.layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_normal_, resample_patch_embed, \
+from timm.layers import PatchEmbed, Mlp as TimmMlp, DropPath, trunc_normal_, lecun_normal_, resample_patch_embed, \
     resample_abs_pos_embed
 from timm.models._builder import build_model_with_cfg
 from timm.models._manipulate import named_apply
@@ -69,6 +69,11 @@ from utils.conf import warn_once
 __all__ = ['VisionTransformer']  # model_registry will add each entrypoint fn to this
 
 _logger = logging.getLogger(__name__)
+
+
+class Mlp(TimmMlp):
+    def forward(self, x, **kwargs):
+        return super().forward(x)
 
 
 class Attention(nn.Module):

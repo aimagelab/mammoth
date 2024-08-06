@@ -72,7 +72,7 @@ class CLIP(ContinualModel):
     @staticmethod
     def get_parser() -> ArgumentParser:
         parser = ArgumentParser(description='STATIC Continual Learning with CLIP')
-        parser.set_defaults(lr=0, n_epochs=0)
+        parser.set_defaults(lr=0, n_epochs=0)  # disable training by default
         parser.add_argument('--clip_backbone', type=str, default='ViT-L/14',
                             choices=list(clip.available_models()),
                             help='Backbone architecture for CLIP')

@@ -10,15 +10,15 @@ import os
 from utils.conf import warn_once
 
 try:
-    import quadprog
-except BaseException:
-    quadprog = None
-    if os.name == 'nt':
-        # check if os is windows
-        warn_once('Warning: GEM and A-GEM cannot be used on Windows (quadprog required)')
-    else:
-        warn_once('Warning: quadprog not found (GEM and A-GEM will not work)')
-    raise ImportError
+    import quadprog as solver
+except ImportError:
+    warn_once("`quadprog` not found, trying with `qpsolvers`. Note that the code is only tested with `quadprog`.")
+    try:
+        import qpsolvers as solver
+    except ImportError:
+        solver = None
+        warn_once('Warning: qpsolvers not found (GEM and A-GEM will not work)')
+        raise ImportError
 
 from models.utils.continual_model import ContinualModel
 from utils.args import add_rehearsal_args, ArgumentParser
@@ -80,7 +80,7 @@ def project2cone2(gradient, memories, margin=0.5, eps=1e-3):
     grad_prod = np.dot(memories_np, gradient_np) * -1
     G = np.eye(n_rows)
     h = np.zeros(n_rows) + margin
-    v = quadprog.solve_qp(self_prod, grad_prod, G, h)[0]
+    v = solver.solve_qp(self_prod, grad_prod, G, h)[0]
     x = np.dot(v, memories_np) + gradient_np
     gradient.copy_(torch.from_numpy(x).view(-1, 1))
 
@@ -99,7 +99,7 @@ class Gem(ContinualModel):
         return parser
 
     def __init__(self, backbone, loss, args, transform):
-        assert quadprog is not None, 'GEM requires quadprog (linux only)'
+        assert solver is not None, 'GEM requires quadprog (linux only, python <= 3.10) or qpsolvers (cross-platform)'
         super(Gem, self).__init__(backbone, loss, args, transform)
         self.buffer = Buffer(self.args.buffer_size)
 

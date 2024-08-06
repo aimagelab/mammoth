@@ -73,8 +73,8 @@ class Lwf(ContinualModel):
 
         loss = self.loss(outputs[:, :self.n_seen_classes], labels)
         if logits is not None:
-            loss += self.args.alpha * modified_kl_div(smooth(self.soft(logits[:, :self.n_past_classes]).to(self.device), 2, 1),
-                                                      smooth(self.soft(outputs[:, :self.n_past_classes]), 2, 1))
+            loss += self.args.alpha * modified_kl_div(smooth(self.soft(logits[:, :self.n_past_classes]).to(self.device), self.args.softmax_temp, 1),
+                                                      smooth(self.soft(outputs[:, :self.n_past_classes]), self.args.softmax_temp, 1))
 
         loss.backward()
         self.opt.step()
