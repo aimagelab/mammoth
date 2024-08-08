@@ -4,10 +4,9 @@ import sys
 import torch
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.main import main
-import pytest
 
 
-def test_der_cifar100_defaultscheduler():
+def test_der_cifar100_defaultscheduler(capsys):
     N_TASKS = 10
     sys.argv = ['mammoth',
                 '--model',
@@ -33,22 +32,16 @@ def test_der_cifar100_defaultscheduler():
                 '--seed',
                 '0']
 
-    log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_der_cifar100_defaultscheduler.log')
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(log_path, 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()
 
-    # read output file and search for the string 'Saving checkpoint into'
-    with open(log_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-        ckpt_name = [line for line in lines if 'Saving checkpoint into' in line]
-        assert any(ckpt_name), f'Checkpoint not saved in {log_path}'
+    _, err = capsys.readouterr()
 
-        ckpt_base_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip()
-        ckpt_paths = [os.path.join('checkpoints', ckpt_base_name + f'_{i}.pt') for i in range(N_TASKS)]
+    # read output file and search for the string 'Saving checkpoint into'
+    ckpt_name = [line for line in err.splitlines() if 'Saving checkpoint into' in line]
+    assert any(ckpt_name), f'Checkpoint not saved'
+
+    ckpt_base_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip()
+    ckpt_paths = [os.path.join('checkpoints', ckpt_base_name + f'_{i}.pt') for i in range(N_TASKS)]
 
     for ckpt_path in ckpt_paths:
         assert os.path.exists(ckpt_path), f'Checkpoint file {ckpt_path} not found'
@@ -61,7 +54,7 @@ def test_der_cifar100_defaultscheduler():
         assert sched['base_lrs'] == [0.03], f'Base learning rate not updated correctly in {ckpt_path}'
 
 
-def test_der_cifar100_customscheduler():
+def test_der_cifar100_customscheduler(capsys):
     N_TASKS = 10
     sys.argv = ['mammoth',
                 '--model',
@@ -90,23 +83,15 @@ def test_der_cifar100_customscheduler():
                 '2', '4', '6', '8',
                 '--seed',
                 '0']
-
-    log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_der_cifar100_customscheduler.der.cifar100.log')
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(log_path, 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()
 
+    _, err = capsys.readouterr()
     # read output file and search for the string 'Saving checkpoint into'
-    with open(log_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-        ckpt_name = [line for line in lines if 'Saving checkpoint into' in line]
-        assert any(ckpt_name), f'Checkpoint not saved in {log_path}'
+    ckpt_name = [line for line in err.splitlines() if 'Saving checkpoint into' in line]
+    assert any(ckpt_name), f'Checkpoint not saved'
 
-        ckpt_base_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip()
-        ckpt_paths = [os.path.join('checkpoints', ckpt_base_name + f'_{i}.pt') for i in range(N_TASKS)]
+    ckpt_base_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip()
+    ckpt_paths = [os.path.join('checkpoints', ckpt_base_name + f'_{i}.pt') for i in range(N_TASKS)]
 
     for ckpt_path in ckpt_paths:
         assert os.path.exists(ckpt_path), f'Checkpoint file {ckpt_path} not found'

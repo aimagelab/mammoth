@@ -2,11 +2,9 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.main import main
-from utils.test_utils import init_test_environ
 import pytest
 
 
-@init_test_environ
 @pytest.mark.parametrize('dataset', ['seq-cifar10', 'seq-mnist'])
 @pytest.mark.parametrize('model', ['ewc_on'])
 def test_ewc(dataset, model):
@@ -34,15 +32,9 @@ def test_ewc(dataset, model):
                 '--debug_mode',
                 '1']
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_{model}.{dataset}.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()
 
 
-@init_test_environ
 @pytest.mark.parametrize('dataset', ['seq-cifar10', 'seq-mnist'])
 @pytest.mark.parametrize('model', ['si'])
 def test_si(dataset, model):
@@ -70,15 +62,9 @@ def test_si(dataset, model):
                 '--debug_mode',
                 '1']
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_{model}.{dataset}.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()
 
 
-@init_test_environ
 @pytest.mark.parametrize('dataset', ['seq-cifar10', 'seq-mnist'])
 @pytest.mark.parametrize('model', ['lwf_mc', 'lwf'])
 def test_lwf(dataset, model):
@@ -102,9 +88,4 @@ def test_lwf(dataset, model):
                 '--debug_mode',
                 '1']
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_{model}.{dataset}.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()

@@ -84,7 +84,7 @@ By default, the evaluation is done up to the current task. However, some models 
 
 .. important::
 
-    In order to be able to evaluate on future tasks, the method must extend the :ref:`FutureModel <module-models.future_model>` class. Notably, this function includes the ``future_forward`` method, which performs inference on all classes, and the ``change_transform`` method, which allows to change the transform to be applied to the data during inference.
+    In order to be able to evaluate on future tasks, the method must extend the :ref:`FutureModel <module-models.utils.future_model>` class. Notably, this function includes the ``future_forward`` method, which performs inference on all classes, and the ``change_transform`` method, which allows to change the transform to be applied to the data during inference.
 
 Default arguments and command line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

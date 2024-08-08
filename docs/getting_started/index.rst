@@ -36,3 +36,11 @@ Mammoth includes a few tests to ensure that the code is working as expected for 
     pytest --verbose tests
 
 The tests are quite long, as they evaluate most of the functionality of Mammoth. The estimated runtime is around 1 hour on a RTX 4080 GPU.
+
+.. note::
+
+    The tests require internet access to download the datasets and test the functionalities of the library. 
+
+.. important::
+
+    Running the ``test_datasets`` test WILL delete and (attept to) re-download all datasets.

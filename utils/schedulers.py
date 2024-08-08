@@ -10,6 +10,7 @@ class CosineSchedule(_LRScheduler):
         """
         Apply cosine learning rate schedule to all the parameters in the optimizer.
         """
+        assert K > 1, "K must be greater than 1"
         self.K = K
         super().__init__(optimizer)
 

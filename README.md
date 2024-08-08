@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="230" height="230" src="logo.png" alt="logo">
+  <img width="230" height="230" src="docs/_static/logo.png" alt="logo">
 </p>
 
 <p align="center">
@@ -28,12 +28,12 @@ With Mammoth, nothing is set in stone. You can easily add new models, datasets, 
 ### Check out the official [DOCUMENTATION](https://aimagelab.github.io/mammoth/) for more information on how to use Mammoth!
 
 <p align="center">
-  <img width="112" height="112" src="seq_mnist.gif" alt="Sequential MNIST">
-  <img width="112" height="112" src="seq_cifar10.gif" alt="Sequential CIFAR-10">
-  <img width="112" height="112" src="seq_tinyimg.gif" alt="Sequential TinyImagenet">
-  <img width="112" height="112" src="perm_mnist.gif" alt="Permuted MNIST">
-  <img width="112" height="112" src="rot_mnist.gif" alt="Rotated MNIST">
-  <img width="112" height="112" src="mnist360.gif" alt="MNIST-360">
+  <img width="112" height="112" src="docs/_static/seq_mnist.gif" alt="Sequential MNIST">
+  <img width="112" height="112" src="docs/_static/seq_cifar10.gif" alt="Sequential CIFAR-10">
+  <img width="112" height="112" src="docs/_static/seq_tinyimg.gif" alt="Sequential TinyImagenet">
+  <img width="112" height="112" src="docs/_static/perm_mnist.gif" alt="Permuted MNIST">
+  <img width="112" height="112" src="docs/_static/rot_mnist.gif" alt="Rotated MNIST">
+  <img width="112" height="112" src="docs/_static/mnist360.gif" alt="MNIST-360">
 </p>
 
 ## Setup

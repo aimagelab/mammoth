@@ -2,7 +2,6 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.main import main
-from utils.test_utils import init_test_environ
 import pytest
 
 
@@ -10,8 +9,8 @@ def unsupport_quadprog():
     return os.name == 'nt'
 
 
-@init_test_environ
-@pytest.mark.skipif(unsupport_quadprog(), reason='`quadprog` not supported on Windows. Good luck.')
+@pytest.mark.skipif(unsupport_quadprog(), reason='`quadprog` not supported on Windows.'
+                    'You may have luck with `qpsolvers` instead but we will not test it here.')
 @pytest.mark.parametrize('dataset', ['seq-cifar10', 'seq-mnist'])
 @pytest.mark.parametrize('model', ['gem', 'agem', 'agem_r'])
 def test_gem(dataset, model):
@@ -37,9 +36,4 @@ def test_gem(dataset, model):
                 '--debug_mode',
                 '1']
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_{model}.{dataset}.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()

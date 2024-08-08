@@ -1,6 +1,6 @@
 Welcome to Mammoth's documentation!
 ===================================
-.. image:: images/logo.png
+.. image:: _static/logo.png
     :alt: logo
     :align: center
     :height: 230px
@@ -28,32 +28,32 @@ With Mammoth, nothing is set in stone. You can easily add new models, datasets, 
    :class: centered
    :stub-columns: 0
 
-   * - .. image:: images/seq_mnist.gif
+   * - .. image:: _static/seq_mnist.gif
          :alt: Sequential MNIST
          :height: 112px
          :width: 112px
 
-     - .. image:: images/seq_cifar10.gif
+     - .. image:: _static/seq_cifar10.gif
          :alt: Sequential CIFAR-10
          :height: 112px
          :width: 112px
 
-     - .. image:: images/seq_tinyimg.gif
+     - .. image:: _static/seq_tinyimg.gif
          :alt: Sequential TinyImagenet
          :height: 112px
          :width: 112px
 
-     - .. image:: images/perm_mnist.gif
+     - .. image:: _static/perm_mnist.gif
          :alt: Permuted MNIST
          :height: 112px
          :width: 112px
 
-     - .. image:: images/rot_mnist.gif
+     - .. image:: _static/rot_mnist.gif
          :alt: Rotated MNIST
          :height: 112px
          :width: 112px
 
-     - .. image:: images/mnist360.gif
+     - .. image:: _static/mnist360.gif
          :alt: MNIST-360
          :height: 112px
          :width: 112px

@@ -2,11 +2,8 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.main import main
-from utils.test_utils import init_test_environ
-import pytest
 
 
-@init_test_environ
 def test_gdumb_lider():
     sys.argv = ['mammoth',
                 '--model',
@@ -34,15 +31,9 @@ def test_gdumb_lider():
                 '--debug_mode',
                 '1']
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_gdumb-lider.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()
 
 
-@init_test_environ
 def test_icarl_lider():
     sys.argv = ['mammoth',
                 '--model',
@@ -70,15 +61,9 @@ def test_icarl_lider():
                 '--debug_mode',
                 '1']
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_icarl-lider.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()
 
 
-@init_test_environ
 def test_erace_lider():
     sys.argv = ['mammoth',
                 '--model',
@@ -106,15 +91,9 @@ def test_erace_lider():
                 '--debug_mode',
                 '1']
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_er-ace-lider.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()
 
 
-@init_test_environ
 def test_derpp_lider():
     sys.argv = ['mammoth',
                 '--model',
@@ -146,9 +125,4 @@ def test_derpp_lider():
                 '--debug_mode',
                 '1']
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_derpp-lider.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()

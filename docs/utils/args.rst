@@ -18,7 +18,7 @@ Arguments
 	*Help*: Model name.
 
 	- *Default*: ``None``
-	- *Choices*: ``joint-gcl, second-stage-starprompt, lwf-mc, gdumb-lider, ewc-on, xder, hal, sgd, si, moe-adapters, first-stage-starprompt, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, attriclip, starprompt, coda-prompt, clip, pnn, er-ace, xder-ce, dualprompt, twf, mer, er-ace-lider, gdumb, l2p, ccic, slca, agem-r, rpc, xder-rpc, gss, lwf, cgil, er, agem``
+	- *Choices*: ``joint-gcl, second-stage-starprompt, lwf-mc, gdumb-lider, joint, ewc-on, xder, hal, sgd, si, moe-adapters, first-stage-starprompt, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, attriclip, starprompt, coda-prompt, clip, pnn, er-ace, xder-ce, dualprompt, twf, mer, er-ace-lider, gdumb, dap, l2p, ccic, slca, agem-r, rpc, xder-rpc, gss, lwf, cgil, er, agem``
 **\-\-lr** : float
 	*Help*: Learning rate. This should either be set as default by the model (with `set_defaults <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.set_defaults>`_), by the dataset (with `set_default_from_args`, see :ref:`module-datasets.utils`), or with `--lr=<value>`.
 

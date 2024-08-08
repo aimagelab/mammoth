@@ -5,17 +5,17 @@ from utils.main import main
 import pytest
 
 
-@pytest.mark.parametrize('code_optimization', [0, 1, 2, 3])
-def test_code_optim_erace(code_optimization):
+@pytest.mark.parametrize('dataset', ['seq-cifar10', 'seq-mnist'])
+@pytest.mark.parametrize('model', ['sgd', 'lwf_mc'])
+def test_class_task_il(dataset, model):
     sys.argv = ['mammoth',
                 '--model',
-                'er-ace',
-                '--buffer_size',
-                '50',
+                model,
                 '--dataset',
-                'seq-cifar10',
+                dataset,
+                '--joint=1',
                 '--lr',
-                '1e-3',
+                '1e-4',
                 '--n_epochs',
                 '1',
                 '--batch_size',
@@ -27,22 +27,20 @@ def test_code_optim_erace(code_optimization):
                 '--seed',
                 '0',
                 '--debug_mode',
-                '1',
-                '--code_optimization',
-                str(code_optimization)]
+                '1']
 
     main()
 
 
-@pytest.mark.parametrize('code_optimization', [0, 1, 2, 3])
-def test_code_optimization_slca(code_optimization):
+@pytest.mark.parametrize('dataset', ['perm-mnist', 'rot-mnist'])
+def test_domain_il(dataset):
     sys.argv = ['mammoth',
                 '--model',
-                'slca',
+                'joint',
                 '--dataset',
-                'seq-cifar10-224',
+                dataset,
                 '--lr',
-                '1e-3',
+                '1e-4',
                 '--n_epochs',
                 '1',
                 '--batch_size',
@@ -54,8 +52,6 @@ def test_code_optimization_slca(code_optimization):
                 '--seed',
                 '0',
                 '--debug_mode',
-                '1',
-                '--code_optimization',
-                str(code_optimization)]
+                '1']
 
     main()

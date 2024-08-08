@@ -10,6 +10,8 @@ import torch
 from models.utils.continual_model import ContinualModel
 from tqdm import tqdm
 
+from utils.conf import create_seeded_dataloader
+
 
 class Joint(ContinualModel):
     NAME = 'joint'
@@ -41,12 +43,15 @@ class Joint(ContinualModel):
         bs = self.args.batch_size
         scheduler = dataset.get_scheduler(self, self.args)
 
-        with tqdm(total=self.args.n_epochs * len(all_inputs), desc="Training joint") as pbar:
+        joint_dataset = torch.utils.data.TensorDataset(all_inputs, all_labels)
+        dataloader = create_seeded_dataloader(self.args, joint_dataset, batch_size=self.args.batch_size, shuffle=True)
+
+        with tqdm(total=self.args.n_epochs * len(dataloader)) as pbar:
             for e in range(self.args.n_epochs):
-                order = torch.randperm(len(all_inputs))
-                for i in range(int(math.ceil(len(all_inputs) / bs))):
-                    inputs = all_inputs[order][i * bs: (i + 1) * bs]
-                    labels = all_labels[order][i * bs: (i + 1) * bs]
+                pbar.set_description(f"Joint - Epoch {e}")
+                for i, (inputs, labels) in enumerate(dataloader):
+                    if self.args.debug_mode and i > self.get_debug_iters():
+                        break
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
                     self.opt.zero_grad()
                     outputs = self.net(inputs)

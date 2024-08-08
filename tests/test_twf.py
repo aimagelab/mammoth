@@ -2,11 +2,9 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.main import main
-from utils.test_utils import init_test_environ
 import pytest
 
 
-@init_test_environ
 @pytest.mark.parametrize('dataset', ['seq-cifar100', 'seq-tinyimg'])  # , 'seq-cub200'
 @pytest.mark.parametrize('resize_maps', ['0', '1'])
 def test_twf_random_init(dataset, resize_maps):
@@ -47,16 +45,9 @@ def test_twf_random_init(dataset, resize_maps):
                 '--debug_mode',
                 '1']
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_twf_random_init.{dataset}.resize_maps_{resize_maps}.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
-
     main()
 
 
-@init_test_environ
 @pytest.mark.parametrize(('dataset', 'loadcheck'),
                          [('seq-cifar100', 'https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EeWEOSls505AsMCTXAxWoLUBmeIjCiplFl40zDOCmB_lEw?e=Izv0jh'),
                           ('seq-cub200-rs', 'https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EV7I5BpJvURIhMMk95r3x5YBAZKch-NPFEJ9hhPQghcWCw?e=dt8wp3'),
@@ -100,11 +91,5 @@ def test_twf_with_checkpoint(dataset, loadcheck, resize_maps):
                 '0',
                 '--debug_mode',
                 '1']
-
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_twf_with_checkpoint.{dataset}.resize_maps_{resize_maps}.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
 
     main()
