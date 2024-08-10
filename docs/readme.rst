@@ -83,6 +83,18 @@ Datasets
 
 Mammoth includes **21** datasets, covering *toy classification problems* (different versions of MNIST), *standard domains* (CIFAR, Imagenet-R, TinyImagenet, MIT-67), *fine-grained classification domains* (Cars-196, CUB-200), *aerial domains* (EuroSAT-RGB, Resisc45), *medical domains* (CropDisease, ISIC, ChestX).
 
+Work in progress
+----------------
+
+All the code is under active development. Here are some of the features we are working on:
+
+- **Configurations for datasets**: Currently, each dataset represents a *specific configuration* (e.g., number of tasks, data augmentations, backbone, etc.). This makes adding a new *setting* a bit cumbersome. We are working on a more flexible way to define configurations, while leaving the current system as a default for retro-compatibility.
+- **New models**: We are working on adding new models to the repository.
+- **New training modalities**: We will introduce new CL training regimes, such as training with *noisy labels*, *regression*, *segmentation*, *detection*, etc.
+- **Openly accessible result dashboard**: We are working on a dashboard to visualize the results of all the models in both their respective settings (to prove their reproducibility) and in a general setting (to compare them). 
+
+All the new additions will try to preserve the current structure of the repository, making it easy to add new functionalities with a simple merge.
+
 Pretrained backbones
 --------------------
 

@@ -23,6 +23,8 @@ Ideally, all the code necessary to run the experiments is included _in the repos
 
 With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
 
+> ***All the models included in mammoth are verified against the original papers to reproduce the original results in their respective original settings.***
+
 ## Documentation
 
 ### Check out the official [DOCUMENTATION](https://aimagelab.github.io/mammoth/) for more information on how to use Mammoth!
@@ -42,6 +44,17 @@ With Mammoth, nothing is set in stone. You can easily add new models, datasets, 
 - Use `./utils/main.py` to run experiments.
 - New models can be added to the `models/` folder.
 - New datasets can be added to the `datasets/` folder.
+
+## Update roadmap
+
+All the code is under active development. Here are some of the features we are working on:
+
+- **Configurations for datasets**: Currently, each dataset represents a *specific configuration* (e.g., number of tasks, data augmentations, backbone, etc.). This makes adding a new *setting* a bit cumbersome. We are working on a more flexible way to define configurations, while leaving the current system as a default for retro-compatibility.
+- **New models**: We are working on adding new models to the repository.
+- **New training modalities**: We will introduce new CL training regimes, such as training with *noisy labels*, *regression*, *segmentation*, *detection*, etc.
+- **Openly accessible result dashboard**: We are working on a dashboard to visualize the results of all the models in both their respective settings (to prove their reproducibility) and in a general setting (to compare them). *This may take some time, since compute is not free.*
+
+All the new additions will try to preserve the current structure of the repository, making it easy to add new functionalities with a simple merge.
 
 ## Models
 

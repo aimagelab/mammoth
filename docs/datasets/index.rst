@@ -77,6 +77,8 @@ and are defined in the **SETTING** attribute of each dataset. The following sett
 
     Mammoth datasets support the **joint** setting, which is a special case of the `class-il` setting where all the classes are available at each task. This is useful to compare the performance of a method on what is usually considered the *upper bound* for the `class-il` setting. To run an experiment on the **joint** setting, simply set the ``--joint`` to ``1``. This will automatically set the **N_CLASSES_PER_TASK** attribute to the total number of classes in the dataset and the **TASKS** attribute to ``1``.
 
+    Note that the **joint** setting is available only for the `class-il` (and `task-il`) setting. If you want to run an experiment on the **joint** setting for a dataset that follows the `domain-il` setting, you can use the :ref:`Joint <module-models.joint>` **model** (with ``--model=joint``).
+
 Evaluate on Future Tasks
 ~~~~~~~~~~~~~~~~~~~~~~~~
 

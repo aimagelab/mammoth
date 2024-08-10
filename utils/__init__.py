@@ -13,16 +13,16 @@ def binary_to_boolean_type(value: str) -> bool:
     Returns:
         the boolean type
     """
-    if not isinstance(val, str):
-        val = str(value)
+    if not isinstance(value, str):
+        value = str(value)
 
-    val = value.lower()
+    value = value.lower()
     true_values = ['true', '1', 't', 'y', 'yes']
     false_values = ['false', '0', 'f', 'n', 'no']
 
-    assert val in true_values + false_values
+    assert value in true_values + false_values
 
-    return val in true_values
+    return value in true_values
 
 
 def custom_str_underscore(value):
