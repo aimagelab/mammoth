@@ -12,6 +12,7 @@ import torch
 import numpy as np
 import torch.nn as nn
 import torch.optim.lr_scheduler as scheds
+import torch.utils
 from torch.utils.data import DataLoader, Dataset
 
 from datasets.utils.validation import get_validation_indexes
@@ -73,9 +74,14 @@ class ContinualDataset(object):
                 self.args.class_order = np.random.permutation(self.N_CLASSES)
 
         if args.joint:
-            assert self.SETTING in ['class-il', 'task-il'], 'Joint training is only supported for class-il and task'
-            self.N_CLASSES_PER_TASK = self.N_CLASSES
-            self.N_TASKS = 1
+            if self.SETTING in ['class-il', 'task-il']:
+                # just set the number of classes per task to the total number of classes
+                self.N_CLASSES_PER_TASK = self.N_CLASSES
+                self.N_TASKS = 1
+            else:
+                # bit more tricky, not supported for now
+                raise NotImplementedError('Joint training is only supported for class-il and task-il.'
+                                          'For other settings, please use the `joint` model with `--model=joint` and `--joint=0`')
 
         if not all((self.NAME, self.SETTING, self.N_CLASSES_PER_TASK, self.N_TASKS, self.SIZE, self.N_CLASSES)):
             raise NotImplementedError('The dataset must be initialized with all the required fields.')

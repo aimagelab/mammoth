@@ -56,7 +56,7 @@ class MoEAdapters(FutureModel):
         parser = ArgumentParser(description='MoE Adapters -- Boosting Continual Learning of Vision-Language Models via Mixture-of-Experts Adapters')
 
         # Frozen hyperparameters
-        parser.set_defaults(batch_size=8, n_epochs=1, optimizer='adamw', lr=1e-3, scheduler_mode='iter')
+        parser.set_defaults(batch_size=8, n_epochs=1, optimizer='adamw', lr=1e-3, scheduler_mode='iter', eval_future=1)
         parser.add_argument("--virtual_bs_n", type=int, default=8, help="Virtual batch size iterations")
 
         # Tunable hyperparameters

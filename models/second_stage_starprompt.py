@@ -25,6 +25,8 @@ class SecondStageStarprompt(ContinualModel):
     def get_parser() -> ArgumentParser:
         parser = ArgumentParser(description='Second-stage of StarPrompt. Requires the keys saved from the first stage.')
 
+        parser.set_defaults(batch_size=128, optimizer='adam', lr=0.001)
+
         frozen_group = parser.add_argument_group('Frozen hyperparameters')
         frozen_group.add_argument("--virtual_bs_n", type=int, default=1,
                                   help="virtual batch size iterations")
