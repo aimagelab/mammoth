@@ -161,6 +161,7 @@ class Block(nn.Module):
             mlp_layer=Mlp
     ):
         super().__init__()
+        self.embed_dim = dim
         self.norm1 = norm_layer(dim)
         self.attn = attn_layer(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=drop)
         self.ls1 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
@@ -253,6 +254,7 @@ class VisionTransformer(MammothBackbone):
         mlp_layer = mlp_layer if mlp_layer is not None else (Mlp if not use_lora else LoRAMlp)
         self.attn_layer = attn_layer
         self.norm_layer = norm_layer
+        self.patch_size = patch_size
         self.num_heads = num_heads
         self.weight_init = weight_init
         self.class_token = class_token
@@ -267,6 +269,8 @@ class VisionTransformer(MammothBackbone):
         self.qkv_bias = qkv_bias
         self.attn_drop_rate = attn_drop_rate
         self.depth = depth
+        self.drop_rate = drop_rate
+        self.mlp_layer = mlp_layer
 
         self.patch_embed = embed_layer(
             img_size=img_size,
