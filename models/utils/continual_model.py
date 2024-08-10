@@ -240,7 +240,7 @@ class ContinualModel(nn.Module):
                 opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.get_parameters(), lr=self.args.lr,
                                                                                     weight_decay=self.args.optim_wd,
                                                                                     momentum=self.args.optim_mom,
-                                                                                    nesterov=self.args.optim_nesterov == 1)
+                                                                                    nesterov=self.args.optim_nesterov)
             elif self.args.optimizer.lower() == 'adam' or self.args.optimizer.lower() == 'adamw':
                 opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.get_parameters(), lr=self.args.lr,
                                                                                     weight_decay=self.args.optim_wd)

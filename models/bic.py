@@ -12,6 +12,7 @@ from datasets import get_dataset
 from torch.optim import Adam
 
 from models.utils.continual_model import ContinualModel
+from utils import binary_to_boolean_type
 from utils.args import add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer, icarl_replay
@@ -36,7 +37,7 @@ class BiC(ContinualModel):
                             help='bias injector.')
         parser.add_argument('--wd_reg', type=float, default=None,
                             help='bias injector.')
-        parser.add_argument('--distill_after_bic', type=int, default=1, choices=[0, 1])
+        parser.add_argument('--distill_after_bic', type=binary_to_boolean_type, default=1)
 
         return parser
 

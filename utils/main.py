@@ -146,7 +146,7 @@ def parse_args():
         args.conf_git_hash = None
 
     if args.savecheck:
-        assert args.inference_only == 0, "Should not save checkpoint in inference only mode"
+        assert not args.inference_only, "Should not save checkpoint in inference only mode"
         if not os.path.isdir('checkpoints'):
             create_if_not_exists("checkpoints")
 
@@ -158,8 +158,8 @@ def parse_args():
 
     if args.joint:
         assert args.start_from is None and args.stop_after is None, "Joint training does not support start_from and stop_after"
-        assert args.enable_other_metrics == 0, "Joint training does not support other metrics"
-        assert args.eval_future == 0, "Joint training does not support future evaluation (what is the future?)"
+        assert not args.enable_other_metrics, "Joint training does not support other metrics"
+        assert not args.eval_future, "Joint training does not support future evaluation (what is the future?)"
 
     assert 0 < args.label_perc <= 1, "label_perc must be in (0, 1]"
 

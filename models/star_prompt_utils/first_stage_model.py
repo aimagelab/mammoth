@@ -149,7 +149,7 @@ class Prompter(torch.nn.Module):
                   desc='Updating statistics for first stage Generative Replay') as pbar:
             for _ in range(self.args.num_monte_carlo_gr_first_stage):
                 for i, data in enumerate(dataset.train_loader):
-                    if self.args.debug_mode == 1 and i > 3 and min([len(v) for k, v in features_dict.items()]) > self.args.gr_mog_n_components:
+                    if self.args.debug_mode and i > 3 and min([len(v) for k, v in features_dict.items()]) > self.args.gr_mog_n_components:
                         break
                     inputs, labels = data[0].to(self.device), data[1].to(self.device, dtype=torch.long)
 

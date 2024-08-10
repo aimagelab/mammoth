@@ -8,6 +8,7 @@ Arguments:
     --feature_extractor_type: the type of convnet to use. `vit-b-p16` is the default: ViT-B/16 pretrained on Imagenet 21k (**NO** finetuning on ImageNet 1k)
 """
 
+from utils import binary_to_boolean_type
 from utils.args import *
 from models.utils.continual_model import ContinualModel
 
@@ -26,8 +27,7 @@ class SLCA(ContinualModel):
         parser.add_argument('--prefix', type=str, default='reproduce')
         parser.add_argument('--memory_size', type=int, default=0)
         parser.add_argument('--memory_per_class', type=int, default=0)
-        parser.add_argument('--fixed_memory', type=int, choices=[0, 1], default=0)
-        parser.add_argument('--shuffle', type=int, choices=[0, 1], default=1)
+        parser.add_argument('--fixed_memory', type=binary_to_boolean_type, default=0)
         parser.add_argument(
             '--feature_extractor_type',
             type=str,

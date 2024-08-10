@@ -1,11 +1,28 @@
-# Copyright 2020-present, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Davide Abati, Simone Calderara.
-# All rights reserved.
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
 import os
 import string
 import random
+
+
+def binary_to_boolean_type(value: str) -> bool:
+    """
+    Converts a binary string to a boolean type.
+
+    Args:
+        value: the binary string
+
+    Returns:
+        the boolean type
+    """
+    if not isinstance(val, str):
+        val = str(value)
+
+    val = value.lower()
+    true_values = ['true', '1', 't', 'y', 'yes']
+    false_values = ['false', '0', 'f', 'n', 'no']
+
+    assert val in true_values + false_values
+
+    return val in true_values
 
 
 def custom_str_underscore(value):

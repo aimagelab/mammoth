@@ -273,7 +273,7 @@ class Prompter(torch.nn.Module):
         else:
             with tqdm(total=len(dataset.train_loader), desc='Updating statistics for first stage Generative Replay') as pbar:
                 for i, data in enumerate(dataset.train_loader):
-                    if self.args.debug_mode == 1 and i > 3 and min([len(v) for v in features_dict.values()]) > self.args.gr_mog_n_components:
+                    if self.args.debug_mode and i > 3 and min([len(v) for v in features_dict.values()]) > self.args.gr_mog_n_components:
                         break
                     inputs, labels = data[0], data[1]
                     inputs, labels = inputs.to(self.device), labels.to(self.device).long()

@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 from datasets import get_dataset_names
 from models import get_all_models
 from models.utils.continual_model import ContinualModel
-from utils import custom_str_underscore
+from utils import binary_to_boolean_type, custom_str_underscore
 
 
 def add_experiment_args(parser: ArgumentParser) -> None:
@@ -75,7 +75,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                            help='optimizer weight decay.')
     opt_group.add_argument('--optim_mom', type=float, default=0.,
                            help='optimizer momentum.')
-    opt_group.add_argument('--optim_nesterov', type=int, default=0,
+    opt_group.add_argument('--optim_nesterov', type=binary_to_boolean_type, default=0,
                            help='optimizer nesterov momentum.')
     opt_group.add_argument('--lr_scheduler', type=str, help='Learning rate scheduler.')
     opt_group.add_argument('--scheduler_mode', type=str, choices=['epoch', 'iter'], default='epoch',
@@ -102,7 +102,7 @@ def add_management_args(parser: ArgumentParser) -> None:
 
     mng_group.add_argument('--seed', type=int, default=None,
                            help='The random seed. If not provided, a random seed will be used.')
-    mng_group.add_argument('--permute_classes', type=int, choices=[0, 1], default=0,
+    mng_group.add_argument('--permute_classes', type=binary_to_boolean_type, default=0,
                            help='Permute classes before splitting into tasks? This applies the seed before permuting if the `seed` argument is present.')
     mng_group.add_argument('--base_path', type=str, default="./data/",
                            help='The base path where to save datasets, logs, results.')
@@ -116,13 +116,13 @@ def add_management_args(parser: ArgumentParser) -> None:
                            help='Helper argument to include notes for this run. Example: distinguish between different versions of a model and allow separation of results')
     mng_group.add_argument('--eval_epochs', type=int, default=None,
                            help='Perform inference on validation every `eval_epochs` epochs. If not provided, the model is evaluated ONLY at the end of each task.')
-    mng_group.add_argument('--non_verbose', default=0, choices=[0, 1], type=int, help='Make progress bars non verbose')
-    mng_group.add_argument('--disable_log', default=0, choices=[0, 1], type=int, help='Disable logging?')
+    mng_group.add_argument('--non_verbose', default=0, type=binary_to_boolean_type, help='Make progress bars non verbose')
+    mng_group.add_argument('--disable_log', default=0, type=binary_to_boolean_type, help='Disable logging?')
     mng_group.add_argument('--num_workers', type=int, default=None, help='Number of workers for the dataloaders (default=infer from number of cpus).')
-    mng_group.add_argument('--enable_other_metrics', default=0, choices=[0, 1], type=int,
+    mng_group.add_argument('--enable_other_metrics', default=0, type=binary_to_boolean_type,
                            help='Enable computing additional metrics: forward and backward transfer.')
-    mng_group.add_argument('--debug_mode', type=int, default=0, choices=[0, 1], help='Run only a few training steps per epoch. This also disables logging on wandb.')
-    mng_group.add_argument('--inference_only', default=0, choices=[0, 1], type=int,
+    mng_group.add_argument('--debug_mode', type=binary_to_boolean_type, default=0, help='Run only a few training steps per epoch. This also disables logging on wandb.')
+    mng_group.add_argument('--inference_only', default=0, type=binary_to_boolean_type,
                            help='Perform inference only for each task (no training).')
     mng_group.add_argument('-O', '--code_optimization', type=int, default=0, choices=[0, 1, 2, 3],
                            help='Optimization level for the code.'

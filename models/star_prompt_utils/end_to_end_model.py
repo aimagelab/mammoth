@@ -219,7 +219,7 @@ class STARPromptModel(nn.Module):
         print(f"RECALL: Task - {current_task} - classes from "
               f"{n_past_classes} - to {n_seen_classes}")
 
-        if current_task == 0 or self.args.enable_gr == 0:
+        if current_task == 0 or not self.args.enable_gr:
             return
 
         assert self.classifier_state_dict

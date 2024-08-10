@@ -3,6 +3,8 @@ import os
 import sys
 import torch
 from argparse import ArgumentParser
+
+from utils import binary_to_boolean_type
 try:
     import clip
 except ImportError:
@@ -30,7 +32,7 @@ class FirstStageStarprompt(ContinualModel):
                                   type=int, default=500, help="Number of EM iterations during fit for GR with MOG.")
         frozen_group.add_argument('--gr_mog_n_components', type=int, default=5,
                                   help="Number of components for Generative Replay with MOG.")
-        frozen_group.add_argument("--enable_gr", type=int, default=1, choices=[0, 1],
+        frozen_group.add_argument("--enable_gr", type=binary_to_boolean_type, default=1,
                                   help="Enable Generative Replay.")
         frozen_group.add_argument('--batch_size_gr', type=int, default=128,
                                   help="Batch size for Generative Replay.")
@@ -49,8 +51,8 @@ class FirstStageStarprompt(ContinualModel):
                                    type=int, default=10, help="Num. of epochs for Generative Replay.")
 
         # Useful flags
-        parser.add_argument("--save_first_stage_keys", type=int, default=1,
-                            choices=[0, 1], help="save text encoder outputs")
+        parser.add_argument("--save_first_stage_keys", type=binary_to_boolean_type, default=1,
+                            help="save text encoder outputs")
 
         # Backbone arguments
         parser.add_argument("--clip_backbone", type=str, default='ViT-L/14', help="CLIP backbone architecture",

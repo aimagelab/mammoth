@@ -69,7 +69,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, retur
     loss_fn = dataset.get_loss()
     avg_loss = 0
     total_len = sum(len(x) for x in dataset.test_loaders) if hasattr(dataset.test_loaders[0], '__len__') else None
-    pbar = tqdm(dataset.test_loaders, total=total_len, desc='Evaluating')
+    pbar = tqdm(dataset.test_loaders, total=total_len, desc='Evaluating', disable=model.args.non_verbose)
     for k, test_loader in enumerate(dataset.test_loaders):
         if last and k < len(dataset.test_loaders) - 1:
             continue
@@ -167,7 +167,9 @@ def train_single_epoch(model: ContinualModel,
     i = 0
     previous_time = time()
 
-    pbar = tqdm(train_iter, total=data_len, desc=f"Task {current_task + 1} - Epoch {epoch + 1}")
+    pbar = tqdm(train_iter, total=data_len,
+                desc=f"Task {current_task + 1} - Epoch {epoch + 1}",
+                disable=args.non_verbose)
     while True:
         try:
             data = next(train_iter)
@@ -333,7 +335,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                             best_ea_model = deepcopy({k: v.cpu() for k, v in model.state_dict().items()})
                             cur_stopping_patience = args.early_stopping_patience
 
-                    if args.eval_epochs is not None and (epoch > 0 or args.eval_epochs == 1) and epoch % args.eval_epochs == 0 and epoch < model.args.n_epochs:
+                    if args.eval_epochs is not None and (epoch > 0 or args.eval_epochs) and epoch % args.eval_epochs == 0 and epoch < model.args.n_epochs:
                         epoch_accs = evaluate(model, eval_dataset)
 
                         log_accs(args, logger, epoch_accs, t, dataset.SETTING, epoch=epoch)

@@ -13,6 +13,7 @@ from datasets import get_dataset
 from torch import nn
 
 from models.utils.continual_model import ContinualModel
+from utils import binary_to_boolean_type
 from utils.args import add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer, fill_buffer, icarl_replay
@@ -114,7 +115,7 @@ class Lucir(ContinualModel):
                             help='Number of epochs to finetune on coreset after each task.')
         parser.add_argument('--lr_finetune', type=float, required=False, default=0.01,
                             help='Learning Rate for finetuning.')
-        parser.add_argument('--imprint_weights', type=int, choices=[0, 1], required=False, default=1,
+        parser.add_argument('--imprint_weights', type=binary_to_boolean_type, required=False, default=1,
                             help='Apply weight imprinting?')
         return parser
 
@@ -219,7 +220,7 @@ class Lucir(ContinualModel):
                 # Update model classifier
                 self.update_classifier()
 
-                if self.args.imprint_weights == 1:
+                if self.args.imprint_weights:
                     self.imprint_weights(dataset)
 
                 # Restore optimizer LR

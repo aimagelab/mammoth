@@ -18,6 +18,8 @@ Requires:
 
 import torch
 import torch.nn as nn
+
+from utils import binary_to_boolean_type
 try:
     import clip
 except ImportError:
@@ -76,9 +78,9 @@ class CLIP(ContinualModel):
         parser.add_argument('--clip_backbone', type=str, default='ViT-L/14',
                             choices=list(clip.available_models()),
                             help='Backbone architecture for CLIP')
-        parser.add_argument('--save_predictions', type=int, choices=[0, 1], default=0,
+        parser.add_argument('--save_predictions', type=binary_to_boolean_type, default=0,
                             help='Whether to save predictions of the TRAINING set after each task')
-        parser.add_argument('--use_templates', type=int, choices=[0, 1], default=0,
+        parser.add_argument('--use_templates', type=binary_to_boolean_type, default=0,
                             help='Whether to use prompt templates for CLIP. NOTE: Datasets NEED to have a `get_prompt_templates` method implemented.')
         return parser
 

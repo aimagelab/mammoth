@@ -11,7 +11,7 @@ from models.utils.continual_model import ContinualModel
 from utils.args import add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer
-from utils import none_or_float
+from utils import binary_to_boolean_type, none_or_float
 
 
 def dsimplex(num_classes=10):
@@ -73,7 +73,7 @@ class XDerRPC(ContinualModel):
         parser.add_argument('--m', type=float, default=0.3)
 
         parser.add_argument('--clip_grad', type=none_or_float, default=None, metavar='NORM', help='Clip gradient norm (default: None, no clipping)')
-        parser.add_argument('--align_bn', type=int, default=0, choices=[0, 1], help='Use BatchNorm alignment')
+        parser.add_argument('--align_bn', type=binary_to_boolean_type, default=0, help='Use BatchNorm alignment')
 
         parser.add_argument('--n_rpc_heads', type=int, help='N Heads for RPC')
         return parser
@@ -190,7 +190,7 @@ class XDerRPC(ContinualModel):
 
         self.opt.zero_grad()
 
-        with bn_track_stats(self, self.args.align_bn == 0 or self.current_task == 0):
+        with bn_track_stats(self, not self.args.align_bn or self.current_task == 0):
             outputs = self(inputs)
 
         # Present head
@@ -217,7 +217,7 @@ class XDerRPC(ContinualModel):
             # Label Replay Loss (past heads)
             buf_idx2, buf_inputs2, buf_labels2, buf_logits2, buf_tl2 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
-            with bn_track_stats(self, self.args.align_bn == 0):
+            with bn_track_stats(self, not self.args.align_bn):
                 buf_outputs2 = self(buf_inputs2).float()
 
             buf_ce = self.loss(buf_outputs2[:, :self.n_past_classes], buf_labels2)

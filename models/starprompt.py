@@ -6,6 +6,7 @@ import torch
 
 from models.star_prompt_utils.end_to_end_model import STARPromptModel
 from models.utils.continual_model import ContinualModel
+from utils import binary_to_boolean_type
 from utils.schedulers import CosineSchedule
 
 try:
@@ -47,13 +48,13 @@ class STARPrompt(ContinualModel):
                                     help="Type of distribution model for Generative Replay (both first and second stage). "
                                     "- `mog`: Mixture of Gaussian. "
                                     "- `gaussian`: Single Gaussian distribution.")
-        ablation_group.add_argument("--enable_gr", type=int, default=1, choices=[0, 1],
+        ablation_group.add_argument("--enable_gr", type=binary_to_boolean_type, default=1,
                                     help="Enable Generative Replay (both first and second stage).")
         ablation_group.add_argument('--prompt_mode', type=str, default='residual', choices=['residual', 'concat'],
                                     help="Prompt type for the second stage. "
                                     "- `residual`: STAR-Prompt style prompting. "
                                     "- `concat`: Prefix-Tuning style prompting.")
-        ablation_group.add_argument("--enable_confidence_modulation", type=int, default=1, choices=[0, 1],
+        ablation_group.add_argument("--enable_confidence_modulation", type=binary_to_boolean_type, default=1,
                                     help="Enable confidence modulation with CLIP similarities (Eq. 5 of the main paper)?")
 
         tunable_group = parser.add_argument_group('Tunable hyperparameters')

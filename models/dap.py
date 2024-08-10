@@ -10,6 +10,7 @@ from datasets.utils.continual_dataset import ContinualDataset
 from models.utils.continual_model import ContinualModel
 
 from models.dap_utils.dap_model import DAPModel
+from utils import binary_to_boolean_type
 
 
 class WarmupConstantSchedule(LambdaLR):
@@ -46,7 +47,7 @@ class DAP(ContinualModel):
         parser.add_argument('--task_emb', type=int, default=16, help='task embedding size')
         parser.add_argument('--num_dap_tokens', type=int, default=10, help='number of dap tokens')
 
-        parser.add_argument('--load_original_checkpoint', type=int, default=0, choices=[0, 1],
+        parser.add_argument('--load_original_checkpoint', type=binary_to_boolean_type, default=0,
                             help='load original checkpoint. This requires the file `imagenet21k_ViT-B_16.npz` to be '
                                  'present in the ./data directory. You can download it following the instructions in '
                                  'https://github.com/naver-ai/dap-cl')
