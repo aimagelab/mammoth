@@ -1,4 +1,9 @@
+"""
+DISCLAIMER: AttriCLIP **does not** reproduce the results in the paper (https://arxiv.org/pdf/2305.11488).
+Unfortunately, the original implementation (https://github.com/bhrqw/AttriCLIP) did not reproduced the results either and is no longer available. This is a known issue (see https://github.com/bhrqw/SADA/issues/3).
 
+This implementation is based on that code and on the information provided in the paper.
+"""
 
 from utils.args import *
 from models.utils.continual_model import ContinualModel
@@ -21,7 +26,6 @@ class Attriclip(ContinualModel):
         parser.add_argument("--num_prompt", type=int, default=10, help='num_prompt')
         parser.add_argument("--text_prompt", type=int, default=3, help='text_prompt')
         parser.add_argument('--freeze_clip', type=int, default=1, help='freeze_clip')
-        parser.add_argument("--virtual_bs_n", type=int, default=1, help="virtual batch size iterations")
         return parser
 
     def __init__(self, backbone, loss, args, transform):

@@ -33,6 +33,7 @@ def parse_args():
     parser.add_argument("--at_a_time", type=int, default=1, help="number of jobs to run at a time")
     parser.add_argument("--start_from", type=int, default=0, help="start from job number")
     parser.add_argument("--reverse", action="store_true", help="reverse job order")
+    parser.add_argument("--preamble", type=str, help="string of arguments common to all jobs")
     args = parser.parse_args()
 
     assert args.at_a_time >= 1, "at_a_time must be at least 1"
@@ -120,6 +121,8 @@ def main():
 
     print("Jobname: {}".format(jobname))
     print("Logging to {}".format(basedir))
+
+    jobs_list = [args.preamble + " " + job for job in jobs_list]
 
     # create thread pool
     pool = ThreadPool(processes=args.at_a_time)

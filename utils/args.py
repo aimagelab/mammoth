@@ -106,6 +106,8 @@ def add_management_args(parser: ArgumentParser) -> None:
                            help='Permute classes before splitting into tasks? This applies the seed before permuting if the `seed` argument is present.')
     mng_group.add_argument('--base_path', type=str, default="./data/",
                            help='The base path where to save datasets, logs, results.')
+    mng_group.add_argument('--results_path', type=str, default="results/",
+                           help='The path where to save the results. NOTE: this path is relative to `base_path`.')
     mng_group.add_argument('--device', type=str,
                            help='The device (or devices) available to use for training. '
                            'More than one device can be specified by separating them with a comma. '

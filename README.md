@@ -23,7 +23,7 @@ Ideally, all the code necessary to run the experiments is included _in the repos
 
 With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
 
-> ***All the models included in mammoth are verified against the original papers to reproduce the original results in their respective original settings.***
+> ***All the models included in mammoth are verified against the original papers (or subsequent relevant papers) to reproduce their original results.***
 
 ## Documentation
 

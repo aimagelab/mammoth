@@ -8,6 +8,7 @@ This module contains the Logger class and related functions for logging accuracy
 """
 
 from contextlib import suppress
+import os
 import sys
 from typing import Any, Dict
 
@@ -111,6 +112,7 @@ class Logger:
                  model_str: str) -> None:
         """
         Initializes a Logger object. This will take track and log the accuracy values and other metrics in the default path (`data/results`).
+        The default path can be changed with the `--results_path` argument.
 
         Args:
             args: The args from the command line.
@@ -286,6 +288,7 @@ class Logger:
     def write(self, args: Dict[str, Any]) -> None:
         """
         Writes out the logged value along with its arguments in the default path (`data/results`).
+        The default path can be changed with the `--results_path` argument.
 
         Args:
             args: the namespace of the current experiment
@@ -306,7 +309,7 @@ class Logger:
         wrargs['backward_transfer'] = self.bwt
         wrargs['forgetting'] = self.forgetting
 
-        target_folder = base_path() + "results/"
+        target_folder = os.path.join(base_path(), self.args.results_path)
 
         create_if_not_exists(target_folder + self.setting)
         create_if_not_exists(target_folder + self.setting +
