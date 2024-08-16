@@ -351,7 +351,8 @@ def fill_buffer(buffer: Buffer, dataset: ContinualDataset, t_idx: int, net: Cont
 
     # 2.1 Extract all features
     a_x, a_y, a_f, a_l = [], [], [], []
-    for x, y, not_norm_x in loader:
+    for data in loader:
+        x, y, not_norm_x = data[0], data[1], data[2]
         mask = (y >= n_past_classes) & (y < n_seen_classes)
         x, y, not_norm_x = x[mask], y[mask], not_norm_x[mask]
         if not x.size(0):

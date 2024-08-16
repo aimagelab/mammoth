@@ -302,8 +302,9 @@ class Lucir(ContinualModel):
         with bn_track_stats(self, False):
             for _ in range(opt_steps):
                 examples, labels = self.buffer.get_all_data(self.transform, device=self.device)
-                dt = create_seeded_dataloader(self.args, [(e, l) for e, l in zip(examples, labels)],
-                                              shuffle=True, batch_size=self.args.batch_size)
+                dset = torch.utils.data.TensorDataset(examples, labels)
+                torch.cuda.synchronize()
+                dt = create_seeded_dataloader(self.args, dset, shuffle=True, batch_size=self.args.batch_size, num_workers=0)
                 for inputs, labels in dt:
                     self.observe(inputs, labels, None, fitting=True)
                     lr_scheduler.step()

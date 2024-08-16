@@ -87,7 +87,7 @@ class XDerV2(ContinualModel):
         with torch.no_grad():
             with bn_track_stats(self, False):
                 for data in dataset.train_loader:
-                    inputs, labels, not_aug_inputs = data
+                    inputs, labels, not_aug_inputs = data[0], data[1], data[2]
                     inputs = inputs.to(self.device)
                     not_aug_inputs = not_aug_inputs.to(self.device)
                     outputs = self.net(inputs)

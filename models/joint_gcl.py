@@ -20,6 +20,7 @@ class JointGCL(ContinualModel):
     @staticmethod
     def get_parser() -> ArgumentParser:
         parser = ArgumentParser(description='Joint training: a strong, simple baseline.')
+        parser.set_defaults(n_epochs=1)
         return parser
 
     def __init__(self, backbone, loss, args, transform):
@@ -50,7 +51,7 @@ class JointGCL(ContinualModel):
             loss = self.loss(outputs, labels.long())
             loss.backward()
             self.opt.step()
-            progress_bar(i, math.ceil(len(all_data) / self.args.batch_size), e, 'J', loss.item())
+            progress_bar(i, math.ceil(len(all_data) / self.args.batch_size), 0, 'J', loss.item())
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.old_data.append(inputs.data)

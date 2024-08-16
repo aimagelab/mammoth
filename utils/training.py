@@ -181,14 +181,14 @@ def train_single_epoch(model: ContinualModel,
             break
 
         if hasattr(train_loader.dataset, 'logits'):
-            inputs, labels, not_aug_inputs, logits = data
+            inputs, labels, not_aug_inputs, logits = data[0], data[1], data[2], data[3]
             inputs = inputs.to(model.device)
             labels = labels.to(model.device, dtype=torch.long)
             not_aug_inputs = not_aug_inputs.to(model.device)
             logits = logits.to(model.device)
             loss = model.meta_observe(inputs, labels, not_aug_inputs, logits, epoch=epoch)
         else:
-            inputs, labels, not_aug_inputs = data
+            inputs, labels, not_aug_inputs = data[0], data[1], data[2]
             inputs, labels = inputs.to(model.device), labels.to(model.device, dtype=torch.long)
             not_aug_inputs = not_aug_inputs.to(model.device)
             loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch)

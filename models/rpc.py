@@ -97,7 +97,7 @@ class RPC(ContinualModel):
 
         with torch.no_grad():
             for data in dataset.train_loader:
-                _, labels, not_aug_inputs = data
+                labels, not_aug_inputs = data[1], data[2]
                 not_aug_inputs = not_aug_inputs.to(self.device)
                 if all(ce == 0):
                     break

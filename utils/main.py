@@ -62,6 +62,23 @@ def lecun_fix():
     urllib.request.install_opener(opener)
 
 
+def check_args(args):
+    """
+    Just a (non complete) stream of asserts to ensure the validity of the arguments.
+    """
+    assert args.label_perc_by_class == 1 or args.label_perc == 1, "Cannot use both `label_perc_by_task` and `label_perc_by_class`"
+
+    if args.joint:
+        assert args.start_from is None and args.stop_after is None, "Joint training does not support start_from and stop_after"
+        assert not args.enable_other_metrics, "Joint training does not support other metrics"
+        assert not args.eval_future, "Joint training does not support future evaluation (what is the future?)"
+
+    assert 0 < args.label_perc <= 1, "label_perc must be in (0, 1]"
+
+    if args.savecheck:
+        assert not args.inference_only, "Should not save checkpoint in inference only mode"
+
+
 def parse_args():
     """
     Parse command line arguments for the mammoth program and sets up the `args` object.
@@ -146,7 +163,6 @@ def parse_args():
         args.conf_git_hash = None
 
     if args.savecheck:
-        assert not args.inference_only, "Should not save checkpoint in inference only mode"
         if not os.path.isdir('checkpoints'):
             create_if_not_exists("checkpoints")
 
@@ -156,12 +172,7 @@ def parse_args():
         args.ckpt_name = f"{extra_ckpt_name}{args.model}_{args.dataset}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}_{args.n_epochs}_{str(now)}_{uid}"
         print("Saving checkpoint into", args.ckpt_name, file=sys.stderr)
 
-    if args.joint:
-        assert args.start_from is None and args.stop_after is None, "Joint training does not support start_from and stop_after"
-        assert not args.enable_other_metrics, "Joint training does not support other metrics"
-        assert not args.eval_future, "Joint training does not support future evaluation (what is the future?)"
-
-    assert 0 < args.label_perc <= 1, "label_perc must be in (0, 1]"
+    check_args(args)
 
     if args.validation is not None:
         logging.info(f"Using {args.validation}% of the training set as validation set.")
@@ -232,7 +243,6 @@ def main(args=None):
 
     loss = dataset.get_loss()
     model = get_model(args, backbone, loss, dataset.get_transform())
-    # model = torch.compile(model)
     assert isinstance(model, FutureModel) or not args.eval_future, "Model does not support future_forward."
 
     if args.distributed == 'dp':

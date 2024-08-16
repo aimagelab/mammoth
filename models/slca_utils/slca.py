@@ -69,7 +69,8 @@ class SLCA_Model(BaseLearner):
         class_means, class_covs = {}, {}
         status = self._network.training
         self._network.eval()
-        for imgs, labels, _ in tqdm(loader):
+        for data in tqdm(loader):
+            imgs, labels = data[0], data[1]
             if self.args.debug_mode and all(len(class_vectors[idx]) >= 5 for idx in range(offset_1, offset_2)):
                 break
             imgs, labels = imgs.to(self.device), labels.to(self.device)

@@ -309,24 +309,20 @@ class Logger:
         wrargs['backward_transfer'] = self.bwt
         wrargs['forgetting'] = self.forgetting
 
-        target_folder = os.path.join(base_path(), self.args.results_path)
+        target_folder = smart_joint(base_path(), self.args.results_path)
 
-        create_if_not_exists(target_folder + self.setting)
-        create_if_not_exists(target_folder + self.setting +
-                             "/" + self.dataset)
-        create_if_not_exists(target_folder + self.setting +
-                             "/" + self.dataset + "/" + self.model)
+        create_if_not_exists(smart_joint(target_folder, self.setting))
+        create_if_not_exists(smart_joint(target_folder, self.setting, self.dataset))
+        create_if_not_exists(smart_joint(target_folder, self.setting, self.dataset, self.model))
 
-        path = target_folder + self.setting + "/" + self.dataset\
-            + "/" + self.model + "/logs.pyd"
+        path = smart_joint(target_folder, self.setting, self.dataset, self.model, "logs.pyd")
         print("Logging results and arguments in " + path)
         with open(path, 'a') as f:
             f.write(str(wrargs) + '\n')
 
         if self.setting == 'class-il':
-            create_if_not_exists(smart_joint(*[target_folder, "task-il/", self.dataset]))
-            create_if_not_exists(target_folder + "task-il/"
-                                 + self.dataset + "/" + self.model)
+            create_if_not_exists(smart_joint(target_folder, "task-il/", self.dataset))
+            create_if_not_exists(smart_joint(target_folder, "task-il", self.dataset, self.model))
 
             for i, acc in enumerate(self.accs_mask_classes):
                 wrargs['accmean_task' + str(i + 1)] = acc
@@ -339,7 +335,6 @@ class Logger:
             wrargs['backward_transfer'] = self.bwt_mask_classes
             wrargs['forgetting'] = self.forgetting_mask_classes
 
-            path = target_folder + "task-il" + "/" + self.dataset + "/"\
-                + self.model + "/logs.pyd"
+            path = smart_joint(target_folder, "task-il", self.dataset, self.model, "logs.pyd")
             with open(path, 'a') as f:
                 f.write(str(wrargs) + '\n')

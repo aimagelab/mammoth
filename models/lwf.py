@@ -64,7 +64,7 @@ class Lwf(ContinualModel):
                                                          len(dataset.train_loader.dataset)))])
                     log = self.net(inputs.to(self.device)).cpu()
                     logits.append(log)
-            setattr(dataset.train_loader.dataset, 'logits', torch.cat(logits))
+            setattr(dataset.train_loader.dataset, 'logits', torch.cat(logits))  # TODO: Update `return_names`
         self.net.train()
 
     def observe(self, inputs, labels, not_aug_inputs, logits=None, epoch=None):

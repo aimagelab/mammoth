@@ -12,7 +12,7 @@ from argparse import ArgumentParser
 from datasets import get_dataset_names
 from models import get_all_models
 from models.utils.continual_model import ContinualModel
-from utils import binary_to_boolean_type, custom_str_underscore
+from utils import binary_to_boolean_type, create_list_type, custom_str_underscore
 
 
 def add_experiment_args(parser: ArgumentParser) -> None:
@@ -36,7 +36,10 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                            '(with `set_defaults <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.set_defaults>`_),'
                            ' by the dataset (with `set_default_from_args`, see :ref:`module-datasets.utils`), or with `--lr=<value>`.')
     exp_group.add_argument('--batch_size', type=int, help='Batch size.')
-    exp_group.add_argument('--label_perc', type=float, default=1, help='Percentage in (0-1] of labeled examples per task.')
+    exp_group.add_argument('--label_perc_by_task', '--label_perc', '--lpt', type=float, default=1,
+                           dest='label_perc', help='Percentage in (0-1] of labeled examples per task.')
+    exp_group.add_argument('--label_perc_by_class', '--lpc', type=float, default=1, dest='label_perc_by_class',
+                           help='Percentage in (0-1] of labeled examples per task.')
     exp_group.add_argument('--joint', type=int, choices=(0, 1), default=0, help='Train model on Joint (single task)?')
     exp_group.add_argument('--eval_future', type=int, choices=(0, 1), default=0, help='Evaluate future tasks?')
 
@@ -82,7 +85,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                            help='Scheduler mode. Possible values:'
                            ' - `epoch`: the scheduler is called at the end of each epoch.'
                            ' - `iter`: the scheduler is called at the end of each iteration.')
-    opt_group.add_argument('--lr_milestones', type=int, nargs='+', default=[],
+    opt_group.add_argument('--lr_milestones', type=create_list_type(), default=[],
                            help='Learning rate scheduler milestones (used if `lr_scheduler=multisteplr`).')
     opt_group.add_argument('--sched_multistep_lr_gamma', type=float, default=0.1,
                            help='Learning rate scheduler gamma (used if `lr_scheduler=multisteplr`).')

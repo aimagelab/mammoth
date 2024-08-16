@@ -34,17 +34,24 @@ def parse_args():
     parser.add_argument("--start_from", type=int, default=0, help="start from job number")
     parser.add_argument("--reverse", action="store_true", help="reverse job order")
     parser.add_argument("--preamble", type=str, help="string of arguments common to all jobs")
+    parser.add_argument("--job_idxs", type=str, help="index of jobs to run (applied BEFORE `start_from`). Comma separated list of integers")
     args = parser.parse_args()
 
     assert args.at_a_time >= 1, "at_a_time must be at least 1"
     assert args.cycles >= 1, "cycles must be at least 1"
     assert args.start_from >= 0, "start_from must be at least 0"
 
-    jobs_list = [l for l in open(args.file, "r").read().splitlines() if l.strip() != "" and not l.strip().startswith("#")][args.start_from:] * args.cycles
+    jobs_list = [l for l in open(args.file, "r").read().splitlines() if l.strip() != "" and not l.strip().startswith("#")][args.start_from:]
+    job_idxs = list(range(len(jobs_list)))
+    if args.job_idxs:
+        job_idxs = [int(j) for j in args.job_idxs.split(",")]
+
+    jobs_list = jobs_list * args.cycles
+
     if args.reverse:
         jobs_list = list(reversed(jobs_list))
     jobname = args.file.strip().split("/")[-1].split("\\")[-1].split(".")[0]
-    return args, jobs_list, jobname
+    return args, jobs_list, jobname, job_idxs
 
 
 def print_progress(basepath):
@@ -55,11 +62,11 @@ def print_progress(basepath):
     print("\033c", end="")
 
     for job_index, (jobname, pid) in active_jobs.items():
-        filename = smart_joint(basepath, f'{job_index + 1}.err')
+        filename = smart_joint(basepath, f'{job_index}.err')
         if not os.path.exists(filename):
             return
 
-        print(f"Job {job_index + 1} ({jobname}) is running with pid {pid}:")
+        print(f"Job {job_index} ({jobname}) is running with pid {pid}:")
 
         # show last line of error, wait for job to end
         with open(filename, "r") as err:
@@ -70,10 +77,10 @@ def print_progress(basepath):
             print(last_line.strip())
 
     print("Completed jobs:" + str(len(completed_jobs)))
-    print("[" + " ".join([str(job_index + 1) for job_index, _ in completed_jobs.items()]) + "]")
+    print("[" + " ".join([str(job_index) for job_index, _ in completed_jobs.items()]) + "]")
 
     print("Failed jobs:" + str(len(failed_jobs)))
-    print("[" + " ".join([str(job_index + 1) for job_index, _ in failed_jobs.items()]) + "]")
+    print("[" + " ".join([str(job_index) for job_index, _ in failed_jobs.items()]) + "]")
 
 
 def run_job(jobdata, basedir, jobname, log=False):
@@ -81,7 +88,7 @@ def run_job(jobdata, basedir, jobname, log=False):
     global active_jobs
     global completed_jobs
     global failed_jobs
-    with open(smart_joint(basedir, f'{index + 1}.out'), "w") as out, open(smart_joint(basedir, f'{index + 1}.err'), "w") as err:
+    with open(smart_joint(basedir, f'{index}.out'), "w") as out, open(smart_joint(basedir, f'{index}.err'), "w") as err:
         p = subprocess.Popen("python utils/main.py " + job, shell=True, stdout=out, stderr=err)
         active_jobs[index] = (jobname, p.pid)
         p.wait()
@@ -95,7 +102,7 @@ def run_job(jobdata, basedir, jobname, log=False):
 
 
 def main():
-    args, jobs_list, jobname = parse_args()
+    args, jobs_list, jobname, job_idxs = parse_args()
 
     print("Running {} jobs".format(len(jobs_list)))
     time.sleep(2)
@@ -127,7 +134,7 @@ def main():
     # create thread pool
     pool = ThreadPool(processes=args.at_a_time)
     run_fn = functools.partial(run_job, basedir=basedir, jobname=jobname)
-    result = pool.map_async(run_fn, [(job, i) for i, job in enumerate(jobs_list)])
+    result = pool.map_async(run_fn, [(jobs_list[i], i) for i in job_idxs])
 
     # wait for all jobs to finish and print progress
     while not result._number_left == 0:

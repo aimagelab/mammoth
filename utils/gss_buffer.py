@@ -14,10 +14,13 @@ import torch
 import torch.nn.functional as F
 from torchvision import transforms
 
+from utils.augmentations import apply_transform
+
 
 class Buffer:
     """
-    The memory buffer of rehearsal method.
+    Memory buffer for the GSS model.
+    The buffer supports only `examples` and `labels` tensors.
     """
 
     def __init__(self, buffer_size, device, minibatch_size, model=None):
@@ -31,8 +34,6 @@ class Buffer:
         self.fathom = 0
         self.fathom_mask = None
         self.reset_fathom()
-
-        self.conterone = 0
 
     def reset_fathom(self):
         self.fathom = 0
@@ -127,7 +128,7 @@ class Buffer:
     def drop_cache(self):
         self.cache = {}
 
-    def get_data(self, size: int, transform: transforms = None, give_index=False, random=False) -> Tuple:
+    def get_data(self, size: int, transform: transforms = None, give_index=False, random=False, device=None) -> Tuple:
         """
         Random samples a batch of size items.
 
@@ -138,6 +139,7 @@ class Buffer:
         Returns:
             a tuple with the requested items
         """
+        target_device = self.device if device is None else device
 
         if size > self.examples.shape[0]:
             size = self.examples.shape[0]
@@ -154,12 +156,14 @@ class Buffer:
                 self.fathom = 0
         if transform is None:
             def transform(x): return x
-        ret_tuple = (torch.stack([transform(ee.cpu())
-                                  for ee in self.examples[choice]]).to(self.device),)
+
+        selected_samples = self.examples[choice]
+        ret_tuple = (apply_transform(selected_samples, transform=transform).to(target_device),)
+
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str)
-                ret_tuple += (attr[choice],)
+                ret_tuple += (attr[choice].to(target_device),)
         if give_index:
             ret_tuple += (choice,)
 

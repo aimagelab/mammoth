@@ -3,6 +3,27 @@ import string
 import random
 
 
+def create_list_type(type=int) -> list:
+    def list_type(value: str) -> bool:
+        """
+        Converts a string to list of <type>.
+
+        Args:
+            value: the binary string
+
+        Returns:
+            the boolean type
+        """
+        if not isinstance(value, str):
+            value = str(value)
+
+        if ',' in value:
+            return [type(v) for v in value.split(',')]
+        else:
+            return [type(v) for v in value.split()]
+    return list_type
+
+
 def binary_to_boolean_type(value: str) -> bool:
     """
     Converts a binary string to a boolean type.

@@ -134,7 +134,8 @@ class LiderOptimizer(ContinualModel):
         self.net.eval()
 
         all_lips = []
-        for i, (inputs, labels, _) in enumerate(tqdm(dataset.train_loader, desc="Computing target L budget")):
+        for i, data in enumerate(tqdm(dataset.train_loader, desc="Computing target L budget")):
+            inputs, labels = data[0], data[1]
             if self.args.debug_mode and i > self.get_debug_iters():
                 continue
 

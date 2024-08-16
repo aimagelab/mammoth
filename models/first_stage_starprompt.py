@@ -53,6 +53,8 @@ class FirstStageStarprompt(ContinualModel):
         # Useful flags
         parser.add_argument("--save_first_stage_keys", type=binary_to_boolean_type, default=1,
                             help="save text encoder outputs")
+        parser.add_argument("--save_first_stage_keys_filename", type=str, help="filename for saving text encoder outputs. Default is:"
+                            "coop_keys_<N_TASKS-1>_<conf_jobnum>.pt")
 
         # Backbone arguments
         parser.add_argument("--clip_backbone", type=str, default='ViT-L/14', help="CLIP backbone architecture",
@@ -93,7 +95,10 @@ class FirstStageStarprompt(ContinualModel):
                 'keys': te_outputs,
                 'args': self.args,
             }
-            fname = f'./coop_keys/coop_keys_{self.current_task}_{self.args.conf_jobnum}.pt'
+            if self.args.save_first_stage_keys_filename is not None:
+                fname = f'./coop_keys/{self.args.save_first_stage_keys_filename}'
+            else:
+                fname = f'./coop_keys/coop_keys_{self.current_task}_{self.args.conf_jobnum}.pt'
             torch.save(st, fname)
             print('Saved text-encoder keys in:', fname, file=sys.stderr)
 

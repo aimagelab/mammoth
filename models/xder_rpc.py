@@ -127,7 +127,7 @@ class XDerRPC(ContinualModel):
                 with bn_track_stats(self, False):
                     if self.args.start_from is None or self.args.start_from <= self.current_task:
                         for data in dataset.train_loader:
-                            inputs, labels, not_aug_inputs = data
+                            inputs, labels, not_aug_inputs = data[0], data[1], data[2]
                             inputs = inputs.to(self.device)
                             not_aug_inputs = not_aug_inputs.to(self.device)
                             outputs = self(inputs)

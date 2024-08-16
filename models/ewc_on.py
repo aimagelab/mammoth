@@ -42,7 +42,7 @@ class EwcOn(ContinualModel):
         fish = torch.zeros_like(self.net.get_params())
 
         for j, data in enumerate(dataset.train_loader):
-            inputs, labels, _ = data
+            inputs, labels = data[0], data[1]
             inputs, labels = inputs.to(self.device), labels.to(self.device)
             for ex, lab in zip(inputs, labels):
                 self.opt.zero_grad()

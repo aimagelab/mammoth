@@ -69,7 +69,7 @@ class BiC(ContinualModel):
             with bn_track_stats(self, False):
                 for data in self.val_loader:
 
-                    inputs, labels, _ = data
+                    inputs, labels = data[0], data[1]
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
 
                     resp += self.forward(inputs, anticipate=fprefx == 'post')[:, :(self.current_task + 1) * self.cpt].sum(0)
@@ -93,7 +93,7 @@ class BiC(ContinualModel):
             for l in range(self.args.bic_epochs):
                 for data in self.val_loader:
 
-                    inputs, labels, _ = data
+                    inputs, labels = data[0], data[1]
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
 
                     self.biasopt.zero_grad()
@@ -184,7 +184,7 @@ class BiC(ContinualModel):
         counter = 0
         with torch.no_grad():
             for i, data in enumerate(dataset.train_loader):
-                _, labels, not_aug_inputs = data
+                labels, not_aug_inputs = data[1], data[2]
                 not_aug_inputs = not_aug_inputs.to(self.device)
                 if examples_per_task - counter > 0:
                     self.buffer.add_data(examples=not_aug_inputs[:(examples_per_task - counter)],

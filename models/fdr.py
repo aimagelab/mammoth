@@ -49,7 +49,7 @@ class Fdr(ContinualModel):
         counter = 0
         with torch.no_grad():
             for i, data in enumerate(dataset.train_loader):
-                inputs, labels, not_aug_inputs = data
+                inputs, not_aug_inputs = data[0], data[2]
                 inputs = inputs.to(self.device)
                 not_aug_inputs = not_aug_inputs.to(self.device)
                 outputs = self.net(inputs)
