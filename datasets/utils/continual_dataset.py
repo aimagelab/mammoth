@@ -6,7 +6,7 @@
 from argparse import Namespace
 import logging
 import sys
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import torch
 import numpy as np
@@ -14,6 +14,7 @@ import torch.nn as nn
 import torch.optim.lr_scheduler as scheds
 import torch.utils
 from torch.utils.data import DataLoader, Dataset
+from torchvision import transforms
 
 from datasets.utils.validation import get_validation_indexes
 from utils.conf import create_seeded_dataloader
@@ -72,6 +73,9 @@ class ContinualDataset(object):
                 if self.args.seed is not None:
                     np.random.seed(self.args.seed)
                 self.args.class_order = np.random.permutation(self.N_CLASSES)
+
+        if args.label_perc != 1 or args.label_perc_by_class != 1:
+            self.unlabeled_rng = np.random.RandomState(args.seed)
 
         if args.joint:
             if self.SETTING in ['class-il', 'task-il']:
@@ -219,20 +223,28 @@ class ContinualDataset(object):
 
 
 def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):
-    if setting.args.label_perc == 1:
+    if setting.args.label_perc == 1 and setting.args.label_perc_by_class == 1:
         return np.zeros(train_dataset.targets.shape[0]).astype('bool')
     else:
-        lpc = int(setting.args.label_perc * (train_dataset.targets.shape[0] // setting.N_CLASSES_PER_TASK))
-        ind = np.indices(train_dataset.targets.shape)[0]
-        mask = []
-        for i_label, _ in enumerate(np.unique(train_dataset.targets)):
-            partial_targets = train_dataset.targets[train_dataset.targets == i_label]
-            current_mask = np.random.choice(partial_targets.shape[0], max(
-                partial_targets.shape[0] - lpc, 0), replace=False)
+        if setting.args.label_perc != 1:  # label perc by task
+            lpt = int(setting.args.label_perc * (train_dataset.targets.shape[0] // setting.N_CLASSES_PER_TASK))
+            ind = np.indices(train_dataset.targets.shape)[0]
+            mask = []
+            for lab in np.unique(train_dataset.targets):
+                partial_targets = train_dataset.targets[train_dataset.targets == lab]
+                current_mask = setting.unlabeled_rng.choice(partial_targets.shape[0], max(
+                    partial_targets.shape[0] - lpt, 0), replace=False)
 
-            mask = np.append(mask, ind[train_dataset.targets == i_label][current_mask])
+                mask.append(ind[train_dataset.targets == lab][current_mask])
+        else:  # label perc by class
+            unique_labels, label_count_by_class = np.unique(train_dataset.targets, return_counts=True)
+            lpcs = (setting.args.label_perc_by_class * label_count_by_class).astype(np.int32)
+            mask = []
+            for lab, count, lpc in zip(unique_labels, label_count_by_class, lpcs):
+                current_mask = setting.unlabeled_rng.choice(count, max(count - lpc, 0), replace=False)
+                mask.append(np.where(train_dataset.targets == lab)[0][current_mask])
 
-        return mask.astype(np.int32)
+        return np.array(mask).astype(np.int32)
 
 
 def _prepare_data_loaders(train_dataset, test_dataset, setting: ContinualDataset):

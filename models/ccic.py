@@ -24,15 +24,17 @@ class Ccic(ContinualModel):
         parser = ArgumentParser(description='Continual Semi-Supervised Learning via'
                                 ' Continual Contrastive Interpolation Consistency.')
         add_rehearsal_args(parser)
+
+        parser.set_defaults(optimizer='adam')
         parser.add_argument('--alpha', type=float, default=0.5,
                             help='Unsupervised loss weight.')
-        parser.add_argument('--knn_k', type=int, default=3,
+        parser.add_argument('--knn_k', '--k', type=int, default=2, dest='knn_k',
                             help='k of kNN.')
         parser.add_argument('--memory_penalty', type=float,
                             default=1.0, help='Unsupervised penalty weight.')
         parser.add_argument('--k_aug', type=int, default=3,
                             help='Number of augumentation to compute label predictions.')
-        parser.add_argument('--mixmatch_alpha', type=float, default=0.5,
+        parser.add_argument('--mixmatch_alpha', '--lamda', type=float, default=0.5, dest='mixmatch_alpha',
                             help='Regularization weight.')
         parser.add_argument('--sharp_temp', default=0.5,
                             type=float, help='Temperature for sharpening.')

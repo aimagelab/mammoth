@@ -77,8 +77,9 @@ Other useful arguments
 
 * ``--joint``: If set to ``1``, the supplied dataset will be treated as a single task. This usually serves as a upper bound for the performance of the model.
 
-* ``--label_perc``: The percentage of labels to use for each task. If set to ``0``, the model will be trained in a fully unsupervised manner.
+* ``--label_perc_by_task`` (alias of ``--label_perc`` and ``--lpt``): The percentage of labels to use **for each task**. If set to ``0``, the model will be trained in a fully unsupervised manner.
 
+* ``--label_perc_by_class`` (alias of ``--lpc``): The percentage of labels to use **for each class**. If set to ``0``, the model will be trained in a fully unsupervised manner.
 
 Other notable modules  
 ---------------------
