@@ -46,9 +46,9 @@ class RotatedMNIST(ContinualDataset):
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return MNISTMLP(28 * 28, RotatedMNIST.N_CLASSES_PER_TASK)
+        return "mnistmlp"
 
     @staticmethod
     def get_transform():

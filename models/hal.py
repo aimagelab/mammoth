@@ -4,12 +4,13 @@
 # LICENSE file in the root directory of this source tree.
 
 import sys
-
 import numpy as np
 import torch
-from datasets import get_dataset
 from torch.optim import SGD
 
+
+from backbone import get_backbone
+from datasets import get_dataset
 from models.utils.continual_model import ContinualModel
 from utils.args import add_rehearsal_args, ArgumentParser
 from utils.ring_buffer import RingBuffer as Buffer
@@ -39,7 +40,7 @@ class HAL(ContinualModel):
         self.anchor_optimization_steps = 100
         self.finetuning_epochs = 1
         self.dataset = get_dataset(args)
-        self.spare_model = self.dataset.get_backbone()
+        self.spare_model = get_backbone(self.args)
         self.spare_model.to(self.device)
         self.spare_opt = SGD(self.spare_model.parameters(), lr=self.args.lr)
 

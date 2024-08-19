@@ -10,7 +10,7 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torchvision.datasets import CIFAR10
 
-from backbone.vit import vit_base_patch16_224_prompt_prototype
+
 from datasets.seq_cifar10 import TCIFAR10, MyCIFAR10, base_path
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
@@ -69,9 +69,9 @@ class SequentialCIFAR10224(ContinualDataset):
             [transforms.ToPILImage(), SequentialCIFAR10224.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=SequentialCIFAR10224.N_CLASSES_PER_TASK * SequentialCIFAR10224.N_TASKS)
+        return "vit"
 
     @staticmethod
     def get_loss():

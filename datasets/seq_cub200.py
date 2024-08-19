@@ -13,7 +13,6 @@ from utils import smart_joint
 from utils.conf import base_path
 from torch.utils.data import Dataset
 from torchvision.transforms.functional import InterpolationMode
-from backbone.vit import vit_base_patch16_224_prompt_prototype
 
 
 class MyCUB200(Dataset):
@@ -175,10 +174,9 @@ class SequentialCUB200(ContinualDataset):
             [transforms.ToPILImage(), SequentialCUB200.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        num_classes = SequentialCUB200.N_CLASSES_PER_TASK * SequentialCUB200.N_TASKS
-        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=num_classes)
+        return "vit"
 
     @staticmethod
     def get_loss():

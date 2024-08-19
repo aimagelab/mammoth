@@ -2,7 +2,8 @@ import torch
 import torch.nn.functional as F
 from copy import deepcopy
 from typing import List, Tuple
-from datasets import get_dataset
+
+from backbone import get_backbone
 from utils.buffer import Buffer, fill_buffer, icarl_replay
 from utils.args import *
 from utils.distributed import make_dp
@@ -24,7 +25,6 @@ class ICarlLider(LiderOptimizer):
 
     def __init__(self, backbone, loss, args, transform):
         super().__init__(backbone, loss, args, transform)
-        self.dataset = get_dataset(args)
 
         # Instantiate buffers
         self.buffer = Buffer(self.args.buffer_size)
@@ -127,7 +127,7 @@ class ICarlLider(LiderOptimizer):
             self.init_net(dataset)
 
     def end_task(self, dataset) -> None:
-        self.old_net = get_dataset(self.args).get_backbone().to(self.device)
+        self.old_net = get_backbone(self.args).to(self.device)
         if self.args.distributed == 'dp':
             self.old_net = make_dp(self.old_net)
         _, unexpected = self.old_net.load_state_dict(deepcopy(self.net.state_dict()), strict=False)

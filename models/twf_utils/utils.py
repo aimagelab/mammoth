@@ -3,12 +3,13 @@ import torch.nn.functional as F
 from copy import deepcopy
 import types
 
+from backbone import get_backbone
 from models.twf_utils.afd import MultiTaskAFDAlternative
 
 
 @torch.no_grad()
 def init_twf(model, dataset):
-    model.teacher = dataset.get_backbone()
+    model.teacher = get_backbone(model.args)
     if isinstance(model.net, torch.nn.DataParallel):
         st = deepcopy(model.net.module.state_dict())
     else:

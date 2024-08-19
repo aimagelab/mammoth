@@ -4,17 +4,14 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from datasets import get_dataset
-from torch.optim import SGD
 
 from utils.args import ArgumentParser
 from utils.conf import get_device
 from models.utils.continual_model import ContinualModel
+from backbone import get_backbone
 
 
-def get_backbone(bone, old_cols=None, x_shape=None):
+def get_pnn_backbone(bone, old_cols=None, x_shape=None):
     from backbone.MNISTMLP import MNISTMLP
     from backbone.MNISTMLP_PNN import MNISTMLP_PNN
     from backbone.ResNetBlock import ResNet
@@ -38,7 +35,7 @@ class Pnn(ContinualModel):
         return parser
 
     def __init__(self, backbone, loss, args, transform):
-        self.nets = [get_backbone(backbone).to(get_device())]
+        self.nets = [get_pnn_backbone(backbone).to(get_device())]
         backbone = self.nets[-1]
         super(Pnn, self).__init__(backbone, loss, args, transform)
         self.x_shape = None
@@ -69,7 +66,7 @@ class Pnn(ContinualModel):
         # instantiate new column
         self.task_idx += 1
         self.nets[-1].cpu()
-        self.nets.append(get_backbone(dataset.get_backbone(), self.nets, self.x_shape).to(self.device))
+        self.nets.append(get_pnn_backbone(get_backbone(self.args), self.nets, self.x_shape).to(self.device))
         self.net = self.nets[-1]
         self.opt = self.get_optimizer()
 

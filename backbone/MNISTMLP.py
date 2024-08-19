@@ -6,10 +6,10 @@
 import torch
 import torch.nn as nn
 
-from backbone import MammothBackbone, num_flat_features, xavier
+from backbone import MammothBackbone, num_flat_features, register_backbone, xavier
 
 
-class MNISTMLP(MammothBackbone):
+class BaseMNISTMLP(MammothBackbone):
     """
     Network composed of two hidden layers, each containing 100 ReLU activations.
     Designed for the MNIST dataset.
@@ -23,7 +23,7 @@ class MNISTMLP(MammothBackbone):
             input_size: the size of the input data
             output_size: the size of the output
         """
-        super(MNISTMLP, self).__init__()
+        super(BaseMNISTMLP, self).__init__()
 
         self.input_size = input_size
         self.output_size = output_size
@@ -72,3 +72,9 @@ class MNISTMLP(MammothBackbone):
             return (out, feats)
 
         raise NotImplementedError("Unknown return type")
+
+
+@register_backbone("mnistmlp")
+class MNISTMLP(BaseMNISTMLP):
+    def __init__(self) -> None:
+        super(MNISTMLP, self).__init__(28 * 28, 10)

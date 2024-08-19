@@ -106,3 +106,27 @@ def get_dataset_names():
     if not hasattr(get_dataset_names, 'names'):
         setattr(get_dataset_names, 'names', _dataset_names())
     return getattr(get_dataset_names, 'names')
+
+
+def get_dataset_config_names(dataset: str):
+    """
+    Return the names of the available continual dataset configurations.
+
+    The configurations can be used to create a dataset with specific hyperparameters and can be
+    specified using the `--dataset_config` attribute.
+
+    The configurations are stored in the `datasets/configs/<dataset>` folder.
+    """
+
+    def _dataset_config_names(dataset):
+        names = []
+        if os.path.exists(f'datasets/configs/{dataset}'):
+            names = [dset_config.split('.yaml')[0] for dset_config in os.listdir(f'datasets/configs/{dataset}')
+                     if dset_config.endswith('.yaml') and not dset_config.startswith('__')]
+        return names
+
+    if not hasattr(get_dataset_config_names, 'names'):
+        setattr(get_dataset_config_names, 'names', {})
+    if dataset not in get_dataset_config_names.names:
+        get_dataset_config_names.names[dataset] = _dataset_config_names(dataset)
+    return get_dataset_config_names.names[dataset]

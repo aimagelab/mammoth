@@ -4,10 +4,9 @@
 # LICENSE file in the root directory of this source tree.
 
 import math
-
 import torch
-from torch.optim import SGD
 
+from backbone import get_backbone
 from models.utils.continual_model import ContinualModel
 from utils.args import ArgumentParser
 from utils.status import progress_bar
@@ -30,7 +29,7 @@ class JointGCL(ContinualModel):
 
     def end_task(self, dataset):
         # reinit network
-        self.net = dataset.get_backbone()
+        self.net = get_backbone(self.args)
         self.net.to(self.device)
         self.net.train()
         self.opt = self.get_optimizer()

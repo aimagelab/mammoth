@@ -64,10 +64,9 @@ class SequentialCUB200RS(SequentialCUB200):
             [transforms.ToPILImage(), SequentialCUB200RS.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        num_classes = SequentialCUB200RS.N_CLASSES_PER_TASK * SequentialCUB200RS.N_TASKS
-        return resnet50(num_classes, pretrained=True)
+        return "resnet50_pt"
 
     @staticmethod
     def get_normalization_transform():

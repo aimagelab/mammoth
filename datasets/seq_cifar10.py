@@ -11,7 +11,6 @@ import torchvision.transforms as transforms
 from PIL import Image
 from torchvision.datasets import CIFAR10
 
-from backbone.ResNetBlock import resnet18
 from utils.conf import base_path
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
@@ -117,10 +116,9 @@ class SequentialCIFAR10(ContinualDataset):
             [transforms.ToPILImage(), SequentialCIFAR10.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return resnet18(SequentialCIFAR10.N_CLASSES_PER_TASK
-                        * SequentialCIFAR10.N_TASKS)
+        return "resnet18"
 
     @staticmethod
     def get_loss():

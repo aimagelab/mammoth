@@ -4,9 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from argparse import Namespace
-import logging
-import sys
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import torch
 import numpy as np
@@ -14,17 +12,18 @@ import torch.nn as nn
 import torch.optim.lr_scheduler as scheds
 import torch.utils
 from torch.utils.data import DataLoader, Dataset
-from torchvision import transforms
 
 from datasets.utils.validation import get_validation_indexes
 from utils.conf import create_seeded_dataloader
-from datasets.utils import DEFAULT_ARGS
+from datasets.utils import build_torchvision_transform
 from utils.prompt_templates import templates
 
 
 class ContinualDataset(object):
     """
     A base class for defining continual learning datasets.
+
+    Data is divided into tasks and loaded only when the `get_data_loaders` method is called.
 
     Attributes:
         NAME (str): the name of the dataset
@@ -41,6 +40,13 @@ class ContinualDataset(object):
         c_task (int): the current task
         args (Namespace): the arguments which contains the hyperparameters
     """
+
+    base_fields = ('SETTING', 'N_CLASSES_PER_TASK', 'N_TASKS', 'SIZE', 'N_CLASSES', 'AVAIL_SCHEDS')
+    optional_fields = ('MEAN', 'STD')
+    composed_fields = {
+        'TRANSFORM': build_torchvision_transform,
+        'TEST_TRANSFORM': build_torchvision_transform
+    }
 
     NAME: str
     SETTING: str
@@ -87,31 +93,36 @@ class ContinualDataset(object):
                 raise NotImplementedError('Joint training is only supported for class-il and task-il.'
                                           'For other settings, please use the `joint` model with `--model=joint` and `--joint=0`')
 
-        if not all((self.NAME, self.SETTING, self.N_CLASSES_PER_TASK, self.N_TASKS, self.SIZE, self.N_CLASSES)):
-            raise NotImplementedError('The dataset must be initialized with all the required fields.')
+        missing_fields = [field for field in self.base_fields if not hasattr(self, field) or getattr(self, field) is None]
+        if len(missing_fields) > 0:
+            raise NotImplementedError('The dataset must be initialized with all the required fields but is missing:', missing_fields)
 
-    def update_default_args(self):
+    @classmethod
+    def set_default_from_config(cls, config: dict):
         """
-        Updates the default arguments with the ones specified in the dataset class.
-        Default arguments are defined in the DEFAULT_ARGS dictionary and set by the 'set_default_from_args' decorator.
+        Sets the default arguments from the configuration file.
+        The default values will be set in the class attributes and will be available for all instances of the class.
 
-        Returns:
-            Namespace: the updated arguments
+        Args:
+            config (dict): the configuration file
         """
 
-        if self.args.dataset not in DEFAULT_ARGS:  # no default args for this dataset
-            return self.args
+        _base_fields = [k.casefold() for k in cls.base_fields]
+        _optional_fields = [k.casefold() for k in cls.optional_fields]
+        _composed_fields = [k.casefold() for k in cls.composed_fields.keys()]
 
-        for k, v in DEFAULT_ARGS[self.args.dataset].items():
-            assert hasattr(self.args, k), f'Argument {k} set by the `set_default_from_args` decorator is not present in the arguments.'
-
-            if getattr(self.args, k) is None:
-                setattr(self.args, k, v)
+        for k, v in config.items():
+            if k.casefold() in _base_fields:
+                _k = cls.base_fields[_base_fields.index(k.casefold())]
+                setattr(cls, _k, v)
+            elif k.casefold() in _optional_fields:
+                k = cls.optional_fields[_optional_fields.index(k.casefold())]
+                setattr(cls, k, v)
+            elif k.casefold() in _composed_fields:
+                _k = list(cls.composed_fields.keys())[_composed_fields.index(k.casefold())]
+                setattr(cls, _k, cls.composed_fields[_k](v))
             else:
-                if getattr(self.args, k) != v:
-                    logging.warning('{} set to {} instead of {}.'.format(k, getattr(self.args, k), v))
-
-        return self.args
+                setattr(cls, k, v)
 
     def get_offsets(self, task_idx: int = None):
         """
@@ -144,9 +155,8 @@ class ContinualDataset(object):
         """
         raise NotImplementedError
 
-    @staticmethod
-    def get_backbone() -> nn.Module:
-        """Returns the backbone to be used for the current dataset."""
+    def get_backbone() -> str:
+        """Returns the name of the backbone to be used for the current dataset. This can be changes using the `--backbone` argument or by setting it in the `dataset_config`."""
         raise NotImplementedError
 
     @staticmethod

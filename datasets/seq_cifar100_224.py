@@ -8,7 +8,7 @@ import torchvision.transforms as transforms
 from torchvision.transforms.functional import InterpolationMode
 from torchvision.datasets import CIFAR100
 
-from backbone.vit import vit_base_patch16_224_prompt_prototype
+
 from datasets.seq_cifar100 import TCIFAR100, MyCIFAR100
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
@@ -41,7 +41,9 @@ class SequentialCIFAR100224(ContinualDataset):
     N_TASKS = 10
     N_CLASSES = 100
     SIZE = (224, 224)
-    MEAN, STD = (0, 0, 0), (1, 1, 1)  # Normalized in [0,1] as in L2P paper
+    # MEAN, STD = (0, 0, 0), (1, 1, 1)  # Normalized in [0,1] as in L2P paper
+    MEAN, STD = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
+
     TRANSFORM = transforms.Compose(
         [transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BICUBIC),
          transforms.RandomHorizontalFlip(p=0.5),
@@ -74,9 +76,9 @@ class SequentialCIFAR100224(ContinualDataset):
             [transforms.ToPILImage(), SequentialCIFAR100224.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=SequentialCIFAR100224.N_CLASSES_PER_TASK * SequentialCIFAR100224.N_TASKS)
+        return "vit"
 
     @staticmethod
     def get_loss():

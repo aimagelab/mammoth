@@ -81,7 +81,7 @@ class Prompter(torch.nn.Module):
         self.seq_dataset = get_dataset(self.args)
         self.num_classes = self.seq_dataset.N_CLASSES
 
-        self.clip_model, self.clip_preprocess = clip.load(args.backbone, self.device)
+        self.clip_model, self.clip_preprocess = clip.load(args.clip_backbone, self.device)
         self.clip_model = self.clip_model.float()
 
         for p in self.clip_model.parameters():
@@ -262,10 +262,10 @@ class Prompter(torch.nn.Module):
         self.eval()
 
         Path('./cache').mkdir(parents=True, exist_ok=True)
-        backbone = self.args.backbone.replace('/', '_')
-        cache_path = Path(f'./cache/{dataset.NAME}_{self.current_task}_{backbone}_features.pt')
+        clip_backbone = self.args.clip_backbone.replace('/', '_')
+        cache_path = Path(f'./cache/{dataset.NAME}_{self.current_task}_{clip_backbone}_features.pt')
         if dataset.args.seed is not None:
-            cache_path = Path(f'./cache/{dataset.NAME}_{self.current_task}_seed_{dataset.args.seed}_{backbone}_features.pt')
+            cache_path = Path(f'./cache/{dataset.NAME}_{self.current_task}_seed_{dataset.args.seed}_{clip_backbone}_features.pt')
 
         if cache_path.exists():
             features_dict = torch.load(cache_path)

@@ -24,7 +24,6 @@ from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_o
 from datasets.transforms.denormalization import DeNormalize
 from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
-from backbone.vit import vit_base_patch16_224_prompt_prototype
 
 
 class MyEuroSat(Dataset):
@@ -174,9 +173,9 @@ class SequentialEuroSatRgb(ContinualDataset):
                                         SequentialEuroSatRgb.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=SequentialEuroSatRgb.N_CLASSES)
+        return "vit"
 
     @staticmethod
     def get_loss():

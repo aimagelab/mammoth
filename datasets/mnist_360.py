@@ -13,7 +13,6 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torchvision.datasets import MNIST
 
-from backbone.MNISTMLP import MNISTMLP
 from datasets.perm_mnist import MyMNIST
 from datasets.transforms.rotation import IncrementalRotation
 from datasets.utils.gcl_dataset import GCLDataset
@@ -297,9 +296,9 @@ class SequentialMNIST360(GCLDataset):
 
         return train_dataset, test_dataset
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone() -> torch.nn.Module:
-        return MNISTMLP(28 * 28, 10)
+        return "mnistmlp"
 
     @staticmethod
     def get_loss() -> Callable:

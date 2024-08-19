@@ -5,6 +5,7 @@
 
 from torch.optim import SGD, lr_scheduler
 
+from backbone import get_backbone
 from models.utils.continual_model import ContinualModel
 from utils.args import add_rehearsal_args, ArgumentParser
 from utils.augmentations import cutmix_data
@@ -85,5 +86,5 @@ class GDumb(ContinualModel):
         # new model
         if not (self.current_task == dataset.N_TASKS - 1):
             return
-        self.net = dataset.get_backbone().to(self.device)
+        self.net = get_backbone(self.args).to(self.device)
         fit_buffer(self, self.args.fitting_epochs)

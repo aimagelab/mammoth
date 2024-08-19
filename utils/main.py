@@ -34,7 +34,7 @@ sys.path.append(mammoth_path + '/datasets')
 sys.path.append(mammoth_path + '/backbone')
 sys.path.append(mammoth_path + '/models')
 
-from utils import create_if_not_exists, custom_str_underscore
+from utils import create_if_not_exists
 from utils.conf import warn_once
 
 if __name__ == '__main__':
@@ -47,7 +47,8 @@ if __name__ == '__main__':
     except ImportError:
         warn_once("Warning: python-dotenv not installed. Ignoring .env file.")
 
-from utils.args import add_management_args, add_experiment_args, fix_argparse_default_priority
+from utils.args import add_initial_args, add_management_args, add_experiment_args, add_post_parse_argparser, \
+    fix_argparse_default_priority, check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args
 from utils.conf import base_path, get_device
 from utils.distributed import make_dp
 from utils.best_args import best_args
@@ -86,29 +87,39 @@ def parse_args():
     Returns:
         args (argparse.Namespace): Parsed command line arguments.
     """
+    check_multiple_defined_arg_during_string_parse()
+
     from models import get_all_models, get_model_class
-    from datasets import get_dataset_names, get_dataset
-    # from datasets.utils import update_default_args
+    from datasets import get_dataset_class
+    from datasets.utils import load_config, update_args_with_dataset_defaults
 
     parser = ArgumentParser(description='mammoth', allow_abbrev=False, add_help=False)
-    parser.add_argument('--model', type=custom_str_underscore, help='Model name.', choices=list(get_all_models().keys()))
-    parser.add_argument('--load_best_args', action='store_true',
-                        help='(deprecated) Loads the best arguments for each method, dataset and memory buffer. '
-                        'NOTE: This option is deprecated and not up to date.')
-
+    add_initial_args(parser)
     args = parser.parse_known_args()[0]
+
+    # load args from dataset config
+    dataset_config = load_config(args)
+    dataset_class = get_dataset_class(args)
+    dataset_class.set_default_from_config(dataset_config)
+
+    update_args_with_dataset_defaults(args, strict=False)
+
+    add_post_parse_argparser(parser, args)
+
     models_dict = get_all_models()
     if args.model is None:
         print('No model specified. Please specify a model with --model to see all other options.')
         print('Available models are: {}'.format(list(models_dict.keys())))
         sys.exit(1)
 
+    if args.backbone is None:
+        warn_once('No backbone specified. Using default backbone (set by the dataset).')
+
     mod = importlib.import_module('models.' + models_dict[args.model])
 
     if args.load_best_args:
-        parser.add_argument('--dataset', type=str, required=True,
-                            choices=get_dataset_names(),
-                            help='Which dataset to perform experiments on.')
+        warn_once("The `load_best_args` option is deprecated, untested, and not up to date.")
+
         if hasattr(mod, 'Buffer'):
             parser.add_argument('--buffer_size', type=int, required=True,
                                 help='The size of the memory buffer.')
@@ -123,9 +134,11 @@ def parse_args():
             best = best[-1]
 
         parser = get_model_class(args).get_parser()
+        add_initial_args(parser)
         add_management_args(parser)
         add_experiment_args(parser)
         fix_argparse_default_priority(parser)
+        check_multiple_defined_arg_during_string_parse(parser)
         to_parse = sys.argv[1:] + ['--' + k + '=' + str(v) for k, v in best.items()]
         to_parse.remove('--load_best_args')
         args = parser.parse_args(to_parse)
@@ -133,12 +146,17 @@ def parse_args():
             args.model = 'joint_gcl'
     else:
         parser = get_model_class(args).get_parser()
+        add_initial_args(parser)
+        add_post_parse_argparser(parser, args)
         add_management_args(parser)
         add_experiment_args(parser)
+
+        add_dynamic_parsable_args(parser, args)
+
         fix_argparse_default_priority(parser)
         args = parser.parse_args()
 
-    get_dataset(args).update_default_args()
+    update_args_with_dataset_defaults(args, strict=True)
 
     args.model = models_dict[args.model]
 
@@ -169,7 +187,7 @@ def parse_args():
         now = time.strftime("%Y%m%d-%H%M%S")
         uid = args.conf_jobnum.split('-')[0]
         extra_ckpt_name = "" if args.ckpt_name is None else f"{args.ckpt_name}_"
-        args.ckpt_name = f"{extra_ckpt_name}{args.model}_{args.dataset}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}_{args.n_epochs}_{str(now)}_{uid}"
+        args.ckpt_name = f"{extra_ckpt_name}{args.model}_{args.dataset}_{args.dataset_config}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}_{args.n_epochs}_{str(now)}_{uid}"
         print("Saving checkpoint into", args.ckpt_name, file=sys.stderr)
 
     check_args(args)
@@ -181,11 +199,52 @@ def parse_args():
     return args
 
 
+def extend_args(args, dataset):
+    from datasets import ContinualDataset
+    dataset: ContinualDataset = dataset  # noqa, used for type hinting
+
+    if hasattr(args, 'num_classes') and args.num_classes is None:
+        args.num_classes = dataset.N_CLASSES
+
+    if args.fitting_mode == 'epochs' and args.n_epochs is None and isinstance(dataset, ContinualDataset):
+        args.n_epochs = dataset.get_epochs()
+    elif args.fitting_mode == 'iters' and args.n_iters is None and isinstance(dataset, ContinualDataset):
+        args.n_iters = dataset.get_iters()
+
+    if args.batch_size is None:
+        args.batch_size = dataset.get_batch_size()
+        if hasattr(importlib.import_module('models.' + args.model), 'Buffer') and (not hasattr(args, 'minibatch_size') or args.minibatch_size is None):
+            args.minibatch_size = dataset.get_minibatch_size()
+    else:
+        args.minibatch_size = args.batch_size
+
+    if args.validation:
+        if args.validation_mode == 'current':
+            assert dataset.SETTING in ['class-il', 'task-il'], "`current` validation modes is only supported for class-il and task-il settings (requires a task division)."
+
+    if args.debug_mode:
+        print('Debug mode enabled: running only a few forward steps per epoch with W&B disabled.')
+        args.nowand = 1
+
+    if args.wandb_entity is None:
+        args.wandb_entity = os.getenv('WANDB_ENTITY', None)
+    if args.wandb_project is None:
+        args.wandb_project = os.getenv('WANDB_PROJECT', None)
+
+    if args.wandb_entity is None or args.wandb_project is None:
+        logging.warning('`wandb_entity` and `wandb_project` not set. Disabling wandb.')
+        args.nowand = 1
+    else:
+        print('Logging to wandb: {}/{}'.format(args.wandb_entity, args.wandb_project))
+        args.nowand = 0
+
+
 def main(args=None):
     from models import get_model
-    from datasets import ContinualDataset, get_dataset
+    from datasets import get_dataset
     from utils.training import train
     from models.utils.future_model import FutureModel
+    from backbone import get_backbone
 
     lecun_fix()
     if args is None:
@@ -208,23 +267,9 @@ def main(args=None):
 
     dataset = get_dataset(args)
 
-    if args.fitting_mode == 'epochs' and args.n_epochs is None and isinstance(dataset, ContinualDataset):
-        args.n_epochs = dataset.get_epochs()
-    elif args.fitting_mode == 'iters' and args.n_iters is None and isinstance(dataset, ContinualDataset):
-        args.n_iters = dataset.get_iters()
+    extend_args(args, dataset)
 
-    if args.batch_size is None:
-        args.batch_size = dataset.get_batch_size()
-        if hasattr(importlib.import_module('models.' + args.model), 'Buffer') and (not hasattr(args, 'minibatch_size') or args.minibatch_size is None):
-            args.minibatch_size = dataset.get_minibatch_size()
-    else:
-        args.minibatch_size = args.batch_size
-
-    if args.validation:
-        if args.validation_mode == 'current':
-            assert dataset.SETTING in ['class-il', 'task-il'], "`current` validation modes is only supported for class-il and task-il settings (requires a task division)."
-
-    backbone = dataset.get_backbone()
+    backbone = get_backbone(args)
     if args.code_optimization == 3:
         # check if the model is compatible with torch.compile
         # from https://pytorch.org/tutorials/intermediate/torch_compile_tutorial.html
@@ -255,22 +300,6 @@ def main(args=None):
     elif args.distributed == 'ddp':
         # DDP breaks the buffer, it has to be synchronized.
         raise NotImplementedError('Distributed Data Parallel not supported yet.')
-
-    if args.debug_mode:
-        print('Debug mode enabled: running only a few forward steps per epoch with W&B disabled.')
-        args.nowand = 1
-
-    if args.wandb_entity is None:
-        args.wandb_entity = os.getenv('WANDB_ENTITY', None)
-    if args.wandb_project is None:
-        args.wandb_project = os.getenv('WANDB_PROJECT', None)
-
-    if args.wandb_entity is None or args.wandb_project is None:
-        logging.warning('`wandb_entity` and `wandb_project` not set. Disabling wandb.')
-        args.nowand = 1
-    else:
-        print('Logging to wandb: {}/{}'.format(args.wandb_entity, args.wandb_project))
-        args.nowand = 0
 
     try:
         import setproctitle

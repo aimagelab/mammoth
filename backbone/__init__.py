@@ -1,12 +1,15 @@
-# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
-# All rights reserved.
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
+from argparse import Namespace
+import importlib
+import inspect
+import os
 import math
 
 import torch
 import torch.nn as nn
+
+from typing import Callable
+
+REGISTERED_BACKBONES = dict()  # dictionary containing the registered networks. Template: {name: {'class': class, 'parsable_args': parsable_args}}
 
 
 def xavier(m: nn.Module) -> None:
@@ -144,3 +147,82 @@ class MammothBackbone(nn.Module):
         for pp in list(self.parameters()):
             grads.append(pp.grad.view(-1))
         return grads
+
+
+def register_backbone(name: str) -> Callable:
+    """
+    Decorator to register a backbone network for use in a Dataset. The decorator may be used on a class that inherits from `MammothBackbone` or on a function that returns a `MammothBackbone` instance.
+    The registered model can be accessed using the `get_backbone` function and can include additional keyword arguments to be set during parsing.
+
+    The arguments can be inferred by the *signature* of the backbone network's class. The value of the argument is the default value. If the default is set to `Parameter.empty`, the argument is required. If the default is set to `None`, the argument is optional. The type of the argument is inferred from the default value (default is `str`).
+
+    Args:
+        name: the name of the backbone network
+    """
+    def register_network_fn(cls: MammothBackbone | Callable) -> MammothBackbone:
+        # check if the name is already registered
+        if name in REGISTERED_BACKBONES:
+            raise ValueError(f"Name {name} already registered!")
+
+        # check if `cls` is a subclass of `MammothBackbone`
+        if inspect.isfunction(cls):
+            signature = inspect.signature(cls)
+        elif isinstance(cls, MammothBackbone) or issubclass(cls, MammothBackbone):
+            signature = inspect.signature(cls.__init__)
+        else:
+            raise ValueError("The registered class must be a subclass of MammothBackbone or a function returning MammothBackbone")
+
+        parsable_args = {}
+        for arg_name, value in list(signature.parameters.items()):
+            if arg_name != 'self' and not arg_name.startswith('_'):
+                default = value.default
+                tp = str if default is inspect.Parameter.empty or value.annotation is inspect._empty else type(default)
+                if default is inspect.Parameter.empty and arg_name != 'num_classes':
+                    parsable_args[arg_name] = {
+                        'type': tp,
+                        'required': True
+                    }
+                else:
+                    parsable_args[arg_name] = {
+                        'type': tp,
+                        'required': False,
+                        'default': default if default is not inspect.Parameter.empty else None
+                    }
+
+        REGISTERED_BACKBONES[name] = {'class': cls, 'parsable_args': parsable_args}
+        return cls
+
+    return register_network_fn
+
+
+def get_backbone_class(name: str, return_args=False) -> MammothBackbone:
+    assert name in REGISTERED_BACKBONES, "Attempted to access non-registered network"
+    cl = REGISTERED_BACKBONES[name]['class']
+    if return_args:
+        return cl, REGISTERED_BACKBONES[name]['parsable_args']
+
+
+def get_backbone(args: Namespace) -> MammothBackbone:
+    """
+    Build the backbone network from the registered networks.
+
+    Args:
+        args: the arguments which contains the `--backbone` attribute and the additional arguments required by the backbone network
+
+    Returns:
+        the backbone model
+    """
+    backbone_class, backbone_args = get_backbone_class(args.backbone, return_args=True)
+    missing_args = [arg for arg in backbone_args.keys() if arg not in vars(args)]
+    assert len(missing_args) == 0, "Missing arguments for the backbone network: " + ', '.join(missing_args)
+
+    parsed_args = {arg: getattr(args, arg) for arg in backbone_args.keys()}
+
+    return backbone_class(**parsed_args)
+
+
+for file in os.listdir(os.path.dirname(__file__)):
+    if file.endswith(".py") and not file.startswith("_"):
+        module_name, _ = os.path.splitext(file)
+        relative_module_name = f".{module_name}"
+        module = importlib.import_module(relative_module_name, package=__name__)

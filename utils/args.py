@@ -2,17 +2,111 @@
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
+import logging
+import sys
+
 if __name__ == '__main__':
     import os
-    import sys
     mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sys.path.append(mammoth_path)
 
-from argparse import ArgumentParser
-from datasets import get_dataset_names
+from inspect import Parameter
+from argparse import ArgumentParser, Namespace
+
+from backbone import REGISTERED_BACKBONES
+from datasets import get_dataset_names, get_dataset_config_names
 from models import get_all_models
 from models.utils.continual_model import ContinualModel
-from utils import binary_to_boolean_type, create_list_type, custom_str_underscore
+from utils import binary_to_boolean_type, custom_str_underscore
+
+
+def build_parsable_args(parser: ArgumentParser, spec: dict) -> None:
+    """
+    Builds the argument parser given a specification and extends the given parser.
+
+    The specification dictionary can either be a simple list of key-value argument or follow the format:
+    ```
+    {
+        'name': {
+            'type': type,
+            'default': default,
+            'choices': choices,
+            'help': help,
+            'required': True/False
+        }
+    }
+    ```
+    If the specification is a simple list of key-value arguments, the value of the argument is the default value. If the default is set to `inspect.Parameter.empty`, the argument is required. The type of the argument is inferred from the default value (default is `str`).
+
+    Args:
+        parser: the argument parser
+        spec: the specification dictionary
+
+    Returns:
+        the argument parser
+    """
+
+    for name, arg_spec in spec.items():
+        # check if the argument is already defined in the parser
+        if any([action.dest == name for action in parser._actions]):
+            logging.warn(f"Argument `{name}` is already defined in the parser. Skipping...")
+            continue
+
+        if isinstance(arg_spec, dict):
+            arg_type = arg_spec.get('type', str)
+            arg_default = arg_spec.get('default', None)
+            arg_choices = arg_spec.get('choices', None)
+            arg_help = arg_spec.get('help', '')
+            arg_required = arg_spec.get('required', False)
+        else:
+            arg_type = str
+            arg_default = arg_spec
+            arg_choices = None
+            arg_help = ''
+            arg_required = arg_spec is Parameter.empty
+
+        parser.add_argument(f'--{name}', type=arg_type, default=arg_default, choices=arg_choices, help=arg_help, required=arg_required)
+
+
+def add_dynamic_parsable_args(parser: ArgumentParser, args: Namespace) -> None:
+    """
+    Add the additional arguments of backbones, datasets and models to the parser.
+    """
+
+    bk_group = parser.add_argument_group('Backbone arguments', 'Arguments used to define the backbone network.')
+    build_parsable_args(bk_group, REGISTERED_BACKBONES[args.backbone]['parsable_args'])
+    # build_parsable_args(parser, get_dataset_names())
+    # build_parsable_args(parser, get_all_models())
+
+
+def add_post_parse_argparser(parser: ArgumentParser, args: Namespace) -> None:
+    """
+    Arguments that need to be set after parsing the initial arguments.
+    """
+
+    post_group = parser.add_argument_group('Post parse arguments', 'Arguments that need to be set after parsing the initial arguments.')
+
+    post_group.add_argument('--dataset_config', type=str,
+                            choices=get_dataset_config_names(args.dataset),
+                            help='The configuration used for this dataset (e.g., number of tasks, transforms, backbone architecture, etc.).'
+                            'The available configurations are defined in the `datasets/config/<dataset>` folder.')
+
+
+def add_initial_args(parser) -> ArgumentParser:
+    """
+    Returns the initial parser for the arguments.
+    """
+    parser.add_argument('--dataset', type=str, required=True,
+                        choices=get_dataset_names(),
+                        help='Which dataset to perform experiments on.')
+    parser.add_argument('--model', type=custom_str_underscore, required=True,
+                        help='Model name.', choices=list(get_all_models().keys()))
+    parser.add_argument('--backbone', type=custom_str_underscore, help='Backbone network name.', choices=list(REGISTERED_BACKBONES.keys()))
+    parser.add_argument('--load_best_args', action='store_true',
+                        help='(deprecated) Loads the best arguments for each method, dataset and memory buffer. '
+                        'NOTE: This option is deprecated and not up to date.')
+
+    return parser
 
 
 def add_experiment_args(parser: ArgumentParser) -> None:
@@ -27,11 +121,6 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     """
     exp_group = parser.add_argument_group('Experiment arguments', 'Arguments used to define the experiment settings.')
 
-    exp_group.add_argument('--dataset', type=str, required=True,
-                           choices=get_dataset_names(),
-                           help='Which dataset to perform experiments on.')
-    exp_group.add_argument('--model', type=custom_str_underscore, required=True,
-                           help='Model name.', choices=list(get_all_models().keys()))
     exp_group.add_argument('--lr', required=True, type=float, help='Learning rate. This should either be set as default by the model '
                            '(with `set_defaults <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.set_defaults>`_),'
                            ' by the dataset (with `set_default_from_args`, see :ref:`module-datasets.utils`), or with `--lr=<value>`.')
@@ -85,7 +174,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                            help='Scheduler mode. Possible values:'
                            ' - `epoch`: the scheduler is called at the end of each epoch.'
                            ' - `iter`: the scheduler is called at the end of each iteration.')
-    opt_group.add_argument('--lr_milestones', type=create_list_type(), default=[],
+    opt_group.add_argument('--lr_milestones', type=int, default=[], nargs='+',
                            help='Learning rate scheduler milestones (used if `lr_scheduler=multisteplr`).')
     opt_group.add_argument('--sched_multistep_lr_gamma', type=float, default=0.1,
                            help='Learning rate scheduler gamma (used if `lr_scheduler=multisteplr`).')
@@ -166,6 +255,25 @@ def add_rehearsal_args(parser: ArgumentParser) -> None:
                        help='The size of the memory buffer.')
     group.add_argument('--minibatch_size', type=int,
                        help='The batch size of the memory buffer.')
+
+
+def check_multiple_defined_arg_during_string_parse() -> None:
+    """
+    Check if an argument is defined multiple times during the string parsing.
+    Prevents the user from typing the same argument multiple times as:
+    `--arg1=val1 --arg1=val2`.
+    """
+
+    cmd_args = sys.argv[1:]
+    keys = set()
+    for i, arg in enumerate(cmd_args):
+        if '=' in arg:
+            arg_name = arg.split('=')[0]
+        else:
+            arg_name = arg if arg.startswith('-') else None
+        if arg_name is not None and arg_name in keys:
+            raise ValueError(f"Argument `{arg_name}` is defined multiple times.")
+        keys.add(arg_name)
 
 
 def fix_argparse_default_priority(parser: ArgumentParser) -> None:

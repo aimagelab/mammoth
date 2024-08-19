@@ -62,7 +62,7 @@ from timm.models._builder import build_model_with_cfg
 from timm.models._manipulate import named_apply
 
 from backbone.utils.layers import IncrementalClassifier
-from backbone import MammothBackbone
+from backbone import MammothBackbone, register_backbone
 from backbone.utils.lora_utils import LoRAAttention, LoRAMlp
 from utils.conf import warn_once
 
@@ -691,3 +691,8 @@ def vit_base_patch16_224_prompt_prototype(pretrained=False, pretrain_type='in21k
     else:
         model = create_vision_transformer('vit_base_patch16_224', pretrained=pretrained, **dict(model_kwargs, **kwargs))
     return model
+
+
+@register_backbone("vit")
+def vit_backbone(num_classes, pretrained=True, pretrain_type='in21k-ft-in1k'):
+    return vit_base_patch16_224_prompt_prototype(pretrained=pretrained, pretrain_type=pretrain_type, num_classes=num_classes)

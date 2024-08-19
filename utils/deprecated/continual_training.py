@@ -7,11 +7,12 @@
 from argparse import Namespace
 
 import torch
+
+from backbone import get_backbone
 from datasets import get_dataset
 from models import get_model
 from models.utils.continual_model import ContinualModel
 from utils.loggers import Logger
-
 from utils.stats import track_system_stats
 from utils.status import progress_bar
 
@@ -55,7 +56,7 @@ def train(args: Namespace):
     """
 
     dataset = get_dataset(args)
-    backbone = dataset.get_backbone()
+    backbone = get_backbone(args)
     loss = dataset.get_loss()
     model = get_model(args, backbone, loss, dataset.get_transform())
 

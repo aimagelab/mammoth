@@ -22,7 +22,6 @@ from utils.conf import base_path
 from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
 from datasets.transforms.denormalization import DeNormalize
 from torchvision.transforms.functional import InterpolationMode
-from backbone.vit import vit_base_patch16_224_prompt_prototype
 
 
 class MyImagenetR(Dataset):
@@ -162,9 +161,9 @@ class SequentialImagenetR(ContinualDataset):
             [transforms.ToPILImage(), SequentialImagenetR.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=SequentialImagenetR.N_CLASSES)
+        return "vit"
 
     @staticmethod
     def get_loss():

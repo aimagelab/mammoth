@@ -19,7 +19,6 @@ from utils.conf import base_path
 from torch.utils.data import Dataset
 from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
-from backbone.vit import vit_base_patch16_224_prompt_prototype
 
 
 def load_and_preprocess_cars196(train_str='train', names_only=False) -> Tuple[torch.Tensor, torch.Tensor, dict] | dict:
@@ -202,9 +201,9 @@ class SequentialCars196(ContinualDataset):
             [transforms.ToPILImage(), SequentialCars196.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=sum(SequentialCars196.N_CLASSES_PER_TASK))
+        return "vit"
 
     @staticmethod
     def get_loss():

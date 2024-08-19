@@ -11,11 +11,11 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from backbone.MNISTMLP import MNISTMLP
 from torchvision.datasets import MNIST
 
 from datasets.perm_mnist import MyMNIST
 from datasets.transforms.rotation import IncrementalRotation
+from datasets.utils import set_default_from_args
 from datasets.utils.gcl_dataset import GCLDataset
 from datasets.utils.validation import get_train_val
 from utils.conf import base_path, create_seeded_dataloader
@@ -193,9 +193,9 @@ class MNIST360(GCLDataset):
                 self.test_over = True
         return x_test, y_test
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone() -> torch.nn.Module:
-        return MNISTMLP(28 * 28, 10)
+        return "mnistmlp"
 
     @staticmethod
     def get_loss() -> F.cross_entropy:

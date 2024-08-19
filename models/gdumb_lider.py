@@ -1,7 +1,10 @@
-from utils.args import *
+from argparse import ArgumentParser
+import torch
+
+from backbone import get_backbone
+from utils.args import add_rehearsal_args
 from torch.optim import SGD, lr_scheduler
 from utils.buffer import Buffer
-import torch
 from models.utils.lider_model import LiderOptimizer, add_lipschitz_args
 from utils.augmentations import cutmix_data
 from utils.status import progress_bar
@@ -101,7 +104,7 @@ class GDumbLider(LiderOptimizer):
         # new model
         if not (self.current_task == dataset.N_TASKS - 1):
             return
-        self.net = dataset.get_backbone().to(self.device)
+        self.net = get_backbone(self.args).to(self.device)
 
         self.net.set_return_prerelu(True)
         self.init_net(dataset)
