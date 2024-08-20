@@ -180,18 +180,16 @@ def train_single_epoch(model: ContinualModel,
         if args.fitting_mode == 'iters' and model.task_iteration >= model.args.n_iters:
             break
 
-        if hasattr(train_loader.dataset, 'logits'):
-            inputs, labels, not_aug_inputs, logits = data[0], data[1], data[2], data[3]
-            inputs = inputs.to(model.device)
-            labels = labels.to(model.device, dtype=torch.long)
-            not_aug_inputs = not_aug_inputs.to(model.device)
-            logits = logits.to(model.device)
-            loss = model.meta_observe(inputs, labels, not_aug_inputs, logits, epoch=epoch)
-        else:
-            inputs, labels, not_aug_inputs = data[0], data[1], data[2]
-            inputs, labels = inputs.to(model.device), labels.to(model.device, dtype=torch.long)
-            not_aug_inputs = not_aug_inputs.to(model.device)
-            loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch)
+        inputs, labels, not_aug_inputs = data[0], data[1], data[2]
+        inputs, labels = inputs.to(model.device), labels.to(model.device, dtype=torch.long)
+        not_aug_inputs = not_aug_inputs.to(model.device)
+
+        extra_fields = {
+            train_loader.dataset.extra_return_fields[k]: data[3 + k] for k in range(len(data) - 3)
+        }
+
+        loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch, **extra_fields)
+
         assert not math.isnan(loss)
 
         if scheduler is not None and args.scheduler_mode == 'iter':

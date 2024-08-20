@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from argparse import Namespace
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import torch
 import numpy as np
@@ -13,10 +13,95 @@ import torch.optim.lr_scheduler as scheds
 import torch.utils
 from torch.utils.data import DataLoader, Dataset
 
+from datasets.utils.label_noise import build_noisy_labels
 from datasets.utils.validation import get_validation_indexes
 from utils.conf import create_seeded_dataloader
 from datasets.utils import build_torchvision_transform
 from utils.prompt_templates import templates
+
+
+class MammothDatasetWrapper(Dataset, object):
+    """
+    Wraps the datasets used inside the ContinualDataset class to allow for a more flexible retrieval of the data.
+    """
+    data: np.ndarray  # Required: the data of the dataset
+    targets: np.ndarray  # Required: the targets of the dataset
+    indexes: np.ndarray  # The original indexes of the items in the complete dataset
+
+    required_fields = ('data', 'targets')  # Required: the fields that must be defined
+    extra_return_fields: Tuple[str] = tuple()  # Optional: extra fields to return from the dataset (must be defined)
+
+    is_init: bool = False
+
+    def __getattr__(self, name: str) -> torch.Any:
+        if self.is_init and hasattr(self.dataset, name):
+            return getattr(self.dataset, name)
+        if name not in vars(self):
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+        return super().__getattr__(name)
+
+    def __setattr__(self, name: str, value: torch.Any) -> None:
+        if self.is_init and hasattr(self.dataset, name):
+            return setattr(self.dataset, name, value)
+        return super().__setattr__(name, value)
+
+    def __hasattr__(self, name: str) -> bool:
+        if self.is_init and name == '__getitem__' or name == '__len__':
+            return hasattr(self.dataset, name)
+        return super().__hasattr__(name)
+
+    def __init__(self, ext_dataset: Dataset, train: bool = False):
+        super().__init__()
+
+        self.dataset = ext_dataset
+        self.train = train
+        assert all([hasattr(self.dataset, field) for field in self.required_fields]), 'The dataset must implement the required fields'
+
+        self.indexes = np.arange(len(self.dataset))
+
+        self._c_iter = 0
+        self.is_init = True
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def extend_return_items(self, ret_tuple: Tuple[torch.Tensor, int, torch.Tensor, Optional[torch.Tensor]],
+                            index: int) -> Tuple[torch.Tensor, int, Optional[torch.Tensor], Tuple[Optional[torch.Tensor]]]:
+        """
+        Extends the return tuple with the extra fields defined in `extra_return_fields`.
+
+        Args:
+            ret_tuple (Tuple[torch.Tensor, int, torch.Tensor, Optional[torch.Tensor]]): the current return tuple
+
+        Returns:
+            Tuple[torch.Tensor, int, Optional[torch.Tensor], Sequence[Optional[torch.Tensor]]]: the extended return tuple
+        """
+        tmp_tuple = []
+        for name in self.extra_return_fields:
+            attr = getattr(self, name)
+            c_idx = index if len(attr) == len(self.data) else self.indexes[index]
+            attr = attr[c_idx]
+            tmp_tuple.append(attr)
+
+        ret_tuple = list(ret_tuple) + tmp_tuple
+
+        return tuple(ret_tuple)
+
+    def __iter__(self):
+        self._c_iter = 0
+        return iter(self.dataset)
+
+    def __next__(self):
+        ret_tuple = next(self.dataset)
+        ret_tuple = self.extend_return_items(ret_tuple, self._c_iter)
+        self._c_iter += 1
+        return ret_tuple
+
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, int, torch.Tensor, Optional[torch.Tensor]]:
+        ret_tuple = self.dataset.__getitem__(index)
+        ret_tuple = self.extend_return_items(ret_tuple, index)
+
+        return ret_tuple
 
 
 class ContinualDataset(object):
@@ -257,7 +342,7 @@ def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):
         return np.array(mask).astype(np.int32)
 
 
-def _prepare_data_loaders(train_dataset, test_dataset, setting: ContinualDataset):
+def _prepare_data_loaders(train_dataset: MammothDatasetWrapper, test_dataset: MammothDatasetWrapper, setting: ContinualDataset):
     if isinstance(train_dataset.targets, list) or not train_dataset.targets.dtype is torch.long:
         train_dataset.targets = torch.tensor(train_dataset.targets, dtype=torch.long)
     if isinstance(test_dataset.targets, list) or not test_dataset.targets.dtype is torch.long:
@@ -284,6 +369,10 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     Returns:
         the training and test loaders
     """
+    # Initializations
+    train_dataset = MammothDatasetWrapper(train_dataset, train=True)
+    test_dataset = MammothDatasetWrapper(test_dataset, train=False)
+
     if setting.SETTING == 'task-il' or setting.SETTING == 'class-il':
         setting.c_task += 1
 
@@ -292,19 +381,31 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     if not isinstance(test_dataset.targets, np.ndarray):
         test_dataset.targets = np.array(test_dataset.targets)
 
+    # Permute classes
     if setting.args.permute_classes:
         train_dataset.targets = setting.args.class_order[train_dataset.targets]
         test_dataset.targets = setting.args.class_order[test_dataset.targets]
 
+    # Setup validation
     if setting.args.validation:
         train_idxs, val_idxs = get_validation_indexes(setting.args.validation, train_dataset, setting.args.seed)
 
         test_dataset.data = train_dataset.data[val_idxs]
         test_dataset.targets = train_dataset.targets[val_idxs]
+        test_dataset.indexes = train_dataset.indexes[val_idxs]
 
         train_dataset.data = train_dataset.data[train_idxs]
         train_dataset.targets = train_dataset.targets[train_idxs]
+        train_dataset.indexes = train_dataset.indexes[train_idxs]
 
+    # Apply noise to the labels
+    if setting.args.noise_rate > 0:
+        noisy_targets = build_noisy_labels(train_dataset.targets, setting.args)
+        train_dataset.true_labels = train_dataset.targets
+        train_dataset.targets = noisy_targets
+        train_dataset.extra_return_fields += ('true_labels',)
+
+    # Split the dataset into tasks
     start_c, end_c = setting.get_offsets()
 
     if setting.SETTING == 'class-il' or setting.SETTING == 'task-il':
@@ -322,12 +423,16 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
 
         test_dataset.data = test_dataset.data[test_mask]
         test_dataset.targets = test_dataset.targets[test_mask]
+        test_dataset.indexes = test_dataset.indexes[test_mask]
 
         train_dataset.data = train_dataset.data[train_mask]
         train_dataset.targets = train_dataset.targets[train_mask]
+        train_dataset.indexes = train_dataset.indexes[train_mask]
 
+    # Finalize data, apply unlabeled mask
     train_dataset, test_dataset = _prepare_data_loaders(train_dataset, test_dataset, setting)
 
+    # Create dataloaders
     train_loader = create_seeded_dataloader(setting.args, train_dataset,
                                             batch_size=setting.args.batch_size, shuffle=True)
     test_loader = create_seeded_dataloader(setting.args, test_dataset,

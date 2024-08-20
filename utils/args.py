@@ -125,6 +125,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                            '(with `set_defaults <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.set_defaults>`_),'
                            ' by the dataset (with `set_default_from_args`, see :ref:`module-datasets.utils`), or with `--lr=<value>`.')
     exp_group.add_argument('--batch_size', type=int, help='Batch size.')
+
     exp_group.add_argument('--label_perc_by_task', '--label_perc', '--lpt', type=float, default=1,
                            dest='label_perc', help='Percentage in (0-1] of labeled examples per task.')
     exp_group.add_argument('--label_perc_by_class', '--lpc', type=float, default=1, dest='label_perc_by_class',
@@ -178,6 +179,17 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                            help='Learning rate scheduler milestones (used if `lr_scheduler=multisteplr`).')
     opt_group.add_argument('--sched_multistep_lr_gamma', type=float, default=0.1,
                            help='Learning rate scheduler gamma (used if `lr_scheduler=multisteplr`).')
+
+    noise_group = parser.add_argument_group('Noise arguments', 'Arguments used to define the noisy-label settings.')
+
+    noise_group.add_argument('--noise_type', type=str, choices=['symmetric', 'asymmetric'], default='symmetric',
+                             help='Type of noise to apply. The symmetric type is supported by all datasets, while the asymmetric must be supported explicitly by the dataset (see `datasets/utils/label_noise`).')
+    noise_group.add_argument('--noise_rate', type=float, default=0,
+                             help='Noise rate in [0-1].')
+    noise_group.add_argument('--disable_noisy_labels_cache', type=binary_to_boolean_type, default=0,
+                             help='Disable caching the noisy label targets? NOTE: if the seed is not set, the noisy labels will be different at each run with this option disabled.')
+    noise_group.add_argument('--cache_path_noisy_labels', type=str, default='noisy_labels',
+                             help='Path where to save the noisy labels cache. The path is relative to the `base_path`.')
 
 
 def add_management_args(parser: ArgumentParser) -> None:

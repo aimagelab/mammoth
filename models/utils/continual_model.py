@@ -29,6 +29,7 @@ import sys
 from argparse import ArgumentParser, Namespace
 from contextlib import suppress
 from typing import List, Tuple
+import inspect
 
 import kornia
 import torch
@@ -322,6 +323,12 @@ class ContinualModel(nn.Module):
                 if labeled_mask.sum() == 0:  # if all samples are unlabeled
                     return 0
                 args = [arg[labeled_mask] if isinstance(arg, torch.Tensor) and arg.shape[0] == args[0].shape[0] else arg for arg in args]
+
+        # remove kwargs that are not needed by the observe method
+        observe_args = inspect.signature(self.observe).parameters.keys()
+        if 'kwargs' not in observe_args:
+            kwargs = {k: v for k, v in kwargs.items() if k in observe_args}
+
         if 'wandb' in sys.modules and not self.args.nowand:
             pl = persistent_locals(self.observe)
             ret = pl(*args, **kwargs)

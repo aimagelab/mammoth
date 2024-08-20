@@ -27,7 +27,7 @@ class Sgd(ContinualModel):
     def __init__(self, backbone, loss, args, transform):
         super(Sgd, self).__init__(backbone, loss, args, transform)
 
-    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None, **kwargs):
         """
         SGD trains on the current task using the data provided, with no countermeasures to avoid forgetting.
         """

@@ -79,6 +79,8 @@ def check_args(args):
     if args.savecheck:
         assert not args.inference_only, "Should not save checkpoint in inference only mode"
 
+    assert (args.noise_rate >= 0.) and (args.noise_rate <= 1.), "Noise rate must be in [0, 1]"
+
 
 def parse_args():
     """
