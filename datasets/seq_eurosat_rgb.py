@@ -51,16 +51,17 @@ class MyEuroSat(Dataset):
                 f.write('')
 
             # downlaod split file form https://drive.google.com/file/d/1Ip7yaCWFi0eaOFUGga0lUdVi_DDQth1o/
+            # from "Conditional Prompt Learning for Vision-Language Models", Kaiyang Zhou et al.
             gdd.download_file_from_google_drive(file_id='1Ip7yaCWFi0eaOFUGga0lUdVi_DDQth1o',
                                                 dest_path=self.root + '/split.json')
 
             print('Done', file=sys.stderr)
 
         self.data_split = pd.DataFrame(json.load(open(self.root + '/split.json', 'r'))[split])
-        self.class_names = self.get_class_names()
-
         self.data = self.data_split[0].values
         self.targets = self.data_split[1].values
+
+        self.class_names = self.get_class_names()
 
     @staticmethod
     def get_class_names():

@@ -46,6 +46,8 @@ from torchvision import transforms
 with suppress(ImportError):
     import wandb
 
+_logger = logging.getLogger(__name__)
+
 
 class ContinualModel(nn.Module):
     """
@@ -194,14 +196,14 @@ class ContinualModel(nn.Module):
             self.transform = to_kornia_transform(transform.transforms[-1].transforms)
             self.normalization_transform = to_kornia_transform(self.dataset.get_normalization_transform())
         except BaseException:
-            logging.error("could not initialize kornia transforms.")
+            _logger.error("could not initialize kornia transforms.")
             self.normalization_transform = transforms.Compose([transforms.ToPILImage(), self.dataset.TEST_TRANSFORM]) if hasattr(
                 self.dataset, 'TEST_TRANSFORM') else transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), self.dataset.get_normalization_transform()])
 
         if self.net is not None:
             self.opt = self.get_optimizer()
         else:
-            logging.warning("no default model for this dataset. You will have to specify the optimizer yourself.")
+            _logger.warning("no default model for this dataset. You will have to specify the optimizer yourself.")
             self.opt = None
         self.device = get_device()
 
@@ -209,7 +211,7 @@ class ContinualModel(nn.Module):
             raise NotImplementedError('Please specify the name and the compatibility of the model.')
 
         if self.args.label_perc != 1 and 'cssl' not in self.COMPATIBILITY:
-            logging.info('label_perc is not explicitly supported by this model -> training may break')
+            _logger.info('label_perc is not explicitly supported by this model -> training may break')
 
     def to(self, device):
         """

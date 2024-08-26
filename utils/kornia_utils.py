@@ -120,19 +120,26 @@ def to_kornia_transform(transform: transforms.Compose, apply: bool = True) -> Un
 
     for t in transform:
         if isinstance(t, transforms.RandomResizedCrop):
-            ts.append(kornia.augmentation.RandomResizedCrop(size=t.size, scale=t.scale, ratio=t.ratio, interpolation=t.interpolation))
+            ts.append(kornia.augmentation.RandomResizedCrop(size=t.size, scale=t.scale, ratio=t.ratio, resample=_convert_interpolation_to_resample(t.interpolation)))
         elif isinstance(t, transforms.RandomHorizontalFlip):
             ts.append(kornia.augmentation.RandomHorizontalFlip(p=t.p))
         elif isinstance(t, transforms.RandomVerticalFlip):
             ts.append(kornia.augmentation.RandomVerticalFlip(p=t.p))
         elif isinstance(t, transforms.RandomRotation):
-            ts.append(kornia.augmentation.RandomRotation(degrees=t.degrees, interpolation=t.interpolation))
+            ts.append(kornia.augmentation.RandomRotation(degrees=t.degrees, resample=_convert_interpolation_to_resample(t.interpolation)))
         elif isinstance(t, transforms.RandomGrayscale):
             ts.append(kornia.augmentation.RandomGrayscale(p=t.p))
         elif isinstance(t, transforms.RandomAffine):
-            ts.append(kornia.augmentation.RandomAffine(degrees=t.degrees, translate=t.translate, scale=t.scale, shear=t.shear, interpolation=t.interpolation, fill=t.fill))
+            ts.append(
+                kornia.augmentation.RandomAffine(
+                    degrees=t.degrees,
+                    translate=t.translate,
+                    scale=t.scale,
+                    shear=t.shear,
+                    resample=_convert_interpolation_to_resample(t.interpolation),
+                    fill=t.fill))
         elif isinstance(t, transforms.RandomPerspective):
-            ts.append(kornia.augmentation.RandomPerspective(distortion_scale=t.distortion_scale, p=t.p, interpolation=t.interpolation, fill=t.fill))
+            ts.append(kornia.augmentation.RandomPerspective(distortion_scale=t.distortion_scale, p=t.p, resample=_convert_interpolation_to_resample(t.interpolation), fill=t.fill))
         elif isinstance(t, transforms.RandomCrop):
             ts.append(kornia.augmentation.RandomCrop(size=t.size, padding=t.padding, pad_if_needed=t.pad_if_needed, fill=t.fill, padding_mode=t.padding_mode))
         elif isinstance(t, transforms.RandomErasing):
@@ -146,7 +153,7 @@ def to_kornia_transform(transform: transforms.Compose, apply: bool = True) -> Un
         elif isinstance(t, transforms.RandomOrder):
             ts.append(kornia.augmentation.RandomOrder(t.transforms))
         elif isinstance(t, transforms.RandomResizedCrop):
-            ts.append(kornia.augmentation.RandomResizedCrop(size=t.size, scale=t.scale, ratio=t.ratio, interpolation=t.interpolation))
+            ts.append(kornia.augmentation.RandomResizedCrop(size=t.size, scale=t.scale, ratio=t.ratio, resample=_convert_interpolation_to_resample(t.interpolation)))
         elif isinstance(t, transforms.Compose):
             ts.extend(to_kornia_transform(t, apply=False))
         elif isinstance(t, transforms.ToTensor) or isinstance(t, transforms.ToPILImage):

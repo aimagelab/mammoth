@@ -41,7 +41,6 @@ class SequentialCIFAR100224(ContinualDataset):
     N_TASKS = 10
     N_CLASSES = 100
     SIZE = (224, 224)
-    # MEAN, STD = (0, 0, 0), (1, 1, 1)  # Normalized in [0,1] as in L2P paper
     MEAN, STD = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
 
     TRANSFORM = transforms.Compose(

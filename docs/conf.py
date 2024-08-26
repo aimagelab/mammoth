@@ -139,7 +139,7 @@ def get_headling_module(fullname):
             name = name.replace('_', ' ')
         else:
             name = name.upper().replace('_', ' ')
-        return f".. _module-{fullname}:\n{name}\n" + "=" * (len(name) + 1)
+        return f".. _module-{fullname}:\n\n{name}\n" + "=" * (len(name) + 1)
 
 
 def reorder_modules(modules):

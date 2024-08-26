@@ -3,7 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from argparse import Namespace
+from argparse import ArgumentParser, Namespace
 from typing import List, Optional, Tuple
 
 import torch
@@ -183,13 +183,15 @@ class ContinualDataset(object):
             raise NotImplementedError('The dataset must be initialized with all the required fields but is missing:', missing_fields)
 
     @classmethod
-    def set_default_from_config(cls, config: dict):
+    def set_default_from_config(cls, config: dict, parser: ArgumentParser):
         """
         Sets the default arguments from the configuration file.
         The default values will be set in the class attributes and will be available for all instances of the class.
+        All attributes under the key 'args' will be set in the argument parser.
 
         Args:
             config (dict): the configuration file
+            parser (ArgumentParser): the argument parser to set the default values
         """
 
         _base_fields = [k.casefold() for k in cls.base_fields]
@@ -206,6 +208,9 @@ class ContinualDataset(object):
             elif k.casefold() in _composed_fields:
                 _k = list(cls.composed_fields.keys())[_composed_fields.index(k.casefold())]
                 setattr(cls, _k, cls.composed_fields[_k](v))
+            elif k == 'args':
+                for k, v in v.items():
+                    parser.set_defaults(**{k: v})
             else:
                 setattr(cls, k, v)
 

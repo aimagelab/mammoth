@@ -18,6 +18,8 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
+_logger = logging.getLogger("general")
+
 
 def warn_once(*msg):
     """
@@ -31,7 +33,7 @@ def warn_once(*msg):
         warn_once.warned = set()
     if msg not in warn_once.warned:
         warn_once.warned.add(msg)
-        logging.warning(msg)
+        _logger.warning(msg)
 
 
 def _get_gpu_memory_pynvml_all_processes(device_id: int = 0) -> int:

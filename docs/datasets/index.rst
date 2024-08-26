@@ -3,14 +3,14 @@
 Datasets
 ========
 
-Mammoth datasets **define a complete and separate** Continual Learning benchmark. This means that 
-each dataset **must statically define** all the necessary information to run a continual learning experiment, including:
+Mammoth datasets **define a complete** Continual Learning benchmark. This means that 
+each dataset **defines** all the necessary information to run a continual learning experiment, including:
 
 .. admonition:: Required properties
 
-    - Name of the dataset: **NAME** attribute (``str``).
+    - Name of the dataset: **NAME** attribute (``str``). This will be used to select the dataset from the command line with the ``--dataset`` argument.
 
-    - Incremental setting (`class-il`, `domain-il`, or `general-continual`): **SETTING** attribute (``str``). See more in section :ref:`settings`.
+    - Incremental setting (`class-il`, `domain-il`, or `general-continual`): **SETTING** attribute (``str``). See more in section :ref:`datasets-settings`.
 
     - Size of the input data: **SIZE** attribute (``tuple[int]``).
 
@@ -28,7 +28,7 @@ each dataset **must statically define** all the necessary information to run a c
 
     - **get_data_loaders** static method (``[DataLoader, DataLoader]``): returns the train and test data loaders for each task. See more in :ref:`Utils`.
 
-    - **get_backbone** static method (``nn.Module``): returns the backbone model for the experiment. Backbones are defined in `backbones` folder. See more in :ref:`backbones`.
+    - **get_backbone** static method (``str``): returns the *name* of backbone model to be used for the experiment. Backbones are defined in `backbones` folder and can be registered with the `register_backbone` decorator. See more in :ref:`backbones`.
 
     - **get_transform** static method (``callable``): returns the data-augmentation transform to apply to the data during train.
 
@@ -51,7 +51,32 @@ See :ref:`Continual Dataset <module-datasets.utils.continual_dataset>` for more 
     Datasets are downloaded by default in the **data** folder. You can change this
     default location by setting the **base_path** function in :ref:`conf <module-utils.conf>`. 
 
-.. _settings:
+.. _dataset-configurations:
+
+Dataset configurations
+----------------------
+
+To allow for a more flexible configuration of the datasets, Mammoth supports the use of configuration files that can be used to set the values of the dataset attributes. This greatly simplifies the creation of new datasets, as it allows to separate the definition of a dataset (i.e., its data) from its configuration (number of tasks, transforms, etc.).
+
+The configuration files are stored in **datasets/configs/<dataset name>/<configuration name>.yaml** and can be selected from the command line using the ``--dataset_config`` argument. 
+
+The configuration file may contain:
+- `SETTING`: the incremental setting of the dataset. This can be one of 'class-il', 'domain-il', 'general-continual', or 'cssl'.
+- `N_CLASSES_PER_TASK`: the number of classes per task. This can be a single integer or a list of integers (one for each task).
+- `N_TASKS`: the number of tasks.
+- `SIZE`: the size of the input data.
+- `N_CLASSES`: the total number of classes in the dataset.
+- `AVAIL_SCHEDS`: the available learning rate schedulers for the dataset.
+- `TRANSFORM`: the data augmentation transform to apply to the data during training.
+- `TEST_TRANSFORM`: the normalization transform to apply to the data during training.
+- `MEAN`, `STD`: the mean and standard deviation of the dataset, used for normalization.
+- any field specified by the `set_default_from_args` decorator in the dataset class (see more in section :ref:`dataset-index-defaults`). This includes the `backbone`, `batch_size`, `n_epochs`, etc.
+- `args`: special field that allows to set the values of the default values for the command line arguments
+
+The configuration file sets the default values for the dataset attributes. However, some can be overridden by the command line arguments: all those defined by the `set_default_from_args` decorator and the args field. The priority is as follows: command line arguments > configuration file > default values.
+
+.. _datasets-settings:
+
 Experimental settings
 ---------------------
 
@@ -87,6 +112,8 @@ By default, the evaluation is done up to the current task. However, some models 
 .. important::
 
     In order to be able to evaluate on future tasks, the method must extend the :ref:`FutureModel <module-models.utils.future_model>` class. Notably, this function includes the ``future_forward`` method, which performs inference on all classes, and the ``change_transform`` method, which allows to change the transform to be applied to the data during inference.
+
+.. _dataset-index-defaults:
 
 Default arguments and command line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,6 +154,7 @@ These classes provide some useful methods to create data loaders and store maske
     4. If all goes well, your dataset should be picked up by the **get_dataset** function and you should be able to run an experiment with it.
 
 .. _dataset-index-utils:
+
 Utils
 --------
 

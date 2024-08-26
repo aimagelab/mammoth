@@ -106,7 +106,7 @@ def load_config(args: Namespace) -> dict:
         dict: the configuration of the dataset
     """
     if hasattr(args, 'dataset_config') and args.dataset_config:
-        filepath = smart_joint('datasets', 'configs', args.dataset, args.dataset_config)
+        filepath = smart_joint('datasets', 'configs', args.dataset, args.dataset_config + '.yaml')
         if not os.path.exists(filepath):
             raise FileNotFoundError(f'Dataset configuration file {args.dataset_config} not found in {filepath}')
     else:

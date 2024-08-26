@@ -28,6 +28,27 @@ In addition, some models require the output of *all* the layers of the backbone 
     Other values of ``returnt`` may be supported by the backbone, but they are not guaranteed to work with all the models.
 
 
+.. _backbone-registration:
+
+Backbone registration and selection
+-----------------------------------
+
+To be used in Mammoth, backbones must be registered with the `register_backbone` decorator. The decorator can be applied either to subclasses of the **MammothBackbone** class (see below) or to functions that return the backbone. The decorator takes a single argument, the name of the backbone, which will be used to select the backbone from the command line (with ``--backbone``) or from the dataset configuration file.
+
+Since each backbone requires different arguments, the decorator will automatically try to infer the arguments from the *signature* of the function (or the `__init__` method if applied to a class). For each argument in the signature, its default value will be used as the default value during parsing. If the default is not set, the argument is *required*; otherwise, the argument is optional. The type of the argument is inferred from the default value (default is `str`).
+
+For example, the following code registers a backbone with a single required argument (``depth``) and an optional argument (``width``) with default value 1:
+
+.. code-block:: python
+
+    @register_backbone('resnet')
+    def resnet(depth: int, width: int = 1):
+        return ResNet(depth, width)
+
+.. important::
+
+    The name of the arguments should not overlap with other arguments, but must not be unique across backbones. Only the arguments of the backbone selected by the user will be processed and available in the command line. If the same argument is specified externally, the backbone one will be **ignored**.
+
 Mammoth backbone base class
 ---------------------------
 

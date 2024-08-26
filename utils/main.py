@@ -99,15 +99,6 @@ def parse_args():
     add_initial_args(parser)
     args = parser.parse_known_args()[0]
 
-    # load args from dataset config
-    dataset_config = load_config(args)
-    dataset_class = get_dataset_class(args)
-    dataset_class.set_default_from_config(dataset_config)
-
-    update_args_with_dataset_defaults(args, strict=False)
-
-    add_post_parse_argparser(parser, args)
-
     models_dict = get_all_models()
     if args.model is None:
         print('No model specified. Please specify a model with --model to see all other options.')
@@ -150,12 +141,21 @@ def parse_args():
         parser = get_model_class(args).get_parser()
         add_initial_args(parser)
         add_post_parse_argparser(parser, args)
+
         add_management_args(parser)
         add_experiment_args(parser)
-
-        add_dynamic_parsable_args(parser, args)
-
         fix_argparse_default_priority(parser)
+        args = parser.parse_known_args()[0]
+
+        # load args from dataset config
+        dataset_config = load_config(args)
+        dataset_class = get_dataset_class(args)
+        dataset_class.set_default_from_config(dataset_config, parser)
+
+        update_args_with_dataset_defaults(args, strict=False)
+
+        # add dynamic args defined by the backbones, datasets, etc.
+        add_dynamic_parsable_args(parser, args)
         args = parser.parse_args()
 
     update_args_with_dataset_defaults(args, strict=True)

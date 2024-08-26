@@ -83,7 +83,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, retur
                 break
             if model.args.debug_mode and i > model.get_debug_iters():
                 break
-            inputs, labels = data
+            inputs, labels = data[0], data[1]
             inputs, labels = inputs.to(model.device), labels.to(model.device)
             if 'class-il' not in model.COMPATIBILITY and 'general-continual' not in model.COMPATIBILITY:
                 outputs = model(inputs, k)
@@ -202,8 +202,11 @@ def train_single_epoch(model: ContinualModel,
 
         time_diff = time() - previous_time
         previous_time = time()
-        ep_h = 3600 / (data_len * time_diff) if data_len else 'N/A'
-        pbar.set_postfix({'loss': loss} if ep_h == 'N/A' else {'loss': loss, 'ep/h': ep_h})
+        bar_log = {'loss': loss, 'lr': model.opt.param_groups[0]['lr']}
+        if data_len:
+            ep_h = 3600 / (data_len * time_diff)
+            bar_log['ep/h'] = ep_h
+        pbar.set_postfix(bar_log)
         pbar.update()
 
     if scheduler is not None and args.scheduler_mode == 'epoch':

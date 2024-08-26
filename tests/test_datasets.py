@@ -66,3 +66,30 @@ def test_dataset_workers():
                 '1']
 
     main()
+
+
+@pytest.mark.parametrize('config', ['default', 'l2p'])
+def test_configs(config):
+    sys.argv = ['mammoth',
+                '--model',
+                'sgd',
+                '--dataset',
+                'seq-cifar100-224',
+                '--lr',
+                '1e-4',
+                '--dataset_config',
+                config,
+                '--n_epochs',
+                '1',
+                '--batch_size',
+                '2',
+                '--non_verbose',
+                '1',
+                '--seed',
+                '0',
+                '--num_workers',
+                '0',
+                '--debug_mode',
+                '1']
+
+    main()

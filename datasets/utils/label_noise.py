@@ -7,7 +7,10 @@ The following types of noise are supported:
 
 The noisy labels can be cached to improve reproducibility. This can be disabled by setting `--disable_noisy_labels_cache=1`.
 
-The code is based on: `Symmetric Cross Entropy for Robust Learning with Noisy Labels <https://arxiv.org/abs/1908.06112>`_
+The code is based on:
+- `Symmetric Cross Entropy for Robust Learning with Noisy Labels <https://arxiv.org/abs/1908.06112>`_
+- `Making Deep Neural Networks Robust to Label Noise: a Loss Correction Approach <https://arxiv.org/pdf/1609.03683>`_
+- `Generalized Cross Entropy Loss for Training Deep Neural Networks with Noisy Labels` <https://arxiv.org/pdf/1805.07836>`_
 """
 
 from argparse import Namespace
@@ -162,7 +165,7 @@ def noisify_cifar10_asymmetric(targets: np.ndarray, args: Namespace) -> np.ndarr
     - cat <-> dog
     - deer -> horse
 
-    Reference: `Symmetric Cross Entropy for Robust Learning with Noisy Labels <https://arxiv.org/abs/1908.06112>`_
+    Reference: `Making Deep Neural Networks Robust to Label Noise: a Loss Correction Approach <https://arxiv.org/pdf/1609.03683>`_
     """
 
     transitions = {0: 0, 2: 0, 4: 7, 7: 7, 1: 1, 9: 1, 3: 5, 5: 3, 6: 6, 8: 8}
@@ -233,7 +236,7 @@ def noisify_cifar100_asymmetric(targets: np.ndarray, args: Namespace) -> np.ndar
     """
     Apply asymmetric noisy to CIFAR-100 according to the noise rate. For each superclass, the mistakes are chosen among samples of the same superclass.
 
-    Reference: `Symmetric Cross Entropy for Robust Learning with Noisy Labels <https://arxiv.org/abs/1908.06112>`_
+    Reference: `Making Deep Neural Networks Robust to Label Noise: a Loss Correction Approach <https://arxiv.org/pdf/1609.03683>`_
     """
     n_classes = 100
     transition_matrix = np.eye(n_classes)

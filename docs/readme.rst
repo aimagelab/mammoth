@@ -27,6 +27,10 @@ With Mammoth, nothing is set in stone. You can easily add new models, datasets, 
 
     **All the models included in mammoth are verified against the original papers (or subsequent relevant papers) to reproduce their original results.**
 
+**NEW: DATASET CONFIGURATIONS** We now support *configuration files* for the datasets with the new ``--dataset_config`` argument. This allows for more flexibility in the dataset definition. See more in :ref:`dataset-configurations`.
+
+**NEW: REGISTRATION AND SELECTION OF BACKBONES** Backbone architectures can now be registered and made globally available with the `register_backbone` decorator. Once registered, they can be easily accessed with the new ``--backbone`` argument. See more in :ref:`backbone-registration`.
+
 .. list-table::
    :widths: 15 15 15 15 15 15
    :class: centered
@@ -92,7 +96,6 @@ Work in progress
 
 All the code is under active development. Here are some of the features we are working on:
 
-- **Configurations for datasets**: Currently, each dataset represents a *specific configuration* (e.g., number of tasks, data augmentations, backbone, etc.). This makes adding a new *setting* a bit cumbersome. We are working on a more flexible way to define configurations, while leaving the current system as a default for retro-compatibility.
 - **New models**: We are working on adding new models to the repository.
 - **New training modalities**: We will introduce new CL training regimes, such as training with *noisy labels*, *regression*, *segmentation*, *detection*, etc.
 - **Openly accessible result dashboard**: We are working on a dashboard to visualize the results of all the models in both their respective settings (to prove their reproducibility) and in a general setting (to compare them). 
