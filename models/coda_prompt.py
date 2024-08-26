@@ -12,6 +12,7 @@ from models.utils.continual_model import ContinualModel
 import torch
 from datasets import get_dataset
 from models.coda_prompt_utils.model import Model
+from utils.conf import warn_once
 from utils.schedulers import CosineSchedule
 
 
@@ -23,10 +24,12 @@ class CodaPrompt(ContinualModel):
     def get_parser() -> ArgumentParser:
         parser = ArgumentParser(description='Continual Learning via'
                                 ' CODA-Prompt: COntinual Decomposed Attention-based Prompting')
+        parser.set_defaults(lr=0.001, optimizer='adam', optim_mom=0.9)
         parser.add_argument('--mu', type=float, default=0.0, help='weight of prompt loss')
         parser.add_argument('--pool_size', type=int, default=100, help='pool size')
         parser.add_argument('--prompt_len', type=int, default=8, help='prompt length')
-        parser.add_argument('--virtual_bs_iterations', type=int, default=1, help="virtual batch size iterations")
+        parser.add_argument('--virtual_bs_iterations', '--virtual_bs_n', dest='virtual_bs_iterations',
+                            type=int, default=1, help="virtual batch size iterations")
         return parser
 
     def __init__(self, backbone, loss, args, transform):
@@ -35,6 +38,9 @@ class CodaPrompt(ContinualModel):
         logging.warning(f"CODA-Prompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
         print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
         print("-" * 20)
+
+        if args.lr_scheduler is not None:
+            warn_once("CODA-Prompt uses a custom scheduler: cosine. Ignoring --lr_scheduler.")
 
         self.dataset = get_dataset(args)
         self.n_classes = self.dataset.N_CLASSES
@@ -80,7 +86,7 @@ class CodaPrompt(ContinualModel):
             self.opt.zero_grad()
 
         torch.cuda.empty_cache()
-        loss.backward()
+        (loss / float(self.args.virtual_bs_iterations)).backward()
         if self.task_iteration > 0 and self.task_iteration % self.args.virtual_bs_iterations == 0:
             self.opt.step()
             self.opt.zero_grad()

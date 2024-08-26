@@ -38,7 +38,8 @@ class SLCA(ContinualModel):
         parser.add_argument('--ca_with_logit_norm', type=float, default=0.1)
         parser.add_argument('--milestones', type=str, default='40')
         parser.add_argument('--lr_decay', type=float, default=0.1)
-        parser.add_argument('--virtual_bs_iterations', type=int, default=1, help="virtual batch size iterations")
+        parser.add_argument('--virtual_bs_n', '--virtual_bs_iterations', dest='virtual_bs_iterations',
+                            type=int, default=1, help="virtual batch size iterations")
         return parser
 
     def __init__(self, backbone, loss, args, transform):
@@ -93,7 +94,7 @@ class SLCA(ContinualModel):
             self.opt.zero_grad()
 
         torch.cuda.empty_cache()
-        loss.backward()
+        (loss / self.args.virtual_bs_iterations).backward()
         if self.task_iteration > 0 and self.task_iteration % self.args.virtual_bs_iterations == 0:
             self.opt.step()
             self.opt.zero_grad()

@@ -1,32 +1,25 @@
+"""
+On the reproducibility of DAP
+-----------------------------
+
+The original implementation of DAP is available at `https://github.com/naver-ai/dap-cl` and features:
+ - a custom backbone, available with the `--load_original_checkpoint` flag
+ - majority voting during test time, available with the `--enable_test_time_majority_voting` flag
+ - custom splits for many datasets. Specifically: `imagenet-r`, `chestx`, `eurosat-rgb`, `isic`, and `resisc45` use a validation set of 20% from the training set as the test set, while other datasets use their original splits. This differs from the Mammoth implementation, which follows that of other commonly used works (e.g, `eurosat-rgb` uses the split of CoOp).
+"""
+
 import logging
 import os
 import numpy as np
 import torch
 import torch.nn as nn
 from argparse import ArgumentParser
-from torch.optim.lr_scheduler import LambdaLR
 
 from datasets.utils.continual_dataset import ContinualDataset
 from models.utils.continual_model import ContinualModel
 
 from models.dap_utils.dap_model import DAPModel
 from utils import binary_to_boolean_type
-
-
-class WarmupConstantSchedule(LambdaLR):
-    """ Linear warmup and then constant.
-        Linearly increases learning rate schedule from 0 to 1 over `warmup_steps` training steps.
-        Keeps learning rate schedule equal to 1. after warmup_steps.
-    """
-
-    def __init__(self, optimizer, warmup_steps, last_epoch=-1):
-        self.warmup_steps = warmup_steps
-        super(WarmupConstantSchedule, self).__init__(optimizer, self.lr_lambda, last_epoch=last_epoch)
-
-    def lr_lambda(self, step):
-        if step < self.warmup_steps:
-            return float(step) / float(max(1.0, self.warmup_steps))
-        return 1.
 
 
 class DAP(ContinualModel):
@@ -75,12 +68,6 @@ class DAP(ContinualModel):
             raise ValueError('Unknown optimizer: {}'.format(self.args.optimizer))
         return opt
 
-    def get_scheduler(self):
-        return WarmupConstantSchedule(
-            self.opt,
-            warmup_steps=0,
-        )
-
     def get_parameters(self):
         return [p for p in self.net.parameters() if p.requires_grad]
 
@@ -90,12 +77,11 @@ class DAP(ContinualModel):
                 if "dap_downsample" in k:
                     p.requires_grad = False
 
-        dataset.train_loader.dataset.transform = self.dataset.TEST_TRANSFORM  # transforms.Compose([transforms.ToTensor(), self.dataset.get_normalization_transform()])
+        # dataset.train_loader.dataset.transform = self.dataset.TEST_TRANSFORM  # transforms.Compose([transforms.ToTensor(), self.dataset.get_normalization_transform()])
 
         self.net.train()
 
         self.opt = self.get_optimizer()
-        self.scheduler = self.get_scheduler()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return super().forward(x)[:, :self.n_seen_classes]
