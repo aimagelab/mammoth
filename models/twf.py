@@ -48,11 +48,10 @@ class TwF(ContinualModel):
         parser.add_argument('--virtual_bs_iterations', type=int, default=1, help="virtual batch size iterations")
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         assert "resnet" in str(type(backbone)).lower(), "Only resnet is supported for TwF"
 
-        super().__init__(
-            backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
         self.buffer = Buffer(self.args.buffer_size)
         self.buf_transform = self.get_custom_double_transform(self.original_transform.transforms)

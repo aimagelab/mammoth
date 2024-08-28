@@ -91,8 +91,8 @@ class GDumbLider(LiderOptimizer):
                             help='Alpha parameter for cutmix')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super().__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
 
     def observe(self, inputs: torch.Tensor, labels: torch.Tensor, not_aug_inputs: torch.Tensor, epoch=None):

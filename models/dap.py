@@ -47,13 +47,13 @@ class DAP(ContinualModel):
 
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         if args.enable_test_time_majority_voting:
             logging.warning("Majority voting is enabled during test time. The results will not be a fair comparison with other methods.")
         if args.load_original_checkpoint and not os.path.exists('./data/imagenet21k_ViT-B_16.npz'):
             raise FileNotFoundError('`imagenet21k_ViT-B_16.npz` not found in ./data directory. Please follow the instructions in '
                                     'https://github.com/naver-ai/dap-cl to download the file.')
-        super(DAP, self).__init__(backbone, loss, args, transform)
+        super(DAP, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.net = DAPModel(backbone=self.net, n_tasks=self.n_tasks, num_classes=self.num_classes, args=args, device=args.device)
 
         self.opt = self.get_optimizer()

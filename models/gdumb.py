@@ -73,8 +73,8 @@ class GDumb(ContinualModel):
                             help='Alpha parameter for cutmix')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(GDumb, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(GDumb, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):

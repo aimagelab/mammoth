@@ -66,7 +66,7 @@ class MoEAdapters(FutureModel):
 
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         assert args.scheduler_mode == 'iter', "MoE Adapters only supports 'iter' scheduler mode."
         assert args.lr_scheduler is None, "MoE Adapters does not require a learning rate scheduler and will use a custom one."
 
@@ -77,7 +77,7 @@ class MoEAdapters(FutureModel):
 
         del backbone
         logging.info("MoE Adapters will override the backbone model.")
-        super().__init__(None, loss, args, transform)
+        super().__init__(None, loss, args, transform, dataset=dataset)
         self.net = Model(args, self.dataset, device=self.device)
         self.opt = self.get_optimizer()
 

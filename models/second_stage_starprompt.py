@@ -89,8 +89,8 @@ class SecondStageStarprompt(ContinualModel):
 
     net: Model
 
-    def __init__(self, backbone, loss, args, transform):
-        super().__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
         self.net = Model(args,
                          backbone=self.net,

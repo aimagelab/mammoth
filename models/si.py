@@ -24,8 +24,8 @@ class SI(ContinualModel):
                             help='xi parameter for EWC online')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(SI, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(SI, self).__init__(backbone, loss, args, transform, dataset=dataset)
 
         self.checkpoint = self.net.get_params().data.clone().to(self.device)
         self.big_omega = None

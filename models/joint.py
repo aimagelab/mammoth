@@ -17,8 +17,8 @@ class Joint(ContinualModel):
     NAME = 'joint'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Joint, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(Joint, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.old_data = []
         self.old_labels = []
 

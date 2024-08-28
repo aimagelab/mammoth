@@ -43,8 +43,8 @@ class XDerV2(ContinualModel):
 
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super().__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
         from utils.buffer import Buffer
         self.buffer = Buffer(self.args.buffer_size)
         self.update_counter = torch.zeros(self.args.buffer_size)

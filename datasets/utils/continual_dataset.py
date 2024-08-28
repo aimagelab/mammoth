@@ -60,6 +60,7 @@ class MammothDatasetWrapper(Dataset, object):
         self.indexes = np.arange(len(self.dataset))
 
         self._c_iter = 0
+        self.num_times_iterated = 0
         self.is_init = True
 
     def __len__(self):
@@ -89,6 +90,7 @@ class MammothDatasetWrapper(Dataset, object):
 
     def __iter__(self):
         self._c_iter = 0
+        self.num_times_iterated += 1
         return iter(self.dataset)
 
     def __next__(self):

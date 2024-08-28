@@ -38,7 +38,7 @@ def forward_transfer(results, random_results):
     n_tasks = len(results)
     li = []
     for i in range(1, n_tasks):
-        li.append(results[i - 1][i] - random_results[i])
+        li.append(results[i - 1][i] - random_results[i][0])
 
     return np.mean(li)
 

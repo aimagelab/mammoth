@@ -119,8 +119,8 @@ class Lucir(ContinualModel):
                             help='Apply weight imprinting?')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Lucir, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(Lucir, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.dataset = get_dataset(args)
 
         # Instantiate buffers

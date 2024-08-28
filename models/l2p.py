@@ -21,6 +21,7 @@ class L2P(ContinualModel):
     @staticmethod
     def get_parser() -> ArgumentParser:
         parser = ArgumentParser(description='Learning to Prompt (L2P)')
+        parser.set_defaults(optimizer='adam')
         # Prompt parameters
         parser.add_argument('--prompt_pool', default=True, type=bool,)
         parser.add_argument('--pool_size_l2p', default=10, type=int, help='number of prompts (M in paper)')
@@ -56,7 +57,7 @@ class L2P(ContinualModel):
         parser.add_argument('--clip_grad', type=float, default=1, help='Clip gradient norm')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         """
         L2P re-defines the backbone model to include the prompt parameters. This is done *before* calling the super constructor, so that the backbone is already initialized when the super constructor is called.
         """
@@ -69,7 +70,7 @@ class L2P(ContinualModel):
         args.lr = args.lr * args.batch_size / 256.0
         backbone = L2PModel(args)
 
-        super().__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
     def begin_task(self, dataset):
         self.net.original_model.eval()

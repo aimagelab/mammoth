@@ -32,7 +32,7 @@ class CodaPrompt(ContinualModel):
                             type=int, default=1, help="virtual batch size iterations")
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         del backbone
         print("-" * 20)
         logging.warning(f"CODA-Prompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
@@ -46,7 +46,7 @@ class CodaPrompt(ContinualModel):
         self.n_classes = self.dataset.N_CLASSES
         self.n_tasks = self.dataset.N_TASKS
         backbone = Model(num_classes=self.n_classes, pt=True, prompt_param=[self.n_tasks, [args.pool_size, args.prompt_len, 0]])
-        super().__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
         self.net.task_id = 0
         self.opt = self.get_optimizer()
 

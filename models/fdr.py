@@ -23,8 +23,8 @@ class Fdr(ContinualModel):
                             help='Penalty weight.')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Fdr, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(Fdr, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
         self.i = 0
         self.soft = torch.nn.Softmax(dim=1)

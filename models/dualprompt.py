@@ -68,7 +68,7 @@ class DualPrompt(ContinualModel):
         parser.add_argument('--freeze', default=['blocks', 'patch_embed', 'cls_token', 'norm', 'pos_embed'], nargs='*', type=list, help='freeze part in backbone model')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         del backbone
         print("-" * 20)
         logging.warning(f"DualPrompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
@@ -76,9 +76,10 @@ class DualPrompt(ContinualModel):
         print("-" * 20)
 
         args.lr = args.lr * args.batch_size / 256.0
-        backbone = Model(args, get_dataset(args).N_CLASSES)
+        tmp_dataset = get_dataset(args) if dataset is None else dataset
+        backbone = Model(args, tmp_dataset.N_CLASSES)
 
-        super().__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
     def begin_task(self, dataset):
         self.offset_1, self.offset_2 = self.dataset.get_offsets(self.current_task)

@@ -64,8 +64,8 @@ class RPC(ContinualModel):
         add_rehearsal_args(parser)
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(RPC, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(RPC, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
         self.rpchead = torch.from_numpy(dsimplex(self.cpt * self.n_tasks)).float().to(self.device)
 

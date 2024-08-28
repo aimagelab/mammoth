@@ -90,12 +90,12 @@ class STARPrompt(ContinualModel):
 
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         if not hasattr(args, 'first_stage_epochs') or args.first_stage_epochs is None:
             logging.info("`first_stage_epochs` not set. Setting it to `n_epochs`.")
             args.first_stage_epochs = args.n_epochs
 
-        super().__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
         self.net = STARPromptModel(args,
                                    backbone=self.net,

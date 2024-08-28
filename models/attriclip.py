@@ -28,18 +28,18 @@ class Attriclip(ContinualModel):
         parser.add_argument('--freeze_clip', type=int, default=1, help='freeze_clip')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        self.seq_dataset = get_dataset(args)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        seq_dataset = get_dataset(args) if dataset is None else dataset
         self.device = get_device()
-        self.class_names = self.seq_dataset.get_class_names()
+        self.class_names = seq_dataset.get_class_names()
         backbone = CoOp(self.device, False, False, args)
-        offset_1, offset_2 = self.seq_dataset.get_offsets(0)
+        offset_1, offset_2 = seq_dataset.get_offsets(0)
         cur_class_names = self.class_names[offset_1:offset_2]
         backbone.init_model(class_names=cur_class_names, text_key=backbone.text_key, text_prompt=backbone.text_prompt)
-        super().__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
     def begin_task(self, dataset):
-        self.offset_1, self.offset_2 = self.seq_dataset.get_offsets(self.current_task)
+        self.offset_1, self.offset_2 = self.dataset.get_offsets(self.current_task)
         self.per_epoch_steps = len(dataset.train_loader)
         cur_class_names = self.class_names[self.offset_1:self.offset_2]
         self.net.init_model(class_names=cur_class_names, text_key=self.net.text_key, text_prompt=self.net.text_prompt)

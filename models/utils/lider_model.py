@@ -30,8 +30,8 @@ class LiderOptimizer(ContinualModel):
     Superclass for all models that use the Lipschitz regularization in LiDER (https://arxiv.org/pdf/2210.06443.pdf).
     """
 
-    def __init__(self, backbone, loss, args, transform):
-        super().__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
         if self.args.alpha_lip_lambda == 0 and self.args.beta_lip_lambda == 0:
             logging.error("LiDER is enabled but both `alpha_lip_lambda` and `beta_lip_lambda` are 0. LiDER will not be used.")

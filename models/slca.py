@@ -42,7 +42,7 @@ class SLCA(ContinualModel):
                             type=int, default=1, help="virtual batch size iterations")
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         self.device = get_device()
         del backbone
         print("-" * 20)
@@ -52,7 +52,7 @@ class SLCA(ContinualModel):
 
         args.milestones = args.milestones.split(',')
         n_features = backbone._network.convnet.feature_dim
-        super().__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
         self.class_means = torch.zeros(self.num_classes, n_features).to(self.device)
         self.class_covs = torch.zeros(self.num_classes, n_features, n_features).to(self.device)
 

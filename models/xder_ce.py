@@ -36,8 +36,8 @@ class XDerCE(ContinualModel):
 
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(XDerCE, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(XDerCE, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
         self.update_counter = torch.zeros(self.args.buffer_size)
 

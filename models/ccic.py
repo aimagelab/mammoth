@@ -41,14 +41,13 @@ class Ccic(ContinualModel):
         parser.add_argument('--mixup_alpha', default=0.75, type=float)
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Ccic, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(Ccic, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size, self.device)
         self.epoch = 0
-        self.n_tasks = get_dataset(args).N_TASKS
         self.embeddings = None
 
-        self.eye = torch.eye(self.N_CLASSES).to(self.device)
+        self.eye = torch.eye(self.num_classes).to(self.device)
         self.sup_virtual_batch = RingBuffer(self.args.batch_size)
         self.unsup_virtual_batch = RingBuffer(self.args.batch_size)
 

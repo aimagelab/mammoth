@@ -62,11 +62,11 @@ class FirstStageStarprompt(ContinualModel):
 
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         logging.warning("The first stage of STAR-Prompt ignores the backbone as it uses CLIP")
         del backbone
 
-        super().__init__(None, loss, args, transform)
+        super().__init__(None, loss, args, transform, dataset=dataset)
         self.net = Model(args, num_classes=self.num_classes, dataset=self.dataset, device=self.device)
         self.opt = self.get_optimizer()
 

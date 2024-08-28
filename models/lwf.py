@@ -33,8 +33,8 @@ class Lwf(ContinualModel):
                             help='Temperature of the softmax function.')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Lwf, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(Lwf, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.old_net = None
         self.soft = torch.nn.Softmax(dim=1)
         self.logsoft = torch.nn.LogSoftmax(dim=1)

@@ -23,8 +23,8 @@ class Der(ContinualModel):
                             help='Penalty weight.')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Der, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(Der, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):

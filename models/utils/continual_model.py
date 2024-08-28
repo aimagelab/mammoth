@@ -28,7 +28,7 @@ import logging
 import sys
 from argparse import ArgumentParser, Namespace
 from contextlib import suppress
-from typing import List, Tuple
+from typing import Iterator, List, Tuple
 import inspect
 
 import kornia
@@ -82,6 +82,7 @@ class ContinualModel(nn.Module):
         Returns:
             the parser of the model
         """
+        warn_once("The model does not have a parser. Please override the get_parser method.")
         parser = ArgumentParser(description='Base CL model')
         return parser
 
@@ -175,7 +176,7 @@ class ContinualModel(nn.Module):
         self._cpt = value
 
     def __init__(self, backbone: nn.Module, loss: nn.Module,
-                 args: Namespace, transform: nn.Module) -> None:
+                 args: Namespace, transform: nn.Module, dataset: ContinualDataset = None) -> None:
         super(ContinualModel, self).__init__()
         print("Using {} as backbone".format(backbone.__class__.__name__))
         self.net = backbone
@@ -183,7 +184,11 @@ class ContinualModel(nn.Module):
         self.args = args
         self.original_transform = transform
         self.transform = transform
-        self.dataset = get_dataset(self.args)
+        if dataset is None:
+            _logger.error("No dataset provided. Will create another instance but NOTE that this **WILL** result in some bugs and possible memory leaks!")
+            self.dataset = get_dataset(self.args)
+        else:
+            self.dataset = dataset
         self.N_CLASSES = self.dataset.N_CLASSES
         self.num_classes = self.N_CLASSES
         self.N_TASKS = self.dataset.N_TASKS
@@ -234,18 +239,33 @@ class ContinualModel(nn.Module):
         """
         return self.net.parameters()
 
-    def get_optimizer(self) -> optim.Optimizer:
+    def get_optimizer(self, params: Iterator[torch.Tensor] = None, lr=None) -> optim.Optimizer:
+        """
+        Returns the optimizer to be used for training.
+
+        Default: SGD.
+
+        Args:
+            params: the parameters to be optimized. If None, the default specified by `get_parameters` is used.
+            lr: the learning rate. If None, the default specified by the command line arguments is used.
+
+        Returns:
+            the optimizer
+        """
+
+        params = params if params is not None else self.get_parameters()
+        lr = lr if lr is not None else self.args.lr
         # check if optimizer is in torch.optim
         supported_optims = {optim_name.lower(): optim_name for optim_name in dir(optim) if optim_name.lower() in self.AVAIL_OPTIMS}
         opt = None
         if self.args.optimizer.lower() in supported_optims:
             if self.args.optimizer.lower() == 'sgd':
-                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.get_parameters(), lr=self.args.lr,
+                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(params, lr=lr,
                                                                                     weight_decay=self.args.optim_wd,
                                                                                     momentum=self.args.optim_mom,
                                                                                     nesterov=self.args.optim_nesterov)
             elif self.args.optimizer.lower() == 'adam' or self.args.optimizer.lower() == 'adamw':
-                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.get_parameters(), lr=self.args.lr,
+                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(params, lr=lr,
                                                                                     weight_decay=self.args.optim_wd)
 
         if opt is None:

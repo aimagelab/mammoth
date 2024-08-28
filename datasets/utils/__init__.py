@@ -92,7 +92,7 @@ def update_args_with_dataset_defaults(args: Namespace, strict=True):
             setattr(args, k, v)
         else:
             if getattr(args, k) != v:
-                logging.warning('{} set to {} instead of {}.'.format(k, getattr(args, k), v))
+                logging.info('{} set to {} instead of {}.'.format(k, getattr(args, k), v))
 
 
 def load_config(args: Namespace) -> dict:

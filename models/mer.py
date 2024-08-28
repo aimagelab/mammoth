@@ -28,9 +28,9 @@ class Mer(ContinualModel):
                             help='Number of batches extracted from the buffer.')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         args.batch_size = 1
-        super(Mer, self).__init__(backbone, loss, args, transform)
+        super(Mer, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
 
     def draw_batches(self, inp, lab):

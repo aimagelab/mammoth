@@ -22,8 +22,8 @@ class JointGCL(ContinualModel):
         parser.set_defaults(n_epochs=1)
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(JointGCL, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(JointGCL, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.old_data = []
         self.old_labels = []
 

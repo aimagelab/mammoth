@@ -30,8 +30,8 @@ class HAL(ContinualModel):
         parser.add_argument('--gamma', type=float, default=0.1)
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super().__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
         self.task_number = 0
         self.buffer = Buffer(self.args.buffer_size, n_tasks=get_dataset(args).N_TASKS)
         self.hal_lambda = args.hal_lambda

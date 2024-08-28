@@ -23,8 +23,8 @@ class ICarlLider(LiderOptimizer):
         add_lipschitz_args(parser)
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super().__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
         # Instantiate buffers
         self.buffer = Buffer(self.args.buffer_size)

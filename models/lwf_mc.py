@@ -22,8 +22,8 @@ class LwFMC(ContinualModel):
                             help='L2 regularization applied to the parameters.')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(LwFMC, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(LwFMC, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.dataset = get_dataset(args)
 
         # Instantiate buffers

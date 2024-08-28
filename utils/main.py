@@ -34,7 +34,9 @@ sys.path.append(mammoth_path + '/datasets')
 sys.path.append(mammoth_path + '/backbone')
 sys.path.append(mammoth_path + '/models')
 
-from utils import create_if_not_exists
+from utils import setup_logging, create_if_not_exists
+setup_logging()
+
 from utils.conf import warn_once
 
 if __name__ == '__main__':
@@ -54,6 +56,8 @@ from utils.distributed import make_dp
 from utils.best_args import best_args
 from utils.conf import set_random_seed
 
+_logger = logging.getLogger("general")
+
 
 def lecun_fix():
     # Yann moved his website to CloudFlare. You need this now
@@ -63,7 +67,7 @@ def lecun_fix():
     urllib.request.install_opener(opener)
 
 
-def check_args(args):
+def check_args(args, dataset=None):
     """
     Just a (non complete) stream of asserts to ensure the validity of the arguments.
     """
@@ -80,6 +84,17 @@ def check_args(args):
         assert not args.inference_only, "Should not save checkpoint in inference only mode"
 
     assert (args.noise_rate >= 0.) and (args.noise_rate <= 1.), "Noise rate must be in [0, 1]"
+
+    if dataset is not None:
+        from datasets.utils.gcl_dataset import GCLDataset, ContinualDataset
+
+        if isinstance(dataset, GCLDataset):
+            assert args.n_epochs == 1, "GCLDataset is not compatible with multiple epochs"
+            assert args.enable_other_metrics == 0, "GCLDataset is not compatible with other metrics (i.e., forward/backward transfer and forgetting)"
+            assert args.eval_future == 0, "GCLDataset is not compatible with future evaluation"
+            assert args.noise_rate == 0, "GCLDataset is not compatible with automatic noise injection"
+
+        assert issubclass(dataset.__class__, ContinualDataset) or issubclass(dataset.__class__, GCLDataset), "Dataset must be an instance of `ContinualDataset` or `GCLDataset`"
 
 
 def parse_args():
@@ -163,7 +178,7 @@ def parse_args():
     args.model = models_dict[args.model]
 
     if args.lr_scheduler is not None:
-        logging.info('`lr_scheduler` set to {}, overrides default from dataset.'.format(args.lr_scheduler))
+        _logger.info('`lr_scheduler` set to {}, overrides default from dataset.'.format(args.lr_scheduler))
 
     if args.seed is not None:
         set_random_seed(args.seed)
@@ -179,7 +194,7 @@ def parse_args():
         repo = git.Repo(path=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         args.conf_git_hash = repo.head.object.hexsha
     except Exception:
-        logging.error("Could not retrieve git hash.")
+        _logger.error("Could not retrieve git hash.")
         args.conf_git_hash = None
 
     if args.savecheck:
@@ -195,13 +210,16 @@ def parse_args():
     check_args(args)
 
     if args.validation is not None:
-        logging.info(f"Using {args.validation}% of the training set as validation set.")
-        logging.info(f"Validation will be computed with mode `{args.validation_mode}`.")
+        _logger.info(f"Using {args.validation}% of the training set as validation set.")
+        _logger.info(f"Validation will be computed with mode `{args.validation_mode}`.")
 
     return args
 
 
 def extend_args(args, dataset):
+    """
+    Extend the command-line arguments with the default values from the dataset and the model.
+    """
     from datasets import ContinualDataset
     dataset: ContinualDataset = dataset  # noqa, used for type hinting
 
@@ -234,7 +252,7 @@ def extend_args(args, dataset):
         args.wandb_project = os.getenv('WANDB_PROJECT', None)
 
     if args.wandb_entity is None or args.wandb_project is None:
-        logging.warning('`wandb_entity` and `wandb_project` not set. Disabling wandb.')
+        _logger.info('`wandb_entity` and `wandb_project` not set. Disabling wandb.')
         args.nowand = 1
     else:
         print('Logging to wandb: {}/{}'.format(args.wandb_entity, args.wandb_project))
@@ -260,8 +278,8 @@ def main(args=None):
 
     if args.code_optimization != 0:
         torch.set_float32_matmul_precision('high' if args.code_optimization == 1 else 'medium')
-        logging.info("Code_optimization is set to", args.code_optimization)
-        logging.info(f"Using {torch.get_float32_matmul_precision()} precision for matmul.")
+        _logger.info("Code_optimization is set to", args.code_optimization)
+        _logger.info(f"Using {torch.get_float32_matmul_precision()} precision for matmul.")
 
         if args.code_optimization == 2:
             if not torch.cuda.is_bf16_supported():
@@ -271,13 +289,15 @@ def main(args=None):
 
     extend_args(args, dataset)
 
+    check_args(args, dataset=dataset)
+
     backbone = get_backbone(args)
     if args.code_optimization == 3:
         # check if the model is compatible with torch.compile
         # from https://pytorch.org/tutorials/intermediate/torch_compile_tutorial.html
         if torch.cuda.get_device_capability()[0] >= 7 and os.name != 'nt':
             print("================ Compiling model with torch.compile ================")
-            logging.warning("`torch.compile` may break your code if you change the model after the first run!")
+            _logger.warning("`torch.compile` may break your code if you change the model after the first run!")
             print("This includes adding classifiers for new tasks, changing the backbone, etc.")
             print("ALSO: some models CHANGE the backbone during initialization. Remember to call `torch.compile` again after that.")
             print("====================================================================")
@@ -289,7 +309,7 @@ def main(args=None):
                 raise Exception(f"torch.compile is not supported on Windows. Check https://github.com/pytorch/pytorch/issues/90768 for updates.")
 
     loss = dataset.get_loss()
-    model = get_model(args, backbone, loss, dataset.get_transform())
+    model = get_model(args, backbone, loss, dataset.get_transform(), dataset=dataset)
     assert isinstance(model, FutureModel) or not args.eval_future, "Model does not support future_forward."
 
     if args.distributed == 'dp':

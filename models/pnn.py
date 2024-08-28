@@ -34,10 +34,10 @@ class Pnn(ContinualModel):
         parser = ArgumentParser(description='Progressive Neural Networks')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         self.nets = [get_pnn_backbone(backbone).to(get_device())]
         backbone = self.nets[-1]
-        super(Pnn, self).__init__(backbone, loss, args, transform)
+        super(Pnn, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.x_shape = None
         self.soft = torch.nn.Softmax(dim=0)
         self.logsoft = torch.nn.LogSoftmax(dim=0)

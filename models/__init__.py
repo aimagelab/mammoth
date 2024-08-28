@@ -22,7 +22,7 @@ def get_all_models() -> List[dict]:
             if not model.find('__') > -1 and not os.path.isdir('models/' + model)}
 
 
-def get_model(args: Namespace, backbone: nn.Module, loss, transform) -> ContinualModel:
+def get_model(args: Namespace, backbone: nn.Module, loss, transform, dataset) -> ContinualModel:
     """
     Return the class of the selected continual model among those that are available.
     If an error was detected while loading the available datasets, it raises the appropriate error message.
@@ -32,6 +32,7 @@ def get_model(args: Namespace, backbone: nn.Module, loss, transform) -> Continua
         backbone (nn.Module): the backbone of the model
         loss: the loss function
         transform: the transform function
+        dataset: the instance of the dataset
 
     Exceptions:
         AssertError: if the model is not available
@@ -43,7 +44,7 @@ def get_model(args: Namespace, backbone: nn.Module, loss, transform) -> Continua
     model_name = args.model.replace('_', '-')
     names = get_model_names()
     assert model_name in names
-    return get_model_class(args)(backbone, loss, args, transform)
+    return get_model_class(args)(backbone, loss, args, transform, dataset)
 
 
 def get_model_class(args: Namespace) -> ContinualModel:

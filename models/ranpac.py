@@ -36,14 +36,14 @@ class RanPAC(ContinualModel):
         parser.add_argument('--rp_size', type=int, default=10000, help='size of the random projection layer (L in the paper)')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         self.device = get_device()
         print("-" * 20)
         print(f"WARNING: RanPAC USES `in21k` AS DEFAULT PRETRAIN. CHANGE IT WITH `--pretrain_type` IF NEEDED.")
         backbone = RanPAC_Model(backbone, args)
         print("-" * 20)
 
-        super().__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
     def get_parameters(self):
         return self.net._network.parameters()

@@ -40,7 +40,7 @@ class IncrementalCoopVAE(FutureModel):
 
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         args.n_epochs = 0
 
         if args.debug_mode:
@@ -48,8 +48,9 @@ class IncrementalCoopVAE(FutureModel):
             args.gr_mog_n_iters = 1
             args.gr_vae_n_iters = 10
 
-        backbone = Model(args, num_classes=get_dataset(args).N_CLASSES)
-        super().__init__(backbone, loss, args, transform)
+        tmp_dataset = get_dataset(args) if dataset is None else dataset
+        backbone = Model(args, num_classes=tmp_dataset.N_CLASSES)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
         # REMOVE ALL TRACK RUNNING STATS FROM CLIP
         for m in self.net.modules():

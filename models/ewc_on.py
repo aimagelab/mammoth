@@ -24,8 +24,8 @@ class EwcOn(ContinualModel):
                             help='gamma parameter for EWC online')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(EwcOn, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(EwcOn, self).__init__(backbone, loss, args, transform, dataset=dataset)
 
         self.logsoft = nn.LogSoftmax(dim=1)
         self.checkpoint = None

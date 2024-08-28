@@ -84,13 +84,13 @@ class CLIP(ContinualModel):
                             help='Whether to use prompt templates for CLIP. NOTE: Datasets NEED to have a `get_prompt_templates` method implemented.')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         backbone, clip_transform = clip.load(args.clip_backbone, device=get_device())
         n_epochs = 1 if args.save_predictions else 0
         if args.n_epochs != n_epochs:
             print(f"CLIP is a STATIC model, setting n_epochs to {n_epochs}")
             args.n_epochs = n_epochs
-        super().__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
         self.net = FinalModel(self.net, self.dataset, args)
         self.clip_transform = clip_transform

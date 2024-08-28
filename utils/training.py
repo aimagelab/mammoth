@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import numpy as np
 from copy import deepcopy
 import math
 import os
@@ -10,23 +11,26 @@ import sys
 from argparse import Namespace
 from time import time
 from typing import Iterable, Tuple
-
+import logging
 import torch
 from tqdm import tqdm
+
 from datasets import get_dataset
-from datasets.utils.continual_dataset import ContinualDataset
+from datasets.utils.continual_dataset import ContinualDataset, MammothDatasetWrapper
 from datasets.utils.gcl_dataset import GCLDataset
 from models.utils.continual_model import ContinualModel
 from models.utils.future_model import FutureModel
 
 from utils.checkpoints import mammoth_load_checkpoint
-from utils.loggers import *
+from utils.loggers import log_extra_metrics, log_accs, Logger
 from utils.stats import track_system_stats
 
 try:
     import wandb
 except ImportError:
     wandb = None
+
+_logger = logging.getLogger(__name__)
 
 
 def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> None:
@@ -138,6 +142,14 @@ def initialize_wandb(args: Namespace) -> None:
     args.wandb_url = wandb.run.get_url()
 
 
+def _to_device(name: str, x, device):
+    if isinstance(x, torch.Tensor):
+        if 'label' in name.lower() or 'target' in name.lower():
+            return x.to(device, dtype=torch.long)
+        return x.to(device)
+    return x
+
+
 def train_single_epoch(model: ContinualModel,
                        train_loader: Iterable,
                        args: Namespace,
@@ -185,7 +197,8 @@ def train_single_epoch(model: ContinualModel,
         not_aug_inputs = not_aug_inputs.to(model.device)
 
         extra_fields = {
-            train_loader.dataset.extra_return_fields[k]: data[3 + k] for k in range(len(data) - 3)
+            train_loader.dataset.extra_return_fields[k]: _to_device(train_loader.dataset.extra_return_fields[k], data[3 + k], model.device)
+            for k in range(len(data) - 3)
         }
 
         loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch, **extra_fields)
@@ -225,6 +238,10 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     """
     print(args)
 
+    is_fwd_enabled = True
+    can_compute_fwd_beforetask = True
+    random_results_class, random_results_task = [], []
+
     if not args.nowand:
         initialize_wandb(args)
 
@@ -255,14 +272,6 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             print('Checkpoint Loaded!')
 
-        if args.enable_other_metrics:
-            dataset_copy = get_dataset(args)
-            for t in range(dataset.N_TASKS):
-                model.net.train()
-                _, _ = dataset_copy.get_data_loaders()
-            if model.NAME != 'icarl' and model.NAME != 'pnn':
-                random_results_class, random_results_task = evaluate(model, dataset_copy)
-
         print(file=sys.stderr)
         start_task = 0 if args.start_from is None else args.start_from
         end_task = dataset.N_TASKS if args.stop_after is None else args.stop_after
@@ -282,7 +291,36 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             model.net.train()
             train_loader, _ = dataset.get_data_loaders()
 
+            if not issubclass(dataset.__class__, GCLDataset):
+                assert issubclass(train_loader.dataset.__class__, MammothDatasetWrapper), "Dataset must be an instance of MammothDatasetWrapper (did you forget to call the `store_masked_loaders`?)"
+
+            if can_compute_fwd_beforetask and is_fwd_enabled and args.enable_other_metrics:
+                # try to compute accuracy at the beginning of the task
+                try:
+                    _logger.info("Evaluating model before task (for Forward Transfer metric)...")
+                    random_res_class, random_res_task = evaluate(model, dataset, last=True)
+                    random_results_class.append(random_res_class)
+                    random_results_task.append(random_res_task)
+                except Exception as e:
+                    _logger.info(f"Could not evaluate before `begin_task`, will try after")
+                    # will try after the begin_task in case the model needs to setup something
+                    can_compute_fwd_beforetask = False
+
             model.meta_begin_task(dataset)
+
+            if not can_compute_fwd_beforetask and is_fwd_enabled and args.enable_other_metrics:
+                if train_loader.dataset.num_times_iterated == 0:  # compute only if the model has not been trained yet
+                    try:
+                        _logger.info("Evaluating model before task (for Forward Transfer metric)...")
+                        random_res_class, random_res_task = evaluate(model, dataset, last=True)
+                        random_results_class.append(random_res_class)
+                        random_results_task.append(random_res_task)
+                    except Exception as e:
+                        _logger.error(f"Model `{model.NAME}` does not support pre-evaluation, will not compute Forward Transfer metric\n{e}")
+                        is_fwd_enabled = False
+                else:
+                    _logger.info("Model used the training data, skipping Forward Transfer metric compute")
+                    is_fwd_enabled = False
 
             if not args.inference_only and args.n_epochs > 0:
                 if t and args.enable_other_metrics:
@@ -396,12 +434,17 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             log_accs(args, logger, accs, 'final', final_dataset.SETTING, prefix="FINAL")
 
-        if not args.disable_log and args.enable_other_metrics:
-            logger.add_bwt(results, results_mask_classes)
-            logger.add_forgetting(results, results_mask_classes)
-            if model.NAME != 'icarl' and model.NAME != 'pnn':
-                logger.add_fwt(results, random_results_class,
-                               results_mask_classes, random_results_task)
+        if args.enable_other_metrics:
+            bwt, bwt_mask_class = logger.add_bwt(results, results_mask_classes)
+            log_extra_metrics(args, bwt, bwt_mask_class, 'Backward Transfer', t)
+            forgetting, forgetting_mask_class = logger.add_forgetting(results, results_mask_classes)
+            log_extra_metrics(args, forgetting, forgetting_mask_class, 'Forgetting', t)
+            if is_fwd_enabled:
+                fwt, fwt_mask_class = logger.add_fwt(results, random_results_class,
+                                                     results_mask_classes, random_results_task)
+                log_extra_metrics(args, fwt, fwt_mask_class, 'Forward Transfer', t)
+            else:
+                _logger.warning("Forward Transfer metric incompatible with the current model, skipped.")
 
         system_tracker.print_stats()
 

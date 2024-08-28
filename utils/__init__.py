@@ -1,6 +1,20 @@
 import os
+import sys
 import string
 import random
+import logging
+
+
+def setup_logging():
+    """
+    Configures the logging module.
+    """
+
+    # check if logging has already been configured
+    if hasattr(setup_logging, 'done'):
+        return
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='[%(levelname)] %(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+    setattr(setup_logging, 'done', True)
 
 
 def binary_to_boolean_type(value: str) -> bool:

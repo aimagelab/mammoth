@@ -98,9 +98,9 @@ class Gem(ContinualModel):
                             help='Margin parameter for GEM.')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         assert solver is not None, 'GEM requires quadprog (linux only, python <= 3.10) or qpsolvers (cross-platform)'
-        super(Gem, self).__init__(backbone, loss, args, transform)
+        super(Gem, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
 
         # Allocate temporary synaptic memory
