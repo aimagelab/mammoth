@@ -83,7 +83,7 @@ Mammoth currently supports **more than 40** models, with new releases covering t
 
 **NOTE**: Datasets are automatically downloaded in `data/`.
 - This can be changed by changing the `base_path` function in `utils/conf.py` or using the `--base_path` argument.
-- The `data/` folder should not be tracked by git and is craeted automatically if missing.
+- The `data/` folder should not be tracked by git and is created automatically if missing.
 
 Mammoth currently includes **21** datasets, covering *toy classification problems* (different versions of MNIST), *standard domains* (CIFAR, Imagenet-R, TinyImagenet, MIT-67), *fine-grained classification domains* (Cars-196, CUB-200), *aerial domains* (EuroSAT-RGB, Resisc45), *medical domains* (CropDisease, ISIC, ChestX).
 
