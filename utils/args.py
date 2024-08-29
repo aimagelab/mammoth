@@ -314,20 +314,6 @@ def check_multiple_defined_arg_during_string_parse() -> None:
         keys.add(arg_name)
 
 
-def fix_argparse_default_priority(parser: ArgumentParser) -> None:
-    """
-    Fix the priority of the default of the arguments, where the value set by the `set_defaults` method is ignored if the argument is set afterwards.
-    (see `https://bugs.python.org/issue23814` for more details).
-    """
-
-    set_defaults_args = parser._defaults
-
-    for action in parser._actions:
-        if action.dest in set_defaults_args:
-            action.default = set_defaults_args[action.dest]
-            action.required = False
-
-
 class _DocsArgs:
     """
     This class is used to generate the documentation of the arguments.
