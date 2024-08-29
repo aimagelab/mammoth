@@ -123,7 +123,7 @@ class Prompter(torch.nn.Module):
                 loss.backward()
                 optim.step()
 
-                pbar.set_postfix({'loss': loss.item()})
+                pbar.set_postfix({'loss': loss.item()}, refresh=False)
 
                 if not self.args.nowand:
                     assert wandb is not None, "wandb is not installed."

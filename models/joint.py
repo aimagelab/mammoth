@@ -48,7 +48,7 @@ class Joint(ContinualModel):
 
         with tqdm(total=self.args.n_epochs * len(dataloader)) as pbar:
             for e in range(self.args.n_epochs):
-                pbar.set_description(f"Joint - Epoch {e}")
+                pbar.set_description(f"Joint - Epoch {e}", refresh=False)
                 for i, (inputs, labels) in enumerate(dataloader):
                     if self.args.debug_mode and i > self.get_debug_iters():
                         break
@@ -59,7 +59,7 @@ class Joint(ContinualModel):
                     loss.backward()
                     self.opt.step()
                     pbar.update(bs)
-                    pbar.set_postfix({'loss': loss.item()})
+                    pbar.set_postfix({'loss': loss.item()}, refresh=False)
 
             if scheduler is not None:
                 scheduler.step()

@@ -13,8 +13,40 @@ def setup_logging():
     # check if logging has already been configured
     if hasattr(setup_logging, 'done'):
         return
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='[%(levelname)s] %(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='[%(levelname)s] (%(filename)s) %(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
     setattr(setup_logging, 'done', True)
+
+
+def field_with_aliases(choices: dict) -> str:
+    """
+    Build a data type where for each key in `choices` there are a set of aliases.
+
+    Example:
+        Given the following dictionary:
+        ```
+        choices = {
+            'a': ['a', 'alpha'],
+            'b': ['b', 'beta']
+        }
+        ```
+        The values 'a' and 'alpha' will be converted to 'a', and 'b' and 'beta' will be converted to 'b'.
+
+    Args:
+        choices: the dictionary containing the aliases
+
+    Returns:
+        the data type for argparse
+    """
+
+    def _parse_field(value: str) -> str:
+        if not isinstance(value, str):
+            value = str(value)
+
+        for key, aliases in choices.items():
+            if value in aliases:
+                return key
+        raise ValueError(f'Value `{value}` does not match the provided choices `{choices}`')
+    return _parse_field
 
 
 def binary_to_boolean_type(value: str) -> bool:

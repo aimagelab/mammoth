@@ -17,7 +17,7 @@ from backbone import REGISTERED_BACKBONES
 from datasets import get_dataset_names, get_dataset_config_names
 from models import get_all_models
 from models.utils.continual_model import ContinualModel
-from utils import binary_to_boolean_type, custom_str_underscore
+from utils import binary_to_boolean_type, custom_str_underscore, field_with_aliases
 
 
 def build_parsable_args(parser: ArgumentParser, spec: dict) -> None:
@@ -182,8 +182,11 @@ def add_experiment_args(parser: ArgumentParser) -> None:
 
     noise_group = parser.add_argument_group('Noise arguments', 'Arguments used to define the noisy-label settings.')
 
-    noise_group.add_argument('--noise_type', type=str, choices=['symmetric', 'asymmetric'], default='symmetric',
-                             help='Type of noise to apply. The symmetric type is supported by all datasets, while the asymmetric must be supported explicitly by the dataset (see `datasets/utils/label_noise`).')
+    noise_group.add_argument('--noise_type', type=field_with_aliases({
+        'symmetric': ['symmetric', 'sym'],
+        'asymmetric': ['asymmetric', 'asym']
+    }), choices=['symmetric', 'asymmetric'], default='symmetric',
+        help='Type of noise to apply. The symmetric type is supported by all datasets, while the asymmetric must be supported explicitly by the dataset (see `datasets/utils/label_noise`).')
     noise_group.add_argument('--noise_rate', type=float, default=0,
                              help='Noise rate in [0-1].')
     noise_group.add_argument('--disable_noisy_labels_cache', type=binary_to_boolean_type, default=0,

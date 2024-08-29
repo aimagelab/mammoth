@@ -164,7 +164,7 @@ class STARPromptModel(nn.Module):
                 if not self.args.nowand:
                     assert wandb is not None, "wandb is not installed."
                     wandb.log({'ca_loss_second_stage': loss.item(), 'ca_lr_second_stage': optim.param_groups[0]['lr']})
-                pbar.set_postfix({'loss': loss.item()})
+                pbar.set_postfix({'loss': loss.item()}, refresh=False)
 
     def align(self, current_task: int, n_seen_classes: int, loss_fn):
 
@@ -300,7 +300,7 @@ class STARPromptModel(nn.Module):
                                    'first_stage_iteration': i})
 
                     pbar.update(1)
-                    pbar.set_postfix({'loss': loss.item()})
+                    pbar.set_postfix({'loss': loss.item()}, refresh=False)
 
         # END-TASK
         opt.zero_grad(set_to_none=True)

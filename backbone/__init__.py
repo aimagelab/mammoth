@@ -4,6 +4,7 @@ import inspect
 import os
 import math
 
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -107,10 +108,7 @@ class MammothBackbone(nn.Module):
         Returns:
             parameters tensor
         """
-        params = []
-        for pp in list(self.parameters()):
-            params.append(pp.view(-1))
-        return torch.cat(params)
+        return torch.nn.utils.parameters_to_vector(self.parameters())
 
     def set_params(self, new_params: torch.Tensor) -> None:
         """
@@ -119,13 +117,7 @@ class MammothBackbone(nn.Module):
         Args:
             new_params: concatenated values to be set
         """
-        assert new_params.size() == self.get_params().size()
-        progress = 0
-        for pp in list(self.parameters()):
-            cand_params = new_params[progress: progress +
-                                     torch.tensor(pp.size()).prod()].view(pp.size())
-            progress += torch.tensor(pp.size()).prod()
-            pp.data = cand_params
+        torch.nn.utils.vector_to_parameters(new_params, self.parameters())
 
     def get_grads(self) -> torch.Tensor:
         """

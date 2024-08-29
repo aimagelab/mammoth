@@ -35,6 +35,7 @@ import kornia
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from backbone import MammothBackbone
 from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
 
@@ -59,7 +60,7 @@ class ContinualModel(nn.Module):
 
     args: Namespace  # The command line arguments
     device: torch.device  # The device to be used for training
-    net: nn.Module  # The backbone of the model (defined by the `dataset`)
+    net: MammothBackbone  # The backbone of the model (defined by the `dataset`)
     loss: nn.Module  # The loss function to be used (defined by the `dataset`)
     opt: optim.Optimizer  # The optimizer to be used for training
     scheduler: optim.lr_scheduler._LRScheduler  # (optional) The scheduler for the optimizer. If defined, it will overwrite the one defined in the `dataset`
@@ -302,6 +303,25 @@ class ContinualModel(nn.Module):
         """
         Prepares the model for the next task.
         Executed after each task.
+        """
+        pass
+
+    def begin_epoch(self, epoch: int, dataset: ContinualDataset) -> None:
+        """
+        Prepares the model for the current epoch.
+        """
+        pass
+
+    def end_task(self, dataset: ContinualDataset) -> None:
+        """
+        Prepares the model for the next task.
+        Executed after each task.
+        """
+        pass
+
+    def end_epoch(self, epoch: int, dataset: ContinualDataset) -> None:
+        """
+        Prepares the model for the next epoch.
         """
         pass
 

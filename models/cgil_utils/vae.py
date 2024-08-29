@@ -138,7 +138,7 @@ class VariationalAutoEncoder(nn.Module):
                     loss = self.elbo(batch, predicted, z_mu, z_logvar) / len(batch)
                     loss.backward()
                     optimizer.step()
-                    t.set_postfix(loss=loss.item(), lr=optimizer.param_groups[0]['lr'])
+                    t.set_postfix(loss=loss.item(), lr=optimizer.param_groups[0]['lr'], refresh=False)
                 sched.step()
         self.eval()
 
