@@ -22,5 +22,5 @@ batch_size: 32
 backbone:
   type: resnet18
   args:
-    nclasses: 10
+    num_classes: 10
 n_epochs: 50

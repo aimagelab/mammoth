@@ -28,8 +28,4 @@ TEST_TRANSFORM:
       mean: [0.5071, 0.4867, 0.4408]
       std: [0.2675, 0.2565, 0.2761]
 batch_size: 128
-backbone:
-  type: vit
-  args:
-    nclasses: 100
 n_epochs: 20

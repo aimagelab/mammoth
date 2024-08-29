@@ -49,8 +49,8 @@ if __name__ == '__main__':
     except ImportError:
         warn_once("Warning: python-dotenv not installed. Ignoring .env file.")
 
-from utils.args import add_initial_args, add_management_args, add_experiment_args, add_post_parse_argparser, \
-    fix_argparse_default_priority, check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args
+from utils.args import add_initial_args, add_management_args, add_experiment_args, add_post_parse_argparser, clean_dynamic_args, \
+    check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args
 from utils.conf import base_path, get_device
 from utils.distributed import make_dp
 from utils.best_args import best_args
@@ -145,7 +145,6 @@ def parse_args():
         add_initial_args(parser)
         add_management_args(parser)
         add_experiment_args(parser)
-        fix_argparse_default_priority(parser)
         check_multiple_defined_arg_during_string_parse(parser)
         to_parse = sys.argv[1:] + ['--' + k + '=' + str(v) for k, v in best.items()]
         to_parse.remove('--load_best_args')
@@ -159,7 +158,6 @@ def parse_args():
 
         add_management_args(parser)
         add_experiment_args(parser)
-        fix_argparse_default_priority(parser)
         args = parser.parse_known_args()[0]
 
         # load args from dataset config
@@ -174,6 +172,7 @@ def parse_args():
         args = parser.parse_args()
 
     update_default_args_with_dataset_defaults(parser, args, dataset_config, strict=True)
+    args = clean_dynamic_args(args)
 
     args.model = models_dict[args.model]
 

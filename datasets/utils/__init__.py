@@ -15,6 +15,8 @@ from torchvision import transforms
 from utils import smart_joint
 from utils.conf import warn_once
 
+_logger = logging.getLogger('dataset/utils')
+
 # Default arguments defined by the datasets
 # The structure is {dataset_name: {arg_name: default_value}}
 DEFAULT_ARGS = {}
@@ -110,7 +112,8 @@ def update_default_args_with_dataset_defaults(parser: ArgumentParser, args: Name
 
     .. note::
 
-        The configuration defined in the configuration file has the highest priority.
+        The command line arguments have the highest priority. Then the dataset configuration file, and finally the
+        default values defined in the dataset class.
 
     Args:
         parser (ArgumentParser): the instance to the argument parser to get metadata about the arguments
@@ -131,12 +134,14 @@ def update_default_args_with_dataset_defaults(parser: ArgumentParser, args: Name
             else:
                 continue
 
-        v = dataset_config.get(k, v)
-        v = _clean_value(v, action_keys[k])
+        cmd_v = getattr(args, k)
+        if cmd_v is None or (action_keys[k].nargs is not None and isinstance(cmd_v, (list, tuple)) and cmd_v == []):  # no command line argument is provided, try the default
+            v = dataset_config.get(k, v)  # use the dataset configuration if available, else use the default set by `set_default_from_args`
+            v = _clean_value(v, action_keys[k])
 
-        if getattr(args, k) is not None and getattr(args, k) != v:
-            logging.info('{} set to {} instead of {}.'.format(k, getattr(args, k), v))
-        setattr(args, k, v)
+            if cmd_v != v:
+                _logger.info('{} set to {} instead of {}.'.format(k, getattr(args, k), v))
+            setattr(args, k, v)
 
 
 def load_config(args: Namespace) -> dict:

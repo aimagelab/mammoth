@@ -13,6 +13,8 @@ except ImportError:
 from models.utils.continual_model import ContinualModel
 from models.star_prompt_utils.first_stage_model import Model
 
+_logger = logging.getLogger('models/first_stage_starprompt')
+
 
 class FirstStageStarprompt(ContinualModel):
     NAME = 'first_stage_starprompt'
@@ -63,7 +65,7 @@ class FirstStageStarprompt(ContinualModel):
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
-        logging.warning("The first stage of STAR-Prompt ignores the backbone as it uses CLIP")
+        _logger.info("The first stage of STAR-Prompt ignores the backbone as it uses CLIP")
         del backbone
 
         super().__init__(None, loss, args, transform, dataset=dataset)

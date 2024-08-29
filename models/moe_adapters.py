@@ -14,6 +14,8 @@ from datasets.utils.continual_dataset import ContinualDataset
 from models.utils.future_model import FutureModel
 from utils.schedulers import CosineSchedulerWithLinearWarmup
 
+_logger = logging.getLogger('models/moe_adapters')
+
 
 class Model(torch.nn.Module):
     def __init__(self, args, dataset: ContinualDataset, device='cpu') -> None:
@@ -71,12 +73,12 @@ class MoEAdapters(FutureModel):
         assert args.lr_scheduler is None, "MoE Adapters does not require a learning rate scheduler and will use a custom one."
 
         if args.optimizer != 'adamw':
-            logging.warning("MoE Adapters should use AdamW optimizer.")
+            _logger.warning("MoE Adapters should use AdamW optimizer.")
 
-        logging.info("MoE Adapters redefines the tokenizer of CLIP. Check out the changes in models/moe_adapters_utils/tokenizer.py .")
+        _logger.info("MoE Adapters redefines the tokenizer of CLIP. Check out the changes in models/moe_adapters_utils/tokenizer.py .")
 
         del backbone
-        logging.info("MoE Adapters will override the backbone model.")
+        _logger.info("MoE Adapters will override the backbone model.")
         super().__init__(None, loss, args, transform, dataset=dataset)
         self.net = Model(args, self.dataset, device=self.device)
         self.opt = self.get_optimizer()

@@ -1,0 +1,2 @@
+batch_size: 5
+n_epochs: 20

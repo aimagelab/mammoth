@@ -68,7 +68,7 @@ from utils.conf import warn_once
 
 __all__ = ['VisionTransformer']  # model_registry will add each entrypoint fn to this
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger('backbone/vit')
 
 
 class Mlp(TimmMlp):
@@ -678,7 +678,7 @@ def vit_base_patch16_224_prompt_prototype(pretrained=False, pretrain_type='in21k
     """
     assert pretrain_type in ['in21k', 'in21k_old', 'in21k-ft-in1k'], f"Invalid pretrain_type: {pretrain_type}"
     if not pretrained:
-        logging.warning("creating a ViT without pre-trained weights. This is not recommended.")
+        _logger.warning("creating a ViT without pre-trained weights. This is not recommended.")
 
     model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12)
     if kwargs is None:

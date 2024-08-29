@@ -151,7 +151,7 @@ class SequentialCIFAR100(ContinualDataset):
 
     @set_default_from_args('lr_scheduler')
     def get_scheduler_name(self):
-        return 'multistep'
+        return 'multisteplr'
 
     @set_default_from_args('lr_milestones')
     def get_scheduler_name(self):

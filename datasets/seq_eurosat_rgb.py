@@ -25,6 +25,8 @@ from datasets.transforms.denormalization import DeNormalize
 from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
 
+_logger = logging.getLogger('datasets/seq_eurosat_rgb')
+
 
 class MyEuroSat(Dataset):
 
@@ -145,7 +147,7 @@ class SequentialEuroSatRgb(ContinualDataset):
         try:
             classes = MyEuroSat.get_class_names()
         except BaseException:
-            logging.warning("dataset not loaded yet -- loading dataset...")
+            _logger.info("dataset not loaded yet -- loading dataset...")
             MyEuroSat(base_path() + 'eurosat', train=True,
                                     transform=None)
             classes = MyEuroSat.get_class_names()

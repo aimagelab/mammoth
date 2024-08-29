@@ -13,6 +13,8 @@ import torch.nn.functional as F
 
 from utils.kornia_utils import KorniaMultiAug
 
+_logger = logging.getLogger('models/twf')
+
 
 def batch_iterate(size: int, batch_size: int):
     n_chunks = size // batch_size
@@ -57,13 +59,13 @@ class TwF(ContinualModel):
         self.buf_transform = self.get_custom_double_transform(self.original_transform.transforms)
 
         if self.args.loadcheck is None:
-            logging.warning("no checkpoint loaded!")
+            _logger.warning("no checkpoint loaded!")
 
         if self.args.lambda_fp_replay == 0:
-            logging.warning('lambda_fp_replay is 0, so no replay of attention masks will be used')
+            _logger.warning('lambda_fp_replay is 0, so no replay of attention masks will be used')
 
         if self.args.lambda_diverse_loss == 0:
-            logging.warning('lambda_diverse_loss is 0, so no diverse loss will be used')
+            _logger.warning('lambda_diverse_loss is 0, so no diverse loss will be used')
 
     def get_custom_double_transform(self, transform):
         tfs = []

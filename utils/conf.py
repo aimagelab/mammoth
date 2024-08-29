@@ -97,10 +97,10 @@ def get_device(avail_devices: str = None) -> torch.device:
             return device
         try:
             if torch.backends.mps.is_available() and torch.backends.mps.is_built():
-                logging.warning("MSP support is still experimental. Use at your own risk!")
+                _logger.warning("MSP support is still experimental. Use at your own risk!")
                 return torch.device("mps")
         except BaseException:
-            logging.error("Something went wrong with MPS. Using CPU.")
+            _logger.error("Something went wrong with MPS. Using CPU.")
 
         return torch.device("cpu")
 

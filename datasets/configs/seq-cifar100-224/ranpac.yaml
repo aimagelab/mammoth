@@ -26,8 +26,4 @@ TEST_TRANSFORM:
       mean: [0, 0, 0]
       std: [1, 1, 1]
 batch_size: 48
-backbone:
-  type: vit
-  args:
-    nclasses: 100
 n_epochs: 20

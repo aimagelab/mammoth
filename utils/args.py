@@ -19,6 +19,8 @@ from models import get_all_models
 from models.utils.continual_model import ContinualModel
 from utils import binary_to_boolean_type, custom_str_underscore, field_with_aliases
 
+_logger = logging.getLogger('utils/args')
+
 
 def build_parsable_args(parser: ArgumentParser, spec: dict) -> None:
     """
@@ -49,7 +51,7 @@ def build_parsable_args(parser: ArgumentParser, spec: dict) -> None:
     for name, arg_spec in spec.items():
         # check if the argument is already defined in the parser
         if any([action.dest == name for action in parser._actions]):
-            logging.warn(f"Argument `{name}` is already defined in the parser. Skipping...")
+            _logger.warn(f"Argument `{name}` is already defined in the parser. Skipping...")
             continue
 
         if isinstance(arg_spec, dict):
@@ -59,13 +61,26 @@ def build_parsable_args(parser: ArgumentParser, spec: dict) -> None:
             arg_help = arg_spec.get('help', '')
             arg_required = arg_spec.get('required', False)
         else:
-            arg_type = str
-            arg_default = arg_spec
             arg_choices = None
             arg_help = ''
-            arg_required = arg_spec is Parameter.empty
+            arg_type = type(arg_spec)
+            arg_default = arg_spec
+            arg_required = False
 
         parser.add_argument(f'--{name}', type=arg_type, default=arg_default, choices=arg_choices, help=arg_help, required=arg_required)
+
+
+def clean_dynamic_args(args: Namespace) -> Namespace:
+    """
+    Extracts the registered name from the dictionary arguments.
+    """
+    if isinstance(args.backbone, dict):
+        args.backbone = args.backbone['type']
+    if isinstance(args.model, dict):
+        args.model = args.model['type']
+    if isinstance(args.dataset, dict):
+        args.dataset = args.dataset['type']
+    return args
 
 
 def add_dynamic_parsable_args(parser: ArgumentParser, args: Namespace) -> None:
@@ -74,7 +89,15 @@ def add_dynamic_parsable_args(parser: ArgumentParser, args: Namespace) -> None:
     """
 
     bk_group = parser.add_argument_group('Backbone arguments', 'Arguments used to define the backbone network.')
-    build_parsable_args(bk_group, REGISTERED_BACKBONES[args.backbone]['parsable_args'])
+    if isinstance(args.backbone, dict):
+        assert 'type' in args.backbone, "The backbone `type` (i.e., the registered name) must be defined in the dictionary."
+        bk_name = args.backbone['type']
+        bk_args = {**REGISTERED_BACKBONES[bk_name]['parsable_args'], **args.backbone['args']}
+        args.backbone = bk_name
+    else:
+        bk_args = REGISTERED_BACKBONES[args.backbone]['parsable_args']
+    build_parsable_args(bk_group, bk_args)
+
     # build_parsable_args(parser, get_dataset_names())
     # build_parsable_args(parser, get_all_models())
 
