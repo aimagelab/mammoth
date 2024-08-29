@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import numpy as np
-from copy import deepcopy
+import copy
 import math
 import os
 import sys
@@ -23,6 +23,7 @@ from models.utils.future_model import FutureModel
 
 from utils.checkpoints import mammoth_load_checkpoint
 from utils.loggers import log_extra_metrics, log_accs, Logger
+from utils.schedulers import get_scheduler
 from utils.stats import track_system_stats
 
 try:
@@ -73,6 +74,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, retur
     loss_fn = dataset.get_loss()
     avg_loss = 0
     total_len = sum(len(x) for x in dataset.test_loaders) if hasattr(dataset.test_loaders[0], '__len__') else None
+
     pbar = tqdm(dataset.test_loaders, total=total_len, desc='Evaluating', disable=model.args.non_verbose)
     for k, test_loader in enumerate(dataset.test_loaders):
         if last and k < len(dataset.test_loaders) - 1:
@@ -105,8 +107,8 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, retur
             correct += torch.sum(pred == labels).item()
             total += labels.shape[0]
             i += 1
-            pbar.set_postfix({f'acc_task_{k+1}': max(0, correct / total * 100)})
-            pbar.set_description(f"Evaluating Task {k+1}")
+            pbar.set_postfix({f'acc_task_{k+1}': max(0, correct / total * 100)}, refresh=False)
+            pbar.set_description(f"Evaluating Task {k+1}", refresh=False)
             pbar.update(1)
 
             if dataset.SETTING == 'class-il':
@@ -179,9 +181,10 @@ def train_single_epoch(model: ContinualModel,
     i = 0
     previous_time = time()
 
+    mininterval = 0.5 if data_len is not None and data_len > 1000 else 0.1
     pbar = tqdm(train_iter, total=data_len,
                 desc=f"Task {current_task + 1} - Epoch {epoch + 1}",
-                disable=args.non_verbose)
+                disable=args.non_verbose, mininterval=mininterval)
     while True:
         try:
             data = next(train_iter)
@@ -219,7 +222,7 @@ def train_single_epoch(model: ContinualModel,
         if data_len:
             ep_h = 3600 / (data_len * time_diff)
             bar_log['ep/h'] = ep_h
-        pbar.set_postfix(bar_log)
+        pbar.set_postfix(bar_log, refresh=False)
         pbar.update()
 
     if scheduler is not None and args.scheduler_mode == 'epoch':
@@ -329,7 +332,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     if dataset.SETTING == 'class-il':
                         results_mask_classes[t - 1] = results_mask_classes[t - 1] + accs[1]
 
-                scheduler = dataset.get_scheduler(model, args, reload_optim=True) if not hasattr(model, 'scheduler') else model.scheduler
+                scheduler = get_scheduler(model, args, reload_optim=True) if not hasattr(model, 'scheduler') else model.scheduler
 
                 epoch = 0
                 best_ea_metric = None
@@ -340,8 +343,12 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     if not isinstance(dataset, GCLDataset):
                         data_len = len(train_loader)
 
+                    model.begin_epoch(epoch, dataset)
+
                     train_single_epoch(model, train_loader, args, current_task=t, epoch=epoch,
                                        system_tracker=system_tracker, data_len=data_len, scheduler=scheduler)
+
+                    model.end_epoch(epoch, dataset)
 
                     epoch += 1
                     if args.fitting_mode == 'epochs' and epoch >= model.args.n_epochs:
@@ -371,7 +378,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                             print(f"\nFound better model with metric {abs(ea_metric)} at epoch {epoch}. "
                                   f"Previous value was {abs(best_ea_metric) if best_ea_metric is not None else 'None'}", file=sys.stderr)
                             best_ea_metric = ea_metric
-                            best_ea_model = deepcopy({k: v.cpu() for k, v in model.state_dict().items()})
+                            best_ea_model = copy.deepcopy({k: v.cpu() for k, v in model.state_dict().items()})
                             cur_stopping_patience = args.early_stopping_patience
 
                     if args.eval_epochs is not None and (epoch > 0 or args.eval_epochs) and epoch % args.eval_epochs == 0 and epoch < model.args.n_epochs:
@@ -409,7 +416,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     'scheduler': scheduler.state_dict() if scheduler is not None else None,
                 }
                 if 'buffer_size' in model.args:
-                    save_obj['buffer'] = deepcopy(model.buffer).to('cpu')
+                    save_obj['buffer'] = copy.deepcopy(model.buffer).to('cpu')
 
                 # Saving model checkpoint for the current task
                 checkpoint_name = None

@@ -2,7 +2,7 @@
 This package contains utility functions used by all datasets, including the base dataset class (ContinualDataset).
 """
 
-from argparse import Namespace
+from argparse import ArgumentParser, Namespace
 import functools
 import inspect
 import logging
@@ -68,18 +68,61 @@ def set_default_from_args(arg_name: str):
     return decorator_set_default_from_args
 
 
-def update_args_with_dataset_defaults(args: Namespace, strict=True):
+def _clean_value(value, argparse_action):
     """
-    Updates the default arguments with the ones specified in the dataset class.
+    - Converts the value to a list if it is defined with 'nargs' in the argparse action. Can split values by space or comma.
+    - Converts the values 'None', 'True', and 'False' to their respective python values.
+    """
+    if argparse_action.nargs is not None and not isinstance(value, (list, tuple)):
+        if isinstance(value, str):
+            try:
+                value = eval(value)  # check if the value is parsable e.g. '[1, 2, 3]'
+            except BaseException:
+                if ' ' in value:  # split by space
+                    value = [v.strip() for v in value.split()]
+                elif ',' in value:  # split by comma
+                    value = [v.strip() for v in value.split(',')]
+                else:
+                    value = [value.strip()]
+            if argparse_action.nargs == '?' and len(value) == 1:
+                value = value[0]
+
+    def _to_python_value(v):
+        if not isinstance(v, str):
+            return v
+        if v == 'None':
+            return None
+        if v == 'True':
+            return True
+        if v == 'False':
+            return False
+        return v
+
+    if isinstance(value, (list, tuple)):
+        return [_to_python_value(v) for v in value]
+    return _to_python_value(value)
+
+
+def update_default_args_with_dataset_defaults(parser: ArgumentParser, args: Namespace, dataset_config: dict, strict=True):
+    """
+    Updates the default arguments with the ones specified in the dataset class and the configuration file.
     Default arguments are defined in the DEFAULT_ARGS dictionary and set by the 'set_default_from_args' decorator.
 
+    .. note::
+
+        The configuration defined in the configuration file has the highest priority.
+
     Args:
+        parser (ArgumentParser): the instance to the argument parser to get metadata about the arguments
         args (Namespace): the arguments to update
+        dataset_config (dict): the configuration of the dataset, loaded from the .yaml configuration file
         strict (bool): if True, raises a warning if the argument is not present in the arguments
     """
 
     if args.dataset not in DEFAULT_ARGS:  # no default args for this dataset
         return
+
+    action_keys = {a.dest: a for a in parser._actions}
 
     for k, v in DEFAULT_ARGS[args.dataset].items():
         if not hasattr(args, k):
@@ -88,11 +131,12 @@ def update_args_with_dataset_defaults(args: Namespace, strict=True):
             else:
                 continue
 
-        if getattr(args, k) is None:
-            setattr(args, k, v)
-        else:
-            if getattr(args, k) != v:
-                logging.info('{} set to {} instead of {}.'.format(k, getattr(args, k), v))
+        v = dataset_config.get(k, v)
+        v = _clean_value(v, action_keys[k])
+
+        if getattr(args, k) is not None and getattr(args, k) != v:
+            logging.info('{} set to {} instead of {}.'.format(k, getattr(args, k), v))
+        setattr(args, k, v)
 
 
 def load_config(args: Namespace) -> dict:

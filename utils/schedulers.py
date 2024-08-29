@@ -1,7 +1,38 @@
+from argparse import Namespace
 import math
 import numpy as np
+import torch
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import _LRScheduler
+import torch.optim.lr_scheduler as scheds
+
+from datasets.utils.continual_dataset import ContinualDataset
+from models.utils.continual_model import ContinualModel
+
+
+def get_scheduler(model: ContinualModel, args: Namespace, reload_optim=True) -> torch.optim.lr_scheduler._LRScheduler:
+    """
+    Returns the scheduler to be used for the current dataset.
+    If `reload_optim` is True, the optimizer is reloaded from the model. This should be done at least ONCE every task
+    to ensure that the learning rate is reset to the initial value.
+    """
+    if args.lr_scheduler is not None:
+        if reload_optim or not hasattr(model, 'opt'):
+            model.opt = model.get_optimizer()
+        # check if lr_scheduler is in torch.optim.lr_scheduler
+        supported_scheds = {sched_name.lower(): sched_name for sched_name in dir(scheds) if sched_name.lower() in ContinualDataset.AVAIL_SCHEDS}
+        sched = None
+        if args.lr_scheduler.lower() in supported_scheds:
+            if args.lr_scheduler.lower() == 'multisteplr':
+                assert args.lr_milestones is not None, 'MultiStepLR requires `--lr_milestones`'
+                sched = getattr(scheds, supported_scheds[args.lr_scheduler.lower()])(model.opt,
+                                                                                     milestones=args.lr_milestones,
+                                                                                     gamma=args.sched_multistep_lr_gamma)
+
+        if sched is None:
+            raise ValueError('Unknown scheduler: {}'.format(args.lr_scheduler))
+        return sched
+    return None
 
 
 class CosineSchedule(_LRScheduler):

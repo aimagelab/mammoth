@@ -108,7 +108,7 @@ def parse_args():
 
     from models import get_all_models, get_model_class
     from datasets import get_dataset_class
-    from datasets.utils import load_config, update_args_with_dataset_defaults
+    from datasets.utils import load_config, update_default_args_with_dataset_defaults
 
     parser = ArgumentParser(description='mammoth', allow_abbrev=False, add_help=False)
     add_initial_args(parser)
@@ -167,13 +167,13 @@ def parse_args():
         dataset_class = get_dataset_class(args)
         dataset_class.set_default_from_config(dataset_config, parser)
 
-        update_args_with_dataset_defaults(args, strict=False)
+        update_default_args_with_dataset_defaults(parser, args, dataset_config, strict=False)
 
         # add dynamic args defined by the backbones, datasets, etc.
         add_dynamic_parsable_args(parser, args)
         args = parser.parse_args()
 
-    update_args_with_dataset_defaults(args, strict=True)
+    update_default_args_with_dataset_defaults(parser, args, dataset_config, strict=True)
 
     args.model = models_dict[args.model]
 

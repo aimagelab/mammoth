@@ -9,7 +9,6 @@ from typing import List, Optional, Tuple
 import torch
 import numpy as np
 import torch.nn as nn
-import torch.optim.lr_scheduler as scheds
 import torch.utils
 from torch.utils.data import DataLoader, Dataset
 
@@ -65,6 +64,17 @@ class MammothDatasetWrapper(Dataset, object):
 
     def __len__(self):
         return len(self.dataset)
+
+    def add_extra_return_field(self, field_name: str, field_value) -> None:
+        """
+        Adds an extra field to the dataset.
+
+        Args:
+            field_name (str): the name of the field
+            field_value: the value of the field
+        """
+        setattr(self, field_name, field_value)
+        self.extra_return_fields += (field_name,)
 
     def extend_return_items(self, ret_tuple: Tuple[torch.Tensor, int, torch.Tensor, Optional[torch.Tensor]],
                             index: int) -> Tuple[torch.Tensor, int, Optional[torch.Tensor], Tuple[Optional[torch.Tensor]]]:
@@ -271,31 +281,6 @@ class ContinualDataset(object):
         """Returns the transform used for denormalizing the current dataset."""
         raise NotImplementedError
 
-    @staticmethod
-    def get_scheduler(model, args: Namespace, reload_optim=True) -> torch.optim.lr_scheduler._LRScheduler:
-        """
-        Returns the scheduler to be used for the current dataset.
-        If `reload_optim` is True, the optimizer is reloaded from the model. This should be done at least ONCE every task
-        to ensure that the learning rate is reset to the initial value.
-        """
-        if args.lr_scheduler is not None:
-            if reload_optim or not hasattr(model, 'opt'):
-                model.opt = model.get_optimizer()
-            # check if lr_scheduler is in torch.optim.lr_scheduler
-            supported_scheds = {sched_name.lower(): sched_name for sched_name in dir(scheds) if sched_name.lower() in ContinualDataset.AVAIL_SCHEDS}
-            sched = None
-            if args.lr_scheduler.lower() in supported_scheds:
-                if args.lr_scheduler.lower() == 'multisteplr':
-                    assert args.lr_milestones is not None, 'MultiStepLR requires `--lr_milestones`'
-                    sched = getattr(scheds, supported_scheds[args.lr_scheduler.lower()])(model.opt,
-                                                                                         milestones=args.lr_milestones,
-                                                                                         gamma=args.sched_multistep_lr_gamma)
-
-            if sched is None:
-                raise ValueError('Unknown scheduler: {}'.format(args.lr_scheduler))
-            return sched
-        return None
-
     def get_iters(self):
         """Returns the number of iterations to be used for the current dataset."""
         raise NotImplementedError('The dataset does not implement the method `get_iters` to set the default number of iterations.')
@@ -407,10 +392,9 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
 
     # Apply noise to the labels
     if setting.args.noise_rate > 0:
+        train_dataset.add_extra_return_field('true_labels', train_dataset.targets.copy())  # save original targets before adding noise
         noisy_targets = build_noisy_labels(train_dataset.targets, setting.args)
-        train_dataset.true_labels = train_dataset.targets
-        train_dataset.targets = noisy_targets
-        train_dataset.extra_return_fields += ('true_labels',)
+        train_dataset.targets = noisy_targets  # overwrite the targets with the noisy ones
 
     # Split the dataset into tasks
     start_c, end_c = setting.get_offsets()
