@@ -3,6 +3,36 @@
 Arguments
 =========
 
+.. rubric:: MAIN MAMMOTH ARGS
+
+**\-\-dataset** : str
+	*Help*: Which dataset to perform experiments on.
+
+	- *Default*: ``None``
+	- *Choices*: ``seq-tinyimg, seq-mit67, seq-cars196, seq-cifar100-224-rs, seq-cifar100-224, seq-chestx, seq-cifar10-224-rs, mnist-360, seq-cropdisease, seq-eurosat-rgb, seq-imagenet-r, seq-cifar100, seq-cifar10-224, perm-mnist, seq-cub200, seq-cifar10, rot-mnist, seq-resisc45, seq-mnist, seq-cub200-rs, seq-isic, seq-tinyimg-r``
+
+**\-\-model** : str (with underscores replaced by dashes)
+	*Help*: Model name.
+
+	- *Default*: ``None``
+	- *Choices*: ``joint-gcl, second-stage-starprompt, lwf-mc, puridiver, gdumb-lider, joint, ewc-on, xder, ranpac, hal, er-ace-tricks, sgd, si, moe-adapters, first-stage-starprompt, er-ace-aer-abs, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, llava, attriclip, starprompt, coda-prompt, er-tricks, clip, pnn, er-ace, xder-ce, dualprompt, twf, mer, er-ace-lider, gdumb, dap, l2p, ccic, slca, agem-r, rpc, xder-rpc, gss, lwf, cgil, dai, er, agem``
+
+**\-\-backbone** : str (with underscores replaced by dashes)
+	*Help*: Backbone network name.
+
+	- *Default*: ``None``
+	- *Choices*: ``resnet18, resnet34, resnet50, resnet50_pt, mnistmlp, vit``
+
+**\-\-load_best_args** : unknown
+	*Help*: (deprecated) Loads the best arguments for each method, dataset and memory buffer. NOTE: This option is deprecated and not up to date.
+
+	- *Default*: ``False``
+
+**\-\-dataset_config** : str
+	*Help*: The configuration used for this dataset (e.g., number of tasks, transforms, backbone architecture, etc.).The available configurations are defined in the `datasets/config/<dataset>` folder.
+
+	- *Default*: ``None``
+
 .. rubric:: EXPERIMENT-RELATED ARGS
 
 .. rubric:: Experiment arguments
@@ -97,7 +127,7 @@ Arguments
 	*Help*: optimizer momentum.
 
 	- *Default*: ``0.0``
-**\-\-optim_nesterov** : binary_to_boolean_type
+**\-\-optim_nesterov** : 0|1|True|False -> bool
 	*Help*: optimizer nesterov momentum.
 
 	- *Default*: ``0``
@@ -123,7 +153,7 @@ Arguments
 
 *Arguments used to define the noisy-label settings.*
 
-**\-\-noise_type** : str
+**\-\-noise_type** : field with aliases (str)
 	*Help*: Type of noise to apply. The symmetric type is supported by all datasets, while the asymmetric must be supported explicitly by the dataset (see `datasets/utils/label_noise`).
 
 	- *Default*: ``symmetric``
@@ -132,7 +162,7 @@ Arguments
 	*Help*: Noise rate in [0-1].
 
 	- *Default*: ``0``
-**\-\-disable_noisy_labels_cache** : binary_to_boolean_type
+**\-\-disable_noisy_labels_cache** : 0|1|True|False -> bool
 	*Help*: Disable caching the noisy label targets? NOTE: if the seed is not set, the noisy labels will be different at each run with this option disabled.
 
 	- *Default*: ``0``
@@ -151,7 +181,7 @@ Arguments
 	*Help*: The random seed. If not provided, a random seed will be used.
 
 	- *Default*: ``None``
-**\-\-permute_classes** : binary_to_boolean_type
+**\-\-permute_classes** : 0|1|True|False -> bool
 	*Help*: Permute classes before splitting into tasks? This applies the seed before permuting if the `seed` argument is present.
 
 	- *Default*: ``0``
@@ -175,11 +205,11 @@ Arguments
 	*Help*: Perform inference on validation every `eval_epochs` epochs. If not provided, the model is evaluated ONLY at the end of each task.
 
 	- *Default*: ``None``
-**\-\-non_verbose** : binary_to_boolean_type
+**\-\-non_verbose** : 0|1|True|False -> bool
 	*Help*: Make progress bars non verbose
 
 	- *Default*: ``0``
-**\-\-disable_log** : binary_to_boolean_type
+**\-\-disable_log** : 0|1|True|False -> bool
 	*Help*: Disable logging?
 
 	- *Default*: ``0``
@@ -187,15 +217,15 @@ Arguments
 	*Help*: Number of workers for the dataloaders (default=infer from number of cpus).
 
 	- *Default*: ``None``
-**\-\-enable_other_metrics** : binary_to_boolean_type
+**\-\-enable_other_metrics** : 0|1|True|False -> bool
 	*Help*: Enable computing additional metrics: forward and backward transfer.
 
 	- *Default*: ``0``
-**\-\-debug_mode** : binary_to_boolean_type
+**\-\-debug_mode** : 0|1|True|False -> bool
 	*Help*: Run only a few training steps per epoch. This also disables logging on wandb.
 
 	- *Default*: ``0``
-**\-\-inference_only** : binary_to_boolean_type
+**\-\-inference_only** : 0|1|True|False -> bool
 	*Help*: Perform inference only for each task (no training).
 
 	- *Default*: ``0``

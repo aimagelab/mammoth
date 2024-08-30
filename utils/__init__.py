@@ -23,12 +23,14 @@ def field_with_aliases(choices: dict) -> str:
 
     Example:
         Given the following dictionary:
-        ```
-        choices = {
-            'a': ['a', 'alpha'],
-            'b': ['b', 'beta']
-        }
-        ```
+
+        .. code-block:: python
+
+            choices = {
+                'a': ['a', 'alpha'],
+                'b': ['b', 'beta']
+            }
+
         The values 'a' and 'alpha' will be converted to 'a', and 'b' and 'beta' will be converted to 'b'.
 
     Args:

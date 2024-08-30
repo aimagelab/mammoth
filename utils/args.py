@@ -27,17 +27,19 @@ def build_parsable_args(parser: ArgumentParser, spec: dict) -> None:
     Builds the argument parser given a specification and extends the given parser.
 
     The specification dictionary can either be a simple list of key-value argument or follow the format:
-    ```
-    {
-        'name': {
-            'type': type,
-            'default': default,
-            'choices': choices,
-            'help': help,
-            'required': True/False
+
+    .. code-block:: python
+
+        {
+            'name': {
+                'type': type,
+                'default': default,
+                'choices': choices,
+                'help': help,
+                'required': True/False
+            }
         }
-    }
-    ```
+
     If the specification is a simple list of key-value arguments, the value of the argument is the default value. If the default is set to `inspect.Parameter.empty`, the argument is required. The type of the argument is inferred from the default value (default is `str`).
 
     Args:
@@ -319,9 +321,20 @@ class _DocsArgs:
     This class is used to generate the documentation of the arguments.
     """
 
-    def __init__(self, name: str, type_: str, choices: str, default: str, help_: str):
+    def __init__(self, name: str, tp: str, choices: str, default: str, help_: str):
+        if tp is None:
+            tp = 'unknown'
+        elif tp.__name__ == '_parse_field':
+            tp = 'field with aliases (str)'
+        elif tp.__name__ == 'binary_to_boolean_type':
+            tp = '0|1|True|False -> bool'
+        elif tp.__name__ == 'custom_str_underscore':
+            tp = 'str (with underscores replaced by dashes)'
+        else:
+            tp = tp.__name__
+
         self.name = name
-        self.type = type_
+        self.type = tp
         self.choices = choices
         self.default = default
         self.help = help_
@@ -332,7 +345,7 @@ class _DocsArgs:
         return ', '.join([c.keys() if isinstance(c, dict) else str(c) for c in self.choices])
 
     def __str__(self):
-        tb = f"""**\\-\\-{self.name}** : {self.type.__name__ if self.type is not None else 'unknown'}
+        tb = f"""**\\-\\-{self.name}** : {self.type}
 \t*Help*: {self.help}\n
 \t- *Default*: ``{self.default}``"""
         if self.choices is not None:
@@ -382,6 +395,26 @@ def _parse_actions(actions: list, group_name: str, group_desc: str) -> _DocArgsG
 if __name__ == '__main__':
     print("Generating documentation for the arguments...")
     os.chdir(mammoth_path)
+
+    parser = ArgumentParser()
+    add_initial_args(parser)
+    parser.add_argument('--dataset_config', type=str,
+                        help='The configuration used for this dataset (e.g., number of tasks, transforms, backbone architecture, etc.).'
+                        'The available configurations are defined in the `datasets/config/<dataset>` folder.')
+    docs_args = []
+    for action in parser._actions:
+        if action.dest == 'help':
+            continue
+        docs_args.append(_DocsArgs(action.dest, action.type, action.choices, action.default, action.help))
+
+    with open('docs/utils/args.rst', 'w') as f:
+        f.write('.. _module-args:\n\n')
+        f.write('Arguments\n')
+        f.write('=========\n\n')
+        f.write('.. rubric:: MAIN MAMMOTH ARGS\n\n')
+        for arg in docs_args:
+            f.write(str(arg) + '\n\n')
+
     parser = ArgumentParser()
     add_experiment_args(parser)
 
@@ -391,10 +424,7 @@ if __name__ == '__main__':
             continue
         docs_args.append(_parse_actions(group._group_actions, group.title, group.description))
 
-    with open('docs/utils/args.rst', 'w') as f:
-        f.write('.. _module-args:\n\n')
-        f.write('Arguments\n')
-        f.write('=========\n\n')
+    with open('docs/utils/args.rst', 'a') as f:
         f.write('.. rubric:: EXPERIMENT-RELATED ARGS\n\n')
         for arg in docs_args:
             f.write(str(arg) + '\n\n')
