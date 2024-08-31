@@ -6,6 +6,8 @@ from torchvision import transforms
 from kornia.augmentation.container.params import ParamItem
 from kornia.constants import Resample
 
+from utils.autoaugment import get_kornia_Cifar10Policy
+
 
 class KorniaMultiAug(kornia.augmentation.AugmentationSequential):
     """
@@ -162,6 +164,8 @@ def to_kornia_transform(transform: transforms.Compose, apply: bool = True) -> Un
             ts.append(kornia.augmentation.Normalize(mean=t.mean, std=t.std, p=1))
         elif isinstance(t, transforms.Resize):
             ts.append(kornia.augmentation.Resize(size=t.size, antialias=t.antialias, resample=_convert_interpolation_to_resample(t.interpolation)))
+        elif "cifar10policy" in str(type(t)).lower():
+            ts.append(get_kornia_Cifar10Policy())
         else:
             raise NotImplementedError
 

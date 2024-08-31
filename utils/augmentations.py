@@ -16,7 +16,7 @@ from torchvision import transforms
 from utils.kornia_utils import KorniaAugNoGrad
 
 
-def apply_transform(x: torch.Tensor, transform) -> torch.Tensor:
+def apply_transform(x: torch.Tensor, transform, autosqueeze=False) -> torch.Tensor:
     """Applies a transform to a batch of images.
 
     If the transforms is a KorniaAugNoGrad, it is applied directly to the batch.
@@ -25,19 +25,27 @@ def apply_transform(x: torch.Tensor, transform) -> torch.Tensor:
     Args:
         x: a batch of images.
         transform: the transform to apply.
+        autosqueeze: whether to automatically squeeze the output tensor.
 
     Returns:
         The transformed batch of images.
     """
+    if transform is None:
+        return x
 
     if isinstance(transform, KorniaAugNoGrad):
         if isinstance(x, PIL.Image.Image):
             x = torch.as_tensor(np.array(x, copy=True)).permute((2, 0, 1))
-        return transform(x)
+        out = transform(x)
+        if autosqueeze and out.shape[0] == 1:
+            out = out.squeeze(0)
     else:
         if isinstance(x, PIL.Image.Image):
             return transform(x)
-        return torch.stack([transform(xi) for xi in x.cpu()], dim=0).to(x.device)
+        out = torch.stack([transform(xi) for xi in x.cpu()], dim=0).to(x.device)
+        if autosqueeze and out.shape[0] == 1:
+            out = out.squeeze(0)
+    return out
 
 
 def rand_bbox(size, lam):
@@ -72,7 +80,7 @@ def rand_bbox(size, lam):
     return bbx1, bby1, bbx2, bby2
 
 
-def cutmix_data(x, y, alpha=1.0, cutmix_prob=0.5):
+def cutmix_data(x, y, alpha=1.0, cutmix_prob=0.5, force=False):
     """
     Generate a cutmix sample given a batch of images and labels.
 
@@ -81,6 +89,7 @@ def cutmix_data(x, y, alpha=1.0, cutmix_prob=0.5):
         y (torch.Tensor): The batch of labels.
         alpha (float): The alpha value used to calculate the size of the bounding box.
         cutmix_prob (float): The probability of applying cutmix.
+        force (bool): Whether to force the application of cutmix.
 
     Returns:
         x (torch.Tensor): The mixed batch of images.
@@ -92,7 +101,7 @@ def cutmix_data(x, y, alpha=1.0, cutmix_prob=0.5):
         AssertionError: If the input tensor `x` does not have 4 dimensions.
     """
 
-    if np.random.rand() > cutmix_prob:
+    if not force and np.random.rand() > cutmix_prob:
         return x, y, y, 1.
 
     assert (alpha > 0)
@@ -100,10 +109,7 @@ def cutmix_data(x, y, alpha=1.0, cutmix_prob=0.5):
     lam = np.random.beta(alpha, alpha)
 
     batch_size = x.size()[0]
-    index = torch.randperm(batch_size)
-
-    if torch.cuda.is_available():
-        index = index.to(x.device)
+    index = torch.randperm(batch_size).to(x.device)
 
     y_a, y_b = y, y[index]
     bbx1, bby1, bbx2, bby2 = rand_bbox(x.size(), lam)
@@ -246,14 +252,15 @@ class RepeatedTransform(object):
         transform_list: The list of transformations to be applied.
     """
 
-    def __init__(self, transform_list: list):
+    def __init__(self, transform_list: list, autosqueeze=False):
         self.transform_list = transform_list
+        self.autosqueeze = autosqueeze
 
         assert len(self.transform_list) > 0, 'The list of transformations must not be empty.'
 
     @torch.no_grad()
     def __call__(self, input):
-        return torch.stack([apply_transform(input, t) for t in self.transform_list])
+        return torch.stack([apply_transform(input, t, autosqueeze=self.autosqueeze) for t in self.transform_list])
 
 
 class DoubleTransform(object):

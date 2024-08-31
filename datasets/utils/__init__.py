@@ -112,8 +112,8 @@ def update_default_args_with_dataset_defaults(parser: ArgumentParser, args: Name
 
     .. note::
 
-        The command line arguments have the highest priority. Then the dataset configuration file, and finally the
-        default values defined in the dataset class.
+        The command line arguments have the highest priority. Then the default values defined in the dataset class.
+        Finally, the values defined in the configuration file are used.
 
     Args:
         parser (ArgumentParser): the instance to the argument parser to get metadata about the arguments

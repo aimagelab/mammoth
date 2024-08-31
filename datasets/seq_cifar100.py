@@ -155,7 +155,7 @@ class SequentialCIFAR100(ContinualDataset):
 
     @set_default_from_args('lr_milestones')
     def get_scheduler_name(self):
-        return '35, 45'
+        return [35, 45]
 
     def get_class_names(self):
         if self.class_names is not None:

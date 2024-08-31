@@ -50,7 +50,8 @@ if __name__ == '__main__':
         warn_once("Warning: python-dotenv not installed. Ignoring .env file.")
 
 from utils.args import add_initial_args, add_management_args, add_experiment_args, add_post_parse_argparser, clean_dynamic_args, \
-    check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args
+    check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args, fix_argparse_default_priority
+
 from utils.conf import base_path, get_device
 from utils.distributed import make_dp
 from utils.best_args import best_args

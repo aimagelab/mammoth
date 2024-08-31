@@ -22,6 +22,20 @@ from utils import binary_to_boolean_type, custom_str_underscore, field_with_alia
 _logger = logging.getLogger('utils/args')
 
 
+def fix_argparse_default_priority(parser: ArgumentParser) -> None:
+    """
+    Fix the priority of the default of the arguments, where the value set by the `set_defaults` method is ignored if the argument is set afterwards.
+    (see `https://bugs.python.org/issue23814` for more details).
+    """
+
+    set_defaults_args = parser._defaults
+
+    for action in parser._actions:
+        if action.dest in set_defaults_args:
+            action.default = set_defaults_args[action.dest]
+            action.required = False
+
+
 def build_parsable_args(parser: ArgumentParser, spec: dict) -> None:
     """
     Builds the argument parser given a specification and extends the given parser.
@@ -208,8 +222,8 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     noise_group = parser.add_argument_group('Noise arguments', 'Arguments used to define the noisy-label settings.')
 
     noise_group.add_argument('--noise_type', type=field_with_aliases({
-        'symmetric': ['symmetric', 'sym'],
-        'asymmetric': ['asymmetric', 'asym']
+        'symmetric': ['symmetric', 'sym', 'symm'],
+        'asymmetric': ['asymmetric', 'asym', 'asymm']
     }), choices=['symmetric', 'asymmetric'], default='symmetric',
         help='Type of noise to apply. The symmetric type is supported by all datasets, while the asymmetric must be supported explicitly by the dataset (see `datasets/utils/label_noise`).')
     noise_group.add_argument('--noise_rate', type=float, default=0,

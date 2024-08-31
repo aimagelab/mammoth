@@ -117,7 +117,8 @@ class track_system_stats:
         if self.disabled:
             return
 
-        torch.cuda.synchronize()  # this allows to raise errors triggered previously by the GPU
+        if torch.cuda.is_available():
+            torch.cuda.synchronize()  # this allows to raise errors triggered previously by the GPU
 
         cpu_res, gpu_res = self.get_stats()
         self.update_stats(cpu_res, gpu_res)
