@@ -146,6 +146,7 @@ def parse_args():
         add_initial_args(parser)
         add_management_args(parser)
         add_experiment_args(parser)
+        fix_argparse_default_priority(parser)
         check_multiple_defined_arg_during_string_parse(parser)
         to_parse = sys.argv[1:] + ['--' + k + '=' + str(v) for k, v in best.items()]
         to_parse.remove('--load_best_args')
@@ -159,6 +160,7 @@ def parse_args():
 
         add_management_args(parser)
         add_experiment_args(parser)
+        fix_argparse_default_priority(parser)
         args = parser.parse_known_args()[0]
 
         # load args from dataset config

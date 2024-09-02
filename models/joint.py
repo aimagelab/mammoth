@@ -11,6 +11,7 @@ from models.utils.continual_model import ContinualModel
 from tqdm import tqdm
 
 from utils.conf import create_seeded_dataloader
+from utils.schedulers import get_scheduler
 
 
 class Joint(ContinualModel):
@@ -41,7 +42,7 @@ class Joint(ContinualModel):
         all_inputs = torch.cat(all_inputs)
         all_labels = torch.cat(all_labels)
         bs = self.args.batch_size
-        scheduler = dataset.get_scheduler(self, self.args)
+        scheduler = get_scheduler(self.net, self.args, reload_optim=True)
 
         joint_dataset = torch.utils.data.TensorDataset(all_inputs, all_labels)
         dataloader = create_seeded_dataloader(self.args, joint_dataset, batch_size=self.args.batch_size, shuffle=True)

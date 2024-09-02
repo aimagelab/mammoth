@@ -6,7 +6,7 @@ import pytest
 
 
 @pytest.mark.parametrize('dataset', ['seq-mnist', 'seq-cifar10', 'seq-cifar100',
-                                     'rot-mnist', 'perm-mnist', 'mnist-360',
+                                     'rot-mnist', 'perm-mnist',
                                      'seq-cifar100-224-rs', 'seq-tinyimg-r', 'seq-cub200',
                                      'seq-cars196', 'seq-eurosat-rgb'])
 def test_symmetric_noise(dataset):

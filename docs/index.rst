@@ -19,7 +19,7 @@
    :maxdepth: 1 
    :glob:
    :hidden:
-   :caption: Getting started:
+   :caption: Getting started
 
    getting_started/index.rst
    getting_started/validation.rst
@@ -32,7 +32,7 @@
    :glob:
    :maxdepth: 1
    :hidden:
-   :caption: Contents:
+   :caption: Contents
 
    generated/models.rst
    generated/datasets.rst
@@ -43,7 +43,7 @@
    :glob:
    :maxdepth: 1
    :hidden:
-   :caption: How to run:
+   :caption: How to run
 
    how_to_run/starprompt.rst
    

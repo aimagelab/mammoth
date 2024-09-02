@@ -23,6 +23,7 @@ class Ccic(ContinualModel):
     def get_parser() -> ArgumentParser:
         parser = ArgumentParser(description='Continual Semi-Supervised Learning via'
                                 ' Continual Contrastive Interpolation Consistency.')
+        parser.set_defaults(optimizer='adam')
         add_rehearsal_args(parser)
 
         parser.set_defaults(optimizer='adam')
@@ -44,7 +45,6 @@ class Ccic(ContinualModel):
     def __init__(self, backbone, loss, args, transform, dataset=None):
         super(Ccic, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size, self.device)
-        self.epoch = 0
         self.embeddings = None
 
         self.eye = torch.eye(self.num_classes).to(self.device)
@@ -79,10 +79,6 @@ class Ccic(ContinualModel):
 
     def end_task(self, dataset):
         self.embeddings = None
-        self.epoch = 0
-
-    def end_epoch(self, dataset):
-        self.epoch += 1
 
     def discard_unsupervised_labels(self, inputs, labels, not_aug_inputs):
         mask = labels != -1
@@ -189,7 +185,7 @@ class Ccic(ContinualModel):
             loss_U = 0
 
         # CIC LOSS
-        if self.current_task > 0 and self.epoch < self.args.n_epochs / 10 * 9:
+        if self.current_task > 0 and epoch < self.args.n_epochs / 10 * 9:
             W_inputs = sup_inputs
             W_probs = self.eye[sup_labels]
             perm = torch.randperm(W_inputs.shape[0])
@@ -213,7 +209,7 @@ class Ccic(ContinualModel):
                              labels=sup_labels_for_buffer)
 
         # SELF-SUPERVISED PAST TASKS NEGATIVE ONLY
-        if self.current_task > 0 and self.epoch < self.args.n_epochs / 10 * 9:
+        if self.current_task > 0 and epoch < self.args.n_epochs / 10 * 9:
             unsup_embeddings = self.net.features(unsup_inputs)
             loss_unsup = negative_only_triplet_loss(unsup_labels, unsup_embeddings, self.args.batch_size // 10,
                                                     margin=1, margin_type='hard')
