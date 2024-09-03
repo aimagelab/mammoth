@@ -95,12 +95,12 @@ class CustomClassifier(nn.Module):
 
 
 class Lucir(ContinualModel):
+    """Continual Learning via Lucir."""
     NAME = 'lucir'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Learning via Lucir.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
 
         parser.add_argument('--lamda_base', type=float, required=False, default=5.,

@@ -10,7 +10,6 @@ if __name__ == '__main__':
     mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sys.path.append(mammoth_path)
 
-from inspect import Parameter
 from argparse import ArgumentParser, Namespace
 
 from backbone import REGISTERED_BACKBONES
@@ -22,18 +21,58 @@ from utils import binary_to_boolean_type, custom_str_underscore, field_with_alia
 _logger = logging.getLogger('utils/args')
 
 
-def fix_argparse_default_priority(parser: ArgumentParser) -> None:
+def update_cli_defaults(parser: ArgumentParser, cnf: dict):
     """
-    Fix the priority of the default of the arguments, where the value set by the `set_defaults` method is ignored if the argument is set afterwards.
-    (see `https://bugs.python.org/issue23814` for more details).
+    Updates the default values of the parser with the values in the configuration dictionary.
+
+    If an argument is defined as `required` in the parser but a default value is provided in the configuration dictionary, the argument is set as not required.
+
+    Args:
+        parser: the argument parser
+        cnf: the configuration dictionary
+
+    Returns:
+        None
     """
-
-    set_defaults_args = parser._defaults
-
     for action in parser._actions:
+        if action.dest == 'help':
+            continue
+        if action.dest in cnf:
+            action.default = cnf[action.dest]
+            action.required = False
+
+
+def fix_model_parser_backwards_compatibility(main_parser: ArgumentParser, model_parser: ArgumentParser = None) -> ArgumentParser:
+    """
+    Fix the backwards compatibility of the `get_parser` method of the models.
+
+    Args:
+        main_parser: the main parser
+        model_parser: the parser of the model
+
+    Returns:
+        the fixed parser
+    """
+    if model_parser is None:
+        return main_parser
+
+    if main_parser != model_parser:
+        for action in model_parser._actions:
+            if action.dest == 'help':
+                continue
+            # add the arguments of the model parser to the main parser
+            if not any([action.dest == a.dest for a in main_parser._actions]):
+                main_parser._add_action(action)
+
+    # update the defaults of the main parser with the defaults of the model parser
+    set_defaults_args = model_parser._defaults
+
+    for action in main_parser._actions:
         if action.dest in set_defaults_args:
             action.default = set_defaults_args[action.dest]
             action.required = False
+
+    return main_parser
 
 
 def build_parsable_args(parser: ArgumentParser, spec: dict) -> None:
@@ -118,17 +157,22 @@ def add_dynamic_parsable_args(parser: ArgumentParser, args: Namespace) -> None:
     # build_parsable_args(parser, get_all_models())
 
 
-def add_post_parse_argparser(parser: ArgumentParser, args: Namespace) -> None:
+def add_configuration_args(parser: ArgumentParser, args: Namespace) -> None:
     """
-    Arguments that need to be set after parsing the initial arguments.
+    Arguments that need to define the configuration of the dataset and model.
     """
 
-    post_group = parser.add_argument_group('Post parse arguments', 'Arguments that need to be set after parsing the initial arguments.')
+    config_group = parser.add_argument_group('Configuration arguments', 'Arguments used to define the dataset and model configurations.')
 
-    post_group.add_argument('--dataset_config', type=str,
-                            choices=get_dataset_config_names(args.dataset),
-                            help='The configuration used for this dataset (e.g., number of tasks, transforms, backbone architecture, etc.).'
-                            'The available configurations are defined in the `datasets/config/<dataset>` folder.')
+    config_group.add_argument('--dataset_config', type=str,
+                              choices=get_dataset_config_names(args.dataset),
+                              help='The configuration used for this dataset (e.g., number of tasks, transforms, backbone architecture, etc.).'
+                              'The available configurations are defined in the `datasets/config/<dataset>` folder.')
+
+    config_group.add_argument('--model_config', type=field_with_aliases({'default': ['base', 'default'], 'best': ['best']}), default='default',
+                              help='The configuration used for this model. The available configurations are defined in the `models/config/<model>.yaml` file '
+                              'and include a `default` (dataset-agostic) configuration and a `best` configuration (dataset-specific). '
+                              'If not provided, the `default` configuration is used.')
 
 
 def add_initial_args(parser) -> ArgumentParser:
@@ -224,7 +268,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     noise_group.add_argument('--noise_type', type=field_with_aliases({
         'symmetric': ['symmetric', 'sym', 'symm'],
         'asymmetric': ['asymmetric', 'asym', 'asymm']
-    }), choices=['symmetric', 'asymmetric'], default='symmetric',
+    }), default='symmetric',
         help='Type of noise to apply. The symmetric type is supported by all datasets, while the asymmetric must be supported explicitly by the dataset (see `datasets/utils/label_noise`).')
     noise_group.add_argument('--noise_rate', type=float, default=0,
                              help='Noise rate in [0-1].')

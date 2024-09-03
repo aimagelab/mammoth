@@ -73,7 +73,7 @@ The configuration file may contain:
 - any field specified by the `set_default_from_args` decorator in the dataset class (see more in section :ref:`dataset-index-defaults`). This includes the `backbone`, `batch_size`, `n_epochs`, etc.
 - `args`: special field that allows to set the values of the default values for the command line arguments
 
-The configuration file sets the default values for the dataset attributes and all values defined by the `set_default_from_args` decorator and the args field. The priority is as follows: command line arguments > default values set by the model > configuration file.
+The configuration file sets the default values for the dataset attributes and all values defined by the `set_default_from_args` decorator. The priority is as follows: command line arguments > default values set by the model > configuration file.
 
 .. _datasets-settings:
 

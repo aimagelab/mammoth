@@ -16,12 +16,12 @@ from utils.buffer import Buffer, fill_buffer, icarl_replay
 
 
 class ICarl(ContinualModel):
+    """Continual Learning via iCaRL."""
     NAME = 'icarl'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Learning via iCaRL.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         return parser
 

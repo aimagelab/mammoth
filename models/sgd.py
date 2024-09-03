@@ -13,16 +13,11 @@ from utils.args import ArgumentParser
 
 class Sgd(ContinualModel):
     """
-    Implementation of the Sgd model for continual learning.
+    Finetuning baseline - simple incremental training.
     """
 
     NAME = 'sgd'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
-
-    @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Finetuning baseline - simple incremental training.')
-        return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
         super(Sgd, self).__init__(backbone, loss, args, transform, dataset=dataset)

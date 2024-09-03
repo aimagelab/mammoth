@@ -56,12 +56,12 @@ def fit_buffer(self: ContinualModel, epochs):
 
 
 class GDumb(ContinualModel):
+    """Greedy sampler and Dumb Learner."""
     NAME = 'gdumb'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Greedy sampler and Dumb Learner.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         parser.add_argument('--maxlr', type=float, default=5e-2,
                             help='Max learning rate.')

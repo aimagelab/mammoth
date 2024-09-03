@@ -20,13 +20,12 @@ def modified_kl_div(old, new):
 
 
 class Lwf(ContinualModel):
+    """Continual learning via Learning without Forgetting."""
     NAME = 'lwf'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via'
-                                ' Learning without Forgetting.')
+    def get_parser(parser) -> ArgumentParser:
         parser.add_argument('--alpha', type=float, default=0.5,
                             help='Penalty weight.')
         parser.add_argument('--softmax_temp', type=float, default=2,

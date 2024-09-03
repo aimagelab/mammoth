@@ -18,12 +18,12 @@ from models.slca_utils.slca import SLCA_Model
 
 
 class SLCA(ContinualModel):
+    """Continual Learning via Slow Learner with Classifier Alignment."""
     NAME = 'slca'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Learning via Slow Learner with Classifier Alignment')
+    def get_parser(parser) -> ArgumentParser:
         parser.add_argument('--prefix', type=str, default='reproduce')
         parser.add_argument('--memory_size', type=int, default=0)
         parser.add_argument('--memory_per_class', type=int, default=0)

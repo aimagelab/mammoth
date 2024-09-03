@@ -16,14 +16,13 @@ except ImportError:
 
 
 class STARPrompt(ContinualModel):
+    """Second-stage of StarPrompt. Requires the keys saved from the first stage."""
     NAME = 'starprompt'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
     net: STARPromptModel
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Second-stage of StarPrompt. Requires the keys saved from the first stage.')
-
+    def get_parser(parser) -> ArgumentParser:
         parser.set_defaults(batch_size=128, optimizer='adam', lr=0.001)
 
         frozen_group = parser.add_argument_group('Frozen hyperparameters')

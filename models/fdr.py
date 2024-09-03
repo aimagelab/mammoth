@@ -11,13 +11,12 @@ from utils.buffer import Buffer
 
 
 class Fdr(ContinualModel):
+    """Continual learning via Function Distance Regularization."""
     NAME = 'fdr'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via'
-                                ' Function Distance Regularization.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         parser.add_argument('--alpha', type=float, required=True,
                             help='Penalty weight.')

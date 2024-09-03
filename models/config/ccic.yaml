@@ -1,0 +1,12 @@
+default:
+  optimizer: adam
+seq-cifar10: # dataset
+  500: # buffer size
+    lr: 0.0001
+    mixmatch_alpha: 0.75
+    memory_penalty: 0.7
+    label_perc: 0.25
+    batch_size: 32
+    n_epochs: 50
+    buffer_size: 500 # optional
+    knn_k: 2

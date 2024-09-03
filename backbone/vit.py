@@ -640,7 +640,7 @@ def create_vision_transformer(variant, base_class=VisionTransformer, pretrained=
         _filter_fn = filter_fn
 
     if variant == 'vit_base_patch16_224_in21k_fn_in1k_old':
-        from timm.models.helpers import resolve_pretrained_cfg
+        from timm.models import resolve_pretrained_cfg
 
         pretrained_cfg = resolve_pretrained_cfg(variant, pretrained_cfg=kwargs.pop('pretrained_cfg', None))
         pretrained_cfg.custom_load = True

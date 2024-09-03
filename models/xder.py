@@ -16,13 +16,12 @@ from utils.simclrloss import SupConLoss
 
 
 class XDerV2(ContinualModel):
+    """Continual learning via eXtended Dark Experience Replay."""
     NAME = 'xder'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via'
-                                            ' eXtended Dark Experience Replay.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         parser.add_argument('--alpha', type=float, required=True, help='Penalty weight.')
         parser.add_argument('--beta', type=float, required=True, help='Penalty weight.')

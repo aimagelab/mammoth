@@ -72,13 +72,12 @@ def fit_buffer(self: LiderOptimizer, epochs):
 
 
 class GDumbLider(LiderOptimizer):
+    """GDumb learns an empty model only on the buffer. Treated with LiDER!"""
     NAME = 'gdumb_lider'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='GDumb learns an empty model only on the buffer.'
-                                            'Treated with LiDER!')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         add_lipschitz_args(parser)
         parser.add_argument('--maxlr', type=float, default=5e-2,

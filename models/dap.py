@@ -25,13 +25,13 @@ _logger = logging.getLogger('models/DAP')
 
 
 class DAP(ContinualModel):
+    """Generating Instance-level Prompts for Rehearsal-free Continual Learning."""
     NAME = 'dap'
     COMPATIBILITY = ['class-il', 'task-il']
     net: DAPModel
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Generating Instance-level Prompts for Rehearsal-free Continual Learning.')
+    def get_parser(parser) -> ArgumentParser:
         parser.set_defaults(optimizer='adam')
         parser.add_argument('--sim_lambda', type=float, default=0.1)  # 2 imgr, 0.5 resisc, 0.1 default
         parser.add_argument("--virtual_bs_n", type=int, default=1, help="virtual batch size iterations")

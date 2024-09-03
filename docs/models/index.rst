@@ -117,12 +117,12 @@ The base class **ContinualModel** provides a few properties that are automatical
 Model parameters
 ~~~~~~~~~~~~~~~~~
 
-The **get_parser** method is used to define the model-specific hyper-parameters. It is defined as a static method (see :ref:`ContinualModel <module-models.utils.continual_model>`) that returns a `argparse.ArgumentParser <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser>`_ object. This method is called during the initialization of the model and it is used to parse the command line arguments. The **get_parser** method must have the following signature:
+The **get_parser** method is used to define the model-specific hyper-parameters. It is defined as a static method (see :ref:`ContinualModel <module-models.utils.continual_model>`) that takes an existing `argparse.ArgumentParser <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser>`_ object and returns an updated version of it with the model-specific hyper-parameters added. This method is called during the initialization of the model and it is used to parse the command line arguments. The **get_parser** method must have the following signature:
 
 .. code-block:: python
 
     @staticmethod
-    def get_parser() -> argparse.ArgumentParser:
+    def get_parser(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
         # Create the parser
         parser = argparse.ArgumentParser('MyModel parameters')
@@ -132,6 +132,10 @@ The **get_parser** method is used to define the model-specific hyper-parameters.
         ...
 
         return parser
+
+.. note::
+
+    To remain backward compatible with the previous version of the framework, the `parser` parameter is *optional*. In this case, the method must create a new `argparse.ArgumentParser <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser>`_ object and return it.
 
 Once the model is selected with the command line option **--model**, the hyper-parameters are loaded and can be viewed with ``--help``.
 

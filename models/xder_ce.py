@@ -14,14 +14,12 @@ from utils.buffer import Buffer
 
 
 class XDerCE(ContinualModel):
+    """Continual learning via eXtended Dark Experience Replay with cross-entropy on future heads."""
     NAME = 'xder_ce'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via'
-                                ' eXtended Dark Experience Replay with cross-entropy on future heads.')
-
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         parser.add_argument('--alpha', type=float, required=True, help='Penalty weight.')
         parser.add_argument('--beta', type=float, required=True, help='Penalty weight.')

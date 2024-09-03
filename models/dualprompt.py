@@ -19,13 +19,12 @@ _logger = logging.getLogger('models/dualprompt')
 
 
 class DualPrompt(ContinualModel):
+    """DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning."""
     NAME = 'dualprompt'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning')
-
+    def get_parser(parser) -> ArgumentParser:
         parser.add_argument('--train_mask', default=True, type=bool, help='if using the class mask at training')
         parser.add_argument('--pretrained', default=True, help='Load pretrained model or not')
         parser.add_argument('--drop', type=float, default=0.0, metavar='PCT', help='Dropout rate (default: 0.)')

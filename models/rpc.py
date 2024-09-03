@@ -55,12 +55,12 @@ def dsimplex(num_classes=10):
 
 
 class RPC(ContinualModel):
+    """Regular Polytope Classifier."""
     NAME = 'rpc'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Regular Polytope Classifier.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         return parser
 

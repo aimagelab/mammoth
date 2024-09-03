@@ -56,14 +56,12 @@ def dsimplex(num_classes=10):
 
 
 class XDerRPC(ContinualModel):
+    """Continual learning via eXtended Dark Experience Replay with RPC."""
     NAME = 'xder_rpc'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via'
-                                ' eXtended Dark Experience Replay with RPC.')
-
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         parser.add_argument('--alpha', type=float, required=True, help='Penalty weight.')
         parser.add_argument('--beta', type=float, required=True, help='Penalty weight.')

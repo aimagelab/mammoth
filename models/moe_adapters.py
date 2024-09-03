@@ -48,15 +48,14 @@ class Model(torch.nn.Module):
 
 
 class MoEAdapters(FutureModel):
+    """MoE Adapters -- Boosting Continual Learning of Vision-Language Models via Mixture-of-Experts Adapters."""
     # https://arxiv.org/pdf/2403.11549v1
     NAME = 'moe-adapters'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
     net: Model
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='MoE Adapters -- Boosting Continual Learning of Vision-Language Models via Mixture-of-Experts Adapters')
-
+    def get_parser(parser) -> ArgumentParser:
         # Frozen hyperparameters
         parser.set_defaults(batch_size=8, n_epochs=1, optimizer='adamw', lr=1e-3, scheduler_mode='iter', eval_future=1)
         parser.add_argument("--virtual_bs_n", type=int, default=8, help="Virtual batch size iterations")

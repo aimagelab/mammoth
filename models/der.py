@@ -11,13 +11,12 @@ from utils.buffer import Buffer
 
 
 class Der(ContinualModel):
+    """Continual learning via Dark Experience Replay."""
     NAME = 'der'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via'
-                                ' Dark Experience Replay.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         parser.add_argument('--alpha', type=float, required=True,
                             help='Penalty weight.')

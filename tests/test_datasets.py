@@ -88,7 +88,7 @@ def test_configs_1(capsys):
                 '--num_workers',
                 '0',
                 '--batch_size',
-                '5',
+                '4',
                 '--noise_rate',
                 '0.4',
                 '--noise_type',
@@ -122,10 +122,10 @@ def test_configs_1(capsys):
         assert config, 'Config file is empty'
 
     # check if the config file is loaded correctly:
-    # - `batch_size` should be 5 (from CLI arguments, overriding puridiver's defaults)
+    # - `batch_size` should be 4 (from CLI arguments, overriding all defaults)
     # - `optim_mom` should be 0.9 (from puridiver's defaults)
-    # - `n_epochs` should be 1 (from puridiver's defaults, overriding config file)
-    assert namespace_dict['batch_size'] == '5', f'batch_size not loaded correctly from CLI. Found {namespace_dict["batch_size"]} but expected 5'
+    # - `n_epochs` should be 1 (from puridiver's defaults, overriding config file and dataset)
+    assert namespace_dict['batch_size'] == '4', f'batch_size not loaded correctly from CLI. Found {namespace_dict["batch_size"]} but expected 4'
     assert namespace_dict['optim_mom'] == '0.9', f'optim_mom not loaded correctly from puridiver defaults. Found {namespace_dict["optim_mom"]} but expected 0.9'
     assert namespace_dict['n_epochs'] == '1', f'n_epochs not loaded correctly from puridiver defaults. Found {namespace_dict["n_epochs"]} but expected 1'
 
@@ -135,7 +135,7 @@ def test_configs_2(capsys):
                 '--model',
                 'ccic',
                 '--buffer_size',
-                '50',
+                '500',
                 '--dataset',
                 'seq-cifar10',
                 '--lr',
@@ -185,7 +185,7 @@ def test_configs_2(capsys):
     # check if the config file is loaded correctly:
     # - `n_epochs` should be 1 (from dataset_config file)
     # - `batch_size` should be 5 (from CLI arguments)
-    # - `optim_mom` should be 0.9 (from ccic's defaults)
-    # - `optim_wd` should be 0 (from CLI arguments, overriding ccic's defaults)
-    assert namespace_dict['n_epochs'] == str(config['n_epochs']), f'n_epochs not loaded correctly from config file. Found {namespace_dict["n_epochs"]} but expected {config["batch_size"]}'
+    # - `optimizer` should be 'adam' (from default model config file)
+    assert namespace_dict['n_epochs'] == str(config['n_epochs']), f'n_epochs not loaded correctly from config file. Found {namespace_dict["n_epochs"]} but expected {config["n_epochs"]}'
     assert namespace_dict['batch_size'] == '5', f'batch_size not loaded correctly from CLI. Found {namespace_dict["batch_size"]} but expected 5'
+    assert namespace_dict['optimizer'] == 'adam', f'optimizer not loaded correctly from config file. Found {namespace_dict["optimizer"]} but expected adam'

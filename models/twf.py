@@ -23,14 +23,13 @@ def batch_iterate(size: int, batch_size: int):
 
 
 class TwF(ContinualModel):
+    """Transfer without Forgetting: double-branch distillation + inter-branch skip attention."""
 
     NAME = 'twf'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Transfer without Forgetting: double-branch distillation + inter-branch skip attention')
-
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         # Griddable parameters
         parser.add_argument('--der_alpha', type=float, required=True,

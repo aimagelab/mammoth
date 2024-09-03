@@ -12,12 +12,12 @@ from utils.args import ArgumentParser
 
 
 class EwcOn(ContinualModel):
+    """Continual learning via online EWC."""
     NAME = 'ewc_on'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via online EWC.')
+    def get_parser(parser) -> ArgumentParser:
         parser.add_argument('--e_lambda', type=float, required=True,
                             help='lambda weight for EWC')
         parser.add_argument('--gamma', type=float, required=True,

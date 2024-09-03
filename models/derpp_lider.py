@@ -6,14 +6,12 @@ from models.utils.lider_model import LiderOptimizer, add_lipschitz_args
 
 
 class DerppLider(LiderOptimizer):
+    """Continual learning via Dark Experience Replay++. Treated with LiDER!"""
     NAME = 'derpp_lider'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via'
-                                ' Dark Experience Replay++.'
-                                'Treated with LiDER!')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         add_lipschitz_args(parser)
 

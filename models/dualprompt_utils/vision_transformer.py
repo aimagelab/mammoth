@@ -6,8 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
 
-from timm.models.helpers import named_apply
-from timm.models.layers import trunc_normal_
+from timm.models import named_apply
+from timm.layers import trunc_normal_
 
 from backbone.vit import LoRAAttention, create_vision_transformer, VisionTransformer as MammothVP, get_init_weights_vit
 from models.dualprompt_utils.prompt import EPrompt

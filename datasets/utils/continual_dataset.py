@@ -199,7 +199,6 @@ class ContinualDataset(object):
         """
         Sets the default arguments from the configuration file.
         The default values will be set in the class attributes and will be available for all instances of the class.
-        All attributes under the key 'args' will be set in the argument parser.
 
         Args:
             config (dict): the configuration file
@@ -220,11 +219,9 @@ class ContinualDataset(object):
             elif k.casefold() in _composed_fields:
                 _k = list(cls.composed_fields.keys())[_composed_fields.index(k.casefold())]
                 setattr(cls, _k, cls.composed_fields[_k](v))
-            elif k == 'args':
-                for k, v in v.items():
-                    parser.set_defaults(**{k: v})
             else:
                 setattr(cls, k, v)
+                parser.set_defaults(**{k: v})
 
     def get_offsets(self, task_idx: int = None):
         """
@@ -330,8 +327,7 @@ def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):
             for lab, count, lpc in zip(unique_labels, label_count_by_class, lpcs):
                 current_mask = setting.unlabeled_rng.choice(count, max(count - lpc, 0), replace=False)
                 mask.append(np.where(train_dataset.targets == lab)[0][current_mask])
-
-        return np.array(mask).astype(np.int32)
+        return np.concatenate(mask).astype(np.int32)
 
 
 def _prepare_data_loaders(train_dataset: MammothDatasetWrapper, test_dataset: MammothDatasetWrapper, setting: ContinualDataset):

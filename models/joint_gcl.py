@@ -13,12 +13,12 @@ from utils.status import progress_bar
 
 
 class JointGCL(ContinualModel):
+    """Joint training: a strong, simple baseline."""
     NAME = 'joint_gcl'
     COMPATIBILITY = ['general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Joint training: a strong, simple baseline.')
+    def get_parser(parser) -> ArgumentParser:
         parser.set_defaults(n_epochs=1)
         return parser
 

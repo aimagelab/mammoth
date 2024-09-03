@@ -6,7 +6,7 @@
 import math
 import torch
 import torch.nn as nn
-from timm.models.layers import DropPath
+from timm.layers import DropPath
 from functools import partial
 from collections import OrderedDict
 import torch

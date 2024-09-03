@@ -23,14 +23,13 @@ from models.ranpac_utils.ranpac import RanPAC_Model
 
 
 class RanPAC(ContinualModel):
+    """RanPAC: Random Projections and Pre-trained Models for Continual Learning."""
     NAME = 'ranpac'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
     net: RanPAC_Model
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='RanPAC: Random Projections and Pre-trained Models for Continual Learning')
-
+    def get_parser(parser) -> ArgumentParser:
         parser.set_defaults(pretrain_type='in21k')
         parser.set_defaults(optim_mom=0.9, optim_wd=0.0005, batch_size=48)
         parser.add_argument('--rp_size', type=int, default=10000, help='size of the random projection layer (L in the paper)')

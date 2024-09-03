@@ -37,9 +37,8 @@ sys.path.append(mammoth_path + '/models')
 from utils import setup_logging, create_if_not_exists
 setup_logging()
 
-from utils.conf import warn_once
-
 if __name__ == '__main__':
+    from utils.conf import warn_once
     try:
         if os.getenv('MAMMOTH_TEST', '0') == '0':
             from dotenv import load_dotenv
@@ -48,14 +47,6 @@ if __name__ == '__main__':
             warn_once("Running in test mode. Ignoring .env file.")
     except ImportError:
         warn_once("Warning: python-dotenv not installed. Ignoring .env file.")
-
-from utils.args import add_initial_args, add_management_args, add_experiment_args, add_post_parse_argparser, clean_dynamic_args, \
-    check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args, fix_argparse_default_priority
-
-from utils.conf import base_path, get_device
-from utils.distributed import make_dp
-from utils.best_args import best_args
-from utils.conf import set_random_seed
 
 _logger = logging.getLogger("general")
 
@@ -105,14 +96,20 @@ def parse_args():
     Returns:
         args (argparse.Namespace): Parsed command line arguments.
     """
-    check_multiple_defined_arg_during_string_parse()
+    from utils.conf import warn_once
+    from utils.args import add_initial_args, add_management_args, add_experiment_args, add_configuration_args, clean_dynamic_args, \
+        check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args, fix_model_parser_backwards_compatibility, update_cli_defaults
 
     from models import get_all_models, get_model_class
-    from datasets import get_dataset_class
-    from datasets.utils import load_config, update_default_args_with_dataset_defaults
+    from models.utils import get_single_arg_value, load_model_config
 
-    parser = ArgumentParser(description='mammoth', allow_abbrev=False, add_help=False)
-    add_initial_args(parser)
+    from datasets import get_dataset_class
+    from datasets.utils import load_dataset_config, get_default_args_for_dataset
+
+    check_multiple_defined_arg_during_string_parse()
+
+    parser = ArgumentParser(description='Mammoth - An Extendible (General) Continual Learning Framework for Pytorch', allow_abbrev=False)
+    add_initial_args(parser)  # 1) add arguments that include model, dataset, and backbone. These define the rest of the arguments.
     args = parser.parse_known_args()[0]
 
     models_dict = get_all_models()
@@ -124,65 +121,81 @@ def parse_args():
     if args.backbone is None:
         warn_once('No backbone specified. Using default backbone (set by the dataset).')
 
-    mod = importlib.import_module('models.' + models_dict[args.model])
+    # 2) add the rest of the main Mammoth arguments
+    add_configuration_args(parser, args)
+    args = parser.parse_known_args()[0]
 
+    add_management_args(parser)
+    add_experiment_args(parser)
+
+    # 3) load the default arguments defined by the dataset
+    parser.set_defaults(**get_default_args_for_dataset(args.dataset))
+
+    # 4) load the configuration file for the dataset and update the parser with the dataset-specific arguments
+    dataset_config = load_dataset_config(args)
+    dataset_class = get_dataset_class(args)
+    dataset_class.set_default_from_config(dataset_config, parser)
+
+    # 5) get the model parser and fix the get_parser function for backwards compatibility
+    model_parser = get_model_class(args).get_parser(parser)
+    parser = fix_model_parser_backwards_compatibility(parser, model_parser)
+    is_rehearsal = any([p for p in parser._actions if p.dest == 'buffer_size'])
+    if is_rehearsal:  # get buffer size
+        buffer_size = get_single_arg_value(parser, 'buffer_size')
+        assert buffer_size is not None, "Buffer size not found in the arguments."
+        try:
+            buffer_size = int(buffer_size)  # try convert to int, check if it is a valid number
+        except ValueError:
+            raise ValueError(f'--buffer_size must be an integer but found {buffer_size}')
+
+    # 6) add the configuration file for the model and update the parser with the model-specific arguments
+    model_config = load_model_config(args, buffer_size=buffer_size)
+    update_cli_defaults(parser, model_config)
+
+    args = parser.parse_known_args()[0]
+
+    # 7) add dynamic args defined by the backbones, datasets, etc.
+    # TODO: ADD DATASET DYNAMIC ARGS
+    add_dynamic_parsable_args(parser, args)
+
+    # 8) parse the arguments
     if args.load_best_args:
-        warn_once("The `load_best_args` option is deprecated, untested, and not up to date.")
+        from utils.best_args import best_args
 
-        if hasattr(mod, 'Buffer'):
-            parser.add_argument('--buffer_size', type=int, required=True,
-                                help='The size of the memory buffer.')
+        warn_once("The `load_best_args` option is untested and not up to date.")
+
+        is_rehearsal = any([p for p in parser._actions if p.dest == 'buffer_size'])  # check if model has a buffer
+
         args = parser.parse_args()
         if args.model == 'joint':
             best = best_args[args.dataset]['sgd']
         else:
             best = best_args[args.dataset][args.model]
-        if hasattr(mod, 'Buffer'):
+        if is_rehearsal:
             best = best[args.buffer_size]
         else:
             best = best[-1]
 
-        parser = get_model_class(args).get_parser()
-        add_initial_args(parser)
-        add_management_args(parser)
-        add_experiment_args(parser)
-        fix_argparse_default_priority(parser)
-        check_multiple_defined_arg_during_string_parse(parser)
         to_parse = sys.argv[1:] + ['--' + k + '=' + str(v) for k, v in best.items()]
         to_parse.remove('--load_best_args')
         args = parser.parse_args(to_parse)
         if args.model == 'joint' and args.dataset == 'mnist-360':
             args.model = 'joint_gcl'
     else:
-        parser = get_model_class(args).get_parser()
-        add_initial_args(parser)
-        add_post_parse_argparser(parser, args)
-
-        add_management_args(parser)
-        add_experiment_args(parser)
-        fix_argparse_default_priority(parser)
-        args = parser.parse_known_args()[0]
-
-        # load args from dataset config
-        dataset_config = load_config(args)
-        dataset_class = get_dataset_class(args)
-        dataset_class.set_default_from_config(dataset_config, parser)
-
-        update_default_args_with_dataset_defaults(parser, args, dataset_config, strict=False)
-
-        # add dynamic args defined by the backbones, datasets, etc.
-        add_dynamic_parsable_args(parser, args)
         args = parser.parse_args()
 
-    update_default_args_with_dataset_defaults(parser, args, dataset_config, strict=True)
-    args = clean_dynamic_args(args)
+    # 9) clean dynamically loaded args
+    args = clean_dynamic_args(args)  # TODO: CHECK IF NEEDED
 
+    # 10) final checks and updates to the arguments
     args.model = models_dict[args.model]
 
     if args.lr_scheduler is not None:
         _logger.info('`lr_scheduler` set to {}, overrides default from dataset.'.format(args.lr_scheduler))
 
     if args.seed is not None:
+        from utils.conf import set_random_seed
+
         set_random_seed(args.seed)
 
     # Add uuid, timestamp and hostname for logging
@@ -262,6 +275,7 @@ def extend_args(args, dataset):
 
 
 def main(args=None):
+    from utils.conf import base_path, get_device
     from models import get_model
     from datasets import get_dataset
     from utils.training import train
@@ -315,6 +329,8 @@ def main(args=None):
     assert isinstance(model, FutureModel) or not args.eval_future, "Model does not support future_forward."
 
     if args.distributed == 'dp':
+        from utils.distributed import make_dp
+
         if args.batch_size < torch.cuda.device_count():
             raise Exception(f"Batch too small for DataParallel (Need at least {torch.cuda.device_count()}).")
 

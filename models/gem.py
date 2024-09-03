@@ -86,12 +86,12 @@ def project2cone2(gradient, memories, margin=0.5, eps=1e-3):
 
 
 class Gem(ContinualModel):
+    """Continual learning via Gradient Episodic Memory."""
     NAME = 'gem'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via Gradient Episodic Memory.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
 
         parser.add_argument('--gamma', type=float, default=0.5,

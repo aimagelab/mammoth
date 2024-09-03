@@ -16,13 +16,12 @@ from utils.conf import get_device
 
 
 class Attriclip(ContinualModel):
+    """Continual Learning via Progressive Neural Networks."""
     NAME = 'attriclip'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Learning via'
-                                            ' Progressive Neural Networks.')
+    def get_parser(parser) -> ArgumentParser:
         parser.add_argument("--num_prompt", type=int, default=10, help='num_prompt')
         parser.add_argument("--text_prompt", type=int, default=3, help='text_prompt')
         parser.add_argument('--freeze_clip', type=int, default=1, help='freeze_clip')

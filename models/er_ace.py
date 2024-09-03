@@ -11,13 +11,12 @@ from utils.buffer import Buffer
 
 
 class ErACE(ContinualModel):
+    """Continual learning via Experience Replay with asymmetric cross-entropy."""
     NAME = 'er_ace'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via'
-                                ' Experience Replay with asymmetric cross-entropy.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         return parser
 

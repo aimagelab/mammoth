@@ -28,15 +28,15 @@ def apply_decay(decay, lr, optimizer, num_iter):
 
 
 class ErTricks(ContinualModel):
+    """Experience Replay with tricks from `Rethinking Experience Replay: a Bag of Tricks for Continual Learning`."""
     NAME = 'er_tricks'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
+    def get_parser(parser) -> ArgumentParser:
         """
         Returns an ArgumentParser object with predefined arguments for the Er model.
         """
-        parser = ArgumentParser(description='Experience Replay with tricks from `Rethinking Experience Replay: a Bag of Tricks for Continual Learning`.')
         add_rehearsal_args(parser)
 
         parser.add_argument('--bic_epochs', type=int, default=50, help='bias injector.')

@@ -16,13 +16,12 @@ import torch.nn.functional as F
 
 
 class Ccic(ContinualModel):
+    """Continual Semi-Supervised Learning via Continual Contrastive Interpolation Consistency."""
     NAME = 'ccic'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'cssl']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Semi-Supervised Learning via'
-                                ' Continual Contrastive Interpolation Consistency.')
+    def get_parser(parser) -> ArgumentParser:
         parser.set_defaults(optimizer='adam')
         add_rehearsal_args(parser)
 

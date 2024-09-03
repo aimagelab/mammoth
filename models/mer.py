@@ -14,12 +14,12 @@ _logger = logging.getLogger(__name__)
 
 
 class Mer(ContinualModel):
+    """Continual Learning via Meta-Experience Replay (Alg 6)."""
     NAME = 'mer'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Learning via Meta-Experience Replay (Alg 6).')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         parser.set_defaults(batch_size=1)
 

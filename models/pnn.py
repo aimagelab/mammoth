@@ -26,13 +26,9 @@ def get_pnn_backbone(bone, old_cols=None, x_shape=None):
 
 
 class Pnn(ContinualModel):
+    """Progressive Neural Networks."""
     NAME = 'pnn'
     COMPATIBILITY = ['task-il']
-
-    @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Progressive Neural Networks')
-        return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
         self.nets = [get_pnn_backbone(backbone).to(get_device())]

@@ -23,9 +23,7 @@ class FirstStageStarprompt(ContinualModel):
     net: Model
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser()
-
+    def get_parser(parser) -> ArgumentParser:
         parser.set_defaults(batch_size=128, optimizer='sgd', lr=0.002)
 
         frozen_group = parser.add_argument_group('Frozen hyperparameters')

@@ -17,12 +17,12 @@ from utils.ring_buffer import RingBuffer as Buffer
 
 
 class HAL(ContinualModel):
+    """Hindsight Anchor Learning."""
     NAME = 'hal'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Hindsight Anchor Learning.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
 
         parser.add_argument('--hal_lambda', type=float, default=0.1)

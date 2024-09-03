@@ -60,13 +60,12 @@ class CustomDataset(torch.utils.data.Dataset):
 
 
 class ErAceAerAbs(ContinualModel):
+    """Er-ACE with AER and ABS, from `May the Forgetting Be with You: Alternate Replay for Learning with Noisy Labels`."""
     NAME = 'er_ace_aer_abs'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Er-ACE with AER and ABS, from `May the Forgetting Be with You: Alternate Replay for Learning with Noisy Labels`')
-
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
 
         parser.add_argument('--sample_selection_strategy', default='abs', type=str, choices=['reservoir', 'lars', 'abs'],

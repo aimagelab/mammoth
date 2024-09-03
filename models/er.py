@@ -21,17 +21,17 @@ from utils.buffer import Buffer
 
 
 class Er(ContinualModel):
+    """Continual learning via Experience Replay."""
     NAME = 'er'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
+    def get_parser(parser) -> ArgumentParser:
         """
         Returns an ArgumentParser object with predefined arguments for the Er model.
 
         This model requires the `add_rehearsal_args` to include the buffer-related arguments.
         """
-        parser = ArgumentParser(description='Continual learning via Experience Replay.')
         add_rehearsal_args(parser)
         return parser
 

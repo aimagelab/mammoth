@@ -18,13 +18,12 @@ _logger = logging.getLogger('models/coda_prompt')
 
 
 class CodaPrompt(ContinualModel):
+    """Continual Learning via CODA-Prompt: COntinual Decomposed Attention-based Prompting."""
     NAME = 'coda_prompt'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Learning via'
-                                ' CODA-Prompt: COntinual Decomposed Attention-based Prompting')
+    def get_parser(parser) -> ArgumentParser:
         parser.set_defaults(lr=0.001, optimizer='adam', optim_mom=0.9)
         parser.add_argument('--mu', type=float, default=0.0, help='weight of prompt loss')
         parser.add_argument('--pool_size', type=int, default=100, help='pool size')

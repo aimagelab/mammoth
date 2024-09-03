@@ -13,9 +13,7 @@ class IncrementalCoopVAE(FutureModel):
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser()
-
+    def get_parser(parser) -> ArgumentParser:
         parser.add_argument("--clip_backbone", type=str, default='ViT-L/14', help="Clip backbone")
         parser.add_argument("--learning_rate_alignment", type=float, default=0.05, help="Learning rate for GR.")
         parser.add_argument("--optim_alignment", type=str, default='adamw', choices=('sgd', 'adam', 'adamw'), help="Optimizer for GR.")

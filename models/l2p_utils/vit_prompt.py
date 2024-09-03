@@ -26,17 +26,10 @@ Hacked together by / Copyright 2020, Ross Wightman
 """
 import math
 import logging
-from functools import partial
-from collections import OrderedDict
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
-
-from timm.data import IMAGENET_INCEPTION_MEAN, IMAGENET_INCEPTION_STD
-from timm.models.helpers import named_apply, adapt_input_conv, checkpoint_seq
-from timm.models.layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_normal_
 
 from backbone.vit import create_vision_transformer, VisionTransformer as MammothVP
 from models.l2p_utils.prompt import Prompt

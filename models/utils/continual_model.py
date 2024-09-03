@@ -74,17 +74,20 @@ class ContinualModel(nn.Module):
     n_tasks: int  # Total number of tasks in the dataset
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
+    def get_parser(parser: ArgumentParser) -> ArgumentParser:
         """
-        Returns the parser of the model.
+        Defines model-specific hyper-parameters, which will be added to the command line arguments. Additional model-specific hyper-parameters can be added by overriding this method.
 
-        Additional model-specific hyper-parameters can be added by overriding this method.
+        For backward compatibility, the `parser` object may be omitted (although this should be avoided). In this case, the method should create and return a new parser.
+
+        This method may also be used to set default values for all other hyper-parameters of the framework (e.g., `lr`, `buffer_size`, etc.) with the `set_defaults` method of the parser. In this case, this method MUST update the original `parser` object and not create a new one.
+
+        Args:
+            parser: the main parser, to which the model-specific arguments will be added
 
         Returns:
             the parser of the model
         """
-        warn_once("The model does not have a parser. Please override the get_parser method.")
-        parser = ArgumentParser(description='Base CL model')
         return parser
 
     @property

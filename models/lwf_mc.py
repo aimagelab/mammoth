@@ -12,12 +12,12 @@ from models.utils.continual_model import ContinualModel
 
 
 class LwFMC(ContinualModel):
+    """Learning without Forgetting - Multi-Class."""
     NAME = 'lwf_mc'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Learning without Forgetting - Multi-Class.')
+    def get_parser(parser) -> ArgumentParser:
         parser.add_argument('--wd_reg', type=float, default=0.0,
                             help='L2 regularization applied to the parameters.')
         return parser

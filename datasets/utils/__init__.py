@@ -105,46 +105,20 @@ def _clean_value(value, argparse_action):
     return _to_python_value(value)
 
 
-def update_default_args_with_dataset_defaults(parser: ArgumentParser, args: Namespace, dataset_config: dict, strict=True):
+def get_default_args_for_dataset(dataset_name: str) -> dict:
     """
-    Updates the default arguments with the ones specified in the dataset class and the configuration file.
-    Default arguments are defined in the DEFAULT_ARGS dictionary and set by the 'set_default_from_args' decorator.
-
-    .. note::
-
-        The command line arguments have the highest priority. Then the default values defined in the dataset class.
-        Finally, the values defined in the configuration file are used.
+    Get the default arguments defined by `set_default_from_args` for the given dataset.
 
     Args:
-        parser (ArgumentParser): the instance to the argument parser to get metadata about the arguments
-        args (Namespace): the arguments to update
-        dataset_config (dict): the configuration of the dataset, loaded from the .yaml configuration file
-        strict (bool): if True, raises a warning if the argument is not present in the arguments
+        dataset_name (str): the name of the dataset
+
+    Returns:
+        dict: the default arguments for the dataset
     """
-
-    if args.dataset not in DEFAULT_ARGS:  # no default args for this dataset
-        return
-
-    action_keys = {a.dest: a for a in parser._actions}
-
-    for k, v in DEFAULT_ARGS[args.dataset].items():
-        if not hasattr(args, k):
-            if strict:
-                raise ValueError(f'Argument {k} set by the `set_default_from_args` decorator is not present in the arguments.')
-            else:
-                continue
-
-        cmd_v = getattr(args, k)
-        if cmd_v is None or (action_keys[k].nargs is not None and isinstance(cmd_v, (list, tuple)) and cmd_v == []):  # no command line argument is provided, try the default
-            v = dataset_config.get(k, v)  # use the dataset configuration if available, else use the default set by `set_default_from_args`
-            v = _clean_value(v, action_keys[k])
-
-            if cmd_v != v:
-                _logger.info('{} set to {} instead of {}.'.format(k, getattr(args, k), v))
-            setattr(args, k, v)
+    return DEFAULT_ARGS.get(dataset_name, {})
 
 
-def load_config(args: Namespace) -> dict:
+def load_dataset_config(args: Namespace) -> dict:
     """
     Loads the configuration file for the dataset.
 

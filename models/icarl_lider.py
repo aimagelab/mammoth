@@ -12,13 +12,12 @@ from utils.batch_norm import bn_track_stats
 
 
 class ICarlLider(LiderOptimizer):
+    """Continual Learning via iCaRL. Treated with LiDER!"""
     NAME = 'icarl_lider'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Learning via iCaRL.'
-                                'Treated with LiDER!')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         add_lipschitz_args(parser)
         return parser

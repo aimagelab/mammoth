@@ -11,13 +11,12 @@ from utils.args import ArgumentParser
 
 
 class SI(ContinualModel):
+    """Continual Learning Through Synaptic Intelligence."""
     NAME = 'si'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Learning Through'
-                                ' Synaptic Intelligence.')
+    def get_parser(parser) -> ArgumentParser:
         parser.add_argument('--c', type=float, required=True,
                             help='surrogate loss weight parameter c')
         parser.add_argument('--xi', type=float, required=True,

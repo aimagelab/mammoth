@@ -21,12 +21,12 @@ from utils.buffer import Buffer, icarl_replay
 
 
 class BiC(ContinualModel):
+    """Bias Correction."""
     NAME = 'bic'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Bias Correction.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
 
         parser.add_argument('--bic_epochs', type=int, default=250,

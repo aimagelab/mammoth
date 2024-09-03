@@ -7,8 +7,6 @@ from torch.utils.data import DataLoader
 import tqdm
 import logging
 
-from sklearn.metrics.pairwise import cosine_similarity
-
 from datasets.utils.continual_dataset import ContinualDataset
 from models.utils.continual_model import ContinualModel
 from argparse import ArgumentParser, Namespace
@@ -115,12 +113,12 @@ def get_dataloader_from_buffer(args: Namespace, buffer: Buffer, batch_size: int,
 
 
 class PuriDivER(ContinualModel):
+    """PuriDivER: Online Continual Learning on a Contaminated Data Stream with Blurry Task Boundaries."""
     NAME = 'puridiver'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='PuriDivER: Online Continual Learning on a Contaminated Data Stream with Blurry Task Boundaries')
+    def get_parser(parser) -> ArgumentParser:
         parser.set_defaults(n_epochs=1, optim_mom=0.9, optim_wd=1e-4, optim_nesterov=1, batch_size=16)
 
         add_rehearsal_args(parser)

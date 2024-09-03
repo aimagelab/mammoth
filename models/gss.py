@@ -11,12 +11,12 @@ from utils.gss_buffer import Buffer as Buffer
 
 
 class Gss(ContinualModel):
+    """Gradient based sample selection for online continual learning."""
     NAME = 'gss'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Gradient based sample selection for online continual learning')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         parser.add_argument('--batch_num', type=int, default=1,
                             help='Number of batches extracted from the buffer.')

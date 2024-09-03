@@ -15,12 +15,12 @@ from models.l2p_utils.l2p_model import L2PModel
 
 
 class L2P(ContinualModel):
+    """Learning to Prompt (L2P)."""
     NAME = 'l2p'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Learning to Prompt (L2P)')
+    def get_parser(parser) -> ArgumentParser:
         parser.set_defaults(optimizer='adam')
         # Prompt parameters
         parser.add_argument('--prompt_pool', default=True, type=bool,)

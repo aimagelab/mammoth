@@ -18,12 +18,12 @@ def project(gxy: torch.Tensor, ger: torch.Tensor) -> torch.Tensor:
 
 
 class AGem(ContinualModel):
+    """Continual learning via A-GEM."""
     NAME = 'agem'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via A-GEM.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         return parser
 

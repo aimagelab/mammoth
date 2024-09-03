@@ -68,12 +68,12 @@ class FinalModel(nn.Module):
 
 
 class CLIP(ContinualModel):
+    """STATIC Continual Learning with CLIP"""
     NAME = 'clip'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='STATIC Continual Learning with CLIP')
+    def get_parser(parser) -> ArgumentParser:
         parser.set_defaults(lr=0, n_epochs=0)  # disable training by default
         parser.add_argument('--clip_backbone', type=str, default='ViT-L/14',
                             choices=list(clip.available_models()),
