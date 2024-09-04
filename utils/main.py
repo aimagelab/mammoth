@@ -140,6 +140,7 @@ def parse_args():
     model_parser = get_model_class(args).get_parser(parser)
     parser = fix_model_parser_backwards_compatibility(parser, model_parser)
     is_rehearsal = any([p for p in parser._actions if p.dest == 'buffer_size'])
+    buffer_size = None
     if is_rehearsal:  # get buffer size
         buffer_size = get_single_arg_value(parser, 'buffer_size')
         assert buffer_size is not None, "Buffer size not found in the arguments."

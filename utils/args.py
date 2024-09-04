@@ -146,11 +146,11 @@ def add_dynamic_parsable_args(parser: ArgumentParser, args: Namespace) -> None:
     bk_group = parser.add_argument_group('Backbone arguments', 'Arguments used to define the backbone network.')
     if isinstance(args.backbone, dict):
         assert 'type' in args.backbone, "The backbone `type` (i.e., the registered name) must be defined in the dictionary."
-        bk_name = args.backbone['type']
+        bk_name = args.backbone['type'].replace('-', '_').lower()
         bk_args = {**REGISTERED_BACKBONES[bk_name]['parsable_args'], **args.backbone['args']}
         args.backbone = bk_name
     else:
-        bk_args = REGISTERED_BACKBONES[args.backbone]['parsable_args']
+        bk_args = REGISTERED_BACKBONES[args.backbone.replace('-', '_').lower()]['parsable_args']
     build_parsable_args(bk_group, bk_args)
 
     # build_parsable_args(parser, get_dataset_names())
