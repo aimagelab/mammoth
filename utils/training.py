@@ -31,8 +31,6 @@ try:
 except ImportError:
     wandb = None
 
-_logger = logging.getLogger(__name__)
-
 
 def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> None:
     """
@@ -300,12 +298,12 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             if can_compute_fwd_beforetask and is_fwd_enabled and args.enable_other_metrics:
                 # try to compute accuracy at the beginning of the task
                 try:
-                    _logger.info("Evaluating model before task (for Forward Transfer metric)...")
+                    logging.info("Evaluating model before task (for Forward Transfer metric)...")
                     random_res_class, random_res_task = evaluate(model, dataset, last=True)
                     random_results_class.append(random_res_class)
                     random_results_task.append(random_res_task)
                 except Exception as e:
-                    _logger.info(f"Could not evaluate before `begin_task`, will try after")
+                    logging.info(f"Could not evaluate before `begin_task`, will try after")
                     # will try after the begin_task in case the model needs to setup something
                     can_compute_fwd_beforetask = False
 
@@ -314,15 +312,15 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             if not can_compute_fwd_beforetask and is_fwd_enabled and args.enable_other_metrics:
                 if train_loader.dataset.num_times_iterated == 0:  # compute only if the model has not been trained yet
                     try:
-                        _logger.info("Evaluating model before task (for Forward Transfer metric)...")
+                        logging.info("Evaluating model before task (for Forward Transfer metric)...")
                         random_res_class, random_res_task = evaluate(model, dataset, last=True)
                         random_results_class.append(random_res_class)
                         random_results_task.append(random_res_task)
                     except Exception as e:
-                        _logger.error(f"Model `{model.NAME}` does not support pre-evaluation, will not compute Forward Transfer metric\n{e}")
+                        logging.error(f"Model `{model.NAME}` does not support pre-evaluation, will not compute Forward Transfer metric\n{e}")
                         is_fwd_enabled = False
                 else:
-                    _logger.info("Model used the training data, skipping Forward Transfer metric compute")
+                    logging.info("Model used the training data, skipping Forward Transfer metric compute")
                     is_fwd_enabled = False
 
             if not args.inference_only and args.n_epochs > 0:
@@ -451,7 +449,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                                                      results_mask_classes, random_results_task)
                 log_extra_metrics(args, fwt, fwt_mask_class, 'Forward Transfer', t)
             else:
-                _logger.warning("Forward Transfer metric incompatible with the current model, skipped.")
+                logging.warning("Forward Transfer metric incompatible with the current model, skipped.")
 
         system_tracker.print_stats()
 

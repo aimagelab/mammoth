@@ -15,8 +15,6 @@ from utils.args import ArgumentParser
 
 from datasets import get_dataset
 
-_logger = logging.getLogger('models/dualprompt')
-
 
 class DualPrompt(ContinualModel):
     """DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning."""
@@ -72,7 +70,7 @@ class DualPrompt(ContinualModel):
     def __init__(self, backbone, loss, args, transform, dataset=None):
         del backbone
         print("-" * 20)
-        _logger.info(f"DualPrompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
+        logging.info(f"DualPrompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
         print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
         print("-" * 20)
 

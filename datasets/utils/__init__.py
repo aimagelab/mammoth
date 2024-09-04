@@ -15,8 +15,6 @@ from torchvision import transforms
 from utils import smart_joint
 from utils.conf import warn_once
 
-_logger = logging.getLogger('dataset/utils')
-
 # Default arguments defined by the datasets
 # The structure is {dataset_name: {arg_name: default_value}}
 DEFAULT_ARGS = {}
@@ -118,24 +116,25 @@ def get_default_args_for_dataset(dataset_name: str) -> dict:
     return DEFAULT_ARGS.get(dataset_name, {})
 
 
-def load_dataset_config(args: Namespace) -> dict:
+def load_dataset_config(dataset_config: str, dataset: str) -> dict:
     """
     Loads the configuration file for the dataset.
 
     Args:
-        args: the arguments which contains the hyperparameters
+        dataset_config (str): the name of the configuration file
+        dataset (str): the name of the dataset
 
     Returns:
         dict: the configuration of the dataset
     """
-    if hasattr(args, 'dataset_config') and args.dataset_config:
-        filepath = smart_joint('datasets', 'configs', args.dataset, args.dataset_config + '.yaml')
+    if dataset_config:
+        filepath = smart_joint('datasets', 'configs', dataset, dataset_config + '.yaml')
         if not os.path.exists(filepath):
-            raise FileNotFoundError(f'Dataset configuration file {args.dataset_config} not found in {filepath}')
+            raise FileNotFoundError(f'Dataset configuration file {dataset_config} not found in {filepath}')
     else:
-        filepath = smart_joint('datasets', 'configs', args.dataset, 'default.yaml')
+        filepath = smart_joint('datasets', 'configs', dataset, 'default.yaml')
         if not os.path.exists(filepath):
-            warn_once(f'Default configuration file not found for dataset {args.dataset}. '
+            warn_once(f'Default configuration file not found for dataset {dataset}. '
                       'Using the defaults specified in the dataset class (if available).')
             return {}
 

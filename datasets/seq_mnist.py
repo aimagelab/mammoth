@@ -11,7 +11,6 @@ import torchvision.transforms as transforms
 from PIL import Image
 from torchvision.datasets import MNIST
 
-from backbone.MNISTMLP import MNISTMLP
 from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
                                               store_masked_loaders)
 from utils.conf import base_path

@@ -30,7 +30,7 @@ class SI(ContinualModel):
         self.big_omega = None
         self.small_omega = 0
 
-    def penalty(self):
+    def penalty(self):  # base form of the penalty term
         if self.big_omega is None:
             return torch.tensor(0.0).to(self.device)
         else:
@@ -48,10 +48,11 @@ class SI(ContinualModel):
         self.checkpoint = self.net.get_params().data.clone().to(self.device)
         self.small_omega = 0
 
-    def get_penalty_grads(self):
+    def get_penalty_grads(self):  # closed form of the gradient of the penalty term
         return self.args.c * 2 * self.big_omega * (self.net.get_params().data - self.checkpoint)
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
+        pre_params = self.net.get_params().detach().data.clone()
         self.opt.zero_grad()
         outputs = self.net(inputs)
         loss = self.loss(outputs, labels)
@@ -60,9 +61,9 @@ class SI(ContinualModel):
         if self.big_omega is not None:
             loss_grads = self.net.get_grads()
             self.net.set_grads(loss_grads + self.get_penalty_grads())
-        cur_small_omega *= self.args.lr * self.net.get_grads().data
-        self.small_omega += cur_small_omega
         nn.utils.clip_grad.clip_grad_value_(self.get_parameters(), 1)
         self.opt.step()
 
+        cur_small_omega *= (pre_params - self.net.get_params().detach().data.clone())
+        self.small_omega += cur_small_omega
         return loss.item()

@@ -229,3 +229,9 @@ def get_backbone(args: Namespace) -> MammothBackbone:
     parsed_args = {arg: getattr(args, arg) for arg in backbone_args.keys()}
 
     return backbone_class(**parsed_args)
+
+
+# import all files in the backbone folder to register the networks
+for file in os.listdir(os.path.dirname(__file__)):
+    if file.endswith('.py') and file != '__init__.py':
+        importlib.import_module(f'backbone.{file[:-3]}')

@@ -10,8 +10,6 @@ from models.utils.continual_model import ContinualModel
 from utils.args import add_rehearsal_args, ArgumentParser
 from utils.buffer import Buffer
 
-_logger = logging.getLogger(__name__)
-
 
 class Mer(ContinualModel):
     """Continual Learning via Meta-Experience Replay (Alg 6)."""
@@ -33,7 +31,7 @@ class Mer(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
         if args.batch_size != 1:
-            _logger.warning('MER is designed to work with batch_size=1. We will use batch_size=1.')
+            logging.warning('MER is designed to work with batch_size=1. We will use batch_size=1.')
             args.batch_size = 1
         super(Mer, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)

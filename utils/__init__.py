@@ -13,7 +13,12 @@ def setup_logging():
     # check if logging has already been configured
     if hasattr(setup_logging, 'done'):
         return
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='[%(levelname)s] (%(name)s) %(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+    formatter = logging.Formatter('[%(levelname)s] %(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+    logger = logging.getLogger('root')
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
     setattr(setup_logging, 'done', True)
 
 

@@ -25,7 +25,7 @@ import importlib
 import socket
 import datetime
 import uuid
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 import torch
 
 mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -34,8 +34,15 @@ sys.path.append(mammoth_path + '/datasets')
 sys.path.append(mammoth_path + '/backbone')
 sys.path.append(mammoth_path + '/models')
 
-from utils import setup_logging, create_if_not_exists
+from utils import setup_logging
 setup_logging()
+
+from utils.conf import base_path, get_device
+from models import get_model
+from datasets import get_dataset
+from utils.training import train
+from models.utils.future_model import FutureModel
+from backbone import get_backbone
 
 if __name__ == '__main__':
     from utils.conf import warn_once
@@ -47,8 +54,6 @@ if __name__ == '__main__':
             warn_once("Running in test mode. Ignoring .env file.")
     except ImportError:
         warn_once("Warning: python-dotenv not installed. Ignoring .env file.")
-
-_logger = logging.getLogger("general")
 
 
 def lecun_fix():
@@ -96,6 +101,7 @@ def parse_args():
     Returns:
         args (argparse.Namespace): Parsed command line arguments.
     """
+    from utils import create_if_not_exists
     from utils.conf import warn_once
     from utils.args import add_initial_args, add_management_args, add_experiment_args, add_configuration_args, clean_dynamic_args, \
         check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args, fix_model_parser_backwards_compatibility, update_cli_defaults
@@ -104,7 +110,7 @@ def parse_args():
     from models.utils import get_single_arg_value, load_model_config
 
     from datasets import get_dataset_class
-    from datasets.utils import load_dataset_config, get_default_args_for_dataset
+    from datasets.utils import get_default_args_for_dataset, load_dataset_config
 
     check_multiple_defined_arg_during_string_parse()
 
@@ -132,7 +138,7 @@ def parse_args():
     parser.set_defaults(**get_default_args_for_dataset(args.dataset))
 
     # 4) load the configuration file for the dataset and update the parser with the dataset-specific arguments
-    dataset_config = load_dataset_config(args)
+    dataset_config = load_dataset_config(args.dataset_config, args.dataset)
     dataset_class = get_dataset_class(args)
     dataset_class.set_default_from_config(dataset_config, parser)
 
@@ -151,6 +157,10 @@ def parse_args():
 
     # 6) add the configuration file for the model and update the parser with the model-specific arguments
     model_config = load_model_config(args, buffer_size=buffer_size)
+    if 'dataset_config' in model_config:  # if the dataset specified a dataset config, use it
+        dataset_config = load_dataset_config(model_config['dataset_config'], args.dataset)
+        dataset_class.set_default_from_config(dataset_config, parser)
+
     update_cli_defaults(parser, model_config)
 
     args = parser.parse_known_args()[0]
@@ -192,7 +202,7 @@ def parse_args():
     args.model = models_dict[args.model]
 
     if args.lr_scheduler is not None:
-        _logger.info('`lr_scheduler` set to {}, overrides default from dataset.'.format(args.lr_scheduler))
+        logging.info('`lr_scheduler` set to {}, overrides default from dataset.'.format(args.lr_scheduler))
 
     if args.seed is not None:
         from utils.conf import set_random_seed
@@ -210,7 +220,7 @@ def parse_args():
         repo = git.Repo(path=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         args.conf_git_hash = repo.head.object.hexsha
     except Exception:
-        _logger.error("Could not retrieve git hash.")
+        logging.error("Could not retrieve git hash.")
         args.conf_git_hash = None
 
     if args.savecheck:
@@ -226,8 +236,8 @@ def parse_args():
     check_args(args)
 
     if args.validation is not None:
-        _logger.info(f"Using {args.validation}% of the training set as validation set.")
-        _logger.info(f"Validation will be computed with mode `{args.validation_mode}`.")
+        logging.info(f"Using {args.validation}% of the training set as validation set.")
+        logging.info(f"Validation will be computed with mode `{args.validation_mode}`.")
 
     return args
 
@@ -260,6 +270,7 @@ def extend_args(args, dataset):
 
     if args.debug_mode:
         print('Debug mode enabled: running only a few forward steps per epoch with W&B disabled.')
+        # set logging level to debug
         args.nowand = 1
 
     if args.wandb_entity is None:
@@ -268,7 +279,7 @@ def extend_args(args, dataset):
         args.wandb_project = os.getenv('WANDB_PROJECT', None)
 
     if args.wandb_entity is None or args.wandb_project is None:
-        _logger.info('`wandb_entity` and `wandb_project` not set. Disabling wandb.')
+        logging.info('`wandb_entity` and `wandb_project` not set. Disabling wandb.')
         args.nowand = 1
     else:
         print('Logging to wandb: {}/{}'.format(args.wandb_entity, args.wandb_project))
@@ -276,13 +287,6 @@ def extend_args(args, dataset):
 
 
 def main(args=None):
-    from utils.conf import base_path, get_device
-    from models import get_model
-    from datasets import get_dataset
-    from utils.training import train
-    from models.utils.future_model import FutureModel
-    from backbone import get_backbone
-
     lecun_fix()
     if args is None:
         args = parse_args()
@@ -295,8 +299,8 @@ def main(args=None):
 
     if args.code_optimization != 0:
         torch.set_float32_matmul_precision('high' if args.code_optimization == 1 else 'medium')
-        _logger.info("Code_optimization is set to", args.code_optimization)
-        _logger.info(f"Using {torch.get_float32_matmul_precision()} precision for matmul.")
+        logging.info("Code_optimization is set to", args.code_optimization)
+        logging.info(f"Using {torch.get_float32_matmul_precision()} precision for matmul.")
 
         if args.code_optimization == 2:
             if not torch.cuda.is_bf16_supported():
@@ -314,7 +318,7 @@ def main(args=None):
         # from https://pytorch.org/tutorials/intermediate/torch_compile_tutorial.html
         if torch.cuda.get_device_capability()[0] >= 7 and os.name != 'nt':
             print("================ Compiling model with torch.compile ================")
-            _logger.warning("`torch.compile` may break your code if you change the model after the first run!")
+            logging.warning("`torch.compile` may break your code if you change the model after the first run!")
             print("This includes adding classifiers for new tasks, changing the backbone, etc.")
             print("ALSO: some models CHANGE the backbone during initialization. Remember to call `torch.compile` again after that.")
             print("====================================================================")

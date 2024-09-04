@@ -7,16 +7,13 @@ from PIL import Image
 from typing import Tuple
 from tqdm import tqdm
 import json
-import warnings
 
-from utils.conf import base_path, warn_once
 try:
-    with warnings.catch_warnings():
-        warnings.filterwarnings(action=lambda x: warn_once(x), category=DeprecationWarning)  # please stop screaming at me, no I won't update every microsecond
-        import deeplake
+    import deeplake
 except ImportError:
     raise NotImplementedError("Deeplake not installed. Please install with `pip install deeplake` to use this dataset.")
 
+from utils.conf import base_path
 from datasets.utils import set_default_from_args
 from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
 from datasets.transforms.denormalization import DeNormalize

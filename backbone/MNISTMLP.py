@@ -5,6 +5,7 @@
 
 import torch
 import torch.nn as nn
+import logging
 
 from backbone import MammothBackbone, num_flat_features, register_backbone, xavier
 
@@ -15,7 +16,7 @@ class BaseMNISTMLP(MammothBackbone):
     Designed for the MNIST dataset.
     """
 
-    def __init__(self, input_size: int, output_size: int) -> None:
+    def __init__(self, input_size: int, output_size: int, hidden_size=100) -> None:
         """
         Instantiates the layers of the network.
 
@@ -28,8 +29,8 @@ class BaseMNISTMLP(MammothBackbone):
         self.input_size = input_size
         self.output_size = output_size
 
-        self.fc1 = nn.Linear(self.input_size, 100)
-        self.fc2 = nn.Linear(100, 100)
+        self.fc1 = nn.Linear(self.input_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
 
         self._features = nn.Sequential(
             self.fc1,
@@ -37,7 +38,7 @@ class BaseMNISTMLP(MammothBackbone):
             self.fc2,
             nn.ReLU(),
         )
-        self.classifier = nn.Linear(100, self.output_size)
+        self.classifier = nn.Linear(hidden_size, self.output_size)
         self.net = nn.Sequential(self._features, self.classifier)
         self.reset_parameters()
 
@@ -75,6 +76,7 @@ class BaseMNISTMLP(MammothBackbone):
 
 
 @register_backbone("mnistmlp")
-class MNISTMLP(BaseMNISTMLP):
-    def __init__(self) -> None:
-        super(MNISTMLP, self).__init__(28 * 28, 10)
+def mnistmlp(mlp_hidden_size: int = 100) -> BaseMNISTMLP:
+    if mlp_hidden_size != 100:
+        logging.info(f"hidden size is set to `{mlp_hidden_size}` instead of the default `100`")
+    return BaseMNISTMLP(28 * 28, 10, hidden_size=mlp_hidden_size)

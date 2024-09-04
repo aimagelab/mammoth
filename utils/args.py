@@ -18,8 +18,6 @@ from models import get_all_models
 from models.utils.continual_model import ContinualModel
 from utils import binary_to_boolean_type, custom_str_underscore, field_with_aliases
 
-_logger = logging.getLogger('utils/args')
-
 
 def update_cli_defaults(parser: ArgumentParser, cnf: dict):
     """
@@ -106,7 +104,7 @@ def build_parsable_args(parser: ArgumentParser, spec: dict) -> None:
     for name, arg_spec in spec.items():
         # check if the argument is already defined in the parser
         if any([action.dest == name for action in parser._actions]):
-            _logger.warn(f"Argument `{name}` is already defined in the parser. Skipping...")
+            logging.warn(f"Argument `{name}` is already defined in the parser. Skipping...")
             continue
 
         if isinstance(arg_spec, dict):

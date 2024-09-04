@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.main import main
 
 
-def test_dualprompt():
+def test_cgil():
     sys.argv = ['mammoth',
                 '--model',
                 'cgil',

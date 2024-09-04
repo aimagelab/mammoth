@@ -6,7 +6,6 @@
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 
-from backbone.MNISTMLP import MNISTMLP
 from datasets.perm_mnist import MyMNIST, MNIST
 from datasets.transforms.rotation import Rotation
 from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders

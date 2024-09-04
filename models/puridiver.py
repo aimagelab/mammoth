@@ -20,8 +20,6 @@ from torchvision import transforms
 from utils.conf import create_seeded_dataloader
 from utils.kornia_utils import to_kornia_transform
 
-_logging = logging.getLogger(__name__)
-
 
 class CustomDataset(torch.utils.data.Dataset):
     def __init__(self, data: torch.Tensor, targets: torch.Tensor, transform=None, probs=None, extra=None, device="cpu"):

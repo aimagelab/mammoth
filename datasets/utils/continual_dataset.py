@@ -327,7 +327,8 @@ def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):
             for lab, count, lpc in zip(unique_labels, label_count_by_class, lpcs):
                 current_mask = setting.unlabeled_rng.choice(count, max(count - lpc, 0), replace=False)
                 mask.append(np.where(train_dataset.targets == lab)[0][current_mask])
-        return np.concatenate(mask).astype(np.int32)
+
+        return np.array(mask).astype(np.int32)
 
 
 def _prepare_data_loaders(train_dataset: MammothDatasetWrapper, test_dataset: MammothDatasetWrapper, setting: ContinualDataset):

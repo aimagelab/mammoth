@@ -68,8 +68,6 @@ from utils.conf import warn_once
 
 __all__ = ['VisionTransformer']  # model_registry will add each entrypoint fn to this
 
-_logger = logging.getLogger('backbone/vit')
-
 
 class Mlp(TimmMlp):
     def forward(self, x, **kwargs):
@@ -533,7 +531,7 @@ def resize_pos_embed(
     if not len(gs_new):  # backwards compatibility
         gs_new = [int(math.sqrt(ntok_new))] * 2
     assert len(gs_new) >= 2
-    _logger.info(f'Resized position embedding: {posemb.shape} ({[gs_old, gs_old]}) to {posemb_new.shape} ({gs_new}).')
+    logging.info(f'Resized position embedding: {posemb.shape} ({[gs_old, gs_old]}) to {posemb_new.shape} ({gs_new}).')
     posemb_grid = posemb_grid.reshape(1, gs_old, gs_old, -1).permute(0, 3, 1, 2)
     posemb_grid = F.interpolate(posemb_grid, size=gs_new, mode=interpolation, antialias=antialias, align_corners=False)
     posemb_grid = posemb_grid.permute(0, 2, 3, 1).reshape(1, gs_new[0] * gs_new[1], -1)
@@ -678,7 +676,7 @@ def vit_base_patch16_224_prompt_prototype(pretrained=False, pretrain_type='in21k
     """
     assert pretrain_type in ['in21k', 'in21k_old', 'in21k-ft-in1k'], f"Invalid pretrain_type: {pretrain_type}"
     if not pretrained:
-        _logger.warning("creating a ViT without pre-trained weights. This is not recommended.")
+        logging.warning("creating a ViT without pre-trained weights. This is not recommended.")
 
     model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12)
     if kwargs is None:

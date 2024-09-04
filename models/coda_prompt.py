@@ -14,8 +14,6 @@ from datasets import get_dataset
 from models.coda_prompt_utils.model import Model
 from utils.schedulers import CosineSchedule
 
-_logger = logging.getLogger('models/coda_prompt')
-
 
 class CodaPrompt(ContinualModel):
     """Continual Learning via CODA-Prompt: COntinual Decomposed Attention-based Prompting."""
@@ -35,12 +33,12 @@ class CodaPrompt(ContinualModel):
     def __init__(self, backbone, loss, args, transform, dataset=None):
         del backbone
         print("-" * 20)
-        _logger.info(f"CODA-Prompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
+        logging.info(f"CODA-Prompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
         print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
         print("-" * 20)
 
         if args.lr_scheduler is not None:
-            _logger.info("CODA-Prompt uses a custom scheduler: cosine. Ignoring --lr_scheduler.")
+            logging.info("CODA-Prompt uses a custom scheduler: cosine. Ignoring --lr_scheduler.")
 
         self.dataset = get_dataset(args)
         self.n_classes = self.dataset.N_CLASSES

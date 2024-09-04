@@ -21,8 +21,6 @@ from models.utils.continual_model import ContinualModel
 from models.dap_utils.dap_model import DAPModel
 from utils import binary_to_boolean_type
 
-_logger = logging.getLogger('models/DAP')
-
 
 class DAP(ContinualModel):
     """Generating Instance-level Prompts for Rehearsal-free Continual Learning."""
@@ -51,7 +49,7 @@ class DAP(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
         if args.enable_test_time_majority_voting:
-            _logger.warning("Majority voting is enabled during test time. The results will not be a fair comparison with other methods.")
+            logging.warning("Majority voting is enabled during test time. The results will not be a fair comparison with other methods.")
         if args.load_original_checkpoint and not os.path.exists('./data/imagenet21k_ViT-B_16.npz'):
             raise FileNotFoundError('`imagenet21k_ViT-B_16.npz` not found in ./data directory. Please follow the instructions in '
                                     'https://github.com/naver-ai/dap-cl to download the file.')

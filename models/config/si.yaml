@@ -1,0 +1,7 @@
+perm-mnist:
+  mlp_hidden_size: 2000
+  xi: 0.1
+  c: 0.1
+  optimizer: adam
+  lr: 0.001
+  dataset_config: 10tasks

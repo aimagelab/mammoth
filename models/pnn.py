@@ -12,12 +12,12 @@ from backbone import get_backbone
 
 
 def get_pnn_backbone(bone, old_cols=None, x_shape=None):
-    from backbone.MNISTMLP import MNISTMLP
+    from backbone.MNISTMLP import BaseMNISTMLP
     from backbone.MNISTMLP_PNN import MNISTMLP_PNN
     from backbone.ResNetBlock import ResNet
     from backbone.ResNet18_PNN import resnet18_pnn
 
-    if isinstance(bone, MNISTMLP):
+    if isinstance(bone, BaseMNISTMLP):
         return MNISTMLP_PNN(bone.input_size, bone.output_size, old_cols)
     elif isinstance(bone, ResNet):
         return resnet18_pnn(bone.num_classes, bone.nf, old_cols, x_shape)
