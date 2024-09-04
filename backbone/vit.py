@@ -56,7 +56,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
 
-from timm.layers import PatchEmbed, Mlp, DropPath, trunc_normal_, lecun_normal_, resample_patch_embed, \
+from timm.layers import PatchEmbed, DropPath, trunc_normal_, lecun_normal_, resample_patch_embed, \
     resample_abs_pos_embed
 from timm.models._builder import build_model_with_cfg
 from timm.models._manipulate import named_apply
@@ -65,6 +65,12 @@ from backbone.utils.layers import IncrementalClassifier
 from backbone import MammothBackbone
 from backbone.utils.lora_utils import LoRAAttention, LoRAMlp
 from utils.conf import warn_once
+from timm.layers import Mlp as TimmMlp
+
+class Mlp(TimmMlp):
+    def forward(self, x, **kwargs):
+        return super().forward(x)
+
 
 __all__ = ['VisionTransformer']  # model_registry will add each entrypoint fn to this
 

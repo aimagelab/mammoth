@@ -35,7 +35,7 @@ class EwcOn(ContinualModel):
         if self.checkpoint is None:
             return torch.tensor(0.0).to(self.device)
         else:
-            penalty = (self.fish * ((self.net.get_params() - self.checkpoint) ** 2)).sum()
+            penalty = self.args.e_lambda * (self.fish * ((self.net.get_params() - self.checkpoint) ** 2)).sum()
             return penalty
 
     def end_task(self, dataset):
@@ -64,12 +64,16 @@ class EwcOn(ContinualModel):
 
         self.checkpoint = self.net.get_params().data.clone()
 
+    def get_penalty_grads(self):
+        return self.args.e_lambda * 2 * self.fish * (self.net.get_params().data - self.checkpoint)
+    
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
         self.opt.zero_grad()
         outputs = self.net(inputs)
-        penalty = self.penalty()
-        loss = self.loss(outputs, labels) + self.args.e_lambda * penalty
+        if self.checkpoint is not None:
+            self.net.set_grads(self.get_penalty_grads())
+        loss = self.loss(outputs, labels)
         assert not torch.isnan(loss)
         loss.backward()
         self.opt.step()

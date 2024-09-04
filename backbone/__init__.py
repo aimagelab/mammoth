@@ -131,16 +131,24 @@ class MammothBackbone(nn.Module):
         Returns:
             gradients tensor
         """
-        return torch.cat(self.get_grads_list())
-
-    def get_grads_list(self):
-        """
-        Returns a list containing the gradients (a tensor for each layer).
-
-        Returns:
-            gradients list
-        """
         grads = []
         for pp in list(self.parameters()):
             grads.append(pp.grad.view(-1))
-        return grads
+        return torch.cat(grads)
+
+
+    def set_grads(self, new_grads: torch.Tensor) -> None:
+        """
+        Sets the parameters to a given value.
+
+        Args:
+            new_params: concatenated values to be set
+        """
+        assert new_grads.size() == self.get_params().size()
+        progress = 0
+        for pp in list(self.parameters()):
+            cand_grads = new_grads[progress: progress +
+                                     torch.tensor(pp.size()).prod()].view(pp.size())
+            progress += torch.tensor(pp.size()).prod()
+            pp.grad = cand_grads
+
