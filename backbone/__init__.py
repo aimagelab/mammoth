@@ -126,19 +126,24 @@ class MammothBackbone(nn.Module):
         Returns:
             gradients tensor
         """
-        return torch.cat(self.get_grads_list())
-
-    def get_grads_list(self):
-        """
-        Returns a list containing the gradients (a tensor for each layer).
-
-        Returns:
-            gradients list
-        """
         grads = []
         for pp in list(self.parameters()):
             grads.append(pp.grad.view(-1))
-        return grads
+        return torch.cat(grads)
+
+    def set_grads(self, new_grads: torch.Tensor) -> None:
+        """
+        Sets the gradients of all parameters.
+
+        Args:
+            new_params: concatenated values to be set
+        """
+        progress = 0
+        for pp in list(self.parameters()):
+            cand_grads = new_grads[progress: progress +
+                                   torch.tensor(pp.size()).prod()].view(pp.size())
+            progress += torch.tensor(pp.size()).prod()
+            pp.grad = cand_grads
 
 
 def register_backbone(name: str) -> Callable:
@@ -151,6 +156,8 @@ def register_backbone(name: str) -> Callable:
     Args:
         name: the name of the backbone network
     """
+    name = name.replace('-', '_').lower()
+
     def register_network_fn(cls: MammothBackbone | Callable) -> MammothBackbone:
         # check if the name is already registered
         if name in REGISTERED_BACKBONES:
@@ -188,6 +195,17 @@ def register_backbone(name: str) -> Callable:
 
 
 def get_backbone_class(name: str, return_args=False) -> MammothBackbone:
+    """
+    Get the backbone network class from the registered networks.
+
+    Args:
+        name: the name of the backbone network
+        return_args: whether to return the parsable arguments of the backbone network
+
+    Returns:
+        the backbone class
+    """
+    name = name.replace('-', '_').lower()
     assert name in REGISTERED_BACKBONES, "Attempted to access non-registered network"
     cl = REGISTERED_BACKBONES[name]['class']
     if return_args:
@@ -211,10 +229,3 @@ def get_backbone(args: Namespace) -> MammothBackbone:
     parsed_args = {arg: getattr(args, arg) for arg in backbone_args.keys()}
 
     return backbone_class(**parsed_args)
-
-
-for file in os.listdir(os.path.dirname(__file__)):
-    if file.endswith(".py") and not file.startswith("_"):
-        module_name, _ = os.path.splitext(file)
-        relative_module_name = f".{module_name}"
-        module = importlib.import_module(relative_module_name, package=__name__)

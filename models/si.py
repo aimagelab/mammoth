@@ -48,15 +48,21 @@ class SI(ContinualModel):
         self.checkpoint = self.net.get_params().data.clone().to(self.device)
         self.small_omega = 0
 
+    def get_penalty_grads(self):
+        return self.args.c * 2 * self.big_omega * (self.net.get_params().data - self.checkpoint)
+
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         self.opt.zero_grad()
         outputs = self.net(inputs)
-        penalty = self.penalty()
-        loss = self.loss(outputs, labels) + self.args.c * penalty
+        loss = self.loss(outputs, labels)
         loss.backward()
+        cur_small_omega = self.net.get_grads().data
+        if self.big_omega is not None:
+            loss_grads = self.net.get_grads()
+            self.net.set_grads(loss_grads + self.get_penalty_grads())
+        cur_small_omega *= self.args.lr * self.net.get_grads().data
+        self.small_omega += cur_small_omega
         nn.utils.clip_grad.clip_grad_value_(self.get_parameters(), 1)
         self.opt.step()
-
-        self.small_omega += self.args.lr * self.net.get_grads().data ** 2
 
         return loss.item()
