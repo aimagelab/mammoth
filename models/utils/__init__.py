@@ -12,31 +12,6 @@ from utils import smart_joint
 from utils.conf import warn_once
 
 
-def get_single_arg_value(parser: ArgumentParser, arg_name: str):
-    """
-    Returns the value of a single argument without explicitly parsing the arguments.
-
-    Args:
-        parser: the argument parser
-        arg_name: the name of the argument
-
-    Returns:
-        str: the value of the argument
-    """
-    action = [action for action in parser._actions if action.dest == arg_name]
-    assert len(action) == 1, f'Argument {arg_name} not found in the parser.'
-    action = action[0]
-
-    for i, arg in enumerate(sys.argv):
-        arg_k = arg.split('=')[0]
-        if arg_k in action.option_strings or arg_k == action.dest:
-            if len(arg.split('=')) == 2:
-                return arg.split('=')[1]
-            else:
-                return sys.argv[i + 1]
-    return None
-
-
 def load_model_config(args: Namespace, buffer_size: int = None) -> dict:
     """
     Loads the configuration file for the model.

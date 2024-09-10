@@ -19,7 +19,32 @@ from models.utils.continual_model import ContinualModel
 from utils import binary_to_boolean_type, custom_str_underscore, field_with_aliases
 
 
-def update_cli_defaults(parser: ArgumentParser, cnf: dict):
+def get_single_arg_value(parser: ArgumentParser, arg_name: str):
+    """
+    Returns the value of a single argument without explicitly parsing the arguments.
+
+    Args:
+        parser: the argument parser
+        arg_name: the name of the argument
+
+    Returns:
+        str: the value of the argument
+    """
+    action = [action for action in parser._actions if action.dest == arg_name]
+    assert len(action) == 1, f'Argument {arg_name} not found in the parser.'
+    action = action[0]
+
+    for i, arg in enumerate(sys.argv):
+        arg_k = arg.split('=')[0]
+        if arg_k in action.option_strings or arg_k == action.dest:
+            if len(arg.split('=')) == 2:
+                return arg.split('=')[1]
+            else:
+                return sys.argv[i + 1]
+    return None
+
+
+def update_cli_defaults(parser: ArgumentParser, cnf: dict, is_rehearsal: bool = False) -> None:
     """
     Updates the default values of the parser with the values in the configuration dictionary.
 
@@ -28,10 +53,25 @@ def update_cli_defaults(parser: ArgumentParser, cnf: dict):
     Args:
         parser: the argument parser
         cnf: the configuration dictionary
+        is_rehearsal: if the arguments are for a rehearsal-based method
 
     Returns:
         None
     """
+    if is_rehearsal:
+        buffer_size = get_single_arg_value(parser, 'buffer_size')
+        if buffer_size is None:
+            buffer_size = list(cnf.keys())
+            assert len(buffer_size) == 1, "Buffer size not provided and multiple values found in the configuration."
+            buffer_size = buffer_size[0]
+
+        cnf = cnf[buffer_size]
+
+        if 'buffer_size' in cnf:
+            assert cnf['buffer_size'] == buffer_size, "Buffer size provided in the configuration is different from the one in the arguments."
+
+        cnf['buffer_size'] = buffer_size
+
     for action in parser._actions:
         if action.dest == 'help':
             continue

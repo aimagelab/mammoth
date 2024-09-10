@@ -104,10 +104,11 @@ def parse_args():
     from utils import create_if_not_exists
     from utils.conf import warn_once
     from utils.args import add_initial_args, add_management_args, add_experiment_args, add_configuration_args, clean_dynamic_args, \
-        check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args, fix_model_parser_backwards_compatibility, update_cli_defaults
+        check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args, fix_model_parser_backwards_compatibility, update_cli_defaults, \
+        get_single_arg_value
 
     from models import get_all_models, get_model_class
-    from models.utils import get_single_arg_value, load_model_config
+    from models.utils import load_model_config
 
     from datasets import get_dataset_class
     from datasets.utils import get_default_args_for_dataset, load_dataset_config
@@ -149,21 +150,23 @@ def parse_args():
     buffer_size = None
     if is_rehearsal:  # get buffer size
         buffer_size = get_single_arg_value(parser, 'buffer_size')
-        assert buffer_size is not None, "Buffer size not found in the arguments."
-        try:
-            buffer_size = int(buffer_size)  # try convert to int, check if it is a valid number
-        except ValueError:
-            raise ValueError(f'--buffer_size must be an integer but found {buffer_size}')
+        if buffer_size is not None:
+            try:
+                buffer_size = int(buffer_size)  # try convert to int, check if it is a valid number
+            except ValueError:
+                raise ValueError(f'--buffer_size must be an integer but found {buffer_size}')
 
     # 6) add the configuration file for the model and update the parser with the model-specific arguments
     model_config = load_model_config(args, buffer_size=buffer_size)
     if 'dataset_config' in model_config:  # if the dataset specified a dataset config, use it
         dataset_config = load_dataset_config(model_config['dataset_config'], args.dataset)
         dataset_class.set_default_from_config(dataset_config, parser)
-
-    update_cli_defaults(parser, model_config)
+    update_cli_defaults(parser, model_config, is_rehearsal=is_rehearsal)
 
     args = parser.parse_known_args()[0]
+
+    if is_rehearsal:
+        assert args.buffer_size is not None, "Buffer size not found in the arguments."
 
     # 7) add dynamic args defined by the backbones, datasets, etc.
     # TODO: ADD DATASET DYNAMIC ARGS

@@ -3,25 +3,28 @@
     "model": "agem",
     "setting": "class-il",
     "result": 19.94,
+    "notes": "reproduced not from main paper but from DER++. The main paper requires task descriptors",
     "cmd": "--dataset=seq-cifar10 --model=agem --buffer_size=500 --lr=0.03"
   },
   {
     "model": "agem-r",
     "setting": "class-il",
     "result": 22.06,
+    "as_main_paper": false,
+    "notes": "reproduced not from main paper but from DER++. The main paper requires task descriptors",
     "cmd": "--dataset=seq-cifar10 --model=agem_r --buffer_size=500 --lr=0.03"
   },
   {
     "model": "attriclip",
     "setting": "class-il",
     "result": null,
-    "cmd": "--lr=0.001 --optimizer=sgd --model=attriclip --dataset=seq-cifar100-224 --batch_size=16 --freeze_clip=1 --seed=1996"
+    "cmd": "--lr=0.001 --optimizer=sgd --model=attriclip --dataset=seq-cifar100-224 --batch_size=16"
   },
   {
     "model": "bic",
     "setting": "class-il",
     "result": 36.02,
-    "cmd": "--model=bic --dataset=seq-cifar100 --lr 0.03 --buffer_size 500"
+    "cmd": "--model=bic --dataset=seq-cifar100 --lr 0.1 --buffer_size 2000 --n_epochs 250 --lr_scheduler multisteplr --lr_milestones 100 150 200 --sched_multistep_lr_gamma=0.1 --optim_wd 0.0002 --batch_size 128 --backbone resnet32"
   },
   {
     "model": "ccic",

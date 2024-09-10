@@ -107,7 +107,10 @@ class ResNet(MammothBackbone):
         self.layer1 = self._make_layer(block, nf * 1, num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, nf * 2, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, nf * 4, num_blocks[2], stride=2)
-        self.layer4 = self._make_layer(block, nf * 8, num_blocks[3], stride=2)
+        if len(num_blocks) == 3:
+            self.layer4 = self._make_layer(block, nf * 8, num_blocks[2], stride=2)
+        else:
+            self.layer4 = nn.Identity()
         self.classifier = nn.Linear(nf * 8 * block.expansion, num_classes)
 
         self.feature_dim = nf * 8 * block.expansion
@@ -214,3 +217,18 @@ def resnet34(num_classes: int, num_filters: int = 64) -> ResNet:
         ResNet network
     """
     return ResNet(BasicBlock, [3, 4, 6, 3], num_classes, num_filters)
+
+
+@register_backbone("resnet32")
+def resnet32(num_classes: int, num_filters: int = 64) -> ResNet:
+    """
+    Instantiates a ResNet32 network.
+
+    Args:
+        num_classes: number of output classes
+        num_filters: number of filters
+
+    Returns:
+        ResNet network
+    """
+    return ResNet(BasicBlock, [5, 5, 5], num_classes, num_filters)
