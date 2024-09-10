@@ -299,7 +299,7 @@ def main(args=None):
 
     if args.code_optimization != 0:
         torch.set_float32_matmul_precision('high' if args.code_optimization == 1 else 'medium')
-        logging.info("Code_optimization is set to", args.code_optimization)
+        logging.info(f"Code_optimization is set to {args.code_optimization}")
         logging.info(f"Using {torch.get_float32_matmul_precision()} precision for matmul.")
 
         if args.code_optimization == 2:
