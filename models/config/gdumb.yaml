@@ -1,0 +1,5 @@
+seq-cifar100:
+  buffer: 500
+  lr: 0
+  model: gdumb
+  optim_wd: 5e-5

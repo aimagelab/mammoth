@@ -1,0 +1,3 @@
+seq-eurosat-rgb:
+  clip_backbone: ViT-L/14
+  model: clip

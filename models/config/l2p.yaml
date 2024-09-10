@@ -1,0 +1,4 @@
+seq-cifar100-224:
+  dataset_config: l2p
+  lr: 0.001
+  model: l2p

@@ -1,0 +1,8 @@
+seq-cifar100:
+  500:
+    alpha: 0.3
+    alpha_lip_lambda: 0.3
+    beta: 0.3
+    beta_lip_lambda: 0.1
+    lr: 0.1
+    model: derpp_lider

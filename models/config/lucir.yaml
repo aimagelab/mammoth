@@ -1,0 +1,9 @@
+seq-cifar100:
+  2000:
+    batch_size: 128
+    lr: 0.1
+    lr_milestones: [80, 120]
+    lr_scheduler: multisteplr
+    model: lucir
+    n_epochs: 160
+    sched_multistep_lr_gamma: 0.1

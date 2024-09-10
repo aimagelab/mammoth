@@ -1,0 +1,4 @@
+mnist-360:
+  batch_size: 4
+  lr: 0.1
+  model: joint_gcl

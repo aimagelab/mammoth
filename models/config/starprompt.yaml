@@ -1,0 +1,14 @@
+seq-cropdisease:
+  gr_mog_n_iters_first_stage: 500
+  lambda_ortho_first_stage: 30
+  lambda_ortho_second_stage: 5
+  learning_rate_gr_first_stage: 0.01
+  learning_rate_gr_second_stage: 0.001
+  lr: 0.001
+  model: starprompt
+  num_epochs_gr_first_stage: 10
+  num_epochs_gr_second_stage: 10
+  num_monte_carlo_gr_first_stage: 2
+  num_monte_carlo_gr_second_stage: 5
+  optimizer: adam
+  seed: 1993

@@ -1,0 +1,16 @@
+seq-cifar100:
+  500:
+    alpha: 0.3
+    batch_size: 64
+    beta: 0.8
+    constr_eta: 0.001
+    constr_margin: 0.7
+    dp_weight: 3000
+    lr: 0.03
+    lr_milestones: [35, 45]
+    lr_scheduler: multisteplr
+    minibatch_size: 64
+    model: xder
+    n_epoch: 50
+    optim_wd: 1e-6
+    sched_multistep_lr_gamma: 0.2

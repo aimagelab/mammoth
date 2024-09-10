@@ -1,0 +1,4 @@
+seq-cifar100-224:
+  dataset_config: slca
+  lr: 0.01
+  model: slca

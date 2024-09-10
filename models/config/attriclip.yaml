@@ -1,0 +1,7 @@
+seq-cifar100-224:
+  batch_size: 16
+  freeze_clip: 1
+  lr: 0.001
+  model: attriclip
+  optimizer: sgd
+  seed: 1996

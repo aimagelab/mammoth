@@ -1,0 +1,5 @@
+seq-cifar10:
+  500:
+    alpha: 0.3
+    lr: 0.03
+    model: der

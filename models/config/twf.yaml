@@ -1,0 +1,10 @@
+seq-cifar10:
+  500:
+    der_alpha: 0.3
+    der_beta: 1.2
+    lambda_diverse_loss: 0.3
+    lambda_fp: 0.03
+    lambda_fp_replay: 1.5
+    loadcheck: https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EeWEOSls505AsMCTXAxWoLUBmeIjCiplFl40zDOCmB_lEw?e
+    lr: 0.1
+    model: twf
