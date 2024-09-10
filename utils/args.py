@@ -19,7 +19,32 @@ from models.utils.continual_model import ContinualModel
 from utils import binary_to_boolean_type, custom_str_underscore, field_with_aliases
 
 
-def update_cli_defaults(parser: ArgumentParser, cnf: dict):
+def get_single_arg_value(parser: ArgumentParser, arg_name: str):
+    """
+    Returns the value of a single argument without explicitly parsing the arguments.
+
+    Args:
+        parser: the argument parser
+        arg_name: the name of the argument
+
+    Returns:
+        str: the value of the argument
+    """
+    action = [action for action in parser._actions if action.dest == arg_name]
+    assert len(action) == 1, f'Argument {arg_name} not found in the parser.'
+    action = action[0]
+
+    for i, arg in enumerate(sys.argv):
+        arg_k = arg.split('=')[0]
+        if arg_k in action.option_strings or arg_k == action.dest:
+            if len(arg.split('=')) == 2:
+                return arg.split('=')[1]
+            else:
+                return sys.argv[i + 1]
+    return None
+
+
+def update_cli_defaults(parser: ArgumentParser, cnf: dict) -> None:
     """
     Updates the default values of the parser with the values in the configuration dictionary.
 
