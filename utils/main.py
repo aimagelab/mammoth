@@ -37,14 +37,9 @@ sys.path.append(mammoth_path + '/models')
 from utils import setup_logging
 setup_logging()
 
-from utils.conf import base_path, get_device
-from models import get_model
-from datasets import get_dataset
-from utils.training import train
-from models.utils.future_model import FutureModel
-from backbone import get_backbone
-
 if __name__ == '__main__':
+    logging.info(f"Running Mammoth! on {socket.gethostname()}. (if you see this message more than once, you are probably importing something wrong)")
+
     from utils.conf import warn_once
     try:
         if os.getenv('MAMMOTH_TEST', '0') == '0':
@@ -129,9 +124,6 @@ def load_configs(parser: ArgumentParser) -> dict:
     # - get the configuration file for the model
     model_config = load_model_config(args, buffer_size=buffer_size)
 
-    # - merge the dataset and model configurations, with the model configuration taking precedence
-    config = {**base_config, **dataset_config, **model_config}
-
     # update the dataset class with the configuration
     dataset_class = get_dataset_class(args)
 
@@ -139,7 +131,10 @@ def load_configs(parser: ArgumentParser) -> dict:
     #   otherwise, use the dataset configuration
     if 'dataset_config' in model_config:  # if the dataset specified a dataset config, use it
         dataset_config = load_dataset_config(model_config['dataset_config'], args.dataset)
-    dataset_class.set_default_from_config(dataset_config, parser)
+    dataset_config = dataset_class.set_default_from_config(dataset_config, parser)  # the updated configuration file is cleaned from the dataset-specific arguments
+
+    # - merge the dataset and model configurations, with the model configuration taking precedence
+    config = {**dataset_config, **base_config, **model_config}
 
     return config
 
@@ -315,6 +310,13 @@ def extend_args(args, dataset):
 
 
 def main(args=None):
+    from utils.conf import base_path, get_device
+    from models import get_model
+    from datasets import get_dataset
+    from utils.training import train
+    from models.utils.future_model import FutureModel
+    from backbone import get_backbone
+
     lecun_fix()
     if args is None:
         args = parse_args()

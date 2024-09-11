@@ -31,13 +31,13 @@
   },
   {
     "model": "cgil",
-    "cmd": "--dataset=seq-eurosat-rgb --model=cgil --backbone=ViT-L/14 --lr=0.01 --g_models=vae --optim_alignment=adamw --learning_rate_alignment=0.03 --eval_future=1 --seed=1992 --combo_context=1 --gr_vae_n_iters=500 --num_epochs_alignment=150",
+    "cmd": "--dataset=seq-eurosat-rgb --model=cgil --clip_backbone=ViT-L/14 --lr=0.01 --g_models=vae --optim_alignment=adamw --learning_rate_alignment=0.03 --eval_future=1 --seed=1992 --combo_context=1 --gr_vae_n_iters=500 --num_epochs_alignment=150",
     "result": 96.17,
     "setting": "class-il"
   },
   {
     "model": "clip",
-    "cmd": "--dataset=seq-eurosat-rgb --model=clip --backbone=ViT-L/14",
+    "cmd": "--dataset=seq-eurosat-rgb --model=clip --clip_backbone=ViT-L/14",
     "result": 55.0,
     "setting": "class-il"
   },

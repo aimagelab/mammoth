@@ -12,7 +12,7 @@ import yaml
                                      'seq-cifar100-224-rs', 'seq-tinyimg-r', 'seq-cub200', 'seq-imagenet-r',
                                      'seq-cars196', 'seq-chestx', 'seq-cropdisease', 'seq-eurosat-rgb',
                                      'seq-isic', 'seq-mit67', 'seq-resisc45'])
-def test_datasets(dataset):
+def test_datasets_with_download(dataset):
     sys.argv = ['mammoth',
                 '--model',
                 'sgd',
@@ -43,6 +43,36 @@ def test_datasets(dataset):
     for path in dataset_paths:
         if os.path.exists(os.path.join(dt_dir, path)):
             os.system(f'rm -rf {os.path.join(dt_dir, path)}')
+
+    main()
+
+
+@pytest.mark.parametrize('dataset', ['seq-mnist', 'seq-cifar10', 'seq-cifar100', 'seq-tinyimg',
+                                     'rot-mnist', 'perm-mnist', 'mnist-360', 'seq-cifar100-224',
+                                     'seq-cifar10-224', 'seq-cifar100-224-rs', 'seq-cub200-rs',
+                                     'seq-cifar100-224-rs', 'seq-tinyimg-r', 'seq-cub200', 'seq-imagenet-r',
+                                     'seq-cars196', 'seq-chestx', 'seq-cropdisease', 'seq-eurosat-rgb',
+                                     'seq-isic', 'seq-mit67', 'seq-resisc45'])
+def test_datasets_withoutdownload(dataset):
+    sys.argv = ['mammoth',
+                '--model',
+                'sgd',
+                '--dataset',
+                dataset,
+                '--lr',
+                '1e-4',
+                '--n_epochs',
+                '1',
+                '--batch_size',
+                '2',
+                '--non_verbose',
+                '1',
+                '--seed',
+                '0',
+                '--num_workers',
+                '0',
+                '--debug_mode',
+                '1']
 
     main()
 

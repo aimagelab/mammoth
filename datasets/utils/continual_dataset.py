@@ -195,15 +195,22 @@ class ContinualDataset(object):
             raise NotImplementedError('The dataset must be initialized with all the required fields but is missing:', missing_fields)
 
     @classmethod
-    def set_default_from_config(cls, config: dict, parser: ArgumentParser):
+    def set_default_from_config(cls, config: dict, parser: ArgumentParser) -> dict:
         """
         Sets the default arguments from the configuration file.
         The default values will be set in the class attributes and will be available for all instances of the class.
 
+        The arguments that are related to the dataset (i.e., are in the 'base_fields', 'optional_fields', or 'composed_fields') will be removed from the config dictionary to avoid conflicts with the command line arguments.
+
         Args:
             config (dict): the configuration file
             parser (ArgumentParser): the argument parser to set the default values
+
+        Returns:
+            dict: the configuration file without the dataset-related arguments
         """
+
+        tmp_config = config.copy()
 
         _base_fields = [k.casefold() for k in cls.base_fields]
         _optional_fields = [k.casefold() for k in cls.optional_fields]
@@ -213,15 +220,20 @@ class ContinualDataset(object):
             if k.casefold() in _base_fields:
                 _k = cls.base_fields[_base_fields.index(k.casefold())]
                 setattr(cls, _k, v)
+                del tmp_config[k]
             elif k.casefold() in _optional_fields:
                 k = cls.optional_fields[_optional_fields.index(k.casefold())]
                 setattr(cls, k, v)
+                del tmp_config[k]
             elif k.casefold() in _composed_fields:
                 _k = list(cls.composed_fields.keys())[_composed_fields.index(k.casefold())]
                 setattr(cls, _k, cls.composed_fields[_k](v))
+                del tmp_config[k]
             else:
                 setattr(cls, k, v)
                 parser.set_defaults(**{k: v})
+
+        return tmp_config
 
     def get_offsets(self, task_idx: int = None):
         """

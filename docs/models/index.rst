@@ -150,11 +150,12 @@ To simplify the selection of the model hyper-parameters, the framework includes 
 
 - **best**: the best configuration for the model for a particular dataset (and buffer size, if applicable). This configuration is used if the ``--model_config`` argument is set to ``best``.
 
-Each configuration is defined in a file named **<model_name>.yaml** and placed in the **models/configs** folder. The configuration file is a `YAML <https://yaml.org/>`_ file that defines the hyper-parameters of the model. The hyper-parameters are defined as a dictionary with the hyper-parameter name as the key and the hyper-parameter value as the value. All hyper-parameters defined at the lower level are loaded with the ``default`` configuration, while only the hyper-parameters defined at under the dataset name (and buffer size, if applicable) are loaded with the ``best`` configuration. For example, the following configuration file for **my_model** defines a default `optimizer` for the model, a `learning_rate` when trained on the **seq-cifar100** dataset, and a `optim_wd` when the buffer size is **100**:
+Each configuration is defined in a file named **<model_name>.yaml** and placed in the **models/configs** folder. The configuration file is a `YAML <https://yaml.org/>`_ file that defines the hyper-parameters of the model. The hyper-parameters are defined as a dictionary with the hyper-parameter name as the key and the hyper-parameter value as the value. All hyper-parameters defined under the key ``default`` are loaded with the ``default`` configuration, while only the hyper-parameters defined at under the dataset name (and buffer size, if applicable) are loaded with the ``best`` configuration. For example, the following configuration file for **my_model** defines a default `optimizer` for the model, a `learning_rate` when trained on the **seq-cifar100** dataset, and a `optim_wd` when the buffer size is **100**:
 
 .. code-block:: yaml
 
-    optimizer: adam # this optimizer is set to 'adam' by default (i.e., is ALWAYS loaded)
+    default:
+        optimizer: adam # this optimizer is set to 'adam' by default (i.e., is ALWAYS loaded)
     seq-cifar100: # all the hyper-parameters defined under 'seq-cifar100' are loaded only if the dataset is 'seq-cifar100'
         learning_rate: 0.001
         100: # all the hyper-parameters defined under '100' are loaded only if the buffer size is '100'
