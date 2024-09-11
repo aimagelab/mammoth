@@ -122,6 +122,7 @@ def test_best_rehearsal(capsys):
     assert namespace_dict['batch_size'] == '4', f'Batch size not loaded correctly, expected 4 but got {namespace_dict["batch_size"]}'
     assert namespace_dict['n_epochs'] == '50', f'Number of epochs not loaded correctly, expected 50 but got {namespace_dict["n_epochs"]}'
     assert namespace_dict['knn_k'] == '2', f'KNN K not loaded correctly, expected 2 but got {namespace_dict["knn_k"]}'
+    assert namespace_dict['backbone'] == 'resnet18', f'Backbone not loaded correctly, expected resnet18 but got {namespace_dict["backbone"]}'
 
 
 def test_best_base(capsys):

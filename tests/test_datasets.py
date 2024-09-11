@@ -112,7 +112,6 @@ def test_configs_1(capsys, caplog):
 
     # load config file
     config_file = namespace_dict['dataset_config'].strip()
-    # assert config_file == 'test', 'Config file not found in output'
 
     config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'datasets', 'configs', 'seq-cifar10', f'{config_file}.yaml')
     assert os.path.exists(config_path), f'Config file {config_file}.yaml not found in datasets/configs folder'
@@ -126,10 +125,12 @@ def test_configs_1(capsys, caplog):
     # - `optim_mom` should be 0.9 (from puridiver's defaults)
     # - `n_epochs` should be 1 (from puridiver's defaults, overriding config file and dataset)
     # - `transform_type` should be 'strong' (from config file) and not 'weak' (from dataset)
+    # - `backbone` should be 'resnet34' (from the config file)
     assert namespace_dict['batch_size'] == '4', f'batch_size not loaded correctly from CLI. Found {namespace_dict["batch_size"]} but expected 4'
     assert namespace_dict['optim_mom'] == '0.9', f'optim_mom not loaded correctly from puridiver defaults. Found {namespace_dict["optim_mom"]} but expected 0.9'
     assert namespace_dict['n_epochs'] == '1', f'n_epochs not loaded correctly from puridiver defaults. Found {namespace_dict["n_epochs"]} but expected 1'
     assert namespace_dict['transform_type'] == 'strong', f'transform_type not loaded correctly from config file. Found {namespace_dict["transform_type"]} but expected strong'
+    assert namespace_dict['backbone'] == 'resnet34', f"backbone not loaded correctly from config file. Found {namespace_dict['backbone']} but expected resnet34"
 
     # check if the transform type is printed correctly
     param_print = [line for line in caplog.text.splitlines() if 'using strong augmentation for cifar10' in line.lower()]
@@ -148,6 +149,8 @@ def test_configs_2(capsys, caplog):
                 '1e-4',
                 '--dataset_config',
                 'test',
+                '--backbone',
+                'resnet18',
                 '--transform_type',
                 'weak',
                 '--non_verbose',
@@ -195,10 +198,12 @@ def test_configs_2(capsys, caplog):
     # - `batch_size` should be 5 (from CLI arguments)
     # - `optimizer` should be 'adam' (from default model config file)
     # - `transform_type` should be 'weak' (from CLI arguments) and not 'strong' (from dataset config file)
+    # - `backbone` should be 'resnet18' (from CLI arguments)
     assert namespace_dict['n_epochs'] == str(config['n_epochs']), f'n_epochs not loaded correctly from config file. Found {namespace_dict["n_epochs"]} but expected {config["n_epochs"]}'
     assert namespace_dict['batch_size'] == '5', f'batch_size not loaded correctly from CLI. Found {namespace_dict["batch_size"]} but expected 5'
     assert namespace_dict['optimizer'] == 'adam', f'optimizer not loaded correctly from config file. Found {namespace_dict["optimizer"]} but expected adam'
     assert namespace_dict['transform_type'] == 'weak', f'transform_type not loaded correctly from CLI. Found {namespace_dict["transform_type"]} but expected weak'
+    assert namespace_dict['backbone'] == 'resnet18', f"backbone not loaded correctly from CLI. Found {namespace_dict['backbone']} but expected resnet18"
 
     # check if the transform type is NOT printed
     param_print = [line for line in caplog.text.splitlines() if 'using strong augmentation for cifar10' in line.lower()]

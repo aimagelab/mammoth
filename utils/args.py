@@ -62,6 +62,8 @@ def update_cli_defaults(parser: ArgumentParser, cnf: dict) -> None:
     Returns:
         None
     """
+    parser.set_defaults(**cnf)
+
     for action in parser._actions:
         if action.dest == 'help':
             continue
@@ -166,9 +168,14 @@ def clean_dynamic_args(args: Namespace) -> Namespace:
     return args
 
 
-def add_dataset_dynamic_parsable_args(parser: ArgumentParser, dataset: str) -> None:
+def add_dynamic_parsable_args(parser: ArgumentParser, dataset: str, backbone: str) -> None:
     """
-    Add the additional arguments of the chosen dataset to the parser.
+    Add the additional arguments of the chosen dataset and backbone to the parser.
+
+    Args:
+        parser: the parser instance to extend
+        dataset: the dataset name
+        backbone: the backbone name
     """
 
     ds_group = parser.add_argument_group('Dataset arguments', 'Arguments used to define the dataset.')
@@ -182,12 +189,6 @@ def add_dataset_dynamic_parsable_args(parser: ArgumentParser, dataset: str) -> N
         bk_args = registered_datasets[dataset.replace('_', '-').lower()]['parsable_args']
     build_parsable_args(ds_group, bk_args)
 
-
-def add_backbone_dynamic_parsable_args(parser: ArgumentParser, backbone: str) -> None:
-    """
-    Add the additional arguments of the chosen backbone to the parser.
-    """
-
     bk_group = parser.add_argument_group('Backbone arguments', 'Arguments used to define the backbone network.')
     if isinstance(backbone, dict):
         assert 'type' in backbone, "The backbone `type` (i.e., the registered name) must be defined in the dictionary."
@@ -197,6 +198,8 @@ def add_backbone_dynamic_parsable_args(parser: ArgumentParser, backbone: str) ->
     else:
         bk_args = REGISTERED_BACKBONES[backbone.replace('-', '_').lower()]['parsable_args']
     build_parsable_args(bk_group, bk_args)
+
+    # model dynamic arguments? maybe in the future...
 
 
 def add_configuration_args(parser: ArgumentParser, args: Namespace) -> None:
