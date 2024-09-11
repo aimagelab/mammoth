@@ -34,6 +34,11 @@ def get_single_arg_value(parser: ArgumentParser, arg_name: str):
     assert len(action) == 1, f'Argument {arg_name} not found in the parser.'
     action = action[0]
 
+    # if the argument has a default value, return it
+    if action.default is not None:
+        return action.default
+
+    # otherwise, search for the argument in the sys.argv
     for i, arg in enumerate(sys.argv):
         arg_k = arg.split('=')[0]
         if arg_k in action.option_strings or arg_k == action.dest:
@@ -161,23 +166,37 @@ def clean_dynamic_args(args: Namespace) -> Namespace:
     return args
 
 
-def add_dynamic_parsable_args(parser: ArgumentParser, args: Namespace) -> None:
+def add_dataset_dynamic_parsable_args(parser: ArgumentParser, dataset: str) -> None:
     """
-    Add the additional arguments of backbones, datasets and models to the parser.
+    Add the additional arguments of the chosen dataset to the parser.
+    """
+
+    ds_group = parser.add_argument_group('Dataset arguments', 'Arguments used to define the dataset.')
+    registered_datasets = get_dataset_names()
+    if isinstance(dataset, dict):
+        assert 'type' in dataset, "The dataset `type` (i.e., the registered name) must be defined in the dictionary."
+        bk_name = dataset['type'].replace('-', '_').lower()
+        bk_args = {**registered_datasets[bk_name]['parsable_args'], **dataset['args']}
+        dataset = bk_name
+    else:
+        bk_args = registered_datasets[dataset.replace('_', '-').lower()]['parsable_args']
+    build_parsable_args(ds_group, bk_args)
+
+
+def add_backbone_dynamic_parsable_args(parser: ArgumentParser, backbone: str) -> None:
+    """
+    Add the additional arguments of the chosen backbone to the parser.
     """
 
     bk_group = parser.add_argument_group('Backbone arguments', 'Arguments used to define the backbone network.')
-    if isinstance(args.backbone, dict):
-        assert 'type' in args.backbone, "The backbone `type` (i.e., the registered name) must be defined in the dictionary."
-        bk_name = args.backbone['type'].replace('-', '_').lower()
-        bk_args = {**REGISTERED_BACKBONES[bk_name]['parsable_args'], **args.backbone['args']}
-        args.backbone = bk_name
+    if isinstance(backbone, dict):
+        assert 'type' in backbone, "The backbone `type` (i.e., the registered name) must be defined in the dictionary."
+        bk_name = backbone['type'].replace('-', '_').lower()
+        bk_args = {**REGISTERED_BACKBONES[bk_name]['parsable_args'], **backbone['args']}
+        backbone = bk_name
     else:
-        bk_args = REGISTERED_BACKBONES[args.backbone.replace('-', '_').lower()]['parsable_args']
+        bk_args = REGISTERED_BACKBONES[backbone.replace('-', '_').lower()]['parsable_args']
     build_parsable_args(bk_group, bk_args)
-
-    # build_parsable_args(parser, get_dataset_names())
-    # build_parsable_args(parser, get_all_models())
 
 
 def add_configuration_args(parser: ArgumentParser, args: Namespace) -> None:
@@ -202,8 +221,8 @@ def add_initial_args(parser) -> ArgumentParser:
     """
     Returns the initial parser for the arguments.
     """
-    parser.add_argument('--dataset', type=str, required=True,
-                        choices=get_dataset_names(),
+    parser.add_argument('--dataset', type=custom_str_underscore, required=True,
+                        choices=get_dataset_names(names_only=True),
                         help='Which dataset to perform experiments on.')
     parser.add_argument('--model', type=custom_str_underscore, required=True,
                         help='Model name.', choices=list(get_all_models().keys()))
@@ -542,7 +561,7 @@ if __name__ == '__main__':
     from models import get_model_names
 
     for model_name, model_class in get_model_names().items():
-        parser = model_class.get_parser()
+        parser = model_class.get_parser(ArgumentParser())
 
         model_args_groups = []
         for group in parser._action_groups:

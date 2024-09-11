@@ -128,16 +128,20 @@ This is done with the **set_default_from_args** decorator, which takes the name 
         return 0.5
 
 
+.. _dataset-naming-convention:
+
 Steps to create a new dataset
 -----------------------------
-    
+
+The following steps are required to create a dataset following the *legacy* naming convention. A new and more flexible way to define datasets is available with the **register_dataset** decorator. See more in :ref:`module-dynamic-registration`.
+
 All datasets must inherit from the **ContinualDataset** class, which is defined in :ref:`Continual Dataset <module-datasets.utils.continual_dataset>`. The only
 exception are datasets that follow the `general-continual` setting, which inherit from the **GCLDataset** class, (defined in :ref:`GCL Dataset <module-datasets.utils.gcl_dataset>`).
 These classes provide some useful methods to create data loaders and store masked data loaders for continual learning experiments. See more in the next section.
 
     1. Create a new file in the `datasets` folder, e.g. ``my_dataset.py``.
 
-    2. Define a new class that inherits from `ContinualDataset` or `GCLDataset` and implements all the required methods and attributes.
+    2. Define a *SINGLE* new class that inherits from `ContinualDataset` or `GCLDataset` and implements all the required methods and attributes.
 
     3. Define the **get_data_loaders** method, which returns a list of train and test data loaders for each task (see more in section :ref:`Utils <dataset-index-utils>`). 
 

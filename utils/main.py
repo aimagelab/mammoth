@@ -104,8 +104,8 @@ def parse_args():
     from utils import create_if_not_exists
     from utils.conf import warn_once
     from utils.args import add_initial_args, add_management_args, add_experiment_args, add_configuration_args, clean_dynamic_args, \
-        check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args, fix_model_parser_backwards_compatibility, update_cli_defaults, \
-        get_single_arg_value
+        check_multiple_defined_arg_during_string_parse, add_backbone_dynamic_parsable_args, add_dataset_dynamic_parsable_args, \
+        fix_model_parser_backwards_compatibility, update_cli_defaults, get_single_arg_value
 
     from models import get_all_models, get_model_class
     from models.utils import load_model_config
@@ -130,20 +130,24 @@ def parse_args():
 
     # 2) add the rest of the main Mammoth arguments
     add_configuration_args(parser, args)
+
+    # 3) add dynamic args defined by the dataset
+    add_dataset_dynamic_parsable_args(parser, args.dataset)
+
     args = parser.parse_known_args()[0]
 
     add_management_args(parser)
     add_experiment_args(parser)
 
-    # 3) load the default arguments defined by the dataset
+    # 4) load the default arguments defined by the dataset
     parser.set_defaults(**get_default_args_for_dataset(args.dataset))
 
-    # 4) load the configuration file for the dataset and update the parser with the dataset-specific arguments
+    # 5) load the configuration file for the dataset and update the parser with the dataset-specific arguments
     dataset_config = load_dataset_config(args.dataset_config, args.dataset)
     dataset_class = get_dataset_class(args)
     dataset_class.set_default_from_config(dataset_config, parser)
 
-    # 5) get the model parser and fix the get_parser function for backwards compatibility
+    # 6) get the model parser and fix the get_parser function for backwards compatibility
     model_parser = get_model_class(args).get_parser(parser)
     parser = fix_model_parser_backwards_compatibility(parser, model_parser)
     is_rehearsal = any([p for p in parser._actions if p.dest == 'buffer_size'])
@@ -156,20 +160,24 @@ def parse_args():
         except ValueError:
             raise ValueError(f'--buffer_size must be an integer but found {buffer_size}')
 
-    # 6) add the configuration file for the model and update the parser with the model-specific arguments
+    # 7) add the configuration file for the model
     model_config = load_model_config(args, buffer_size=buffer_size)
     if 'dataset_config' in model_config:  # if the dataset specified a dataset config, use it
         dataset_config = load_dataset_config(model_config['dataset_config'], args.dataset)
         dataset_class.set_default_from_config(dataset_config, parser)
+
+    # 8) add dynamic args defined by the backbone
+    if 'backbone' in model_config:
+        backbone = model_config['backbone']
+    else:
+        backbone = get_single_arg_value(parser, 'backbone')
+
+    add_backbone_dynamic_parsable_args(parser, backbone)
+
+    # 9) update the parser with the model-specific arguments
     update_cli_defaults(parser, model_config)
 
-    args = parser.parse_known_args()[0]
-
-    # 7) add dynamic args defined by the backbones, datasets, etc.
-    # TODO: ADD DATASET DYNAMIC ARGS
-    add_dynamic_parsable_args(parser, args)
-
-    # 8) parse the arguments
+    # 10) parse the arguments
     if args.load_best_args:
         from utils.best_args import best_args
 
@@ -195,10 +203,10 @@ def parse_args():
     else:
         args = parser.parse_args()
 
-    # 9) clean dynamically loaded args
-    args = clean_dynamic_args(args)  # TODO: CHECK IF NEEDED
+    # 11) clean dynamically loaded args
+    args = clean_dynamic_args(args)
 
-    # 10) final checks and updates to the arguments
+    # 12) final checks and updates to the arguments
     args.model = models_dict[args.model]
 
     if args.lr_scheduler is not None:
@@ -313,6 +321,8 @@ def main(args=None):
     check_args(args, dataset=dataset)
 
     backbone = get_backbone(args)
+    logging.info(f"Using backbone: {args.backbone}")
+
     if args.code_optimization == 3:
         # check if the model is compatible with torch.compile
         # from https://pytorch.org/tutorials/intermediate/torch_compile_tutorial.html

@@ -170,10 +170,6 @@ class SequentialCars196(ContinualDataset):
     ])
     TEST_TRANSFORM = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=MEAN, std=STD)])  # no transform for test
 
-    def __init__(self, args):
-        super().__init__(args)
-        self.args = args
-
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         train_dataset = MyCars196(base_path() + 'cars196', train=True,
                                   transform=self.TRANSFORM)

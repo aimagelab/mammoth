@@ -5,7 +5,7 @@ Arguments
 
 .. rubric:: MAIN MAMMOTH ARGS
 
-**\-\-dataset** : str
+**\-\-dataset** : str (with underscores replaced by dashes)
 	*Help*: Which dataset to perform experiments on.
 
 	- *Default*: ``None``
@@ -157,7 +157,6 @@ Arguments
 	*Help*: Type of noise to apply. The symmetric type is supported by all datasets, while the asymmetric must be supported explicitly by the dataset (see `datasets/utils/label_noise`).
 
 	- *Default*: ``symmetric``
-	- *Choices*: ``symmetric, asymmetric``
 **\-\-noise_rate** : float
 	*Help*: Noise rate in [0-1].
 
