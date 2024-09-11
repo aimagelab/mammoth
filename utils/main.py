@@ -99,11 +99,6 @@ def load_configs(parser: ArgumentParser) -> dict:
 
     args = parser.parse_known_args()[0]
 
-    # load the dataset configuration
-    base_dataset_config = get_default_args_for_dataset(args.dataset)
-    cnf_file_dataset_config = load_dataset_config(args.dataset_config, args.dataset)
-    dataset_config = {**base_dataset_config, **cnf_file_dataset_config}
-
     # load the model configuration
     # - get the model parser and fix the get_parser function for backwards compatibility
     model_parser = get_model_class(args).get_parser(parser)
@@ -119,7 +114,7 @@ def load_configs(parser: ArgumentParser) -> dict:
             raise ValueError(f'--buffer_size must be an integer but found {buffer_size}')
 
     # - get the defaults that were set with `set_defaults` in the parser
-    base_config = parser._defaults
+    base_config = parser._defaults.copy()
 
     # - get the configuration file for the model
     model_config = load_model_config(args, buffer_size=buffer_size)
@@ -127,10 +122,14 @@ def load_configs(parser: ArgumentParser) -> dict:
     # update the dataset class with the configuration
     dataset_class = get_dataset_class(args)
 
-    # - if the model specified a dataset config, use it
-    #   otherwise, use the dataset configuration
+    # load the dataset configuration. If the model specified a dataset config, use it. Otherwise, use the dataset configuration
+    base_dataset_config = get_default_args_for_dataset(args.dataset)
     if 'dataset_config' in model_config:  # if the dataset specified a dataset config, use it
-        dataset_config = load_dataset_config(model_config['dataset_config'], args.dataset)
+        cnf_file_dataset_config = load_dataset_config(model_config['dataset_config'], args.dataset)
+    else:
+        cnf_file_dataset_config = load_dataset_config(args.dataset_config, args.dataset)
+
+    dataset_config = {**base_dataset_config, **cnf_file_dataset_config}
     dataset_config = dataset_class.set_default_from_config(dataset_config, parser)  # the updated configuration file is cleaned from the dataset-specific arguments
 
     # - merge the dataset and model configurations, with the model configuration taking precedence

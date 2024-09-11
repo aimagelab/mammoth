@@ -32,7 +32,7 @@ def test_llava(dataset):
 def test_ideficts(dataset):
     sys.argv = ['mammoth',
                 '--model',
-                'ideficts',
+                'idefics',
                 '--dataset',
                 dataset,
                 '--lr',
