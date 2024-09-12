@@ -17,13 +17,12 @@ from datasets import get_dataset
 
 
 class DualPrompt(ContinualModel):
+    """DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning."""
     NAME = 'dualprompt'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning')
-
+    def get_parser(parser) -> ArgumentParser:
         parser.add_argument('--train_mask', default=True, type=bool, help='if using the class mask at training')
         parser.add_argument('--pretrained', default=True, help='Load pretrained model or not')
         parser.add_argument('--drop', type=float, default=0.0, metavar='PCT', help='Dropout rate (default: 0.)')
@@ -68,17 +67,18 @@ class DualPrompt(ContinualModel):
         parser.add_argument('--freeze', default=['blocks', 'patch_embed', 'cls_token', 'norm', 'pos_embed'], nargs='*', type=list, help='freeze part in backbone model')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         del backbone
         print("-" * 20)
-        logging.warning(f"DualPrompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
+        logging.info(f"DualPrompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
         print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
         print("-" * 20)
 
         args.lr = args.lr * args.batch_size / 256.0
-        backbone = Model(args, get_dataset(args).N_CLASSES)
+        tmp_dataset = get_dataset(args) if dataset is None else dataset
+        backbone = Model(args, tmp_dataset.N_CLASSES)
 
-        super().__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
     def begin_task(self, dataset):
         self.offset_1, self.offset_2 = self.dataset.get_offsets(self.current_task)

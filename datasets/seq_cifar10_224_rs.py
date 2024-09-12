@@ -10,7 +10,6 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torchvision.datasets import CIFAR10
 
-from backbone.ResNetBottleneck import resnet50
 from datasets.seq_cifar10 import TCIFAR10, MyCIFAR10, base_path
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
@@ -20,7 +19,7 @@ from datasets.utils import set_default_from_args
 
 class SequentialCIFAR10224RS(ContinualDataset):
     """Sequential CIFAR10 Dataset. The images are resized to 224x224.
-    Version with ResNet18 backbone.
+    Version with ResNet50 backbone.
 
     Args:
         NAME (str): name of the dataset.
@@ -68,10 +67,9 @@ class SequentialCIFAR10224RS(ContinualDataset):
             [transforms.ToPILImage(), SequentialCIFAR10224RS.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return resnet50(SequentialCIFAR10224RS.N_CLASSES_PER_TASK
-                        * SequentialCIFAR10224RS.N_TASKS)
+        return "resnet50"
 
     @staticmethod
     def get_loss():

@@ -7,19 +7,19 @@ from PIL import Image
 from typing import Tuple
 from tqdm import tqdm
 import json
+
 try:
     import deeplake
 except ImportError:
     raise NotImplementedError("Deeplake not installed. Please install with `pip install deeplake` to use this dataset.")
 
+from utils.conf import base_path
 from datasets.utils import set_default_from_args
 from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
 from datasets.transforms.denormalization import DeNormalize
-from utils.conf import base_path
 from torch.utils.data import Dataset
 from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
-from backbone.vit import vit_base_patch16_224_prompt_prototype
 
 
 def load_and_preprocess_cars196(train_str='train', names_only=False) -> Tuple[torch.Tensor, torch.Tensor, dict] | dict:
@@ -170,10 +170,6 @@ class SequentialCars196(ContinualDataset):
     ])
     TEST_TRANSFORM = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=MEAN, std=STD)])  # no transform for test
 
-    def __init__(self, args):
-        super().__init__(args)
-        self.args = args
-
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         train_dataset = MyCars196(base_path() + 'cars196', train=True,
                                   transform=self.TRANSFORM)
@@ -202,9 +198,9 @@ class SequentialCars196(ContinualDataset):
             [transforms.ToPILImage(), SequentialCars196.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=sum(SequentialCars196.N_CLASSES_PER_TASK))
+        return "vit"
 
     @staticmethod
     def get_loss():

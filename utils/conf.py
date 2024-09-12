@@ -109,7 +109,7 @@ def get_device(avail_devices: str = None) -> torch.device:
         else:
             avail_devices = list(range(torch.cuda.device_count())) if torch.cuda.is_available() else []
         get_device.device = _get_device(avail_devices=avail_devices)
-        print(f'Using device {get_device.device}')
+        logging.info(f'Using device {get_device.device}')
 
     return get_device.device
 
@@ -162,7 +162,7 @@ def worker_init_fn(worker_id, num_workers, seed, rank=1):
     random.seed(worker_seed)
 
 
-def create_seeded_dataloader(args, dataset, **dataloader_args) -> DataLoader:
+def create_seeded_dataloader(args, dataset, non_verbose=False, **dataloader_args) -> DataLoader:
     """
     Creates a dataloader object from a dataset, setting the seeds for the workers (if `--seed` is set).
 
@@ -177,9 +177,10 @@ def create_seeded_dataloader(args, dataset, **dataloader_args) -> DataLoader:
     """
 
     n_cpus = 4 if not hasattr(os, 'sched_getaffinity') else len(os.sched_getaffinity(0))
-    num_workers = n_cpus if args.num_workers is None else args.num_workers
+    num_workers = min(8, n_cpus) if args.num_workers is None else args.num_workers  # limit to 8 cpus if not specified
     dataloader_args['num_workers'] = num_workers if 'num_workers' not in dataloader_args else dataloader_args['num_workers']
-    logging.info(f'Using {dataloader_args["num_workers"]} workers for the dataloader.')
+    if not non_verbose:
+        logging.info(f'Using {dataloader_args["num_workers"]} workers for the dataloader.')
     if args.seed is not None:
         worker_generator = torch.Generator()
         worker_generator.manual_seed(args.seed)

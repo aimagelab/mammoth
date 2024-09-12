@@ -7,20 +7,19 @@ import torch
 from torch.nn import functional as F
 
 from models.utils.continual_model import ContinualModel
+from utils import binary_to_boolean_type
 from utils.args import add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer
 
 
 class XDerCE(ContinualModel):
+    """Continual learning via eXtended Dark Experience Replay with cross-entropy on future heads."""
     NAME = 'xder_ce'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via'
-                                ' eXtended Dark Experience Replay with cross-entropy on future heads.')
-
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         parser.add_argument('--alpha', type=float, required=True, help='Penalty weight.')
         parser.add_argument('--beta', type=float, required=True, help='Penalty weight.')
@@ -29,14 +28,14 @@ class XDerCE(ContinualModel):
         parser.add_argument('--eta', type=float, default=0.1)
         parser.add_argument('--m', type=float, default=0.3)
 
-        parser.add_argument('--past_constraint', type=int, default=1, choices=[0, 1], help='Enable past constraint')
-        parser.add_argument('--future_constraint', type=int, default=1, choices=[0, 1], help='Enable future constraint')
-        parser.add_argument('--align_bn', type=int, default=0, choices=[0, 1], help='Use BatchNorm alignment')
+        parser.add_argument('--past_constraint', type=binary_to_boolean_type, default=1, help='Enable past constraint')
+        parser.add_argument('--future_constraint', type=binary_to_boolean_type, default=1, help='Enable future constraint')
+        parser.add_argument('--align_bn', type=binary_to_boolean_type, default=0, help='Use BatchNorm alignment')
 
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(XDerCE, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(XDerCE, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
         self.update_counter = torch.zeros(self.args.buffer_size)
 
@@ -81,7 +80,7 @@ class XDerCE(ContinualModel):
                 with bn_track_stats(self, False):
                     if self.args.start_from is None or self.args.start_from <= self.current_task:
                         for data in dataset.train_loader:
-                            inputs, labels, not_aug_inputs = data
+                            inputs, labels, not_aug_inputs = data[0], data[1], data[2]
                             inputs = inputs.to(self.device)
                             not_aug_inputs = not_aug_inputs.to(self.device)
                             outputs = self.net(inputs)
@@ -144,7 +143,7 @@ class XDerCE(ContinualModel):
 
         self.opt.zero_grad()
 
-        with bn_track_stats(self, self.args.align_bn == 0 or self.current_task == 0):
+        with bn_track_stats(self, not self.args.align_bn or self.current_task == 0):
             outputs = self.net(inputs)
 
         # Present head
@@ -171,7 +170,7 @@ class XDerCE(ContinualModel):
             # Label Replay Loss (past heads)
             buf_idx2, buf_inputs2, buf_labels2, buf_logits2, buf_tl2 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
-            with bn_track_stats(self, self.args.align_bn == 0):
+            with bn_track_stats(self, not self.args.align_bn):
                 buf_outputs2 = self.net(buf_inputs2)
 
             _, offset = self.dataset.get_offsets(self.current_task + (1 if self.current_task == 0 else 0))

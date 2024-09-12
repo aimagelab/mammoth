@@ -3,6 +3,8 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from argparse import Namespace
+import logging
 from typing import Tuple
 
 import torch
@@ -11,7 +13,6 @@ import torchvision.transforms as transforms
 from PIL import Image
 from torchvision.datasets import CIFAR10
 
-from backbone.ResNetBlock import resnet18
 from utils.conf import base_path
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
@@ -99,6 +100,20 @@ class SequentialCIFAR10(ContinualDataset):
 
     TEST_TRANSFORM = transforms.Compose([transforms.ToTensor(), transforms.Normalize(MEAN, STD)])
 
+    def __init__(self, args, transform_type: str = 'weak'):
+        super().__init__(args)
+
+        assert transform_type in ['weak', 'strong'], "Transform type must be either 'weak' or 'strong'."
+
+        if transform_type == 'strong':
+            logging.info("Using strong augmentation for CIFAR10")
+            self.TRANSFORM = transforms.Compose(
+                [transforms.RandomCrop(32, padding=4),
+                 transforms.RandomHorizontalFlip(),
+                 transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+                 transforms.ToTensor(),
+                 transforms.Normalize(SequentialCIFAR10.MEAN, SequentialCIFAR10.STD)])
+
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         """Class method that returns the train and test loaders."""
         transform = self.TRANSFORM
@@ -117,10 +132,9 @@ class SequentialCIFAR10(ContinualDataset):
             [transforms.ToPILImage(), SequentialCIFAR10.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return resnet18(SequentialCIFAR10.N_CLASSES_PER_TASK
-                        * SequentialCIFAR10.N_TASKS)
+        return "resnet18"
 
     @staticmethod
     def get_loss():

@@ -8,6 +8,7 @@ This module contains the Logger class and related functions for logging accuracy
 """
 
 from contextlib import suppress
+import os
 import sys
 from typing import Any, Dict
 
@@ -20,7 +21,7 @@ with suppress(ImportError):
     import wandb
 
 
-def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT", future=False):
+def log_accs(args, logger, accs, t: int, setting: str, epoch=None, prefix="RESULT", future=False):
     """
     Logs the accuracy values and other metrics.
 
@@ -59,6 +60,31 @@ def log_accs(args, logger, accs, t, setting, epoch=None, prefix="RESULT", future
                   'Task': t}
 
         wandb.log(d2)
+
+
+def log_extra_metrics(args, metric: float, metric_mask_class: float, metric_name: str, t: int, prefix="RESULT"):
+    """
+    Logs the accuracy values and other metrics.
+
+    All metrics are prefixed with `prefix` to be logged on wandb.
+
+    Args:
+        args: The arguments for logging.
+        metric: Class-IL version of the metric `metric_name`.
+        metric_mask_class: Task-IL version of the metric `metric_name`.
+        metric_name: The name of the metric.
+        t: The task index.
+        epoch: The epoch number (optional).
+        prefix: The prefix for the metrics (default="RESULT").
+    """
+
+    print(f'{metric_name}: [Class-IL]: {metric:.2f} \t [Task-IL]: {metric_mask_class:.2f}', file=sys.stderr)
+    print(f'\tRaw {metric_name} values: Class-IL {metric} | Task-IL {metric_mask_class}', file=sys.stderr)
+
+    log_dict = {f'{prefix}_class_{metric_name}': metric, f'{prefix}_task_{metric_name}': metric_mask_class, 'Task': t}
+
+    if not args.nowand:
+        wandb.log(log_dict)
 
 
 def print_mean_accuracy(accs: np.ndarray, task_number: int,
@@ -111,6 +137,7 @@ class Logger:
                  model_str: str) -> None:
         """
         Initializes a Logger object. This will take track and log the accuracy values and other metrics in the default path (`data/results`).
+        The default path can be changed with the `--results_path` argument.
 
         Args:
             args: The args from the command line.
@@ -213,6 +240,8 @@ class Logger:
         if self.setting == 'class-il':
             self.fwt_mask_classes = forward_transfer(results_mask_classes, accs_mask_classes)
 
+        return self.fwt, self.fwt_mask_classes
+
     def add_bwt(self, results, results_mask_classes):
         """
         Adds backward transfer values.
@@ -222,7 +251,10 @@ class Logger:
             results_mask_classes: The results for masked classes.
         """
         self.bwt = backward_transfer(results)
-        self.bwt_mask_classes = backward_transfer(results_mask_classes)
+        if self.setting == 'class-il':
+            self.bwt_mask_classes = backward_transfer(results_mask_classes)
+
+        return self.bwt, self.bwt_mask_classes
 
     def add_forgetting(self, results, results_mask_classes):
         """
@@ -233,7 +265,10 @@ class Logger:
             results_mask_classes: The results for masked classes.
         """
         self.forgetting = forgetting(results)
-        self.forgetting_mask_classes = forgetting(results_mask_classes)
+        if self.setting == 'class-il':
+            self.forgetting_mask_classes = forgetting(results_mask_classes)
+
+        return self.forgetting, self.forgetting_mask_classes
 
     def log(self, mean_acc: np.ndarray) -> None:
         """
@@ -286,6 +321,7 @@ class Logger:
     def write(self, args: Dict[str, Any]) -> None:
         """
         Writes out the logged value along with its arguments in the default path (`data/results`).
+        The default path can be changed with the `--results_path` argument.
 
         Args:
             args: the namespace of the current experiment
@@ -306,24 +342,20 @@ class Logger:
         wrargs['backward_transfer'] = self.bwt
         wrargs['forgetting'] = self.forgetting
 
-        target_folder = base_path() + "results/"
+        target_folder = smart_joint(base_path(), self.args.results_path)
 
-        create_if_not_exists(target_folder + self.setting)
-        create_if_not_exists(target_folder + self.setting +
-                             "/" + self.dataset)
-        create_if_not_exists(target_folder + self.setting +
-                             "/" + self.dataset + "/" + self.model)
+        create_if_not_exists(smart_joint(target_folder, self.setting))
+        create_if_not_exists(smart_joint(target_folder, self.setting, self.dataset))
+        create_if_not_exists(smart_joint(target_folder, self.setting, self.dataset, self.model))
 
-        path = target_folder + self.setting + "/" + self.dataset\
-            + "/" + self.model + "/logs.pyd"
+        path = smart_joint(target_folder, self.setting, self.dataset, self.model, "logs.pyd")
         print("Logging results and arguments in " + path)
         with open(path, 'a') as f:
             f.write(str(wrargs) + '\n')
 
         if self.setting == 'class-il':
-            create_if_not_exists(smart_joint(*[target_folder, "task-il/", self.dataset]))
-            create_if_not_exists(target_folder + "task-il/"
-                                 + self.dataset + "/" + self.model)
+            create_if_not_exists(smart_joint(target_folder, "task-il/", self.dataset))
+            create_if_not_exists(smart_joint(target_folder, "task-il", self.dataset, self.model))
 
             for i, acc in enumerate(self.accs_mask_classes):
                 wrargs['accmean_task' + str(i + 1)] = acc
@@ -336,7 +368,6 @@ class Logger:
             wrargs['backward_transfer'] = self.bwt_mask_classes
             wrargs['forgetting'] = self.forgetting_mask_classes
 
-            path = target_folder + "task-il" + "/" + self.dataset + "/"\
-                + self.model + "/logs.pyd"
+            path = smart_joint(target_folder, "task-il", self.dataset, self.model, "logs.pyd")
             with open(path, 'a') as f:
                 f.write(str(wrargs) + '\n')

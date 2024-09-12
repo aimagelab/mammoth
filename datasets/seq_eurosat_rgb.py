@@ -24,7 +24,6 @@ from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_o
 from datasets.transforms.denormalization import DeNormalize
 from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
-from backbone.vit import vit_base_patch16_224_prompt_prototype
 
 
 class MyEuroSat(Dataset):
@@ -52,16 +51,17 @@ class MyEuroSat(Dataset):
                 f.write('')
 
             # downlaod split file form https://drive.google.com/file/d/1Ip7yaCWFi0eaOFUGga0lUdVi_DDQth1o/
+            # from "Conditional Prompt Learning for Vision-Language Models", Kaiyang Zhou et al.
             gdd.download_file_from_google_drive(file_id='1Ip7yaCWFi0eaOFUGga0lUdVi_DDQth1o',
                                                 dest_path=self.root + '/split.json')
 
             print('Done', file=sys.stderr)
 
         self.data_split = pd.DataFrame(json.load(open(self.root + '/split.json', 'r'))[split])
-        self.class_names = self.get_class_names()
-
         self.data = self.data_split[0].values
         self.targets = self.data_split[1].values
+
+        self.class_names = self.get_class_names()
 
     @staticmethod
     def get_class_names():
@@ -145,7 +145,7 @@ class SequentialEuroSatRgb(ContinualDataset):
         try:
             classes = MyEuroSat.get_class_names()
         except BaseException:
-            logging.warning("dataset not loaded yet -- loading dataset...")
+            logging.info("dataset not loaded yet -- loading dataset...")
             MyEuroSat(base_path() + 'eurosat', train=True,
                                     transform=None)
             classes = MyEuroSat.get_class_names()
@@ -153,10 +153,6 @@ class SequentialEuroSatRgb(ContinualDataset):
         classes = fix_class_names_order(classes, self.args)
         self.class_names = classes
         return self.class_names
-
-    def __init__(self, args):
-        super().__init__(args)
-        self.args = args
 
     def get_data_loaders(self):
         train_dataset = MyEuroSat(base_path() + 'eurosat', split='train',
@@ -174,9 +170,9 @@ class SequentialEuroSatRgb(ContinualDataset):
                                         SequentialEuroSatRgb.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=SequentialEuroSatRgb.N_CLASSES)
+        return "vit"
 
     @staticmethod
     def get_loss():

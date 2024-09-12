@@ -1,0 +1,26 @@
+N_TASKS: 5
+N_CLASSES_PER_TASK: 2
+N_CLASSES: 10
+SIZE: [32, 32]
+MEAN: [0.4914, 0.4822, 0.4465]
+STD: [0.2470, 0.2435, 0.2615]
+TRANSFORM:
+  - RandomCrop:
+      size: 32
+      padding: 4
+  - RandomHorizontalFlip
+  - ToTensor
+  - Normalize:
+      mean: [0.4914, 0.4822, 0.4465]
+      std: [0.2470, 0.2435, 0.2615]
+TEST_TRANSFORM:
+  - ToTensor
+  - Normalize:
+      mean: [0.4914, 0.4822, 0.4465]
+      std: [0.2470, 0.2435, 0.2615]
+batch_size: 32
+backbone:
+  type: resnet18
+  args:
+    num_classes: 10
+n_epochs: 50

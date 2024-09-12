@@ -16,17 +16,17 @@ from utils.buffer import Buffer, fill_buffer, icarl_replay
 
 
 class ICarl(ContinualModel):
+    """Continual Learning via iCaRL."""
     NAME = 'icarl'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Learning via iCaRL.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super().__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
         self.dataset = get_dataset(args)
 
         # Instantiate buffers

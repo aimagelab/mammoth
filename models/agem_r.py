@@ -18,18 +18,17 @@ from utils.buffer import Buffer
 
 
 class AGemr(ContinualModel):
+    """Continual learning via A-GEM, leveraging a reservoir buffer."""
     NAME = 'agem_r'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via A-GEM, '
-                                'leveraging a reservoir buffer.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(AGemr, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(AGemr, self).__init__(backbone, loss, args, transform, dataset=dataset)
 
         self.buffer = Buffer(self.args.buffer_size)
         self.grad_dims = []

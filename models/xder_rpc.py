@@ -11,7 +11,7 @@ from models.utils.continual_model import ContinualModel
 from utils.args import add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer
-from utils import none_or_float
+from utils import binary_to_boolean_type, none_or_float
 
 
 def dsimplex(num_classes=10):
@@ -56,14 +56,12 @@ def dsimplex(num_classes=10):
 
 
 class XDerRPC(ContinualModel):
+    """Continual learning via eXtended Dark Experience Replay with RPC."""
     NAME = 'xder_rpc'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via'
-                                ' eXtended Dark Experience Replay with RPC.')
-
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         parser.add_argument('--alpha', type=float, required=True, help='Penalty weight.')
         parser.add_argument('--beta', type=float, required=True, help='Penalty weight.')
@@ -73,13 +71,13 @@ class XDerRPC(ContinualModel):
         parser.add_argument('--m', type=float, default=0.3)
 
         parser.add_argument('--clip_grad', type=none_or_float, default=None, metavar='NORM', help='Clip gradient norm (default: None, no clipping)')
-        parser.add_argument('--align_bn', type=int, default=0, choices=[0, 1], help='Use BatchNorm alignment')
+        parser.add_argument('--align_bn', type=binary_to_boolean_type, default=0, help='Use BatchNorm alignment')
 
         parser.add_argument('--n_rpc_heads', type=int, help='N Heads for RPC')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super().__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
         self.update_counter = torch.zeros(self.args.buffer_size).to(self.device)
         n_rpc_heads = self.args.n_rpc_heads if self.args.n_rpc_heads is not None else self.num_classes
@@ -127,7 +125,7 @@ class XDerRPC(ContinualModel):
                 with bn_track_stats(self, False):
                     if self.args.start_from is None or self.args.start_from <= self.current_task:
                         for data in dataset.train_loader:
-                            inputs, labels, not_aug_inputs = data
+                            inputs, labels, not_aug_inputs = data[0], data[1], data[2]
                             inputs = inputs.to(self.device)
                             not_aug_inputs = not_aug_inputs.to(self.device)
                             outputs = self(inputs)
@@ -190,7 +188,7 @@ class XDerRPC(ContinualModel):
 
         self.opt.zero_grad()
 
-        with bn_track_stats(self, self.args.align_bn == 0 or self.current_task == 0):
+        with bn_track_stats(self, not self.args.align_bn or self.current_task == 0):
             outputs = self(inputs)
 
         # Present head
@@ -217,7 +215,7 @@ class XDerRPC(ContinualModel):
             # Label Replay Loss (past heads)
             buf_idx2, buf_inputs2, buf_labels2, buf_logits2, buf_tl2 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
-            with bn_track_stats(self, self.args.align_bn == 0):
+            with bn_track_stats(self, not self.args.align_bn):
                 buf_outputs2 = self(buf_inputs2).float()
 
             buf_ce = self.loss(buf_outputs2[:, :self.n_past_classes], buf_labels2)

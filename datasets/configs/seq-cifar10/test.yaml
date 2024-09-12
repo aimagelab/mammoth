@@ -1,0 +1,4 @@
+batch_size: 5
+n_epochs: 2
+transform_type: strong
+backbone: resnet34

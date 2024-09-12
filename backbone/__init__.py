@@ -1,12 +1,18 @@
-# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
-# All rights reserved.
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
+from argparse import Namespace
+import importlib
+import inspect
+import os
 import math
 
+import numpy as np
 import torch
 import torch.nn as nn
+
+from typing import Callable
+
+from utils import register_dynamic_module_fn
+
+REGISTERED_BACKBONES = dict()  # dictionary containing the registered networks. Template: {name: {'class': class, 'parsable_args': parsable_args}}
 
 
 def xavier(m: nn.Module) -> None:
@@ -104,10 +110,7 @@ class MammothBackbone(nn.Module):
         Returns:
             parameters tensor
         """
-        params = []
-        for pp in list(self.parameters()):
-            params.append(pp.view(-1))
-        return torch.cat(params)
+        return torch.nn.utils.parameters_to_vector(self.parameters())
 
     def set_params(self, new_params: torch.Tensor) -> None:
         """
@@ -116,13 +119,7 @@ class MammothBackbone(nn.Module):
         Args:
             new_params: concatenated values to be set
         """
-        assert new_params.size() == self.get_params().size()
-        progress = 0
-        for pp in list(self.parameters()):
-            cand_params = new_params[progress: progress +
-                                     torch.tensor(pp.size()).prod()].view(pp.size())
-            progress += torch.tensor(pp.size()).prod()
-            pp.data = cand_params
+        torch.nn.utils.vector_to_parameters(new_params, self.parameters())
 
     def get_grads(self) -> torch.Tensor:
         """
@@ -136,19 +133,73 @@ class MammothBackbone(nn.Module):
             grads.append(pp.grad.view(-1))
         return torch.cat(grads)
 
-
     def set_grads(self, new_grads: torch.Tensor) -> None:
         """
-        Sets the parameters to a given value.
+        Sets the gradients of all parameters.
 
         Args:
             new_params: concatenated values to be set
         """
-        assert new_grads.size() == self.get_params().size()
         progress = 0
         for pp in list(self.parameters()):
             cand_grads = new_grads[progress: progress +
-                                     torch.tensor(pp.size()).prod()].view(pp.size())
+                                   torch.tensor(pp.size()).prod()].view(pp.size())
             progress += torch.tensor(pp.size()).prod()
             pp.grad = cand_grads
 
+
+def register_backbone(name: str) -> Callable:
+    """
+    Decorator to register a backbone network for use in a Dataset. The decorator may be used on a class that inherits from `MammothBackbone` or on a function that returns a `MammothBackbone` instance.
+    The registered model can be accessed using the `get_backbone` function and can include additional keyword arguments to be set during parsing.
+
+    The arguments can be inferred by the *signature* of the backbone network's class. The value of the argument is the default value. If the default is set to `Parameter.empty`, the argument is required. If the default is set to `None`, the argument is optional. The type of the argument is inferred from the default value (default is `str`).
+
+    Args:
+        name: the name of the backbone network
+    """
+
+    return register_dynamic_module_fn(name, REGISTERED_BACKBONES, MammothBackbone)
+
+
+def get_backbone_class(name: str, return_args=False) -> MammothBackbone:
+    """
+    Get the backbone network class from the registered networks.
+
+    Args:
+        name: the name of the backbone network
+        return_args: whether to return the parsable arguments of the backbone network
+
+    Returns:
+        the backbone class
+    """
+    name = name.replace('-', '_').lower()
+    assert name in REGISTERED_BACKBONES, "Attempted to access non-registered network"
+    cl = REGISTERED_BACKBONES[name]['class']
+    if return_args:
+        return cl, REGISTERED_BACKBONES[name]['parsable_args']
+
+
+def get_backbone(args: Namespace) -> MammothBackbone:
+    """
+    Build the backbone network from the registered networks.
+
+    Args:
+        args: the arguments which contains the `--backbone` attribute and the additional arguments required by the backbone network
+
+    Returns:
+        the backbone model
+    """
+    backbone_class, backbone_args = get_backbone_class(args.backbone, return_args=True)
+    missing_args = [arg for arg in backbone_args.keys() if arg not in vars(args)]
+    assert len(missing_args) == 0, "Missing arguments for the backbone network: " + ', '.join(missing_args)
+
+    parsed_args = {arg: getattr(args, arg) for arg in backbone_args.keys()}
+
+    return backbone_class(**parsed_args)
+
+
+# import all files in the backbone folder to register the networks
+for file in os.listdir(os.path.dirname(__file__)):
+    if file.endswith('.py') and file != '__init__.py':
+        importlib.import_module(f'backbone.{file[:-3]}')

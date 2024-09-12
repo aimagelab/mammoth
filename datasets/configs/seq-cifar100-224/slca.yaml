@@ -1,0 +1,31 @@
+N_TASKS: 10
+N_CLASSES_PER_TASK: 10
+N_CLASSES: 100
+SIZE: [224, 224]
+MEAN: [0.5071, 0.4867, 0.4408]
+STD: [0.2675, 0.2565, 0.2761]
+TRANSFORM:
+  - RandomResizedCrop:
+      size: 224
+      ratio:
+        - 0.75
+        - 1.3333
+  - RandomHorizontalFlip
+  - ColorJitter:
+      brightness: 0.247058823529
+  - ToTensor
+  - Normalize:
+      mean: [0.5071, 0.4867, 0.4408]
+      std: [0.2675, 0.2565, 0.2761]
+TEST_TRANSFORM:
+  - Resize:
+      size: 256
+      interpolation: 3
+  - CenterCrop:
+      size: 224
+  - ToTensor
+  - Normalize:
+      mean: [0.5071, 0.4867, 0.4408]
+      std: [0.2675, 0.2565, 0.2761]
+batch_size: 128
+n_epochs: 20

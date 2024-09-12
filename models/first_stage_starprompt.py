@@ -3,6 +3,8 @@ import os
 import sys
 import torch
 from argparse import ArgumentParser
+
+from utils import binary_to_boolean_type
 try:
     import clip
 except ImportError:
@@ -19,8 +21,8 @@ class FirstStageStarprompt(ContinualModel):
     net: Model
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser()
+    def get_parser(parser) -> ArgumentParser:
+        parser.set_defaults(batch_size=128, optimizer='sgd', lr=0.002)
 
         frozen_group = parser.add_argument_group('Frozen hyperparameters')
         frozen_group.add_argument("--virtual_bs_n", type=int, default=1, help="Virtual batch size iterations")
@@ -28,7 +30,7 @@ class FirstStageStarprompt(ContinualModel):
                                   type=int, default=500, help="Number of EM iterations during fit for GR with MOG.")
         frozen_group.add_argument('--gr_mog_n_components', type=int, default=5,
                                   help="Number of components for Generative Replay with MOG.")
-        frozen_group.add_argument("--enable_gr", type=int, default=1, choices=[0, 1],
+        frozen_group.add_argument("--enable_gr", type=binary_to_boolean_type, default=1,
                                   help="Enable Generative Replay.")
         frozen_group.add_argument('--batch_size_gr', type=int, default=128,
                                   help="Batch size for Generative Replay.")
@@ -47,8 +49,10 @@ class FirstStageStarprompt(ContinualModel):
                                    type=int, default=10, help="Num. of epochs for Generative Replay.")
 
         # Useful flags
-        parser.add_argument("--save_first_stage_keys", type=int, default=1,
-                            choices=[0, 1], help="save text encoder outputs")
+        parser.add_argument("--save_first_stage_keys", type=binary_to_boolean_type, default=1,
+                            help="save text encoder outputs")
+        parser.add_argument("--save_first_stage_keys_filename", type=str, help="filename for saving text encoder outputs. Default is:"
+                            "coop_keys_<N_TASKS-1>_<conf_jobnum>.pt")
 
         # Backbone arguments
         parser.add_argument("--clip_backbone", type=str, default='ViT-L/14', help="CLIP backbone architecture",
@@ -56,11 +60,11 @@ class FirstStageStarprompt(ContinualModel):
 
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        logging.warning("The first stage of STAR-Prompt ignores the backbone as it uses CLIP")
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        logging.info("The first stage of STAR-Prompt ignores the backbone as it uses CLIP")
         del backbone
 
-        super().__init__(None, loss, args, transform)
+        super().__init__(None, loss, args, transform, dataset=dataset)
         self.net = Model(args, num_classes=self.num_classes, dataset=self.dataset, device=self.device)
         self.opt = self.get_optimizer()
 
@@ -89,7 +93,10 @@ class FirstStageStarprompt(ContinualModel):
                 'keys': te_outputs,
                 'args': self.args,
             }
-            fname = f'./coop_keys/coop_keys_{self.current_task}_{self.args.conf_jobnum}.pt'
+            if self.args.save_first_stage_keys_filename is not None:
+                fname = f'./coop_keys/{self.args.save_first_stage_keys_filename}'
+            else:
+                fname = f'./coop_keys/coop_keys_{self.current_task}_{self.args.conf_jobnum}.pt'
             torch.save(st, fname)
             print('Saved text-encoder keys in:', fname, file=sys.stderr)
 

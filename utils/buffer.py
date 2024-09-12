@@ -70,25 +70,183 @@ def icarl_replay(self: ContinualModel, dataset, val_set_split=0):
             self.val_loader = create_seeded_dataloader(self.args, self.val_dataset, batch_size=self.args.batch_size, shuffle=True)
 
 
-def reservoir(num_seen_examples: int, buffer_size: int) -> int:
+class BaseSampleSelection:
     """
-    Reservoir sampling algorithm.
-
-    Args:
-        num_seen_examples: the number of seen examples
-        buffer_size: the maximum buffer size
-
-    Returns:
-        the target index if the current image is sampled, else -1
+    Base class for sample selection strategies.
     """
-    if num_seen_examples < buffer_size:
-        return num_seen_examples
 
-    rand = np.random.randint(0, num_seen_examples + 1)
-    if rand < buffer_size:
-        return rand
-    else:
-        return -1
+    def __init__(self, buffer_size: int, device):
+        """
+        Initialize the sample selection strategy.
+
+        Args:
+            buffer_size: the maximum buffer size
+            device: the device to store the buffer on
+        """
+        self.buffer_size = buffer_size
+        self.device = device
+
+    def __call__(self, num_seen_examples: int) -> int:
+        """
+        Selects the index of the sample to replace.
+
+        Args:
+            num_seen_examples: the number of seen examples
+
+        Returns:
+            the index of the sample to replace
+        """
+
+        raise NotImplementedError
+
+    def update(self, *args, **kwargs):
+        """
+        (optional) Update the state of the sample selection strategy.
+        """
+        pass
+
+
+class ReservoirSampling(BaseSampleSelection):
+    def __call__(self, num_seen_examples: int) -> int:
+        """
+        Reservoir sampling algorithm.
+
+        Args:
+            num_seen_examples: the number of seen examples
+            buffer_size: the maximum buffer size
+
+        Returns:
+            the target index if the current image is sampled, else -1
+        """
+        if num_seen_examples < self.buffer_size:
+            return num_seen_examples
+
+        rand = np.random.randint(0, num_seen_examples + 1)
+        if rand < self.buffer_size:
+            return rand
+        else:
+            return -1
+
+
+class LARSSampling(BaseSampleSelection):
+    def __init__(self, buffer_size: int, device):
+        super().__init__(buffer_size, device)
+        # lossoir scores
+        self.importance_scores = torch.ones(buffer_size, device=device) * -float('inf')
+
+    def update(self, indexes: torch.Tensor, values: torch.Tensor):
+        self.importance_scores[indexes] = values
+
+    def normalize_scores(self, values: torch.Tensor):
+        if values.shape[0] > 0:
+            if values.max() - values.min() != 0:
+                values = (values - values.min()) / ((values.max() - values.min()) + 1e-9)
+            return values
+        else:
+            return None
+
+    def __call__(self, num_seen_examples: int) -> int:
+        if num_seen_examples < self.buffer_size:
+            return num_seen_examples
+
+        rn = np.random.randint(0, num_seen_examples)
+        if rn < self.buffer_size:
+            norm_importance = self.normalize_scores(self.importance_scores)
+            norm_importance = norm_importance / (norm_importance.sum() + 1e-9)
+            index = np.random.choice(range(self.buffer_size), p=norm_importance.cpu().numpy(), size=1)
+            return index
+        else:
+            return -1
+
+
+class LossAwareBalancedSampling(BaseSampleSelection):
+    """
+    Combination of Loss-Aware Sampling (LARS) and Balanced Reservoir Sampling (BRS) from `Rethinking Experience Replay: a Bag of Tricks for Continual Learning`.
+    """
+
+    def __init__(self, buffer_size: int, device):
+        super().__init__(buffer_size, device)
+        # lossoir scores
+        self.importance_scores = torch.ones(buffer_size, device=device) * -float('inf')
+        # balancoir scores
+        self.balance_scores = torch.ones(self.buffer_size, dtype=torch.float).to(self.device) * -float('inf')
+        # merged scores
+        self.scores = torch.ones(self.buffer_size).to(self.device) * -float('inf')
+
+    def update(self, indexes: torch.Tensor, values: torch.Tensor):
+        self.importance_scores[indexes] = values
+
+    def merge_scores(self):
+        scaling_factor = self.importance_scores.abs().mean() * self.balance_scores.abs().mean()
+        norm_importance = self.importance_scores / scaling_factor
+        presoftscores = 0.5 * norm_importance + 0.5 * self.balance_scores
+
+        if presoftscores.max() - presoftscores.min() != 0:
+            presoftscores = (presoftscores - presoftscores.min()) / (presoftscores.max() - presoftscores.min() + 1e-9)
+        self.scores = presoftscores / presoftscores.sum()
+
+    def update_balancoir_scores(self, labels: torch.Tensor):
+        unique_labels, orig_inputs_idxs, counts = labels.unique(return_counts=True, return_inverse=True)
+        # assert len(counts) > unique_labels.max(), "Some classes are missing from the buffer"
+        self.balance_scores = torch.gather(counts, 0, orig_inputs_idxs).float()
+
+    def __call__(self, num_seen_examples: int, labels: torch.Tensor) -> int:
+        if num_seen_examples < self.buffer_size:
+            return num_seen_examples
+
+        rn = np.random.randint(0, num_seen_examples)
+        if rn < self.buffer_size:
+            self.update_balancoir_scores(labels)
+            self.merge_scores()
+            index = np.random.choice(range(self.buffer_size), p=self.scores.cpu().numpy(), size=1)
+            return index
+        else:
+            return -1
+
+
+class ABSSampling(LARSSampling):
+    def __init__(self, buffer_size: int, device: str, dataset: ContinualDataset):
+        super().__init__(buffer_size, device)
+        self.dataset = dataset
+
+    def scale_scores(self, past_indexes: torch.Tensor):
+        # due normalizzazioni divere per i due gruppi
+        past_importance = self.normalize_scores(self.importance_scores[past_indexes])
+        current_importance = self.normalize_scores(self.importance_scores[~past_indexes])
+        current_scores, past_scores = None, None
+        if past_importance is not None:
+            past_importance = 1 - past_importance
+            past_scores = past_importance / past_importance.sum()
+        if current_importance is not None:
+            if current_importance.sum() == 0:
+                current_importance += 1e-9
+            current_scores = current_importance / current_importance.sum()
+
+        return past_scores, current_scores
+
+    def __call__(self, num_seen_examples: int, labels: torch.Tensor) -> int:
+        n_seen_classes, _ = self.dataset.get_offsets()
+
+        if num_seen_examples < self.buffer_size:
+            return num_seen_examples
+
+        rn = np.random.randint(0, num_seen_examples)
+        if rn < self.buffer_size:
+            past_indexes = labels < n_seen_classes
+
+            past_scores, current_scores = self.scale_scores(past_indexes)
+            past_percentage = np.float64(past_indexes.sum().cpu() / self.buffer_size)  # avoid numerical issues
+            pres_percetage = 1 - past_percentage
+            assert past_percentage + pres_percetage == 1, f"The sum of the percentages must be 1 but found {past_percentage+pres_percetage}: {past_percentage} + {pres_percetage}"
+            rp = np.random.choice((0, 1), p=[past_percentage, pres_percetage])
+
+            if not rp:
+                index = np.random.choice(np.arange(self.buffer_size)[past_indexes.cpu().numpy()], p=past_scores.cpu().numpy(), size=1)
+            else:
+                index = np.random.choice(np.arange(self.buffer_size)[~past_indexes.cpu().numpy()], p=current_scores.cpu().numpy(), size=1)
+            return index
+        else:
+            return -1
 
 
 class Buffer:
@@ -96,13 +254,35 @@ class Buffer:
     The memory buffer of rehearsal method.
     """
 
-    def __init__(self, buffer_size, device="cpu"):
+    buffer_size: int  # the maximum size of the buffer
+    device: str  # the device to store the buffer on
+    num_seen_examples: int  # the total number of examples seen, used for reservoir
+    attributes: List[str]  # the attributes stored in the buffer
+    attention_maps: List[torch.Tensor]  # (optional) attention maps used by TwF
+    sample_selection_strategy: str  # the sample selection strategy used to select samples to replace. By default, 'reservoir'
+
+    examples: torch.Tensor  # (mandatory) buffer attribute: the tensor of images
+    labels: torch.Tensor  # (optional) buffer attribute: the tensor of labels
+    logits: torch.Tensor  # (optional) buffer attribute: the tensor of logits
+    task_labels: torch.Tensor  # (optional) buffer attribute: the tensor of task labels
+    true_labels: torch.Tensor  # (optional) buffer attribute: the tensor of true labels
+
+    def __init__(self, buffer_size: int, device="cpu", sample_selection_strategy='reservoir', **kwargs):
         """
         Initialize a reservoir-based Buffer object.
+
+        Supports storing images, labels, logits, task_labels, and attention maps. This can be extended by adding more attributes to the `attributes` list and updating the `init_tensors` method accordingly.
+
+        To select samples to replace, the buffer supports:
+        - `reservoir` sampling: randomly selects samples to replace (default). Ref: "Jeffrey S Vitter. Random sampling with a reservoir."
+        - `lars`: prioritizes retaining samples with the *higher* loss. Ref: "Pietro Buzzega et al. Rethinking Experience Replay: a Bag of Tricks for Continual Learning."
+        - `labrs` (Loss-Aware Balanced Reservoir Sampling): combination of LARS and BRS. Ref: "Pietro Buzzega et al. Rethinking Experience Replay: a Bag of Tricks for Continual Learning."
+        - `abs` (Asymmetric Balanced Sampling): for samples from the current task, prioritizes retaining samples with the *lower* loss (i.e., inverse `lossoir`); for samples from previous tasks, prioritizes retaining samples with the *higher* loss (i.e., `lossoir`). Useful for settings with noisy labels. Ref: "Monica Millunzi et al. May the Forgetting Be with You: Alternate Replay for Learning with Noisy Labels".
 
         Args:
             buffer_size (int): The maximum size of the buffer.
             device (str, optional): The device to store the buffer on. Defaults to "cpu".
+            sample_selection_strategy: The sample selection strategy. Defaults to 'reservoir'. Options: 'reservoir', 'lars', 'labrs', 'abs'.
 
         Note:
             If during the `get_data` the transform is PIL, data will be moved to cpu and then back to the device. This is why the device is set to cpu by default.
@@ -110,8 +290,21 @@ class Buffer:
         self.buffer_size = buffer_size
         self.device = device
         self.num_seen_examples = 0
-        self.attributes = ['examples', 'labels', 'logits', 'task_labels']
+        self.attributes = ['examples', 'labels', 'logits', 'task_labels', 'true_labels']
         self.attention_maps = [None] * buffer_size
+        self.sample_selection_strategy = sample_selection_strategy
+
+        assert sample_selection_strategy.lower() in ['reservoir', 'lars', 'labrs', 'abs'], f"Invalid sample selection strategy: {sample_selection_strategy}"
+
+        if sample_selection_strategy.lower() == 'abs':
+            assert 'dataset' in kwargs, "The dataset is required for ABS sample selection"
+            self.sample_selection_fn = ABSSampling(buffer_size, device, kwargs['dataset'])
+        elif sample_selection_strategy.lower() == 'lars':
+            self.sample_selection_fn = LARSSampling(buffer_size, device)
+        elif sample_selection_strategy.lower() == 'labrs':
+            self.sample_selection_fn = LossAwareBalancedSampling(buffer_size, device)
+        else:
+            self.sample_selection_fn = ReservoirSampling(buffer_size, device)
 
     def to(self, device):
         """
@@ -124,6 +317,7 @@ class Buffer:
             The buffer instance with the updated device and attributes.
         """
         self.device = device
+        self.sample_selection_fn.device = device
         for attr_str in self.attributes:
             if hasattr(self, attr_str):
                 setattr(self, attr_str, getattr(self, attr_str).to(device))
@@ -136,7 +330,8 @@ class Buffer:
         return min(self.num_seen_examples, self.buffer_size)
 
     def init_tensors(self, examples: torch.Tensor, labels: torch.Tensor,
-                     logits: torch.Tensor, task_labels: torch.Tensor) -> None:
+                     logits: torch.Tensor, task_labels: torch.Tensor,
+                     true_labels: torch.Tensor) -> None:
         """
         Initializes just the required tensors.
 
@@ -145,6 +340,7 @@ class Buffer:
             labels: tensor containing the labels
             logits: tensor containing the outputs of the network
             task_labels: tensor containing the task labels
+            true_labels: tensor containing the true labels (used only for logging)
         """
         for attr_str in self.attributes:
             attr = eval(attr_str)
@@ -160,7 +356,7 @@ class Buffer:
         """
         return [attr_str for attr_str in self.attributes if hasattr(self, attr_str)]
 
-    def add_data(self, examples, labels=None, logits=None, task_labels=None, attention_maps=None):
+    def add_data(self, examples, labels=None, logits=None, task_labels=None, attention_maps=None, true_labels=None, sample_selection_scores=None):
         """
         Adds the data to the memory buffer according to the reservoir strategy.
 
@@ -169,15 +365,21 @@ class Buffer:
             labels: tensor containing the labels
             logits: tensor containing the outputs of the network
             task_labels: tensor containing the task labels
+            attention_maps: list of tensors containing the attention maps
+            true_labels: if setting is noisy, the true labels associated with the examples. **Used only for logging.**
+            sample_selection_scores: tensor containing the scores used for the sample selection strategy. NOTE: this is only used if the sample selection strategy defines the `update` method.
 
         Note:
             Only the examples are required. The other tensors are initialized only if they are provided.
         """
         if not hasattr(self, 'examples'):
-            self.init_tensors(examples, labels, logits, task_labels)
+            self.init_tensors(examples, labels, logits, task_labels, true_labels)
 
         for i in range(examples.shape[0]):
-            index = reservoir(self.num_seen_examples, self.buffer_size)
+            if self.sample_selection_strategy == 'abs' or self.sample_selection_strategy == 'labrs':
+                index = self.sample_selection_fn(self.num_seen_examples, labels=self.labels)
+            else:
+                index = self.sample_selection_fn(self.num_seen_examples)
             self.num_seen_examples += 1
             if index >= 0:
                 self.examples[index] = examples[i].to(self.device)
@@ -189,8 +391,13 @@ class Buffer:
                     self.task_labels[index] = task_labels[i].to(self.device)
                 if attention_maps is not None:
                     self.attention_maps[index] = [at[i].byte().to(self.device) for at in attention_maps]
+                if sample_selection_scores is not None:
+                    self.sample_selection_fn.update(index, sample_selection_scores[i])
+                if true_labels is not None:
+                    self.true_labels[index] = true_labels[i].to(self.device)
 
-    def get_data(self, size: int, transform: nn.Module = None, return_index=False, device=None, mask_task_out=None, cpt=None) -> Tuple:
+    def get_data(self, size: int, transform: nn.Module = None, return_index=False, device=None,
+                 mask_task_out=None, cpt=None, return_not_aug=False, not_aug_transform=None) -> Tuple:
         """
         Random samples a batch of size items.
 
@@ -200,6 +407,8 @@ class Buffer:
             return_index: if True, returns the indexes of the sampled items
             mask_task: if not None, masks OUT the examples from the given task
             cpt: the number of classes per task (required if mask_task is not None and task_labels are not present)
+            return_not_aug: if True, also returns the not augmented items
+            not_aug_transform: the transformation to be applied to the not augmented items (if `return_not_aug` is True)
 
         Returns:
             a tuple containing the requested items. If return_index is True, the tuple contains the indexes as first element.
@@ -222,7 +431,15 @@ class Buffer:
             def transform(x): return x
 
         selected_samples = self.examples[choice] if mask_task_out is None else self.examples[samples_mask][choice]
-        ret_tuple = (apply_transform(selected_samples, transform=transform).to(target_device),)
+
+        if return_not_aug:
+            if not_aug_transform is None:
+                def not_aug_transform(x): return x
+            ret_tuple = (apply_transform(selected_samples, transform=not_aug_transform).to(target_device),)
+        else:
+            ret_tuple = tuple()
+
+        ret_tuple += (apply_transform(selected_samples, transform=transform).to(target_device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str)
@@ -277,9 +494,9 @@ class Buffer:
         """
         target_device = self.device if device is None else device
         if transform is None:
-            def transform(x): return x
-
-        ret_tuple = (apply_transform(self.examples[:len(self)], transform=transform).to(target_device),)
+            ret_tuple = (self.examples[:len(self)].to(target_device),)
+        else:
+            ret_tuple = (apply_transform(self.examples[:len(self)], transform=transform).to(target_device),)
         for attr_str in self.attributes[1:]:
             if hasattr(self, attr_str):
                 attr = getattr(self, attr_str)[:len(self)].to(target_device)
@@ -351,7 +568,8 @@ def fill_buffer(buffer: Buffer, dataset: ContinualDataset, t_idx: int, net: Cont
 
     # 2.1 Extract all features
     a_x, a_y, a_f, a_l = [], [], [], []
-    for x, y, not_norm_x in loader:
+    for data in loader:
+        x, y, not_norm_x = data[0], data[1], data[2]
         mask = (y >= n_past_classes) & (y < n_seen_classes)
         x, y, not_norm_x = x[mask], y[mask], not_norm_x[mask]
         if not x.size(0):

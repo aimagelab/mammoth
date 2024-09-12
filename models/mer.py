@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
+import logging
 
 from models.utils.continual_model import ContinualModel
 from utils.args import add_rehearsal_args, ArgumentParser
@@ -11,50 +12,44 @@ from utils.buffer import Buffer
 
 
 class Mer(ContinualModel):
+    """Continual Learning via Meta-Experience Replay (Alg 6)."""
     NAME = 'mer'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Learning via'
-                                ' Meta-Experience Replay.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
+        parser.set_defaults(batch_size=1)
 
         parser.add_argument('--beta', type=float, required=True,
                             help='Within-batch update beta parameter.')
         parser.add_argument('--gamma', type=float, required=True,
                             help='Across-batch update gamma parameter.')
-        parser.add_argument('--batch_num', type=int, required=True,
+        parser.add_argument('--batch_num', type=int, default=1,
                             help='Number of batches extracted from the buffer.')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        args.batch_size = 1
-        super(Mer, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        if args.batch_size != 1:
+            logging.warning('MER is designed to work with batch_size=1. We will use batch_size=1.')
+            args.batch_size = 1
+        super(Mer, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
-
-    def draw_batches(self, inp, lab):
-        batches = []
-        for i in range(self.args.batch_num):
-            if not self.buffer.is_empty():
-                buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size,
-                                                              transform=self.transform, device=self.device)
-                inputs = torch.cat((buf_inputs, inp))
-                labels = torch.cat((buf_labels, torch.tensor([lab]).to(self.device)))
-                batches.append((inputs, labels))
-            else:
-                batches.append((inp, torch.tensor([lab]).to(self.device)))
-        return batches
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
 
-        batches = self.draw_batches(inputs, labels)
         theta_A0 = self.net.get_params().data.clone()
 
         for i in range(self.args.batch_num):
             theta_Wi0 = self.net.get_params().data.clone()
 
-            batch_inputs, batch_labels = batches[i]
+            if not self.buffer.is_empty():
+                buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size,
+                                                              transform=self.transform, device=self.device)
+                batch_inputs = torch.cat((buf_inputs, inputs))
+                batch_labels = torch.cat((buf_labels, torch.tensor([labels]).to(self.device)))
+            else:
+                batch_inputs, batch_labels = inputs, torch.tensor([labels]).to(self.device)
 
             # within-batch step
             self.opt.zero_grad()

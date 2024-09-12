@@ -5,19 +5,18 @@ from models.utils.lider_model import LiderOptimizer, add_lipschitz_args
 
 
 class ErACELider(LiderOptimizer):
+    """ER-ACE with future not fixed (as made by authors). Treated with LiDER!"""
     NAME = 'er_ace_lider'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='ER-ACE with future not fixed (as made by authors)'
-                                'Treated with LiDER!')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         add_lipschitz_args(parser)
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super().__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
         self.seen_so_far = torch.tensor([]).long().to(self.device)
 

@@ -4,24 +4,25 @@
 # LICENSE file in the root directory of this source tree.
 
 import sys
-
 import numpy as np
 import torch
-from datasets import get_dataset
 from torch.optim import SGD
 
+
+from backbone import get_backbone
+from datasets import get_dataset
 from models.utils.continual_model import ContinualModel
 from utils.args import add_rehearsal_args, ArgumentParser
 from utils.ring_buffer import RingBuffer as Buffer
 
 
 class HAL(ContinualModel):
+    """Hindsight Anchor Learning."""
     NAME = 'hal'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Hindsight Anchor Learning.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
 
         parser.add_argument('--hal_lambda', type=float, default=0.1)
@@ -29,8 +30,8 @@ class HAL(ContinualModel):
         parser.add_argument('--gamma', type=float, default=0.1)
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super().__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
         self.task_number = 0
         self.buffer = Buffer(self.args.buffer_size, n_tasks=get_dataset(args).N_TASKS)
         self.hal_lambda = args.hal_lambda
@@ -39,7 +40,7 @@ class HAL(ContinualModel):
         self.anchor_optimization_steps = 100
         self.finetuning_epochs = 1
         self.dataset = get_dataset(args)
-        self.spare_model = self.dataset.get_backbone()
+        self.spare_model = get_backbone(self.args)
         self.spare_model.to(self.device)
         self.spare_opt = SGD(self.spare_model.parameters(), lr=self.args.lr)
 

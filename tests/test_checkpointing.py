@@ -1,17 +1,18 @@
 import os
 import sys
+import uuid
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.main import main
-from utils.test_utils import init_test_environ
 import pytest
 
 
-@init_test_environ
 @pytest.mark.parametrize('model', ['sgd', 'slca', 'l2p'])
 @pytest.mark.parametrize('savecheck', ['last', 'task'])
 @pytest.mark.parametrize('joint', ['0', '1'])
-def test_checkpointing_bufferfree(model, savecheck, joint):
+def test_checkpoint_save_and_load(model, savecheck, joint, capsys):
     N_TASKS = 5  # cifar10
+
+    checkpoint_name = str(uuid.uuid4())
 
     # TEST CHECKPOINT SAVE
     sys.argv = ['mammoth',
@@ -27,6 +28,8 @@ def test_checkpointing_bufferfree(model, savecheck, joint):
                 joint,
                 '--savecheck',
                 savecheck,
+                '--ckpt_name',
+                checkpoint_name,
                 '--batch_size',
                 '4',
                 '--non_verbose',
@@ -38,30 +41,25 @@ def test_checkpointing_bufferfree(model, savecheck, joint):
                 '--debug_mode',
                 '1']
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_checkpoint_save.{model}.{savecheck}.{"joint" if joint=="1" else "cl"}.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()
 
+    _, err = capsys.readouterr()
     # read output file and search for the string 'Saving checkpoint into'
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_checkpoint_save.{model}.{savecheck}.{"joint" if joint=="1" else "cl"}.log'), 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-        ckpt_name = [line for line in lines if 'Saving checkpoint into' in line]
-        assert any(ckpt_name), f'Checkpoint not saved for model {model}'
+    ckpt_name = [line for line in err.splitlines() if 'Saving checkpoint into' in line]
+    assert any(ckpt_name), f'Checkpoint not saved for model {model}'
 
-        if joint == '0':
-            if savecheck == 'last':
-                ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_last.pt'
-            elif savecheck == 'task':
-                ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_{N_TASKS-1}.pt'
-        elif joint == '1':
-            ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_joint.pt'
+    if joint == '0':
+        if savecheck == 'last':
+            ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_last.pt'
+        elif savecheck == 'task':
+            ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_{N_TASKS-1}.pt'
+    elif joint == '1':
+        ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_joint.pt'
 
-        ckpt_path = os.path.join('checkpoints', ckpt_name)
+    ckpt_path = os.path.join('checkpoints', ckpt_name)
 
-        assert os.path.exists(ckpt_path), f'Checkpoint file {ckpt_path} not found'
+    assert checkpoint_name in ckpt_path, f'Checkpoint does not contain the checkpoint name. Found {ckpt_path} but expected {checkpoint_name} in the path'
+    assert os.path.exists(ckpt_path), f'Checkpoint file {ckpt_path} not found'
 
     # TEST CHECKPOINT LOAD
     sys.argv = ['mammoth',
@@ -88,11 +86,6 @@ def test_checkpointing_bufferfree(model, savecheck, joint):
                 '--debug_mode',
                 '1']
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_checkpoint_load.{model}.{savecheck}.{"joint" if joint=="1" else "cl"}.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()
 
     # REMOVE CHECKPOINT FILE
@@ -107,10 +100,9 @@ def test_checkpointing_bufferfree(model, savecheck, joint):
         os.remove(ckpt_path)
 
 
-@init_test_environ
 @pytest.mark.parametrize('savecheck', ['last', 'task'])
 @pytest.mark.parametrize('joint', ['0', '1'])
-def test_checkpointing_replay(savecheck, joint):
+def test_checkpointing_replay(savecheck, joint, capsys):
     N_TASKS = 5  # cifar10
 
     # TEST CHECKPOINT SAVE
@@ -144,30 +136,25 @@ def test_checkpointing_replay(savecheck, joint):
                 '--debug_mode',
                 '1']
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_checkpoint_save.derpp.{savecheck}.{"joint" if joint=="1" else "cl"}.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()
 
+    _, err = capsys.readouterr()
+
     # read output file and search for the string 'Saving checkpoint into'
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_checkpoint_save.derpp.{savecheck}.{"joint" if joint=="1" else "cl"}.log'), 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-        ckpt_name = [line for line in lines if 'Saving checkpoint into' in line]
-        assert any(ckpt_name), f'Checkpoint not saved for derpp'
+    ckpt_name = [line for line in err.splitlines() if 'Saving checkpoint into' in line]
+    assert any(ckpt_name), f'Checkpoint not saved for derpp'
 
-        if joint == '0':
-            if savecheck == 'last':
-                ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_last.pt'
-            elif savecheck == 'task':
-                ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_{N_TASKS-1}.pt'
-        elif joint == '1':
-            ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_joint.pt'
+    if joint == '0':
+        if savecheck == 'last':
+            ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_last.pt'
+        elif savecheck == 'task':
+            ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_{N_TASKS-1}.pt'
+    elif joint == '1':
+        ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_joint.pt'
 
-        ckpt_path = os.path.join('checkpoints', ckpt_name)
+    ckpt_path = os.path.join('checkpoints', ckpt_name)
 
-        assert os.path.exists(ckpt_path), f'Checkpoint file {ckpt_path} not found'
+    assert os.path.exists(ckpt_path), f'Checkpoint file {ckpt_path} not found'
 
     # TEST CHECKPOINT LOAD
     sys.argv = ['mammoth',
@@ -200,11 +187,6 @@ def test_checkpointing_replay(savecheck, joint):
                 '--debug_mode',
                 '1']
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_checkpoint_load.derpp.{savecheck}.{"joint" if joint=="1" else "cl"}.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()
 
     # REMOVE CHECKPOINT FILE

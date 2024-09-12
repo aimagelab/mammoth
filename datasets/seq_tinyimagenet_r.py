@@ -5,6 +5,7 @@
 
 import torchvision.transforms as transforms
 from datasets.seq_tinyimagenet import SequentialTinyImagenet
+from datasets.utils import set_default_from_args
 
 
 class SequentialTinyImagenet32R(SequentialTinyImagenet):
@@ -32,3 +33,15 @@ class SequentialTinyImagenet32R(SequentialTinyImagenet):
             transforms.Resize(32),
             transforms.ToTensor(),
             transforms.Normalize(MEAN, STD)])
+
+    @set_default_from_args('n_epochs')
+    def get_epochs(self):
+        return 50
+
+    @set_default_from_args('batch_size')
+    def get_batch_size(self):
+        return 32
+
+    @set_default_from_args("backbone")
+    def get_backbone():
+        return "resnet18"

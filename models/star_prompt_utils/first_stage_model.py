@@ -123,11 +123,11 @@ class Prompter(torch.nn.Module):
                 loss.backward()
                 optim.step()
 
-                pbar.set_postfix({'loss': loss.item()})
+                pbar.set_postfix({'loss': loss.item()}, refresh=False)
 
                 if not self.args.nowand:
                     assert wandb is not None, "wandb is not installed."
-                    wandb.log({'ca_loss': loss.item(), 'ca_lr': optim.param_groups[0]['lr']})
+                    wandb.log({'ca_loss_first_stage': loss.item(), 'ca_lr_first_stage': optim.param_groups[0]['lr']})
 
     def align(self, current_task: int):
         optim = torch.optim.SGD(lr=self.args.learning_rate_gr_first_stage, params=[self.prompt_parameters],
@@ -149,7 +149,7 @@ class Prompter(torch.nn.Module):
                   desc='Updating statistics for first stage Generative Replay') as pbar:
             for _ in range(self.args.num_monte_carlo_gr_first_stage):
                 for i, data in enumerate(dataset.train_loader):
-                    if self.args.debug_mode == 1 and i > 3 and min([len(v) for k, v in features_dict.items()]) > self.args.gr_mog_n_components:
+                    if self.args.debug_mode and i > 3 and min([len(v) for k, v in features_dict.items()]) > self.args.gr_mog_n_components:
                         break
                     inputs, labels = data[0].to(self.device), data[1].to(self.device, dtype=torch.long)
 

@@ -13,6 +13,7 @@ from datasets import get_dataset
 from torch import nn
 
 from models.utils.continual_model import ContinualModel
+from utils import binary_to_boolean_type
 from utils.args import add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer, fill_buffer, icarl_replay
@@ -94,12 +95,12 @@ class CustomClassifier(nn.Module):
 
 
 class Lucir(ContinualModel):
+    """Continual Learning via Lucir."""
     NAME = 'lucir'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Learning via Lucir.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
 
         parser.add_argument('--lamda_base', type=float, required=False, default=5.,
@@ -114,12 +115,12 @@ class Lucir(ContinualModel):
                             help='Number of epochs to finetune on coreset after each task.')
         parser.add_argument('--lr_finetune', type=float, required=False, default=0.01,
                             help='Learning Rate for finetuning.')
-        parser.add_argument('--imprint_weights', type=int, choices=[0, 1], required=False, default=1,
+        parser.add_argument('--imprint_weights', type=binary_to_boolean_type, required=False, default=1,
                             help='Apply weight imprinting?')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Lucir, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(Lucir, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.dataset = get_dataset(args)
 
         # Instantiate buffers
@@ -219,7 +220,7 @@ class Lucir(ContinualModel):
                 # Update model classifier
                 self.update_classifier()
 
-                if self.args.imprint_weights == 1:
+                if self.args.imprint_weights:
                     self.imprint_weights(dataset)
 
                 # Restore optimizer LR
@@ -301,8 +302,9 @@ class Lucir(ContinualModel):
         with bn_track_stats(self, False):
             for _ in range(opt_steps):
                 examples, labels = self.buffer.get_all_data(self.transform, device=self.device)
-                dt = create_seeded_dataloader(self.args, [(e, l) for e, l in zip(examples, labels)],
-                                              shuffle=True, batch_size=self.args.batch_size)
+                dset = torch.utils.data.TensorDataset(examples, labels)
+                torch.cuda.synchronize()
+                dt = create_seeded_dataloader(self.args, dset, shuffle=True, batch_size=self.args.batch_size, num_workers=0)
                 for inputs, labels in dt:
                     self.observe(inputs, labels, None, fitting=True)
                     lr_scheduler.step()

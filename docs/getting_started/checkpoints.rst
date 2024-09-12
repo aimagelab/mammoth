@@ -1,7 +1,7 @@
 Load and save checkpoints
 =========================
 
-Loading and saving checkpoints is handled automatically in :ref:`module-training` by supplying the ``--savecheck`` and ``--loadcheck`` arguments. 
+Loading and saving checkpoints is handled automatically in :ref:`module-utils.training` by supplying the ``--savecheck`` and ``--loadcheck`` arguments. 
 
 For example, to save a checkpoint after the end of the last task, simply run the following command:
 
@@ -59,4 +59,4 @@ Mammoth supports loading checkpoint both from the local machine **and from a rem
 
 Checkpoints can be loaded either following the mammoth format (defined above) or from a simple ``.pt`` file. In the latter case, the checkpoint file should contain all the parameters of the *backbone* of the model. The other parameters (optimizer, scheduler, etc.) will be initialized from scratch.
 
-The loading functions are available in :ref:`module-checkpoints` and should take care of loading all the parameters regardless of the presence of module parallelism (see :ref:`module-fast-training`).
+The loading functions are available in :ref:`module-utils.checkpoints` and should take care of loading all the parameters regardless of the presence of module parallelism (see :ref:`module-fast-training`).

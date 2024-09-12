@@ -4,7 +4,7 @@ https://github.com/hshustc/CVPR19_Incremental_Learning/blob/master/cifar100-clas
 '''
 import torch
 from torch import nn
-from timm.models.layers import trunc_normal_
+from timm.layers import trunc_normal_
 from copy import deepcopy
 
 

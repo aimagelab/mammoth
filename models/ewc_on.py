@@ -12,20 +12,20 @@ from utils.args import ArgumentParser
 
 
 class EwcOn(ContinualModel):
+    """Continual learning via online EWC."""
     NAME = 'ewc_on'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via online EWC.')
+    def get_parser(parser) -> ArgumentParser:
         parser.add_argument('--e_lambda', type=float, required=True,
                             help='lambda weight for EWC')
         parser.add_argument('--gamma', type=float, required=True,
                             help='gamma parameter for EWC online')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(EwcOn, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(EwcOn, self).__init__(backbone, loss, args, transform, dataset=dataset)
 
         self.logsoft = nn.LogSoftmax(dim=1)
         self.checkpoint = None
@@ -42,7 +42,7 @@ class EwcOn(ContinualModel):
         fish = torch.zeros_like(self.net.get_params())
 
         for j, data in enumerate(dataset.train_loader):
-            inputs, labels, _ = data
+            inputs, labels = data[0], data[1]
             inputs, labels = inputs.to(self.device), labels.to(self.device)
             for ex, lab in zip(inputs, labels):
                 self.opt.zero_grad()

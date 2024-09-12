@@ -16,31 +16,35 @@ from utils.schedulers import CosineSchedule
 
 
 class CodaPrompt(ContinualModel):
+    """Continual Learning via CODA-Prompt: COntinual Decomposed Attention-based Prompting."""
     NAME = 'coda_prompt'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Learning via'
-                                ' CODA-Prompt: COntinual Decomposed Attention-based Prompting')
+    def get_parser(parser) -> ArgumentParser:
+        parser.set_defaults(lr=0.001, optimizer='adam', optim_mom=0.9)
         parser.add_argument('--mu', type=float, default=0.0, help='weight of prompt loss')
         parser.add_argument('--pool_size', type=int, default=100, help='pool size')
         parser.add_argument('--prompt_len', type=int, default=8, help='prompt length')
-        parser.add_argument('--virtual_bs_iterations', type=int, default=1, help="virtual batch size iterations")
+        parser.add_argument('--virtual_bs_iterations', '--virtual_bs_n', dest='virtual_bs_iterations',
+                            type=int, default=1, help="virtual batch size iterations")
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         del backbone
         print("-" * 20)
-        logging.warning(f"CODA-Prompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
+        logging.info(f"CODA-Prompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
         print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
         print("-" * 20)
+
+        if args.lr_scheduler is not None:
+            logging.info("CODA-Prompt uses a custom scheduler: cosine. Ignoring --lr_scheduler.")
 
         self.dataset = get_dataset(args)
         self.n_classes = self.dataset.N_CLASSES
         self.n_tasks = self.dataset.N_TASKS
         backbone = Model(num_classes=self.n_classes, pt=True, prompt_param=[self.n_tasks, [args.pool_size, args.prompt_len, 0]])
-        super().__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
         self.net.task_id = 0
         self.opt = self.get_optimizer()
 
@@ -80,7 +84,7 @@ class CodaPrompt(ContinualModel):
             self.opt.zero_grad()
 
         torch.cuda.empty_cache()
-        loss.backward()
+        (loss / float(self.args.virtual_bs_iterations)).backward()
         if self.task_iteration > 0 and self.task_iteration % self.args.virtual_bs_iterations == 0:
             self.opt.step()
             self.opt.zero_grad()

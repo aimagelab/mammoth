@@ -3,23 +3,27 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from copy import deepcopy
+import numpy as np
+import copy
 import math
 import os
 import sys
 from argparse import Namespace
 from time import time
 from typing import Iterable, Tuple
-
+import logging
 import torch
 from tqdm import tqdm
+
 from datasets import get_dataset
-from datasets.utils.continual_dataset import ContinualDataset
+from datasets.utils.continual_dataset import ContinualDataset, MammothDatasetWrapper
 from datasets.utils.gcl_dataset import GCLDataset
 from models.utils.continual_model import ContinualModel
+from models.utils.future_model import FutureModel
 
 from utils.checkpoints import mammoth_load_checkpoint
-from utils.loggers import *
+from utils.loggers import log_extra_metrics, log_accs, Logger
+from utils.schedulers import get_scheduler
 from utils.stats import track_system_stats
 
 try:
@@ -68,7 +72,8 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, retur
     loss_fn = dataset.get_loss()
     avg_loss = 0
     total_len = sum(len(x) for x in dataset.test_loaders) if hasattr(dataset.test_loaders[0], '__len__') else None
-    pbar = tqdm(dataset.test_loaders, total=total_len, desc='Evaluating')
+
+    pbar = tqdm(dataset.test_loaders, total=total_len, desc='Evaluating', disable=model.args.non_verbose)
     for k, test_loader in enumerate(dataset.test_loaders):
         if last and k < len(dataset.test_loaders) - 1:
             continue
@@ -82,7 +87,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, retur
                 break
             if model.args.debug_mode and i > model.get_debug_iters():
                 break
-            inputs, labels = data
+            inputs, labels = data[0], data[1]
             inputs, labels = inputs.to(model.device), labels.to(model.device)
             if 'class-il' not in model.COMPATIBILITY and 'general-continual' not in model.COMPATIBILITY:
                 outputs = model(inputs, k)
@@ -100,8 +105,8 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, retur
             correct += torch.sum(pred == labels).item()
             total += labels.shape[0]
             i += 1
-            pbar.set_postfix({f'acc_task_{k+1}': max(0, correct / total * 100)})
-            pbar.set_description(f"Evaluating Task {k+1}")
+            pbar.set_postfix({f'acc_task_{k+1}': max(0, correct / total * 100)}, refresh=False)
+            pbar.set_description(f"Evaluating Task {k+1}", refresh=False)
             pbar.update(1)
 
             if dataset.SETTING == 'class-il':
@@ -137,6 +142,14 @@ def initialize_wandb(args: Namespace) -> None:
     args.wandb_url = wandb.run.get_url()
 
 
+def _to_device(name: str, x, device):
+    if isinstance(x, torch.Tensor):
+        if 'label' in name.lower() or 'target' in name.lower():
+            return x.to(device, dtype=torch.long)
+        return x.to(device)
+    return x
+
+
 def train_single_epoch(model: ContinualModel,
                        train_loader: Iterable,
                        args: Namespace,
@@ -166,7 +179,10 @@ def train_single_epoch(model: ContinualModel,
     i = 0
     previous_time = time()
 
-    pbar = tqdm(train_iter, total=data_len, desc=f"Task {current_task + 1} - Epoch {epoch + 1}")
+    mininterval = 0.5 if data_len is not None and data_len > 1000 else 0.1
+    pbar = tqdm(train_iter, total=data_len,
+                desc=f"Task {current_task + 1} - Epoch {epoch + 1}",
+                disable=args.non_verbose, mininterval=mininterval)
     while True:
         try:
             data = next(train_iter)
@@ -177,19 +193,21 @@ def train_single_epoch(model: ContinualModel,
         if args.fitting_mode == 'iters' and model.task_iteration >= model.args.n_iters:
             break
 
-        if hasattr(train_loader.dataset, 'logits'):
-            inputs, labels, not_aug_inputs, logits = data
-            inputs = inputs.to(model.device)
-            labels = labels.to(model.device, dtype=torch.long)
-            not_aug_inputs = not_aug_inputs.to(model.device)
-            logits = logits.to(model.device)
-            loss = model.meta_observe(inputs, labels, not_aug_inputs, logits, epoch=epoch)
-        else:
-            inputs, labels, not_aug_inputs = data
-            inputs, labels = inputs.to(model.device), labels.to(model.device, dtype=torch.long)
-            not_aug_inputs = not_aug_inputs.to(model.device)
-            loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch)
+        inputs, labels, not_aug_inputs = data[0], data[1], data[2]
+        inputs, labels = inputs.to(model.device), labels.to(model.device, dtype=torch.long)
+        not_aug_inputs = not_aug_inputs.to(model.device)
+
+        extra_fields = {
+            train_loader.dataset.extra_return_fields[k]: _to_device(train_loader.dataset.extra_return_fields[k], data[3 + k], model.device)
+            for k in range(len(data) - 3)
+        }
+
+        loss = model.meta_observe(inputs, labels, not_aug_inputs, epoch=epoch, **extra_fields)
+
         assert not math.isnan(loss)
+
+        if scheduler is not None and args.scheduler_mode == 'iter':
+            scheduler.step()
 
         if args.code_optimization == 0 and 'cuda' in str(args.device):
             torch.cuda.synchronize()
@@ -198,11 +216,14 @@ def train_single_epoch(model: ContinualModel,
 
         time_diff = time() - previous_time
         previous_time = time()
-        ep_h = 3600 / (data_len * time_diff) if data_len else 'N/A'
-        pbar.set_postfix({'loss': loss} if ep_h == 'N/A' else {'loss': loss, 'ep/h': ep_h})
+        bar_log = {'loss': loss, 'lr': model.opt.param_groups[0]['lr']}
+        if data_len:
+            ep_h = 3600 / (data_len * time_diff)
+            bar_log['ep/h'] = ep_h
+        pbar.set_postfix(bar_log, refresh=False)
         pbar.update()
 
-    if scheduler is not None:
+    if scheduler is not None and args.scheduler_mode == 'epoch':
         scheduler.step()
 
 
@@ -217,6 +238,10 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         args: the arguments of the current execution
     """
     print(args)
+
+    is_fwd_enabled = True
+    can_compute_fwd_beforetask = True
+    random_results_class, random_results_task = [], []
 
     if not args.nowand:
         initialize_wandb(args)
@@ -248,19 +273,12 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             print('Checkpoint Loaded!')
 
-        if args.enable_other_metrics:
-            dataset_copy = get_dataset(args)
-            for t in range(dataset.N_TASKS):
-                model.net.train()
-                _, _ = dataset_copy.get_data_loaders()
-            if model.NAME != 'icarl' and model.NAME != 'pnn':
-                random_results_class, random_results_task = evaluate(model, dataset_copy)
-
         print(file=sys.stderr)
         start_task = 0 if args.start_from is None else args.start_from
         end_task = dataset.N_TASKS if args.stop_after is None else args.stop_after
 
         if args.eval_future:
+            assert isinstance(model, FutureModel), "Model must be an instance of FutureModel to evaluate on future tasks"
             eval_dataset = get_dataset(args)
             for _ in range(dataset.N_TASKS):
                 eval_dataset.get_data_loaders()
@@ -274,7 +292,36 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             model.net.train()
             train_loader, _ = dataset.get_data_loaders()
 
+            if not issubclass(dataset.__class__, GCLDataset):
+                assert issubclass(train_loader.dataset.__class__, MammothDatasetWrapper), "Dataset must be an instance of MammothDatasetWrapper (did you forget to call the `store_masked_loaders`?)"
+
+            if can_compute_fwd_beforetask and is_fwd_enabled and args.enable_other_metrics:
+                # try to compute accuracy at the beginning of the task
+                try:
+                    logging.info("Evaluating model before task (for Forward Transfer metric)...")
+                    random_res_class, random_res_task = evaluate(model, dataset, last=True)
+                    random_results_class.append(random_res_class)
+                    random_results_task.append(random_res_task)
+                except Exception as e:
+                    logging.info(f"Could not evaluate before `begin_task`, will try after")
+                    # will try after the begin_task in case the model needs to setup something
+                    can_compute_fwd_beforetask = False
+
             model.meta_begin_task(dataset)
+
+            if not can_compute_fwd_beforetask and is_fwd_enabled and args.enable_other_metrics:
+                if train_loader.dataset.num_times_iterated == 0:  # compute only if the model has not been trained yet
+                    try:
+                        logging.info("Evaluating model before task (for Forward Transfer metric)...")
+                        random_res_class, random_res_task = evaluate(model, dataset, last=True)
+                        random_results_class.append(random_res_class)
+                        random_results_task.append(random_res_task)
+                    except Exception as e:
+                        logging.error(f"Model `{model.NAME}` does not support pre-evaluation, will not compute Forward Transfer metric\n{e}")
+                        is_fwd_enabled = False
+                else:
+                    logging.info("Model used the training data, skipping Forward Transfer metric compute")
+                    is_fwd_enabled = False
 
             if not args.inference_only and args.n_epochs > 0:
                 if t and args.enable_other_metrics:
@@ -283,7 +330,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     if dataset.SETTING == 'class-il':
                         results_mask_classes[t - 1] = results_mask_classes[t - 1] + accs[1]
 
-                scheduler = dataset.get_scheduler(model, args, reload_optim=True) if not hasattr(model, 'scheduler') else model.scheduler
+                scheduler = get_scheduler(model, args, reload_optim=True) if not hasattr(model, 'scheduler') else model.scheduler
 
                 epoch = 0
                 best_ea_metric = None
@@ -294,8 +341,12 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     if not isinstance(dataset, GCLDataset):
                         data_len = len(train_loader)
 
+                    model.begin_epoch(epoch, dataset)
+
                     train_single_epoch(model, train_loader, args, current_task=t, epoch=epoch,
                                        system_tracker=system_tracker, data_len=data_len, scheduler=scheduler)
+
+                    model.end_epoch(epoch, dataset)
 
                     epoch += 1
                     if args.fitting_mode == 'epochs' and epoch >= model.args.n_epochs:
@@ -325,10 +376,10 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                             print(f"\nFound better model with metric {abs(ea_metric)} at epoch {epoch}. "
                                   f"Previous value was {abs(best_ea_metric) if best_ea_metric is not None else 'None'}", file=sys.stderr)
                             best_ea_metric = ea_metric
-                            best_ea_model = deepcopy({k: v.cpu() for k, v in model.state_dict().items()})
+                            best_ea_model = copy.deepcopy({k: v.cpu() for k, v in model.state_dict().items()})
                             cur_stopping_patience = args.early_stopping_patience
 
-                    if args.eval_epochs is not None and (epoch > 0 or args.eval_epochs == 1) and epoch % args.eval_epochs == 0 and epoch < model.args.n_epochs:
+                    if args.eval_epochs is not None and (epoch > 0 or args.eval_epochs) and epoch % args.eval_epochs == 0 and epoch < model.args.n_epochs:
                         epoch_accs = evaluate(model, eval_dataset)
 
                         log_accs(args, logger, epoch_accs, t, dataset.SETTING, epoch=epoch)
@@ -363,7 +414,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     'scheduler': scheduler.state_dict() if scheduler is not None else None,
                 }
                 if 'buffer_size' in model.args:
-                    save_obj['buffer'] = deepcopy(model.buffer).to('cpu')
+                    save_obj['buffer'] = copy.deepcopy(model.buffer).to('cpu')
 
                 # Saving model checkpoint for the current task
                 checkpoint_name = None
@@ -388,12 +439,17 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             log_accs(args, logger, accs, 'final', final_dataset.SETTING, prefix="FINAL")
 
-        if not args.disable_log and args.enable_other_metrics:
-            logger.add_bwt(results, results_mask_classes)
-            logger.add_forgetting(results, results_mask_classes)
-            if model.NAME != 'icarl' and model.NAME != 'pnn':
-                logger.add_fwt(results, random_results_class,
-                               results_mask_classes, random_results_task)
+        if args.enable_other_metrics:
+            bwt, bwt_mask_class = logger.add_bwt(results, results_mask_classes)
+            log_extra_metrics(args, bwt, bwt_mask_class, 'Backward Transfer', t)
+            forgetting, forgetting_mask_class = logger.add_forgetting(results, results_mask_classes)
+            log_extra_metrics(args, forgetting, forgetting_mask_class, 'Forgetting', t)
+            if is_fwd_enabled:
+                fwt, fwt_mask_class = logger.add_fwt(results, random_results_class,
+                                                     results_mask_classes, random_results_task)
+                log_extra_metrics(args, fwt, fwt_mask_class, 'Forward Transfer', t)
+            else:
+                logging.warning("Forward Transfer metric incompatible with the current model, skipped.")
 
         system_tracker.print_stats()
 

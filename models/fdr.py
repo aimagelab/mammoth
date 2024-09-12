@@ -11,20 +11,19 @@ from utils.buffer import Buffer
 
 
 class Fdr(ContinualModel):
+    """Continual learning via Function Distance Regularization."""
     NAME = 'fdr'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via'
-                                ' Function Distance Regularization.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         parser.add_argument('--alpha', type=float, required=True,
                             help='Penalty weight.')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Fdr, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(Fdr, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
         self.i = 0
         self.soft = torch.nn.Softmax(dim=1)
@@ -49,7 +48,7 @@ class Fdr(ContinualModel):
         counter = 0
         with torch.no_grad():
             for i, data in enumerate(dataset.train_loader):
-                inputs, labels, not_aug_inputs = data
+                inputs, not_aug_inputs = data[0], data[2]
                 inputs = inputs.to(self.device)
                 not_aug_inputs = not_aug_inputs.to(self.device)
                 outputs = self.net(inputs)

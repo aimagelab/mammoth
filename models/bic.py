@@ -12,6 +12,7 @@ from datasets import get_dataset
 from torch.optim import Adam
 
 from models.utils.continual_model import ContinualModel
+from utils import binary_to_boolean_type
 from utils.args import add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer, icarl_replay
@@ -20,12 +21,12 @@ from utils.buffer import Buffer, icarl_replay
 
 
 class BiC(ContinualModel):
+    """Bias Correction."""
     NAME = 'bic'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Bias Correction.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
 
         parser.add_argument('--bic_epochs', type=int, default=250,
@@ -36,14 +37,13 @@ class BiC(ContinualModel):
                             help='bias injector.')
         parser.add_argument('--wd_reg', type=float, default=None,
                             help='bias injector.')
-        parser.add_argument('--distill_after_bic', type=int, default=1, choices=[0, 1])
+        parser.add_argument('--distill_after_bic', type=binary_to_boolean_type, default=1)
 
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super().__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
-        dd = get_dataset(args)
         self.buffer = Buffer(self.args.buffer_size)
 
         self.lamda = 0
@@ -68,7 +68,7 @@ class BiC(ContinualModel):
             with bn_track_stats(self, False):
                 for data in self.val_loader:
 
-                    inputs, labels, _ = data
+                    inputs, labels = data[0], data[1]
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
 
                     resp += self.forward(inputs, anticipate=fprefx == 'post')[:, :(self.current_task + 1) * self.cpt].sum(0)
@@ -92,7 +92,7 @@ class BiC(ContinualModel):
             for l in range(self.args.bic_epochs):
                 for data in self.val_loader:
 
-                    inputs, labels, _ = data
+                    inputs, labels = data[0], data[1]
                     inputs, labels = inputs.to(self.device), labels.to(self.device)
 
                     self.biasopt.zero_grad()
@@ -183,7 +183,7 @@ class BiC(ContinualModel):
         counter = 0
         with torch.no_grad():
             for i, data in enumerate(dataset.train_loader):
-                _, labels, not_aug_inputs = data
+                labels, not_aug_inputs = data[1], data[2]
                 not_aug_inputs = not_aug_inputs.to(self.device)
                 if examples_per_task - counter > 0:
                     self.buffer.add_data(examples=not_aug_inputs[:(examples_per_task - counter)],

@@ -4,23 +4,20 @@
 # LICENSE file in the root directory of this source tree.
 
 import torch
-import torch.nn as nn
-import torch.optim as optim
-from datasets import get_dataset
-from torch.optim import SGD
 
 from utils.args import ArgumentParser
 from utils.conf import get_device
 from models.utils.continual_model import ContinualModel
+from backbone import get_backbone
 
 
-def get_backbone(bone, old_cols=None, x_shape=None):
-    from backbone.MNISTMLP import MNISTMLP
+def get_pnn_backbone(bone, old_cols=None, x_shape=None):
+    from backbone.MNISTMLP import BaseMNISTMLP
     from backbone.MNISTMLP_PNN import MNISTMLP_PNN
     from backbone.ResNetBlock import ResNet
     from backbone.ResNet18_PNN import resnet18_pnn
 
-    if isinstance(bone, MNISTMLP):
+    if isinstance(bone, BaseMNISTMLP):
         return MNISTMLP_PNN(bone.input_size, bone.output_size, old_cols)
     elif isinstance(bone, ResNet):
         return resnet18_pnn(bone.num_classes, bone.nf, old_cols, x_shape)
@@ -29,18 +26,14 @@ def get_backbone(bone, old_cols=None, x_shape=None):
 
 
 class Pnn(ContinualModel):
+    """Progressive Neural Networks."""
     NAME = 'pnn'
     COMPATIBILITY = ['task-il']
 
-    @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Progressive Neural Networks')
-        return parser
-
-    def __init__(self, backbone, loss, args, transform):
-        self.nets = [get_backbone(backbone).to(get_device())]
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        self.nets = [get_pnn_backbone(backbone).to(get_device())]
         backbone = self.nets[-1]
-        super(Pnn, self).__init__(backbone, loss, args, transform)
+        super(Pnn, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.x_shape = None
         self.soft = torch.nn.Softmax(dim=0)
         self.logsoft = torch.nn.LogSoftmax(dim=0)
@@ -69,7 +62,7 @@ class Pnn(ContinualModel):
         # instantiate new column
         self.task_idx += 1
         self.nets[-1].cpu()
-        self.nets.append(get_backbone(dataset.get_backbone(), self.nets, self.x_shape).to(self.device))
+        self.nets.append(get_pnn_backbone(get_backbone(self.args), self.nets, self.x_shape).to(self.device))
         self.net = self.nets[-1]
         self.opt = self.get_optimizer()
 

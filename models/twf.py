@@ -1,6 +1,7 @@
 import logging
 import torch
 from models.twf_utils.utils import init_twf
+from utils import binary_to_boolean_type
 from utils.augmentations import CustomRandomCrop, CustomRandomHorizontalFlip, DoubleCompose, DoubleTransform, apply_transform
 from utils.buffer import Buffer
 from utils.args import *
@@ -20,14 +21,13 @@ def batch_iterate(size: int, batch_size: int):
 
 
 class TwF(ContinualModel):
+    """Transfer without Forgetting: double-branch distillation + inter-branch skip attention."""
 
     NAME = 'twf'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Transfer without Forgetting: double-branch distillation + inter-branch skip attention')
-
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         # Griddable parameters
         parser.add_argument('--der_alpha', type=float, required=True,
@@ -36,22 +36,21 @@ class TwF(ContinualModel):
                             help='Distillation beta hyperparameter (`beta` in the paper).')
         parser.add_argument('--lambda_fp', type=float, required=True,
                             help='weight of feature propagation loss replay')
-        parser.add_argument('--lambda_diverse_loss', type=float, required=False, default=0,
+        parser.add_argument('--lambda_diverse_loss', type=float, default=0,
                             help='Diverse loss hyperparameter.')
-        parser.add_argument('--lambda_fp_replay', type=float, required=False, default=0,
+        parser.add_argument('--lambda_fp_replay', type=float, default=0,
                             help='weight of feature propagation loss replay')
-        parser.add_argument('--resize_maps', type=int, required=False, choices=[0, 1], default=0,
+        parser.add_argument('--resize_maps', type=binary_to_boolean_type, default=0,
                             help='Apply downscale and upscale to feature maps before save in buffer?')
-        parser.add_argument('--min_resize_threshold', type=int, required=False, default=16,
+        parser.add_argument('--min_resize_threshold', type=int, default=16,
                             help='Min size of feature maps to be resized?')
         parser.add_argument('--virtual_bs_iterations', type=int, default=1, help="virtual batch size iterations")
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         assert "resnet" in str(type(backbone)).lower(), "Only resnet is supported for TwF"
 
-        super().__init__(
-            backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
         self.buffer = Buffer(self.args.buffer_size)
         self.buf_transform = self.get_custom_double_transform(self.original_transform.transforms)
@@ -69,7 +68,7 @@ class TwF(ContinualModel):
         tfs = []
         for tf in transform:
             if isinstance(tf, transforms.RandomCrop):
-                tfs.append(CustomRandomCrop(tf.size, tf.padding, resize=self.args.resize_maps == 1, min_resize_index=2))
+                tfs.append(CustomRandomCrop(tf.size, tf.padding, resize=self.args.resize_maps, min_resize_index=2))
             elif isinstance(tf, transforms.RandomHorizontalFlip):
                 tfs.append(CustomRandomHorizontalFlip(tf.p))
             elif isinstance(tf, transforms.Compose):

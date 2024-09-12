@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from utils import binary_to_boolean_type
 from utils.spkdloss import SPKDLoss
 from datasets import get_dataset
 from torch.nn import functional as F
@@ -15,13 +16,12 @@ from utils.simclrloss import SupConLoss
 
 
 class XDerV2(ContinualModel):
+    """Continual learning via eXtended Dark Experience Replay."""
     NAME = 'xder'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via'
-                                            ' eXtended Dark Experience Replay.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         parser.add_argument('--alpha', type=float, required=True, help='Penalty weight.')
         parser.add_argument('--beta', type=float, required=True, help='Penalty weight.')
@@ -36,14 +36,14 @@ class XDerV2(ContinualModel):
 
         parser.add_argument('--dp_weight', type=float, default=0, help='Weight for distance preserving loss')
 
-        parser.add_argument('--past_constraint', type=int, default=1, choices=[0, 1], help='Enable past constraint')
-        parser.add_argument('--future_constraint', type=int, default=1, choices=[0, 1], help='Enable future constraint')
-        parser.add_argument('--align_bn', type=int, default=0, choices=[0, 1], help='Use BatchNorm alignment')
+        parser.add_argument('--past_constraint', type=binary_to_boolean_type, default=1, help='Enable past constraint')
+        parser.add_argument('--future_constraint', type=binary_to_boolean_type, default=1, help='Enable future constraint')
+        parser.add_argument('--align_bn', type=binary_to_boolean_type, default=0, help='Use BatchNorm alignment')
 
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super().__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
         from utils.buffer import Buffer
         self.buffer = Buffer(self.args.buffer_size)
         self.update_counter = torch.zeros(self.args.buffer_size)
@@ -86,7 +86,7 @@ class XDerV2(ContinualModel):
         with torch.no_grad():
             with bn_track_stats(self, False):
                 for data in dataset.train_loader:
-                    inputs, labels, not_aug_inputs = data
+                    inputs, labels, not_aug_inputs = data[0], data[1], data[2]
                     inputs = inputs.to(self.device)
                     not_aug_inputs = not_aug_inputs.to(self.device)
                     outputs = self.net(inputs)
@@ -147,7 +147,7 @@ class XDerV2(ContinualModel):
 
         self.opt.zero_grad()
 
-        with bn_track_stats(self, self.args.align_bn == 0 or self.current_task == 0):
+        with bn_track_stats(self, not self.args.align_bn or self.current_task == 0):
             outputs = self.net(inputs)
 
         # Present head
@@ -174,7 +174,7 @@ class XDerV2(ContinualModel):
             # Label Replay Loss (past heads)
             buf_idx2, buf_inputs2, buf_labels2, buf_logits2, buf_tl2 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
-            with bn_track_stats(self, self.args.align_bn == 0):
+            with bn_track_stats(self, not self.args.align_bn):
                 buf_outputs2 = self.net(buf_inputs2)
 
             buf_ce = self.loss(buf_outputs2[:, :self.n_past_classes], buf_labels2)
@@ -227,7 +227,7 @@ class XDerV2(ContinualModel):
             with torch.no_grad():
                 scl_inputs = self.gpu_augmentation(scl_na_inputs.repeat_interleave(self.args.simclr_num_aug, 0)).to(self.device)
 
-            with bn_track_stats(self, self.args.align_bn == 0):
+            with bn_track_stats(self, not self.args.align_bn):
                 scl_outputs = self.net(scl_inputs)
 
             scl_featuresFull = scl_outputs.reshape(-1, self.args.simclr_num_aug, scl_outputs.shape[-1])

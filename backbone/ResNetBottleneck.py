@@ -3,7 +3,7 @@ from torch import Tensor
 import torch.nn as nn
 from typing import Type, Any, Callable, Union, List, Optional
 
-from backbone import MammothBackbone
+from backbone import MammothBackbone, register_backbone
 
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',
@@ -257,7 +257,8 @@ class ResNet(MammothBackbone):
                 p.requires_grad = enable
 
 
-def resnet50(num_classes: int, pretrained=False, **kwargs: Any) -> ResNet:
+@register_backbone("resnet50")
+def resnet50(num_classes: int, pretrained=False) -> ResNet:
     r"""ResNet-50 model from
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_.
 
@@ -265,4 +266,16 @@ def resnet50(num_classes: int, pretrained=False, **kwargs: Any) -> ResNet:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return ResNet(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, pretrained=pretrained, **kwargs)
+    return ResNet(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, pretrained=pretrained)
+
+
+@register_backbone("resnet50_pt")
+def resnet50(num_classes: int) -> ResNet:
+    r"""ResNet-50 model from
+    `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_.
+
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        progress (bool): If True, displays a progress bar of the download to stderr
+    """
+    return ResNet(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, pretrained=True)

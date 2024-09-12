@@ -16,37 +16,37 @@ import torch.nn.functional as F
 
 
 class Ccic(ContinualModel):
+    """Continual Semi-Supervised Learning via Continual Contrastive Interpolation Consistency."""
     NAME = 'ccic'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'cssl']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Semi-Supervised Learning via'
-                                ' Continual Contrastive Interpolation Consistency.')
+    def get_parser(parser) -> ArgumentParser:
+        parser.set_defaults(optimizer='adam')
         add_rehearsal_args(parser)
+
+        parser.set_defaults(optimizer='adam')
         parser.add_argument('--alpha', type=float, default=0.5,
                             help='Unsupervised loss weight.')
-        parser.add_argument('--knn_k', type=int, default=3,
+        parser.add_argument('--knn_k', '--k', type=int, default=2, dest='knn_k',
                             help='k of kNN.')
         parser.add_argument('--memory_penalty', type=float,
                             default=1.0, help='Unsupervised penalty weight.')
         parser.add_argument('--k_aug', type=int, default=3,
                             help='Number of augumentation to compute label predictions.')
-        parser.add_argument('--mixmatch_alpha', type=float, default=0.5,
+        parser.add_argument('--mixmatch_alpha', '--lamda', type=float, default=0.5, dest='mixmatch_alpha',
                             help='Regularization weight.')
         parser.add_argument('--sharp_temp', default=0.5,
                             type=float, help='Temperature for sharpening.')
         parser.add_argument('--mixup_alpha', default=0.75, type=float)
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Ccic, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(Ccic, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size, self.device)
-        self.epoch = 0
-        self.n_tasks = get_dataset(args).N_TASKS
         self.embeddings = None
 
-        self.eye = torch.eye(self.N_CLASSES).to(self.device)
+        self.eye = torch.eye(self.num_classes).to(self.device)
         self.sup_virtual_batch = RingBuffer(self.args.batch_size)
         self.unsup_virtual_batch = RingBuffer(self.args.batch_size)
 
@@ -78,10 +78,6 @@ class Ccic(ContinualModel):
 
     def end_task(self, dataset):
         self.embeddings = None
-        self.epoch = 0
-
-    def end_epoch(self, dataset):
-        self.epoch += 1
 
     def discard_unsupervised_labels(self, inputs, labels, not_aug_inputs):
         mask = labels != -1
@@ -188,7 +184,7 @@ class Ccic(ContinualModel):
             loss_U = 0
 
         # CIC LOSS
-        if self.current_task > 0 and self.epoch < self.args.n_epochs / 10 * 9:
+        if self.current_task > 0 and epoch < self.args.n_epochs / 10 * 9:
             W_inputs = sup_inputs
             W_probs = self.eye[sup_labels]
             perm = torch.randperm(W_inputs.shape[0])
@@ -212,7 +208,7 @@ class Ccic(ContinualModel):
                              labels=sup_labels_for_buffer)
 
         # SELF-SUPERVISED PAST TASKS NEGATIVE ONLY
-        if self.current_task > 0 and self.epoch < self.args.n_epochs / 10 * 9:
+        if self.current_task > 0 and epoch < self.args.n_epochs / 10 * 9:
             unsup_embeddings = self.net.features(unsup_inputs)
             loss_unsup = negative_only_triplet_loss(unsup_labels, unsup_embeddings, self.args.batch_size // 10,
                                                     margin=1, margin_type='hard')

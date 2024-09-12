@@ -5,6 +5,7 @@
 
 from torch.optim import SGD, lr_scheduler
 
+from backbone import get_backbone
 from models.utils.continual_model import ContinualModel
 from utils.args import add_rehearsal_args, ArgumentParser
 from utils.augmentations import cutmix_data
@@ -55,12 +56,12 @@ def fit_buffer(self: ContinualModel, epochs):
 
 
 class GDumb(ContinualModel):
+    """Greedy sampler and Dumb Learner."""
     NAME = 'gdumb'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Greedy sampler and Dumb Learner.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         parser.add_argument('--maxlr', type=float, default=5e-2,
                             help='Max learning rate.')
@@ -72,8 +73,8 @@ class GDumb(ContinualModel):
                             help='Alpha parameter for cutmix')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(GDumb, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(GDumb, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
@@ -85,5 +86,5 @@ class GDumb(ContinualModel):
         # new model
         if not (self.current_task == dataset.N_TASKS - 1):
             return
-        self.net = dataset.get_backbone().to(self.device)
+        self.net = get_backbone(self.args).to(self.device)
         fit_buffer(self, self.args.fitting_epochs)

@@ -20,21 +20,20 @@ def modified_kl_div(old, new):
 
 
 class Lwf(ContinualModel):
+    """Continual learning via Learning without Forgetting."""
     NAME = 'lwf'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via'
-                                ' Learning without Forgetting.')
+    def get_parser(parser) -> ArgumentParser:
         parser.add_argument('--alpha', type=float, default=0.5,
                             help='Penalty weight.')
         parser.add_argument('--softmax_temp', type=float, default=2,
                             help='Temperature of the softmax function.')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Lwf, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(Lwf, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.old_net = None
         self.soft = torch.nn.Softmax(dim=1)
         self.logsoft = torch.nn.LogSoftmax(dim=1)
@@ -64,7 +63,8 @@ class Lwf(ContinualModel):
                                                          len(dataset.train_loader.dataset)))])
                     log = self.net(inputs.to(self.device)).cpu()
                     logits.append(log)
-            setattr(dataset.train_loader.dataset, 'logits', torch.cat(logits))
+            dataset.train_loader.dataset.logits = torch.cat(logits)
+            dataset.train_loader.dataset.extra_return_fields += ('logits',)
         self.net.train()
 
     def observe(self, inputs, labels, not_aug_inputs, logits=None, epoch=None):
@@ -73,8 +73,8 @@ class Lwf(ContinualModel):
 
         loss = self.loss(outputs[:, :self.n_seen_classes], labels)
         if logits is not None:
-            loss += self.args.alpha * modified_kl_div(smooth(self.soft(logits[:, :self.n_past_classes]).to(self.device), 2, 1),
-                                                      smooth(self.soft(outputs[:, :self.n_past_classes]), 2, 1))
+            loss += self.args.alpha * modified_kl_div(smooth(self.soft(logits[:, :self.n_past_classes]).to(self.device), self.args.softmax_temp, 1),
+                                                      smooth(self.soft(outputs[:, :self.n_past_classes]), self.args.softmax_temp, 1))
 
         loss.backward()
         self.opt.step()

@@ -11,11 +11,11 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
-from backbone.MNISTMLP import MNISTMLP
 from torchvision.datasets import MNIST
 
 from datasets.perm_mnist import MyMNIST
 from datasets.transforms.rotation import IncrementalRotation
+from datasets.utils import set_default_from_args
 from datasets.utils.gcl_dataset import GCLDataset
 from datasets.utils.validation import get_train_val
 from utils.conf import base_path, create_seeded_dataloader
@@ -132,8 +132,9 @@ class MNIST360(GCLDataset):
     def get_train_data(self) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Ensembles the next examples of the current classes in a single batch.
-        :return: the augmented and not aumented version of the examples of the
-                 current batch, along with their labels.
+
+        Returns:
+            the augmented and not aumented version of the examples of the current batch, along with their labels.
         """
         assert not self.train_over
         batch_size_0 = min(int(round(self.active_remaining_training_items[0] /
@@ -173,7 +174,9 @@ class MNIST360(GCLDataset):
     def get_test_data(self) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Ensembles the next examples of the current class in a batch.
-        :return: the batch of examples along with its label.
+
+        Returns:
+            the batch of examples along with its label.
         """
         assert not self.test_over
         x_test, y_test = next(iter(self.test_loaders[self.test_class]))
@@ -190,9 +193,9 @@ class MNIST360(GCLDataset):
                 self.test_over = True
         return x_test, y_test
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone() -> torch.nn.Module:
-        return MNISTMLP(28 * 28, 10)
+        return "mnistmlp"
 
     @staticmethod
     def get_loss() -> F.cross_entropy:

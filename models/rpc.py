@@ -55,17 +55,17 @@ def dsimplex(num_classes=10):
 
 
 class RPC(ContinualModel):
+    """Regular Polytope Classifier."""
     NAME = 'rpc'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Regular Polytope Classifier.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(RPC, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(RPC, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
         self.rpchead = torch.from_numpy(dsimplex(self.cpt * self.n_tasks)).float().to(self.device)
 
@@ -97,7 +97,7 @@ class RPC(ContinualModel):
 
         with torch.no_grad():
             for data in dataset.train_loader:
-                _, labels, not_aug_inputs = data
+                labels, not_aug_inputs = data[1], data[2]
                 not_aug_inputs = not_aug_inputs.to(self.device)
                 if all(ce == 0):
                     break

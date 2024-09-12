@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.functional import avg_pool2d, relu
 
-from backbone import MammothBackbone
+from backbone import MammothBackbone, register_backbone
 
 
 def conv3x3(in_planes: int, out_planes: int, stride: int = 1) -> F.conv2d:
@@ -186,29 +186,31 @@ class ResNet(MammothBackbone):
         raise NotImplementedError("Unknown return type. Must be in ['out', 'features', 'both', 'full'] but got {}".format(returnt))
 
 
-def resnet18(nclasses: int, nf: int = 64) -> ResNet:
+@register_backbone("resnet18")
+def resnet18(num_classes: int, num_filters: int = 64) -> ResNet:
     """
     Instantiates a ResNet18 network.
 
     Args:
-        nclasses: number of output classes
-        nf: number of filters
+        num_classes: number of output classes
+        num_filters: number of filters
 
     Returns:
         ResNet network
     """
-    return ResNet(BasicBlock, [2, 2, 2, 2], nclasses, nf)
+    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes, num_filters)
 
 
-def resnet34(nclasses: int, nf: int = 64) -> ResNet:
+@register_backbone("resnet34")
+def resnet34(num_classes: int, num_filters: int = 64) -> ResNet:
     """
     Instantiates a ResNet34 network.
 
     Args:
-        nclasses: number of output classes
-        nf: number of filters
+        num_classes: number of output classes
+        num_filters: number of filters
 
     Returns:
         ResNet network
     """
-    return ResNet(BasicBlock, [3, 4, 6, 3], nclasses, nf)
+    return ResNet(BasicBlock, [3, 4, 6, 3], num_classes, num_filters)

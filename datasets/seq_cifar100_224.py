@@ -1,5 +1,6 @@
 
 
+import logging
 from typing import Tuple
 
 import torch
@@ -8,7 +9,7 @@ import torchvision.transforms as transforms
 from torchvision.transforms.functional import InterpolationMode
 from torchvision.datasets import CIFAR100
 
-from backbone.vit import vit_base_patch16_224_prompt_prototype
+
 from datasets.seq_cifar100 import TCIFAR100, MyCIFAR100
 from datasets.transforms.denormalization import DeNormalize
 from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
@@ -41,18 +42,35 @@ class SequentialCIFAR100224(ContinualDataset):
     N_TASKS = 10
     N_CLASSES = 100
     SIZE = (224, 224)
-    MEAN, STD = (0, 0, 0), (1, 1, 1)  # Normalized in [0,1] as in L2P paper
-    TRANSFORM = transforms.Compose(
-        [transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BICUBIC),
-         transforms.RandomHorizontalFlip(p=0.5),
-         transforms.ToTensor(),
-         transforms.Normalize(MEAN, STD)]
-    )
+    MEAN, STD = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
+
+    TRANSFORM = transforms.Compose([
+        transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BICUBIC),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.ToTensor(),
+        transforms.Normalize(MEAN, STD)
+    ])
     TEST_TRANSFORM = transforms.Compose([
         transforms.Resize(224, interpolation=InterpolationMode.BICUBIC),
         transforms.ToTensor(),
         transforms.Normalize(MEAN, STD)
     ])
+
+    def __init__(self, args, transform_type: str = 'weak'):
+        super().__init__(args)
+
+        assert transform_type in ['weak', 'strong'], "Transform type must be either 'weak' or 'strong'."
+
+        if transform_type == 'strong':
+            logging.info("Using strong augmentation for CIFAR100-224")
+            self.TRANSFORM = transforms.Compose(
+                [transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BICUBIC),
+                 transforms.RandomHorizontalFlip(p=0.5),
+                 transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
+                 transforms.RandomRotation(15),
+                 transforms.ToTensor(),
+                 transforms.Normalize(SequentialCIFAR100224.MEAN, SequentialCIFAR100224.STD)]
+            )
 
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = self.TRANSFORM
@@ -74,9 +92,9 @@ class SequentialCIFAR100224(ContinualDataset):
             [transforms.ToPILImage(), SequentialCIFAR100224.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return vit_base_patch16_224_prompt_prototype(pretrained=True, num_classes=SequentialCIFAR100224.N_CLASSES_PER_TASK * SequentialCIFAR100224.N_TASKS)
+        return "vit"
 
     @staticmethod
     def get_loss():

@@ -87,7 +87,7 @@ pygments_style = 'friendly'
 html_theme = "furo"
 html_title = "Mammoth"
 html_static_path = ['_static']
-html_favicon = 'images/logo.png'
+html_favicon = '_static/logo.png'
 
 autosummary_generate = True
 numpydoc_show_class_members = False
@@ -135,12 +135,11 @@ def get_headling_module(fullname):
         fs = open(f'./docs/{ module }/{ name }.rst', 'r').read()
         return fs
     else:
-        ref_name = name
         if os.path.isdir('./' + '/'.join(paths)):  # or os.path.dirname(module).lower() in ['models', 'datasets', 'utils', 'backbone']:
             name = name.replace('_', ' ')
         else:
             name = name.upper().replace('_', ' ')
-        return f".. _module-{ref_name}:\n{name}\n" + "=" * (len(name) + 1)
+        return f".. _module-{fullname}:\n\n{name}\n" + "=" * (len(name) + 1)
 
 
 def reorder_modules(modules):

@@ -56,25 +56,22 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint
 
-from timm.layers import PatchEmbed, DropPath, trunc_normal_, lecun_normal_, resample_patch_embed, \
+from timm.layers import PatchEmbed, Mlp as TimmMlp, DropPath, trunc_normal_, lecun_normal_, resample_patch_embed, \
     resample_abs_pos_embed
 from timm.models._builder import build_model_with_cfg
 from timm.models._manipulate import named_apply
 
 from backbone.utils.layers import IncrementalClassifier
-from backbone import MammothBackbone
+from backbone import MammothBackbone, register_backbone
 from backbone.utils.lora_utils import LoRAAttention, LoRAMlp
 from utils.conf import warn_once
-from timm.layers import Mlp as TimmMlp
+
+__all__ = ['VisionTransformer']  # model_registry will add each entrypoint fn to this
+
 
 class Mlp(TimmMlp):
     def forward(self, x, **kwargs):
         return super().forward(x)
-
-
-__all__ = ['VisionTransformer']  # model_registry will add each entrypoint fn to this
-
-_logger = logging.getLogger(__name__)
 
 
 class Attention(nn.Module):
@@ -162,6 +159,7 @@ class Block(nn.Module):
             mlp_layer=Mlp
     ):
         super().__init__()
+        self.embed_dim = dim
         self.norm1 = norm_layer(dim)
         self.attn = attn_layer(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=drop)
         self.ls1 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
@@ -254,6 +252,7 @@ class VisionTransformer(MammothBackbone):
         mlp_layer = mlp_layer if mlp_layer is not None else (Mlp if not use_lora else LoRAMlp)
         self.attn_layer = attn_layer
         self.norm_layer = norm_layer
+        self.patch_size = patch_size
         self.num_heads = num_heads
         self.weight_init = weight_init
         self.class_token = class_token
@@ -268,6 +267,8 @@ class VisionTransformer(MammothBackbone):
         self.qkv_bias = qkv_bias
         self.attn_drop_rate = attn_drop_rate
         self.depth = depth
+        self.drop_rate = drop_rate
+        self.mlp_layer = mlp_layer
 
         self.patch_embed = embed_layer(
             img_size=img_size,
@@ -530,7 +531,7 @@ def resize_pos_embed(
     if not len(gs_new):  # backwards compatibility
         gs_new = [int(math.sqrt(ntok_new))] * 2
     assert len(gs_new) >= 2
-    _logger.info(f'Resized position embedding: {posemb.shape} ({[gs_old, gs_old]}) to {posemb_new.shape} ({gs_new}).')
+    logging.info(f'Resized position embedding: {posemb.shape} ({[gs_old, gs_old]}) to {posemb_new.shape} ({gs_new}).')
     posemb_grid = posemb_grid.reshape(1, gs_old, gs_old, -1).permute(0, 3, 1, 2)
     posemb_grid = F.interpolate(posemb_grid, size=gs_new, mode=interpolation, antialias=antialias, align_corners=False)
     posemb_grid = posemb_grid.permute(0, 2, 3, 1).reshape(1, gs_new[0] * gs_new[1], -1)
@@ -637,7 +638,7 @@ def create_vision_transformer(variant, base_class=VisionTransformer, pretrained=
         _filter_fn = filter_fn
 
     if variant == 'vit_base_patch16_224_in21k_fn_in1k_old':
-        from timm.models.helpers import resolve_pretrained_cfg
+        from timm.models import resolve_pretrained_cfg
 
         pretrained_cfg = resolve_pretrained_cfg(variant, pretrained_cfg=kwargs.pop('pretrained_cfg', None))
         pretrained_cfg.custom_load = True
@@ -688,3 +689,8 @@ def vit_base_patch16_224_prompt_prototype(pretrained=False, pretrain_type='in21k
     else:
         model = create_vision_transformer('vit_base_patch16_224', pretrained=pretrained, **dict(model_kwargs, **kwargs))
     return model
+
+
+@register_backbone("vit")
+def vit_backbone(num_classes, pretrained=True, pretrain_type='in21k-ft-in1k'):
+    return vit_base_patch16_224_prompt_prototype(pretrained=pretrained, pretrain_type=pretrain_type, num_classes=num_classes)

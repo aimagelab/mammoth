@@ -2,11 +2,9 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.main import main
-from utils.test_utils import init_test_environ
 import pytest
 
 
-@init_test_environ
 @pytest.mark.parametrize('code_optimization', [0, 1, 2, 3])
 def test_code_optim_erace(code_optimization):
     sys.argv = ['mammoth',
@@ -33,15 +31,9 @@ def test_code_optim_erace(code_optimization):
                 '--code_optimization',
                 str(code_optimization)]
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_code_optimization.O{code_optimization}.er-ace.seq-cifar10.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()
 
 
-@init_test_environ
 @pytest.mark.parametrize('code_optimization', [0, 1, 2, 3])
 def test_code_optimization_slca(code_optimization):
     sys.argv = ['mammoth',
@@ -66,9 +58,4 @@ def test_code_optimization_slca(code_optimization):
                 '--code_optimization',
                 str(code_optimization)]
 
-    # log all outputs to file
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')):
-        os.mkdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs'))
-    sys.stdout = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs', f'test_code_optimization.{code_optimization}.slca.seq-cifar10-224.log'), 'w', encoding='utf-8')
-    sys.stderr = sys.stdout
     main()

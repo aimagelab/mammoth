@@ -8,15 +8,13 @@ from models.cgil_utils.cgil_utils import Model
 from models.utils.future_model import FutureModel
 
 
-class IncrementalCoopVAE(FutureModel):
+class CGIL(FutureModel):
     NAME = 'cgil'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser()
-
-        parser.add_argument("--backbone", type=str, default='ViT-L/14', help="Clip backbone")
+    def get_parser(parser) -> ArgumentParser:
+        parser.add_argument("--clip_backbone", type=str, default='ViT-L/14', help="Clip backbone")
         parser.add_argument("--learning_rate_alignment", type=float, default=0.05, help="Learning rate for GR.")
         parser.add_argument("--optim_alignment", type=str, default='adamw', choices=('sgd', 'adam', 'adamw'), help="Optimizer for GR.")
         parser.add_argument("--optim_alignment_wd", type=float, default=0, help="Weight decay for GR.")
@@ -40,7 +38,7 @@ class IncrementalCoopVAE(FutureModel):
 
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         args.n_epochs = 0
 
         if args.debug_mode:
@@ -48,8 +46,9 @@ class IncrementalCoopVAE(FutureModel):
             args.gr_mog_n_iters = 1
             args.gr_vae_n_iters = 10
 
-        backbone = Model(args, num_classes=get_dataset(args).N_CLASSES)
-        super().__init__(backbone, loss, args, transform)
+        tmp_dataset = get_dataset(args) if dataset is None else dataset
+        backbone = Model(args, num_classes=tmp_dataset.N_CLASSES)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
         # REMOVE ALL TRACK RUNNING STATS FROM CLIP
         for m in self.net.modules():

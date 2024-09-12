@@ -6,25 +6,24 @@
 from torch.nn import functional as F
 
 from models.utils.continual_model import ContinualModel
-from utils.args import ArgumentParser, add_experiment_args, add_management_args, add_rehearsal_args
+from utils.args import ArgumentParser, add_rehearsal_args
 from utils.buffer import Buffer
 
 
 class Der(ContinualModel):
+    """Continual learning via Dark Experience Replay."""
     NAME = 'der'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual learning via'
-                                ' Dark Experience Replay.')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         parser.add_argument('--alpha', type=float, required=True,
                             help='Penalty weight.')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Der, self).__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(Der, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):

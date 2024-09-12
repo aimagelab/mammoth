@@ -1,7 +1,10 @@
-from utils.args import *
+from argparse import ArgumentParser
+import torch
+
+from backbone import get_backbone
+from utils.args import add_rehearsal_args
 from torch.optim import SGD, lr_scheduler
 from utils.buffer import Buffer
-import torch
 from models.utils.lider_model import LiderOptimizer, add_lipschitz_args
 from utils.augmentations import cutmix_data
 from utils.status import progress_bar
@@ -69,13 +72,12 @@ def fit_buffer(self: LiderOptimizer, epochs):
 
 
 class GDumbLider(LiderOptimizer):
+    """GDumb learns an empty model only on the buffer. Treated with LiDER!"""
     NAME = 'gdumb_lider'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='GDumb learns an empty model only on the buffer.'
-                                            'Treated with LiDER!')
+    def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         add_lipschitz_args(parser)
         parser.add_argument('--maxlr', type=float, default=5e-2,
@@ -88,8 +90,8 @@ class GDumbLider(LiderOptimizer):
                             help='Alpha parameter for cutmix')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        super().__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
 
     def observe(self, inputs: torch.Tensor, labels: torch.Tensor, not_aug_inputs: torch.Tensor, epoch=None):
@@ -101,7 +103,7 @@ class GDumbLider(LiderOptimizer):
         # new model
         if not (self.current_task == dataset.N_TASKS - 1):
             return
-        self.net = dataset.get_backbone().to(self.device)
+        self.net = get_backbone(self.args).to(self.device)
 
         self.net.set_return_prerelu(True)
         self.init_net(dataset)

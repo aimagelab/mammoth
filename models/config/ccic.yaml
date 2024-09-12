@@ -1,0 +1,13 @@
+default:
+  optimizer: adam
+seq-cifar10: # dataset
+  knn_k: 2 # loaded every time the dataset is seq-cifar10
+  n_epochs: 50
+  batch_size: 32
+  dataset_config: default # override dataset config
+  500: # buffer size
+    lr: 0.0001
+    mixmatch_alpha: 0.75
+    memory_penalty: 0.7
+    label_perc: 0.25
+    buffer_size: 500 # optional

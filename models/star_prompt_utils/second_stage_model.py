@@ -230,7 +230,7 @@ containing the similarity value for the most similar class for each image.
         masked_clip_out = masked_clip_out[:, start_idx:end_idx]
         class_prompts = class_prompts[start_idx:end_idx]
 
-        if self.args.enable_confidence_modulation == 0:
+        if not self.args.enable_confidence_modulation:
             masked_clip_out = (masked_clip_out != 0).float()  # make it binary if not using confidence modulation
 
         if self.args.prompt_mode == 'residual':

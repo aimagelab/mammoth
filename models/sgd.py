@@ -13,21 +13,16 @@ from utils.args import ArgumentParser
 
 class Sgd(ContinualModel):
     """
-    Implementation of the Sgd model for continual learning.
+    Finetuning baseline - simple incremental training.
     """
 
     NAME = 'sgd'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
-    @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Finetuning baseline - simple incremental training.')
-        return parser
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super(Sgd, self).__init__(backbone, loss, args, transform, dataset=dataset)
 
-    def __init__(self, backbone, loss, args, transform):
-        super(Sgd, self).__init__(backbone, loss, args, transform)
-
-    def observe(self, inputs, labels, not_aug_inputs, epoch=None):
+    def observe(self, inputs, labels, not_aug_inputs, epoch=None, **kwargs):
         """
         SGD trains on the current task using the data provided, with no countermeasures to avoid forgetting.
         """

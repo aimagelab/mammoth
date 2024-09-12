@@ -8,3 +8,4 @@ tqdm
 onedrivedownloader
 ftfy
 regex
+pyyaml

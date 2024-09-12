@@ -7,7 +7,7 @@ Models
 ------
 To upgrade your model to the new Mammoth, you need to take some care:
 
-- The *Continual Model* already supports widely used properties such as `current_task`, `n_tasks`, `num_classes`. Check the documentation in :ref:`module-continual_model` for more information.
+- The *Continual Model* already supports widely used properties such as `current_task`, `n_tasks`, `num_classes`. Check the documentation in :ref:`module-models.utils.continual_model` for more information.
 - The *get_parser* has been moved **inside** the model. This is to make it easier to automatically load the arguments of a model in the case of automated parsing. This is easy to fix, just move the `get_parser` function inside the model class and make it a static method. *NOTE*: you do not need to add `add_experiment_args` and `add_management_args` to the get_parser function. These are automatically added.
 - The *observe* function should follow the new signature: `def observe(inputs, labels, not_aug_inputs, epoch=None) -> dict|float`. If a `dict` is returned, it should contain at least the `loss` key. All other values will be logged in WandB (if available).
 
@@ -25,5 +25,5 @@ The datasets had only some minor changes. Just ensure to defined for each datase
 - `TRANSFORM`: the train transform.
 - `TEST_TRANSFORM`: the test transform.
 
-Take a look at :ref:`module-seq_cifar10` for more information on how to define a dataset.
+Take a look at :ref:`module-datasets.seq_cifar10` for more information on how to define a dataset.
 

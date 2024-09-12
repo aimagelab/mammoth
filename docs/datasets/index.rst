@@ -3,14 +3,14 @@
 Datasets
 ========
 
-Mammoth datasets **define a complete and separate** Continual Learning benchmark. This means that 
-each dataset **must statically define** all the necessary information to run a continual learning experiment, including:
+Mammoth datasets **define a complete** Continual Learning benchmark. This means that 
+each dataset **defines** all the necessary information to run a continual learning experiment, including:
 
 .. admonition:: Required properties
 
-    - Name of the dataset: **NAME** attribute (``str``).
+    - Name of the dataset: **NAME** attribute (``str``). This will be used to select the dataset from the command line with the ``--dataset`` argument.
 
-    - Incremental setting (`class-il`, `domain-il`, or `general-continual`): **SETTING** attribute (``str``). See more in section :ref:`settings`.
+    - Incremental setting (`class-il`, `domain-il`, or `general-continual`): **SETTING** attribute (``str``). See more in section :ref:`datasets-settings`.
 
     - Size of the input data: **SIZE** attribute (``tuple[int]``).
 
@@ -28,7 +28,7 @@ each dataset **must statically define** all the necessary information to run a c
 
     - **get_data_loaders** static method (``[DataLoader, DataLoader]``): returns the train and test data loaders for each task. See more in :ref:`Utils`.
 
-    - **get_backbone** static method (``nn.Module``): returns the backbone model for the experiment. Backbones are defined in `backbones` folder. See more in :ref:`backbones`.
+    - **get_backbone** static method (``str``): returns the *name* of backbone model to be used for the experiment. Backbones are defined in `backbones` folder and can be registered with the `register_backbone` decorator. See more in :ref:`backbones`.
 
     - **get_transform** static method (``callable``): returns the data-augmentation transform to apply to the data during train.
 
@@ -45,13 +45,37 @@ each dataset **must statically define** all the necessary information to run a c
 
     - **get_class_names** (``callable``): returns the class names for the dataset. This method is not implemented by default, but is expected for some methods (e.g., `clip`). The method *should* populate the **class_names** attribute of the dataset to cache the result and call the ``fix_class_names_order`` method to ensure that the class names are in the correct order.
 
-See :ref:`module-continual_dataset` for more details or **SequentialCIFAR10** in :ref:`module-seq_cifar10` for an example.
+See :ref:`Continual Dataset <module-datasets.utils.continual_dataset>` for more details or **SequentialCIFAR10** in :ref:`Seq CIFAR-10 <module-datasets.seq_cifar10>` for an example.
 
 .. note::
     Datasets are downloaded by default in the **data** folder. You can change this
-    default location by setting the **base_path** function in :ref:`module-conf`. 
+    default location by setting the **base_path** function in :ref:`conf <module-utils.conf>`. 
 
-.. _settings:
+.. _dataset-configurations:
+
+Dataset configurations
+----------------------
+
+To allow for a more flexible configuration of the datasets, Mammoth supports the use of configuration files that can be used to set the values of the dataset attributes. This greatly simplifies the creation of new datasets, as it allows to separate the definition of a dataset (i.e., its data) from its configuration (number of tasks, transforms, etc.).
+
+The configuration files are stored in **datasets/configs/<dataset name>/<configuration name>.yaml** and can be selected from the command line using the ``--dataset_config`` argument. 
+
+The configuration file may contain:
+- `SETTING`: the incremental setting of the dataset. This can be one of 'class-il', 'domain-il', 'general-continual', or 'cssl'.
+- `N_CLASSES_PER_TASK`: the number of classes per task. This can be a single integer or a list of integers (one for each task).
+- `N_TASKS`: the number of tasks.
+- `SIZE`: the size of the input data.
+- `N_CLASSES`: the total number of classes in the dataset.
+- `AVAIL_SCHEDS`: the available learning rate schedulers for the dataset.
+- `TRANSFORM`: the data augmentation transform to apply to the data during training.
+- `TEST_TRANSFORM`: the normalization transform to apply to the data during training.
+- `MEAN`, `STD`: the mean and standard deviation of the dataset, used for normalization.
+- any field specified by the `set_default_from_args` decorator in the dataset class (see more in section :ref:`dataset-index-defaults`). This includes the `backbone`, `batch_size`, `n_epochs`, etc.
+- `args`: special field that allows to set the values of the default values for the command line arguments
+
+The configuration file sets the default values for the dataset attributes and all values defined by the `set_default_from_args` decorator. The priority is as follows: command line arguments > default values set by the model > configuration file.
+
+.. _datasets-settings:
 
 Experimental settings
 ---------------------
@@ -71,43 +95,59 @@ and are defined in the **SETTING** attribute of each dataset. The following sett
 
 - `general-continual`: the distribution of the classes change gradually over time, without notion of task boundaries. In this setting, the **TASKS** and **N_CLASSES_PER_TASK** attributes are ignored as there is only a single long tasks that changes over time.
 
-- `cssl`: this setting is the same as `class-il`, but with some of the labels missing due to limited supervision. This setting is used to simulate the case where a percentage of the labels is not available for training. For example, if ``--label_perc`` is set to ``0.5``, only 50% of the labels will be available for training. The remaining 50% will be masked with a label of ``-1`` and ignored during training if the currently used method does not support partial labels (check out the **COMPATIBILITY** attribute in :ref:`module-models`).
+- `cssl`: this setting is the same as `class-il`, but with some of the labels missing due to limited supervision. This setting is used to simulate the case where a percentage of the labels is not available for training. For example, if ``--label_perc_by_task`` or ``--label_perc_by_class`` is set to ``0.5``, only 50% of the labels will be available for training. The remaining 50% will be masked with a label of ``-1`` and ignored during training if the currently used method does not support partial labels (check out the **COMPATIBILITY** attribute in :ref:`module-models`).
 
 .. admonition:: Experiments on the **joint** setting
     :class: hint
 
     Mammoth datasets support the **joint** setting, which is a special case of the `class-il` setting where all the classes are available at each task. This is useful to compare the performance of a method on what is usually considered the *upper bound* for the `class-il` setting. To run an experiment on the **joint** setting, simply set the ``--joint`` to ``1``. This will automatically set the **N_CLASSES_PER_TASK** attribute to the total number of classes in the dataset and the **TASKS** attribute to ``1``.
 
+    Note that the **joint** setting is available only for the `class-il` (and `task-il`) setting. If you want to run an experiment on the **joint** setting for a dataset that follows the `domain-il` setting, you can use the :ref:`Joint <module-models.joint>` **model** (with ``--model=joint``).
+
+Evaluate on Future Tasks
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+By default, the evaluation is done up to the current task. However, some models also support evaluation on future tasks (e.g., :ref:`CGIL <module-models.cgil>`). In this case, you can set the ``--eval_future`` to ``1`` to evaluate the model on future tasks. 
+
+.. important::
+
+    In order to be able to evaluate on future tasks, the method must extend the :ref:`FutureModel <module-models.utils.future_model>` class. Notably, this function includes the ``future_forward`` method, which performs inference on all classes, and the ``change_transform`` method, which allows to change the transform to be applied to the data during inference.
+
+.. _dataset-index-defaults:
 
 Default arguments and command line
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Besides **get_epochs** and **get_batch_size**, datasets can define default arguments that are used to set the default values for the command line arguments.
-This is done with the **set_default_from_args** decorator, which takes the name of the command line argument as input. For example, the following code sets the default value for the `--label_perc` argument:
+This is done with the **set_default_from_args** decorator, which takes the name of the command line argument as input. For example, the following code sets the default value for the `--label_perc_by_task` argument:
 
 .. code-block:: python
 
-    @set_default_from_args('--label_perc')
+    @set_default_from_args('--label_perc_by_task')
     def get_label_perc(self):
         return 0.5
 
 
-Steps to create a new dataset:
-------------------------------
-    
-All datasets must inherit from the **ContinualDataset** class, which is defined in :ref:`module-continual_dataset`. The only
-exception are datasets that follow the `general-continual` setting, which inherit from the **GCLDataset** class, (defined in :ref:`module-gcl_dataset`).
-These classes provide some useful methods to create data loaders and store masked data loaders for continual learning experiments. See more in section :ref:`module-utils`.
+.. _dataset-naming-convention:
+
+Steps to create a new dataset
+-----------------------------
+
+The following steps are required to create a dataset following the *legacy* naming convention. A new and more flexible way to define datasets is available with the **register_dataset** decorator. See more in :ref:`module-dynamic-registration`.
+
+All datasets must inherit from the **ContinualDataset** class, which is defined in :ref:`Continual Dataset <module-datasets.utils.continual_dataset>`. The only
+exception are datasets that follow the `general-continual` setting, which inherit from the **GCLDataset** class, (defined in :ref:`GCL Dataset <module-datasets.utils.gcl_dataset>`).
+These classes provide some useful methods to create data loaders and store masked data loaders for continual learning experiments. See more in the next section.
 
     1. Create a new file in the `datasets` folder, e.g. ``my_dataset.py``.
 
-    2. Define a new class that inherits from `ContinualDataset` or `GCLDataset` and implements all the required methods and attributes.
+    2. Define a *SINGLE* new class that inherits from `ContinualDataset` or `GCLDataset` and implements all the required methods and attributes.
 
-    3. Define the **get_data_loaders** method, which returns a list of train and test data loaders for each task (see more in section :ref:`Utils`). 
+    3. Define the **get_data_loaders** method, which returns a list of train and test data loaders for each task (see more in section :ref:`Utils <dataset-index-utils>`). 
 
     .. tip::
         For convenience, most datasets are initially created with all classes and then masked appropriately by the **store_masked_loaders** function. 
-        For example, in :ref:`module-seq_cifar10` the **get_data_loaders** function of **SequentialCIFAR10** dataset first inizializes the **MyCIFAR10** and **TCIFAR10** 
+        For example, in :ref:`Seq CIFAR-10 <module-datasets.seq_cifar10>` the **get_data_loaders** function of **SequentialCIFAR10** dataset first inizializes the **MyCIFAR10** and **TCIFAR10** 
         datasets with train and test data for all classes respectively, and then masks the data loaders to return only the data for the current task.
 
     .. important::
@@ -117,15 +157,18 @@ These classes provide some useful methods to create data loaders and store maske
 
     4. If all goes well, your dataset should be picked up by the **get_dataset** function and you should be able to run an experiment with it.
 
+.. _dataset-index-utils:
+
 Utils
 --------
 
 - **get_data_loaders**: This function should take care of downloading the dataset if necessary, make sure that it contains samples and labels for 
 **only** the current task (you can use the **store_masked_loaders** function), and create the data loaders.
 
-- **store_masked_loaders**: This function is defined in :ref:`module-continual_dataset` and takes care of masking the data loaders to return only the data for the current task.
-It is used by most datasets to create the data loaders for each task. 
+- **store_masked_loaders**: This function is defined in :ref:`Continual Dataset <module-datasets.utils.continual_dataset>` and takes care of masking the data loaders to return only the data for the current task.
+It is used by most datasets to create the data loaders for each task.
+
     - If the ``--permute_classes`` flag is set to ``1``, it also applies the appropriate permutation to the classes before splitting the data.
 
-    - If the ``--label_perc`` argument is set to a value between ``0`` and ``1``, it also randomly masks a percentage of the labels for each task. 
+    - If the ``--label_perc_by_task/--label_perc_by_class`` argument is set to a value between ``0`` and ``1``, it also randomly masks a percentage of the labels for each task/class. 
 

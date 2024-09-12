@@ -9,6 +9,7 @@ try:
 except ImportError:
     wandb = None
 
+from utils import binary_to_boolean_type
 from utils.augmentations import RepeatedTransform
 from utils.conf import create_seeded_dataloader
 from utils.schedulers import CosineSchedule
@@ -18,19 +19,20 @@ from models.star_prompt_utils.generative_replay import Gaussian, MixtureOfGaussi
 
 
 class SecondStageStarprompt(ContinualModel):
+    """Second-stage of StarPrompt. Requires the keys saved from the first stage."""
     NAME = 'second_stage_starprompt'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Second-stage of StarPrompt. Requires the keys saved from the first stage.')
+    def get_parser(parser) -> ArgumentParser:
+        parser.set_defaults(batch_size=128, optimizer='adam', lr=0.001)
 
         frozen_group = parser.add_argument_group('Frozen hyperparameters')
         frozen_group.add_argument("--virtual_bs_n", type=int, default=1,
                                   help="virtual batch size iterations")
-        frozen_group.add_argument("--enable_data_aug_query", type=int, default=1, choices=[0, 1],
+        frozen_group.add_argument("--enable_data_aug_query", type=binary_to_boolean_type, default=1,
                                   help="Use default transform with data aug to generate the CLIP's response?")
-        frozen_group.add_argument("--use_clip_preprocess_eval", type=int, default=0, choices=[0, 1],
+        frozen_group.add_argument("--use_clip_preprocess_eval", type=binary_to_boolean_type, default=0,
                                   help="Use CLIP's transform during eval instead of the default test transform?")
         frozen_group.add_argument("--ortho_split_val", type=int, default=0)
         frozen_group.add_argument('--gr_mog_n_iters', '--gr_mog_n_iters_second_stage', dest='gr_mog_n_iters_second_stage',
@@ -49,15 +51,15 @@ class SecondStageStarprompt(ContinualModel):
                                     help="Type of distribution model for Generative Replay. "
                                     "- `mog`: Mixture of Gaussian. "
                                     "- `gaussian`: Single Gaussian distribution.")
-        ablation_group.add_argument("--enable_gr", type=int, default=1, choices=[0, 1],
+        ablation_group.add_argument("--enable_gr", type=binary_to_boolean_type, default=1,
                                     help="Enable Generative Replay.")
-        ablation_group.add_argument('--statc_keys_use_templates', type=int, default=1, choices=[0, 1],
+        ablation_group.add_argument('--statc_keys_use_templates', type=binary_to_boolean_type, default=1,
                                     help="Use templates for the second stage if no keys are loaded.")
         ablation_group.add_argument('--prompt_mode', type=str, default='residual', choices=['residual', 'concat'],
                                     help="Prompt type for the second stage. "
                                     "- `residual`: STAR-Prompt style prompting. "
                                     "- `concat`: Prefix-Tuning style prompting.")
-        ablation_group.add_argument("--enable_confidence_modulation", type=int, default=1, choices=[0, 1],
+        ablation_group.add_argument("--enable_confidence_modulation", type=binary_to_boolean_type, default=1,
                                     help="Enable confidence modulation with CLIP similarities (Eq. 5 of the main paper)?")
 
         # Tunable hyperparameters
@@ -86,8 +88,8 @@ class SecondStageStarprompt(ContinualModel):
 
     net: Model
 
-    def __init__(self, backbone, loss, args, transform):
-        super().__init__(backbone, loss, args, transform)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
         self.net = Model(args,
                          backbone=self.net,
@@ -161,8 +163,8 @@ class SecondStageStarprompt(ContinualModel):
 
                 if not self.args.nowand:
                     assert wandb is not None, "wandb is not installed."
-                    wandb.log({'ca_loss': loss.item(), 'ca_lr': optim.param_groups[0]['lr']})
-                pbar.set_postfix({'loss': loss.item()})
+                    wandb.log({'ca_loss_second_stage': loss.item(), 'ca_lr_second_stage': optim.param_groups[0]['lr']})
+                pbar.set_postfix({'loss': loss.item()}, refresh=False)
 
     def align(self):
 
@@ -220,7 +222,7 @@ class SecondStageStarprompt(ContinualModel):
         print(f"RECALL: Task - {self.current_task} - classes from "
               f"{self.n_past_classes} - to {self.n_seen_classes}")
 
-        if self.current_task == 0 or self.args.enable_gr == 0:
+        if self.current_task == 0 or not self.args.enable_gr:
             return
 
         assert self.classifier_state_dict
@@ -282,7 +284,7 @@ class SecondStageStarprompt(ContinualModel):
 
     def forward(self, x):
         x, query_x = x[:, 0], x[:, 1]  # from repeated transform
-        if self.args.use_clip_preprocess_eval == 0:
+        if not self.args.use_clip_preprocess_eval:
             query_x = None
         logits = self.net(x, query_x=query_x, cur_classes=self.n_seen_classes)
         logits = logits[:, :self.n_seen_classes]

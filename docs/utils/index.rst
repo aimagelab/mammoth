@@ -55,14 +55,14 @@ Setting the seed affects:
 
 - The random number generators in `numpy`, `torch`, and `random`.
 - The seed for all GPUs (if available). See `PyTorch's docs <https://pytorch.org/docs/stable/generated/torch.cuda.manual_seed_all.html>`_ for more informations.
-- The order of the classes in each task (and the order of the tasks themselves).
+- If `permute_classes` is set, the order of the classes in each task (and the order of the tasks themselves).
 - The random number generators in the data loaders.
 
 We do not set ``torch.use_deterministic_algorithms(True)`` by default, as it can slow down the training process and in our tests does not seem to affect results too much. However, it can be set manually in the `main.py` script if desired.
 
 .. important:: 
 
-  Setting the seed also influences **the order and the classes** present in each task. While this is desired in most cases, it can be disabled by setting the `permute_classes` argument to `0`.
+  The `permute_classes` argument shuffles the classes before splitting them into tasks. This parameter is influenced by the `seed`: if the `seed` is not set, a different permutation will be applied to each run, while if the `seed` is set, the same permutation will be applied each time. Since you probably do not want to run tests with different classes each time, this functionality is *disabled* by default. However, it can be enabled by setting `--permute_classes=1`.
 
 Other useful arguments
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -73,21 +73,22 @@ Other useful arguments
 
 * ``--seed``: The seed to use for the random number generators. If this is not set, the seed will be randomly generated.
 
-* ``--permute_classes``: If set to ``1``, the classes will be randomly permuted before splitting them into tasks.
+* ``--permute_classes``: (default ``0``) If set to ``1``, the classes will be randomly permuted before splitting them into tasks.
 
 * ``--joint``: If set to ``1``, the supplied dataset will be treated as a single task. This usually serves as a upper bound for the performance of the model.
 
-* ``--label_perc``: The percentage of labels to use for each task. If set to ``0``, the model will be trained in a fully unsupervised manner.
+* ``--label_perc_by_task`` (alias of ``--label_perc`` and ``--lpt``): The percentage of labels to use **for each task**. If set to ``0``, the model will be trained in a fully unsupervised manner.
 
+* ``--label_perc_by_class`` (alias of ``--lpc``): The percentage of labels to use **for each class**. If set to ``0``, the model will be trained in a fully unsupervised manner.
 
 Other notable modules  
 ---------------------
 
 - :ref:`args <module-args>`: contains all the **global** arguments. For **model-specific** arguments, see the `parse_args` function in the corresponding model file (under `models/<MODEL NAME>`).  
 
-- :ref:`module-buffer`: contains the `Buffer` class, which is used to store the data for the replay buffer.  
+- :ref:`buffer <module-utils.buffer>`: contains the `Buffer` class, which is used to store the data for the replay buffer.  
 
-- :ref:`module-training`: contains the `train` function, which is responsible for training the model, and the `evaluate` function, which is responsible for evaluating the model. The `train` function iterates over all the tasks and supports `3` utility functions: `begin_task`, `end_task`, and `observe`:
+- :ref:`training <module-utils.training>`: contains the `train` function, which is responsible for training the model, and the `evaluate` function, which is responsible for evaluating the model. The `train` function iterates over all the tasks and supports `3` utility functions: `begin_task`, `end_task`, and `observe`:
 
   - `begin_task`: called at the beginning of each task. It is useful if the model needs to set its internal state before     starting the task (e.g., calculating some preliminary statistics or adding new parameters for the new task).  
 
@@ -95,4 +96,4 @@ Other notable modules
 
   - `observe`: called at each training step. It should contain *all the logic to train the model on the current batch*, including updating the replay buffer and the target network (if applicable). It should also return the loss value for the current batch.  
 
-- :ref:`module-conf`: contains some utility functions such as the default path where to download the datasets (`base_path`) and the default device to use (`get_device`). 
+- :ref:`conf <module-utils.conf>`: contains some utility functions such as the default path where to download the datasets (`base_path`) and the default device to use (`get_device`). 

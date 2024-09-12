@@ -19,20 +19,21 @@
    :maxdepth: 1 
    :glob:
    :hidden:
-   :caption: Getting started:
+   :caption: Getting started
 
    getting_started/index.rst
    getting_started/validation.rst
    getting_started/checkpoints.rst
    getting_started/fast_training.rst
    getting_started/scripts.rst
+   Backbones and Datasets registration <getting_started/dynamic_args.rst>
    Parseval <getting_started/parseval.rst>
 
 .. toctree::
    :glob:
    :maxdepth: 1
    :hidden:
-   :caption: Contents:
+   :caption: Contents
 
    generated/models.rst
    generated/datasets.rst
@@ -43,8 +44,9 @@
    :glob:
    :maxdepth: 1
    :hidden:
-   :caption: How to run:
+   :caption: How to ...
 
-   how_to_run/starprompt.rst
+   Upgrade to the new Mammoth! <how_to_upgrade/index.rst>
+   Run STAR-Prompt <how_to_run/starprompt.rst>
    
 .. include:: readme.rst

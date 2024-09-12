@@ -1,4 +1,9 @@
+"""
+DISCLAIMER: AttriCLIP **does not** reproduce the results in the paper (https://arxiv.org/pdf/2305.11488).
+Unfortunately, the original implementation (https://github.com/bhrqw/AttriCLIP) did not reproduced the results either and is no longer available. This is a known issue (see https://github.com/bhrqw/SADA/issues/3).
 
+This implementation is based on that code and on the information provided in the paper.
+"""
 
 from utils.args import *
 from models.utils.continual_model import ContinualModel
@@ -11,31 +16,29 @@ from utils.conf import get_device
 
 
 class Attriclip(ContinualModel):
+    """Continual Learning via Progressive Neural Networks."""
     NAME = 'attriclip'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Learning via'
-                                            ' Progressive Neural Networks.')
+    def get_parser(parser) -> ArgumentParser:
         parser.add_argument("--num_prompt", type=int, default=10, help='num_prompt')
         parser.add_argument("--text_prompt", type=int, default=3, help='text_prompt')
         parser.add_argument('--freeze_clip', type=int, default=1, help='freeze_clip')
-        parser.add_argument("--virtual_bs_n", type=int, default=1, help="virtual batch size iterations")
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
-        self.seq_dataset = get_dataset(args)
+    def __init__(self, backbone, loss, args, transform, dataset=None):
+        seq_dataset = get_dataset(args) if dataset is None else dataset
         self.device = get_device()
-        self.class_names = self.seq_dataset.get_class_names()
+        self.class_names = seq_dataset.get_class_names()
         backbone = CoOp(self.device, False, False, args)
-        offset_1, offset_2 = self.seq_dataset.get_offsets(0)
+        offset_1, offset_2 = seq_dataset.get_offsets(0)
         cur_class_names = self.class_names[offset_1:offset_2]
         backbone.init_model(class_names=cur_class_names, text_key=backbone.text_key, text_prompt=backbone.text_prompt)
-        super().__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
     def begin_task(self, dataset):
-        self.offset_1, self.offset_2 = self.seq_dataset.get_offsets(self.current_task)
+        self.offset_1, self.offset_2 = self.dataset.get_offsets(self.current_task)
         self.per_epoch_steps = len(dataset.train_loader)
         cur_class_names = self.class_names[self.offset_1:self.offset_2]
         self.net.init_model(class_names=cur_class_names, text_key=self.net.text_key, text_prompt=self.net.text_prompt)

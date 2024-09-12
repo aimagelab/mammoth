@@ -8,6 +8,7 @@ Arguments:
     --feature_extractor_type: the type of convnet to use. `vit-b-p16` is the default: ViT-B/16 pretrained on Imagenet 21k (**NO** finetuning on ImageNet 1k)
 """
 
+from utils import binary_to_boolean_type
 from utils.args import *
 from models.utils.continual_model import ContinualModel
 
@@ -17,17 +18,16 @@ from models.slca_utils.slca import SLCA_Model
 
 
 class SLCA(ContinualModel):
+    """Continual Learning via Slow Learner with Classifier Alignment."""
     NAME = 'slca'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='Continual Learning via Slow Learner with Classifier Alignment')
+    def get_parser(parser) -> ArgumentParser:
         parser.add_argument('--prefix', type=str, default='reproduce')
         parser.add_argument('--memory_size', type=int, default=0)
         parser.add_argument('--memory_per_class', type=int, default=0)
-        parser.add_argument('--fixed_memory', type=int, choices=[0, 1], default=0)
-        parser.add_argument('--shuffle', type=int, choices=[0, 1], default=1)
+        parser.add_argument('--fixed_memory', type=binary_to_boolean_type, default=0)
         parser.add_argument(
             '--feature_extractor_type',
             type=str,
@@ -38,10 +38,11 @@ class SLCA(ContinualModel):
         parser.add_argument('--ca_with_logit_norm', type=float, default=0.1)
         parser.add_argument('--milestones', type=str, default='40')
         parser.add_argument('--lr_decay', type=float, default=0.1)
-        parser.add_argument('--virtual_bs_iterations', type=int, default=1, help="virtual batch size iterations")
+        parser.add_argument('--virtual_bs_n', '--virtual_bs_iterations', dest='virtual_bs_iterations',
+                            type=int, default=1, help="virtual batch size iterations")
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         self.device = get_device()
         del backbone
         print("-" * 20)
@@ -51,7 +52,7 @@ class SLCA(ContinualModel):
 
         args.milestones = args.milestones.split(',')
         n_features = backbone._network.convnet.feature_dim
-        super().__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
         self.class_means = torch.zeros(self.num_classes, n_features).to(self.device)
         self.class_covs = torch.zeros(self.num_classes, n_features, n_features).to(self.device)
 
@@ -93,7 +94,7 @@ class SLCA(ContinualModel):
             self.opt.zero_grad()
 
         torch.cuda.empty_cache()
-        loss.backward()
+        (loss / self.args.virtual_bs_iterations).backward()
         if self.task_iteration > 0 and self.task_iteration % self.args.virtual_bs_iterations == 0:
             self.opt.step()
             self.opt.zero_grad()

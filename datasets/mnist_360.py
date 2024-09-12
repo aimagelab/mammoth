@@ -13,7 +13,6 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torchvision.datasets import MNIST
 
-from backbone.MNISTMLP import MNISTMLP
 from datasets.perm_mnist import MyMNIST
 from datasets.transforms.rotation import IncrementalRotation
 from datasets.utils.gcl_dataset import GCLDataset
@@ -122,8 +121,8 @@ class MNIST360(torch.utils.data.Dataset):
                     train_mask][k * numbers_per_batch:(k + 1) * numbers_per_batch]
                 tmp_train_dataset.transform = transforms.Compose(
                     [train_rotation, transforms.ToTensor()])
-                self.dataset[-1].append(create_seeded_dataloader(self.args,
-                                                                 tmp_train_dataset, batch_size=1, shuffle=True, num_workers=0))
+                self.dataset[-1].append(create_seeded_dataloader(self.args, tmp_train_dataset, non_verbose=True,
+                                                                 batch_size=1, shuffle=True, num_workers=0))
                 self.remaining_training_items[-1].append(
                     tmp_train_dataset.data.shape[0])
 
@@ -152,7 +151,7 @@ class MNIST360(torch.utils.data.Dataset):
                 increase_per_iteration=360.0 / test_mask.sum())
             tmp_test_dataset.transform = transforms.Compose(
                 [test_rotation, transforms.ToTensor()])
-            self.dataset.append(create_seeded_dataloader(self.args, tmp_test_dataset,
+            self.dataset.append(create_seeded_dataloader(self.args, tmp_test_dataset, non_verbose=True,
                                                          batch_size=self.args.batch_size, shuffle=False, num_workers=0))
 
     def get_train_data(self) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
@@ -297,9 +296,9 @@ class SequentialMNIST360(GCLDataset):
 
         return train_dataset, test_dataset
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone() -> torch.nn.Module:
-        return MNISTMLP(28 * 28, 10)
+        return "mnistmlp"
 
     @staticmethod
     def get_loss() -> Callable:

@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="230" height="230" src="logo.png" alt="logo">
+  <img width="230" height="230" src="docs/_static/logo.png" alt="logo">
 </p>
 
 <p align="center">
@@ -23,17 +23,19 @@ Ideally, all the code necessary to run the experiments is included _in the repos
 
 With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
 
+> ***All the models included in mammoth are verified against the original papers (or subsequent relevant papers) to reproduce their original results.***
+
 ## Documentation
 
 ### Check out the official [DOCUMENTATION](https://aimagelab.github.io/mammoth/) for more information on how to use Mammoth!
 
 <p align="center">
-  <img width="112" height="112" src="seq_mnist.gif" alt="Sequential MNIST">
-  <img width="112" height="112" src="seq_cifar10.gif" alt="Sequential CIFAR-10">
-  <img width="112" height="112" src="seq_tinyimg.gif" alt="Sequential TinyImagenet">
-  <img width="112" height="112" src="perm_mnist.gif" alt="Permuted MNIST">
-  <img width="112" height="112" src="rot_mnist.gif" alt="Rotated MNIST">
-  <img width="112" height="112" src="mnist360.gif" alt="MNIST-360">
+  <img width="112" height="112" src="docs/_static/seq_mnist.gif" alt="Sequential MNIST">
+  <img width="112" height="112" src="docs/_static/seq_cifar10.gif" alt="Sequential CIFAR-10">
+  <img width="112" height="112" src="docs/_static/seq_tinyimg.gif" alt="Sequential TinyImagenet">
+  <img width="112" height="112" src="docs/_static/perm_mnist.gif" alt="Permuted MNIST">
+  <img width="112" height="112" src="docs/_static/rot_mnist.gif" alt="Rotated MNIST">
+  <img width="112" height="112" src="docs/_static/mnist360.gif" alt="MNIST-360">
 </p>
 
 ## Setup
@@ -43,18 +45,35 @@ With Mammoth, nothing is set in stone. You can easily add new models, datasets, 
 - New models can be added to the `models/` folder.
 - New datasets can be added to the `datasets/` folder.
 
+## Update roadmap
+
+All the code is under active development. Here are some of the features we are working on:
+
+- **Configurations for datasets**: Currently, each dataset represents a *specific configuration* (e.g., number of tasks, data augmentations, backbone, etc.). This makes adding a new *setting* a bit cumbersome. We are working on a more flexible way to define configurations, while leaving the current system as a default for retro-compatibility.
+- **New models**: We are working on adding new models to the repository.
+- **New training modalities**: We will introduce new CL training regimes, such as training with *noisy labels*, *regression*, *segmentation*, *detection*, etc.
+- **Openly accessible result dashboard**: We are working on a dashboard to visualize the results of all the models in both their respective settings (to prove their reproducibility) and in a general setting (to compare them). *This may take some time, since compute is not free.*
+
+All the new additions will try to preserve the current structure of the repository, making it easy to add new functionalities with a simple merge.
+
 ## Models
 
-Mammoth currently supports **more than 40** models, with new releases covering the main competitors in literature.
+Mammoth currently supports **more than 50** models, with new releases covering the main competitors in literature.
 
-- Efficient Lifelong Learning with A-GEM (A-GEM, A-GEM-R - A-GEM with reservoir buffer): `agem`, `agem_r`
+- Efficient Lifelong Learning with A-GEM (A-GEM, A-GEM-R - A-GEM with reservoir buffer): `agem`, `agem_r`.
+- AttriCLIP: A Non-Incremental Learner for Incremental Knowledge Learning (AttriCLIP): `attriclip`.
 - Bias Correction (BiC): `bic`.
 - Continual Contrastive Interpolation Consistency (CCIC) - _Requires_ `pip install kornia`: `ccic`.
+- Continual Generative training for Incremental prompt-Learning (CGIL): `cgil`
+- Contrastive Language-Image Pre-Training (CLIP): `clip` (*static* method with no learning).
 - CODA-Prompt: COntinual Decomposed Attention-based Prompting for Rehearsal-Free Continual Learning (CODA-Prompt) - _Requires_ `pip install timm==0.9.8`: `coda-prompt`.
-- Dark Experience Replay (DER): `der`.
-- Dark Experience Replay++ (DER++): `derpp`.
+- Generating Instance-level Prompts for Rehearsal-free Continual Learning (DAP): `dap`.
+- Dark Experience for General Continual Learning: a Strong, Simple Baseline (DER & DER++): `der` and `derpp`.
 - DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning (DualPrompt) - _Requires_ `pip install timm==0.9.8`: `dualprompt`.
 - Experience Replay (ER): `er`.
+- Experience Replay with Asymmetric Cross-Entropy (ER-ACE): `er_ace`.
+- May the Forgetting Be with You: Alternate Replay for Learning with Noisy Labels (AER & ABS): `er_ace_aer_abs`.
+- Rethinking Experience Replay: a Bag of Tricks for Continual Learning (ER-ACE with tricks): `er_ace_tricks`.
 - online Elastic Weight Consolidation (oEWC): `ewc_on`.
 - Function Distance Regularization (FDR): `fdr`.
 - Greedy Sampler and Dumb Learner (GDumb): `gdumb`.
@@ -62,22 +81,26 @@ Mammoth currently supports **more than 40** models, with new releases covering t
 - Greedy gradient-based Sample Selection (GSS): `gss`.
 - Hindsight Anchor Learning (HAL): `hal`.
 - Incremental Classifier and Representation Learning (iCaRL): `icarl`.
-- JointGCL: `joint_gcl` (only for General Continual).
+- Image-aware Decoder Enhanced à la Flamingo with Interleaved Cross-attentionS (IDEFICS): `idefics` (*static* method with no learning).
+- Joint training for the General Continual setting: `joint_gcl` (_only for General Continual_).
 - Learning to Prompt (L2P) - _Requires_ `pip install timm==0.9.8`: `l2p`.
 - LiDER (on DER++, iCaRL, GDumb, and ER-ACE): `derpp_lider`, `icarl_lider`, `gdumb_lider`, `er_ace_lider`.
+- Large Language and Vision Assistant (LLAVA): `llava` (*static* method with no learning).
 - Learning a Unified Classifier Incrementally via Rebalancing (LUCIR): `lucir`.
 - Learning without Forgetting (LwF): `lwf`.
+- Learning without Forgetting adapted for Multi-Class classification (LwF.MC): `lwf_mc` (from the iCaRL paper).
 - Meta-Experience Replay (MER): `mer`.
+- Mixture-of-Experts Adapters (MoE Adapters): `moe_adapters`.
 - Progressive Neural Networks (PNN): `pnn`.
+- Online Continual Learning on a Contaminated Data Stream with Blurry Task Boundaries (PuriDivER): `puridiver`.
+- Random Projections and Pre-trained Models for Continual Learning (RanPAC): `ranpac`.
 - Regular Polytope Classifier (RPC): `rpc`.
 - Synaptic Intelligence (SI): `si`.
 - SLCA: Slow Learner with Classifier Alignment for Continual Learning on a Pre-trained Model (SLCA) - _Requires_ `pip install timm==0.9.8`: `slca`.
+- Slow Learner with Classifier Alignment (SLCA): `slca`.
+- Semantic Two-level Additive Residual Prompt (STAR-Prompt): `starprompt`. Also includes the first-stage only (`first_stage_starprompt`) and second-stage only (`second_stage_starprompt`) versions.
 - Transfer without Forgetting (TwF): `twf`.
 - eXtended-DER (X-DER): `xder` (full version), `xder_ce` (X-DER with CE), `xder_rpc` (X-DER with RPC).
-- AttriCLIP: `attriclip`.
-- Slow Learner with Classifier Alignment (SLCA): `slca`.
-- Continual Generative training for Incremental prompt-Learning (CGIL): `cgil`
-- Semantic Two-level Additive Residual Prompt (STAR-Prompt): `starprompt`. Also includes the first-stage only (`first_stage_starprompt`) and second-stage only (`second_stage_starprompt`) versions.
 
 ## Datasets
 

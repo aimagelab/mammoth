@@ -161,7 +161,7 @@ class DiffusionCA(torch.nn.Module):
 
                     loss.backward()
                     self.optimizer.step()
-                    pbar.set_postfix(loss=loss.item())
+                    pbar.set_postfix(loss=loss.item(), refresh=False)
                     iters += 1
                     if iters >= self.n_iters:
                         break

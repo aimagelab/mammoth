@@ -28,12 +28,14 @@ import logging
 import sys
 from argparse import ArgumentParser, Namespace
 from contextlib import suppress
-from typing import List, Tuple
+from typing import Iterator, List, Tuple
+import inspect
 
 import kornia
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from backbone import MammothBackbone
 from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset
 
@@ -56,7 +58,7 @@ class ContinualModel(nn.Module):
 
     args: Namespace  # The command line arguments
     device: torch.device  # The device to be used for training
-    net: nn.Module  # The backbone of the model (defined by the `dataset`)
+    net: MammothBackbone  # The backbone of the model (defined by the `dataset`)
     loss: nn.Module  # The loss function to be used (defined by the `dataset`)
     opt: optim.Optimizer  # The optimizer to be used for training
     scheduler: optim.lr_scheduler._LRScheduler  # (optional) The scheduler for the optimizer. If defined, it will overwrite the one defined in the `dataset`
@@ -70,16 +72,20 @@ class ContinualModel(nn.Module):
     n_tasks: int  # Total number of tasks in the dataset
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
+    def get_parser(parser: ArgumentParser) -> ArgumentParser:
         """
-        Returns the parser of the model.
+        Defines model-specific hyper-parameters, which will be added to the command line arguments. Additional model-specific hyper-parameters can be added by overriding this method.
 
-        Additional model-specific hyper-parameters can be added by overriding this method.
+        For backward compatibility, the `parser` object may be omitted (although this should be avoided). In this case, the method should create and return a new parser.
+
+        This method may also be used to set default values for all other hyper-parameters of the framework (e.g., `lr`, `buffer_size`, etc.) with the `set_defaults` method of the parser. In this case, this method MUST update the original `parser` object and not create a new one.
+
+        Args:
+            parser: the main parser, to which the model-specific arguments will be added
 
         Returns:
             the parser of the model
         """
-        parser = ArgumentParser(description='Base CL model')
         return parser
 
     @property
@@ -172,7 +178,7 @@ class ContinualModel(nn.Module):
         self._cpt = value
 
     def __init__(self, backbone: nn.Module, loss: nn.Module,
-                 args: Namespace, transform: nn.Module) -> None:
+                 args: Namespace, transform: nn.Module, dataset: ContinualDataset = None) -> None:
         super(ContinualModel, self).__init__()
         print("Using {} as backbone".format(backbone.__class__.__name__))
         self.net = backbone
@@ -180,7 +186,11 @@ class ContinualModel(nn.Module):
         self.args = args
         self.original_transform = transform
         self.transform = transform
-        self.dataset = get_dataset(self.args)
+        if dataset is None:
+            logging.error("No dataset provided. Will create another instance but NOTE that this **WILL** result in some bugs and possible memory leaks!")
+            self.dataset = get_dataset(self.args)
+        else:
+            self.dataset = dataset
         self.N_CLASSES = self.dataset.N_CLASSES
         self.num_classes = self.N_CLASSES
         self.N_TASKS = self.dataset.N_TASKS
@@ -231,18 +241,33 @@ class ContinualModel(nn.Module):
         """
         return self.net.parameters()
 
-    def get_optimizer(self) -> optim.Optimizer:
+    def get_optimizer(self, params: Iterator[torch.Tensor] = None, lr=None) -> optim.Optimizer:
+        """
+        Returns the optimizer to be used for training.
+
+        Default: SGD.
+
+        Args:
+            params: the parameters to be optimized. If None, the default specified by `get_parameters` is used.
+            lr: the learning rate. If None, the default specified by the command line arguments is used.
+
+        Returns:
+            the optimizer
+        """
+
+        params = params if params is not None else self.get_parameters()
+        lr = lr if lr is not None else self.args.lr
         # check if optimizer is in torch.optim
         supported_optims = {optim_name.lower(): optim_name for optim_name in dir(optim) if optim_name.lower() in self.AVAIL_OPTIMS}
         opt = None
         if self.args.optimizer.lower() in supported_optims:
             if self.args.optimizer.lower() == 'sgd':
-                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.get_parameters(), lr=self.args.lr,
+                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(params, lr=lr,
                                                                                     weight_decay=self.args.optim_wd,
                                                                                     momentum=self.args.optim_mom,
-                                                                                    nesterov=self.args.optim_nesterov == 1)
+                                                                                    nesterov=self.args.optim_nesterov)
             elif self.args.optimizer.lower() == 'adam' or self.args.optimizer.lower() == 'adamw':
-                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(self.get_parameters(), lr=self.args.lr,
+                opt = getattr(optim, supported_optims[self.args.optimizer.lower()])(params, lr=lr,
                                                                                     weight_decay=self.args.optim_wd)
 
         if opt is None:
@@ -279,6 +304,25 @@ class ContinualModel(nn.Module):
         """
         Prepares the model for the next task.
         Executed after each task.
+        """
+        pass
+
+    def begin_epoch(self, epoch: int, dataset: ContinualDataset) -> None:
+        """
+        Prepares the model for the current epoch.
+        """
+        pass
+
+    def end_task(self, dataset: ContinualDataset) -> None:
+        """
+        Prepares the model for the next task.
+        Executed after each task.
+        """
+        pass
+
+    def end_epoch(self, epoch: int, dataset: ContinualDataset) -> None:
+        """
+        Prepares the model for the next epoch.
         """
         pass
 
@@ -322,6 +366,12 @@ class ContinualModel(nn.Module):
                 if labeled_mask.sum() == 0:  # if all samples are unlabeled
                     return 0
                 args = [arg[labeled_mask] if isinstance(arg, torch.Tensor) and arg.shape[0] == args[0].shape[0] else arg for arg in args]
+
+        # remove kwargs that are not needed by the observe method
+        observe_args = inspect.signature(self.observe).parameters.keys()
+        if 'kwargs' not in observe_args:
+            kwargs = {k: v for k, v in kwargs.items() if k in observe_args}
+
         if 'wandb' in sys.modules and not self.args.nowand:
             pl = persistent_locals(self.observe)
             ret = pl(*args, **kwargs)

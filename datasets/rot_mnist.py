@@ -6,7 +6,6 @@
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 
-from backbone.MNISTMLP import MNISTMLP
 from datasets.perm_mnist import MyMNIST, MNIST
 from datasets.transforms.rotation import Rotation
 from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
@@ -46,9 +45,9 @@ class RotatedMNIST(ContinualDataset):
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return MNISTMLP(28 * 28, RotatedMNIST.N_CLASSES_PER_TASK)
+        return "mnistmlp"
 
     @staticmethod
     def get_transform():

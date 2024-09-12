@@ -3,12 +3,13 @@ import torch.nn.functional as F
 from copy import deepcopy
 import types
 
+from backbone import get_backbone
 from models.twf_utils.afd import MultiTaskAFDAlternative
 
 
 @torch.no_grad()
 def init_twf(model, dataset):
-    model.teacher = dataset.get_backbone()
+    model.teacher = get_backbone(model.args)
     if isinstance(model.net, torch.nn.DataParallel):
         st = deepcopy(model.net.module.state_dict())
     else:
@@ -68,7 +69,7 @@ def init_twf(model, dataset):
 
     # Initialize adapters
     for i, (x, pret_x) in enumerate(zip(feats_t, pret_feats_t)):
-        # clear_grad=self.args.detach_skip_grad == 1
+        # clear_grad=self.args.detach_skip_grad
         adapt_shape = x.shape[1:]
         pret_shape = pret_x.shape[1:]
         if len(adapt_shape) == 1:
@@ -83,7 +84,7 @@ def init_twf(model, dataset):
             lambda_diverse_loss=model.args.lambda_diverse_loss,
             attn_mode="chsp",
             min_resize_threshold=model.args.min_resize_threshold,
-            resize_maps=model.args.resize_maps == 1,
+            resize_maps=model.args.resize_maps,
         ).to(model.device))
 
     # Freeze teacher

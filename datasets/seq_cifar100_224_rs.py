@@ -68,10 +68,9 @@ class SequentialCIFAR100224RS(ContinualDataset):
             [transforms.ToPILImage(), SequentialCIFAR100224RS.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return resnet50(SequentialCIFAR100224RS.N_CLASSES_PER_TASK
-                        * SequentialCIFAR100224RS.N_TASKS, )
+        return "resnet50"
 
     @staticmethod
     def get_loss():

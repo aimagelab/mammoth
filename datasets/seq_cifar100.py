@@ -123,10 +123,9 @@ class SequentialCIFAR100(ContinualDataset):
             [transforms.ToPILImage(), SequentialCIFAR100.TRANSFORM])
         return transform
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return resnet18(SequentialCIFAR100.N_CLASSES_PER_TASK
-                        * SequentialCIFAR100.N_TASKS)
+        return "resnet18"
 
     @staticmethod
     def get_loss():
@@ -150,14 +149,13 @@ class SequentialCIFAR100(ContinualDataset):
     def get_batch_size(self):
         return 32
 
-    @staticmethod
-    def get_scheduler(model, args: Namespace, reload_optim=True) -> torch.optim.lr_scheduler:
-        scheduler = ContinualDataset.get_scheduler(model, args, reload_optim)
-        if scheduler is None:
-            if reload_optim:
-                model.opt = model.get_optimizer()
-            scheduler = torch.optim.lr_scheduler.MultiStepLR(model.opt, [35, 45], gamma=0.1, verbose=False)
-        return scheduler
+    @set_default_from_args('lr_scheduler')
+    def get_scheduler_name(self):
+        return 'multisteplr'
+
+    @set_default_from_args('lr_milestones')
+    def get_scheduler_name(self):
+        return [35, 45]
 
     def get_class_names(self):
         if self.class_names is not None:

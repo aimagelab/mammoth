@@ -18,6 +18,8 @@ Requires:
 
 import torch
 import torch.nn as nn
+
+from utils import binary_to_boolean_type
 try:
     import clip
 except ImportError:
@@ -66,28 +68,29 @@ class FinalModel(nn.Module):
 
 
 class CLIP(ContinualModel):
+    """STATIC Continual Learning with CLIP"""
     NAME = 'clip'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
     @staticmethod
-    def get_parser() -> ArgumentParser:
-        parser = ArgumentParser(description='STATIC Continual Learning with CLIP')
+    def get_parser(parser) -> ArgumentParser:
+        parser.set_defaults(lr=0, n_epochs=0)  # disable training by default
         parser.add_argument('--clip_backbone', type=str, default='ViT-L/14',
                             choices=list(clip.available_models()),
                             help='Backbone architecture for CLIP')
-        parser.add_argument('--save_predictions', type=int, choices=[0, 1], default=0,
+        parser.add_argument('--save_predictions', type=binary_to_boolean_type, default=0,
                             help='Whether to save predictions of the TRAINING set after each task')
-        parser.add_argument('--use_templates', type=int, choices=[0, 1], default=0,
+        parser.add_argument('--use_templates', type=binary_to_boolean_type, default=0,
                             help='Whether to use prompt templates for CLIP. NOTE: Datasets NEED to have a `get_prompt_templates` method implemented.')
         return parser
 
-    def __init__(self, backbone, loss, args, transform):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         backbone, clip_transform = clip.load(args.clip_backbone, device=get_device())
         n_epochs = 1 if args.save_predictions else 0
         if args.n_epochs != n_epochs:
             print(f"CLIP is a STATIC model, setting n_epochs to {n_epochs}")
             args.n_epochs = n_epochs
-        super().__init__(backbone, loss, args, transform)
+        super().__init__(backbone, loss, args, transform, dataset=dataset)
 
         self.net = FinalModel(self.net, self.dataset, args)
         self.clip_transform = clip_transform

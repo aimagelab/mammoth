@@ -3,26 +3,124 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-from argparse import Namespace
-import logging
-import sys
-from typing import List, Tuple
+from argparse import ArgumentParser, Namespace
+from typing import List, Optional, Tuple
 
 import torch
 import numpy as np
 import torch.nn as nn
-import torch.optim.lr_scheduler as scheds
+import torch.utils
 from torch.utils.data import DataLoader, Dataset
 
+from datasets.utils.label_noise import build_noisy_labels
 from datasets.utils.validation import get_validation_indexes
 from utils.conf import create_seeded_dataloader
-from datasets.utils import DEFAULT_ARGS
+from datasets.utils import build_torchvision_transform
 from utils.prompt_templates import templates
+
+
+class MammothDatasetWrapper(Dataset, object):
+    """
+    Wraps the datasets used inside the ContinualDataset class to allow for a more flexible retrieval of the data.
+    """
+    data: np.ndarray  # Required: the data of the dataset
+    targets: np.ndarray  # Required: the targets of the dataset
+    indexes: np.ndarray  # The original indexes of the items in the complete dataset
+
+    required_fields = ('data', 'targets')  # Required: the fields that must be defined
+    extra_return_fields: Tuple[str] = tuple()  # Optional: extra fields to return from the dataset (must be defined)
+
+    is_init: bool = False
+
+    def __getattr__(self, name: str) -> torch.Any:
+        if self.is_init and hasattr(self.dataset, name):
+            return getattr(self.dataset, name)
+        if name not in vars(self):
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+        return super().__getattr__(name)
+
+    def __setattr__(self, name: str, value: torch.Any) -> None:
+        if self.is_init and hasattr(self.dataset, name):
+            return setattr(self.dataset, name, value)
+        return super().__setattr__(name, value)
+
+    def __hasattr__(self, name: str) -> bool:
+        if self.is_init and name == '__getitem__' or name == '__len__':
+            return hasattr(self.dataset, name)
+        return super().__hasattr__(name)
+
+    def __init__(self, ext_dataset: Dataset, train: bool = False):
+        super().__init__()
+
+        self.dataset = ext_dataset
+        self.train = train
+        assert all([hasattr(self.dataset, field) for field in self.required_fields]), 'The dataset must implement the required fields'
+
+        self.indexes = np.arange(len(self.dataset))
+
+        self._c_iter = 0
+        self.num_times_iterated = 0
+        self.is_init = True
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def add_extra_return_field(self, field_name: str, field_value) -> None:
+        """
+        Adds an extra field to the dataset.
+
+        Args:
+            field_name (str): the name of the field
+            field_value: the value of the field
+        """
+        setattr(self, field_name, field_value)
+        self.extra_return_fields += (field_name,)
+
+    def extend_return_items(self, ret_tuple: Tuple[torch.Tensor, int, torch.Tensor, Optional[torch.Tensor]],
+                            index: int) -> Tuple[torch.Tensor, int, Optional[torch.Tensor], Tuple[Optional[torch.Tensor]]]:
+        """
+        Extends the return tuple with the extra fields defined in `extra_return_fields`.
+
+        Args:
+            ret_tuple (Tuple[torch.Tensor, int, torch.Tensor, Optional[torch.Tensor]]): the current return tuple
+
+        Returns:
+            Tuple[torch.Tensor, int, Optional[torch.Tensor], Sequence[Optional[torch.Tensor]]]: the extended return tuple
+        """
+        tmp_tuple = []
+        for name in self.extra_return_fields:
+            attr = getattr(self, name)
+            c_idx = index if len(attr) == len(self.data) else self.indexes[index]
+            attr = attr[c_idx]
+            tmp_tuple.append(attr)
+
+        ret_tuple = list(ret_tuple) + tmp_tuple
+
+        return tuple(ret_tuple)
+
+    def __iter__(self):
+        self._c_iter = 0
+        self.num_times_iterated += 1
+        return iter(self.dataset)
+
+    def __next__(self):
+        ret_tuple = next(self.dataset)
+        ret_tuple = self.extend_return_items(ret_tuple, self._c_iter)
+        self._c_iter += 1
+        return ret_tuple
+
+    def __getitem__(self, index: int) -> Tuple[torch.Tensor, int, torch.Tensor, Optional[torch.Tensor]]:
+        ret_tuple = self.dataset.__getitem__(index)
+        ret_tuple = self.extend_return_items(ret_tuple, index)
+
+        return ret_tuple
 
 
 class ContinualDataset(object):
     """
     A base class for defining continual learning datasets.
+
+    Data is divided into tasks and loaded only when the `get_data_loaders` method is called.
 
     Attributes:
         NAME (str): the name of the dataset
@@ -39,6 +137,13 @@ class ContinualDataset(object):
         c_task (int): the current task
         args (Namespace): the arguments which contains the hyperparameters
     """
+
+    base_fields = ('SETTING', 'N_CLASSES_PER_TASK', 'N_TASKS', 'SIZE', 'N_CLASSES', 'AVAIL_SCHEDS')
+    optional_fields = ('MEAN', 'STD')
+    composed_fields = {
+        'TRANSFORM': build_torchvision_transform,
+        'TEST_TRANSFORM': build_torchvision_transform
+    }
 
     NAME: str
     SETTING: str
@@ -72,36 +177,63 @@ class ContinualDataset(object):
                     np.random.seed(self.args.seed)
                 self.args.class_order = np.random.permutation(self.N_CLASSES)
 
+        if args.label_perc != 1 or args.label_perc_by_class != 1:
+            self.unlabeled_rng = np.random.RandomState(args.seed)
+
         if args.joint:
-            assert self.SETTING in ['class-il', 'task-il'], 'Joint training is only supported for class-il and task'
-            self.N_CLASSES_PER_TASK = self.N_CLASSES
-            self.N_TASKS = 1
+            if self.SETTING in ['class-il', 'task-il']:
+                # just set the number of classes per task to the total number of classes
+                self.N_CLASSES_PER_TASK = self.N_CLASSES
+                self.N_TASKS = 1
+            else:
+                # bit more tricky, not supported for now
+                raise NotImplementedError('Joint training is only supported for class-il and task-il.'
+                                          'For other settings, please use the `joint` model with `--model=joint` and `--joint=0`')
 
-        if not all((self.NAME, self.SETTING, self.N_CLASSES_PER_TASK, self.N_TASKS, self.SIZE, self.N_CLASSES)):
-            raise NotImplementedError('The dataset must be initialized with all the required fields.')
+        missing_fields = [field for field in self.base_fields if not hasattr(self, field) or getattr(self, field) is None]
+        if len(missing_fields) > 0:
+            raise NotImplementedError('The dataset must be initialized with all the required fields but is missing:', missing_fields)
 
-    def update_default_args(self):
+    @classmethod
+    def set_default_from_config(cls, config: dict, parser: ArgumentParser) -> dict:
         """
-        Updates the default arguments with the ones specified in the dataset class.
-        Default arguments are defined in the DEFAULT_ARGS dictionary and set by the 'set_default_from_args' decorator.
+        Sets the default arguments from the configuration file.
+        The default values will be set in the class attributes and will be available for all instances of the class.
+
+        The arguments that are related to the dataset (i.e., are in the 'base_fields', 'optional_fields', or 'composed_fields') will be removed from the config dictionary to avoid conflicts with the command line arguments.
+
+        Args:
+            config (dict): the configuration file
+            parser (ArgumentParser): the argument parser to set the default values
 
         Returns:
-            Namespace: the updated arguments
+            dict: the configuration file without the dataset-related arguments
         """
 
-        if self.args.dataset not in DEFAULT_ARGS:  # no default args for this dataset
-            return self.args
+        tmp_config = config.copy()
 
-        for k, v in DEFAULT_ARGS[self.args.dataset].items():
-            assert hasattr(self.args, k), f'Argument {k} set by the `set_default_from_args` decorator is not present in the arguments.'
+        _base_fields = [k.casefold() for k in cls.base_fields]
+        _optional_fields = [k.casefold() for k in cls.optional_fields]
+        _composed_fields = [k.casefold() for k in cls.composed_fields.keys()]
 
-            if getattr(self.args, k) is None:
-                setattr(self.args, k, v)
+        for k, v in config.items():
+            if k.casefold() in _base_fields:
+                _k = cls.base_fields[_base_fields.index(k.casefold())]
+                setattr(cls, _k, v)
+                del tmp_config[k]
+            elif k.casefold() in _optional_fields:
+                k = cls.optional_fields[_optional_fields.index(k.casefold())]
+                setattr(cls, k, v)
+                del tmp_config[k]
+            elif k.casefold() in _composed_fields:
+                _k = list(cls.composed_fields.keys())[_composed_fields.index(k.casefold())]
+                setattr(cls, _k, cls.composed_fields[_k](v))
+                del tmp_config[k]
             else:
-                if getattr(self.args, k) != v:
-                    logging.warning('{} set to {} instead of {}.'.format(k, getattr(self.args, k), v))
+                setattr(cls, k, v)
+                parser.set_defaults(**{k: v})
 
-        return self.args
+        return tmp_config
 
     def get_offsets(self, task_idx: int = None):
         """
@@ -128,13 +260,14 @@ class ContinualDataset(object):
     def get_data_loaders(self) -> Tuple[DataLoader, DataLoader]:
         """Creates and returns the training and test loaders for the current task.
         The current training loader and all test loaders are stored in self.
-        :return: the current training and test loaders
+
+        Returns:
+            the current training and test loaders
         """
         raise NotImplementedError
 
-    @staticmethod
-    def get_backbone() -> nn.Module:
-        """Returns the backbone to be used for the current dataset."""
+    def get_backbone() -> str:
+        """Returns the name of the backbone to be used for the current dataset. This can be changes using the `--backbone` argument or by setting it in the `dataset_config`."""
         raise NotImplementedError
 
     @staticmethod
@@ -156,31 +289,6 @@ class ContinualDataset(object):
     def get_denormalization_transform() -> nn.Module:
         """Returns the transform used for denormalizing the current dataset."""
         raise NotImplementedError
-
-    @staticmethod
-    def get_scheduler(model, args: Namespace, reload_optim=True) -> torch.optim.lr_scheduler._LRScheduler:
-        """
-        Returns the scheduler to be used for the current dataset.
-        If `reload_optim` is True, the optimizer is reloaded from the model. This should be done at least ONCE every task
-        to ensure that the learning rate is reset to the initial value.
-        """
-        if args.lr_scheduler is not None:
-            if reload_optim or not hasattr(model, 'opt'):
-                model.opt = model.get_optimizer()
-            # check if lr_scheduler is in torch.optim.lr_scheduler
-            supported_scheds = {sched_name.lower(): sched_name for sched_name in dir(scheds) if sched_name.lower() in ContinualDataset.AVAIL_SCHEDS}
-            sched = None
-            if args.lr_scheduler.lower() in supported_scheds:
-                if args.lr_scheduler.lower() == 'multisteplr':
-                    assert args.lr_milestones is not None, 'MultiStepLR requires `--lr_milestones`'
-                    sched = getattr(scheds, supported_scheds[args.lr_scheduler.lower()])(model.opt,
-                                                                                         milestones=args.lr_milestones,
-                                                                                         gamma=args.sched_multistep_lr_gamma)
-
-            if sched is None:
-                raise ValueError('Unknown scheduler: {}'.format(args.lr_scheduler))
-            return sched
-        return None
 
     def get_iters(self):
         """Returns the number of iterations to be used for the current dataset."""
@@ -211,23 +319,31 @@ class ContinualDataset(object):
 
 
 def _get_mask_unlabeled(train_dataset, setting: ContinualDataset):
-    if setting.args.label_perc == 1:
+    if setting.args.label_perc == 1 and setting.args.label_perc_by_class == 1:
         return np.zeros(train_dataset.targets.shape[0]).astype('bool')
     else:
-        lpc = int(setting.args.label_perc * (train_dataset.targets.shape[0] // setting.N_CLASSES_PER_TASK))
-        ind = np.indices(train_dataset.targets.shape)[0]
-        mask = []
-        for i_label, _ in enumerate(np.unique(train_dataset.targets)):
-            partial_targets = train_dataset.targets[train_dataset.targets == i_label]
-            current_mask = np.random.choice(partial_targets.shape[0], max(
-                partial_targets.shape[0] - lpc, 0), replace=False)
+        if setting.args.label_perc != 1:  # label perc by task
+            lpt = int(setting.args.label_perc * (train_dataset.targets.shape[0] // setting.N_CLASSES_PER_TASK))
+            ind = np.indices(train_dataset.targets.shape)[0]
+            mask = []
+            for lab in np.unique(train_dataset.targets):
+                partial_targets = train_dataset.targets[train_dataset.targets == lab]
+                current_mask = setting.unlabeled_rng.choice(partial_targets.shape[0], max(
+                    partial_targets.shape[0] - lpt, 0), replace=False)
 
-            mask = np.append(mask, ind[train_dataset.targets == i_label][current_mask])
+                mask.append(ind[train_dataset.targets == lab][current_mask])
+        else:  # label perc by class
+            unique_labels, label_count_by_class = np.unique(train_dataset.targets, return_counts=True)
+            lpcs = (setting.args.label_perc_by_class * label_count_by_class).astype(np.int32)
+            mask = []
+            for lab, count, lpc in zip(unique_labels, label_count_by_class, lpcs):
+                current_mask = setting.unlabeled_rng.choice(count, max(count - lpc, 0), replace=False)
+                mask.append(np.where(train_dataset.targets == lab)[0][current_mask])
 
-        return mask.astype(np.int32)
+        return np.array(mask).astype(np.int32)
 
 
-def _prepare_data_loaders(train_dataset, test_dataset, setting: ContinualDataset):
+def _prepare_data_loaders(train_dataset: MammothDatasetWrapper, test_dataset: MammothDatasetWrapper, setting: ContinualDataset):
     if isinstance(train_dataset.targets, list) or not train_dataset.targets.dtype is torch.long:
         train_dataset.targets = torch.tensor(train_dataset.targets, dtype=torch.long)
     if isinstance(test_dataset.targets, list) or not test_dataset.targets.dtype is torch.long:
@@ -254,6 +370,10 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     Returns:
         the training and test loaders
     """
+    # Initializations
+    train_dataset = MammothDatasetWrapper(train_dataset, train=True)
+    test_dataset = MammothDatasetWrapper(test_dataset, train=False)
+
     if setting.SETTING == 'task-il' or setting.SETTING == 'class-il':
         setting.c_task += 1
 
@@ -262,19 +382,30 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
     if not isinstance(test_dataset.targets, np.ndarray):
         test_dataset.targets = np.array(test_dataset.targets)
 
+    # Permute classes
     if setting.args.permute_classes:
         train_dataset.targets = setting.args.class_order[train_dataset.targets]
         test_dataset.targets = setting.args.class_order[test_dataset.targets]
 
+    # Setup validation
     if setting.args.validation:
         train_idxs, val_idxs = get_validation_indexes(setting.args.validation, train_dataset, setting.args.seed)
 
         test_dataset.data = train_dataset.data[val_idxs]
         test_dataset.targets = train_dataset.targets[val_idxs]
+        test_dataset.indexes = train_dataset.indexes[val_idxs]
 
         train_dataset.data = train_dataset.data[train_idxs]
         train_dataset.targets = train_dataset.targets[train_idxs]
+        train_dataset.indexes = train_dataset.indexes[train_idxs]
 
+    # Apply noise to the labels
+    if setting.args.noise_rate > 0:
+        train_dataset.add_extra_return_field('true_labels', train_dataset.targets.copy())  # save original targets before adding noise
+        noisy_targets = build_noisy_labels(train_dataset.targets, setting.args)
+        train_dataset.targets = noisy_targets  # overwrite the targets with the noisy ones
+
+    # Split the dataset into tasks
     start_c, end_c = setting.get_offsets()
 
     if setting.SETTING == 'class-il' or setting.SETTING == 'task-il':
@@ -292,12 +423,16 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
 
         test_dataset.data = test_dataset.data[test_mask]
         test_dataset.targets = test_dataset.targets[test_mask]
+        test_dataset.indexes = test_dataset.indexes[test_mask]
 
         train_dataset.data = train_dataset.data[train_mask]
         train_dataset.targets = train_dataset.targets[train_mask]
+        train_dataset.indexes = train_dataset.indexes[train_mask]
 
+    # Finalize data, apply unlabeled mask
     train_dataset, test_dataset = _prepare_data_loaders(train_dataset, test_dataset, setting)
 
+    # Create dataloaders
     train_loader = create_seeded_dataloader(setting.args, train_dataset,
                                             batch_size=setting.args.batch_size, shuffle=True)
     test_loader = create_seeded_dataloader(setting.args, test_dataset,

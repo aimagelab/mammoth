@@ -11,7 +11,6 @@ import torchvision.transforms as transforms
 from PIL import Image
 from torchvision.datasets import MNIST
 
-from backbone.MNISTMLP import MNISTMLP
 from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
                                               store_masked_loaders)
 from utils.conf import base_path
@@ -88,10 +87,9 @@ class SequentialMNIST(ContinualDataset):
         train, test = store_masked_loaders(train_dataset, test_dataset, self)
         return train, test
 
-    @staticmethod
+    @set_default_from_args("backbone")
     def get_backbone():
-        return MNISTMLP(28 * 28, SequentialMNIST.N_TASKS
-                        * SequentialMNIST.N_CLASSES_PER_TASK)
+        return "mnistmlp"
 
     @staticmethod
     def get_transform():
