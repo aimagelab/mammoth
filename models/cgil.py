@@ -8,7 +8,7 @@ from models.cgil_utils.cgil_utils import Model
 from models.utils.future_model import FutureModel
 
 
-class IncrementalCoopVAE(FutureModel):
+class CGIL(FutureModel):
     NAME = 'cgil'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
 
