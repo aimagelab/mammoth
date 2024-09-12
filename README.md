@@ -169,7 +169,7 @@ Mammoth currently includes **21** datasets, covering *toy classification problem
 Expand to see the BibTex!
 
 <ul>
-<li><details><summary>CLIP with Generative Latent Replay: a Strong Baseline for Incremental Learning (<b>BMVC 2024</b>) <a href=https://arxiv.org/abs/2407.15793>paper</a></summary>
+<li><details><summary>CLIP with Generative Latent Replay: a Strong Baseline for Incremental Learning (<b>BMVC 2024 oral</b>) <a href=https://arxiv.org/abs/2407.15793>paper</a></summary>
 
 <pre><code>@inproceedings{heng2022enhancing,
   title={CLIP with Generative Latent Replay: a Strong Baseline for Incremental Learning},
