@@ -1,5 +1,6 @@
 
 
+import logging
 from typing import Tuple
 
 import torch
@@ -43,17 +44,33 @@ class SequentialCIFAR100224(ContinualDataset):
     SIZE = (224, 224)
     MEAN, STD = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
 
-    TRANSFORM = transforms.Compose(
-        [transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BICUBIC),
-         transforms.RandomHorizontalFlip(p=0.5),
-         transforms.ToTensor(),
-         transforms.Normalize(MEAN, STD)]
-    )
+    TRANSFORM = transforms.Compose([
+        transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BICUBIC),
+        transforms.RandomHorizontalFlip(p=0.5),
+        transforms.ToTensor(),
+        transforms.Normalize(MEAN, STD)
+    ])
     TEST_TRANSFORM = transforms.Compose([
         transforms.Resize(224, interpolation=InterpolationMode.BICUBIC),
         transforms.ToTensor(),
         transforms.Normalize(MEAN, STD)
     ])
+
+    def __init__(self, args, transform_type: str = 'weak'):
+        super().__init__(args)
+
+        assert transform_type in ['weak', 'strong'], "Transform type must be either 'weak' or 'strong'."
+
+        if transform_type == 'strong':
+            logging.info("Using strong augmentation for CIFAR100-224")
+            self.TRANSFORM = transforms.Compose(
+                [transforms.RandomResizedCrop(224, interpolation=InterpolationMode.BICUBIC),
+                 transforms.RandomHorizontalFlip(p=0.5),
+                 transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.1),
+                 transforms.RandomRotation(15),
+                 transforms.ToTensor(),
+                 transforms.Normalize(SequentialCIFAR100224.MEAN, SequentialCIFAR100224.STD)]
+            )
 
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = self.TRANSFORM

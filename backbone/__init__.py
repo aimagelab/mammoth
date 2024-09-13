@@ -10,6 +10,8 @@ import torch.nn as nn
 
 from typing import Callable
 
+from utils import register_dynamic_module_fn
+
 REGISTERED_BACKBONES = dict()  # dictionary containing the registered networks. Template: {name: {'class': class, 'parsable_args': parsable_args}}
 
 
@@ -156,42 +158,8 @@ def register_backbone(name: str) -> Callable:
     Args:
         name: the name of the backbone network
     """
-    name = name.replace('-', '_').lower()
 
-    def register_network_fn(cls: MammothBackbone | Callable) -> MammothBackbone:
-        # check if the name is already registered
-        if name in REGISTERED_BACKBONES:
-            raise ValueError(f"Name {name} already registered!")
-
-        # check if `cls` is a subclass of `MammothBackbone`
-        if inspect.isfunction(cls):
-            signature = inspect.signature(cls)
-        elif isinstance(cls, MammothBackbone) or issubclass(cls, MammothBackbone):
-            signature = inspect.signature(cls.__init__)
-        else:
-            raise ValueError("The registered class must be a subclass of MammothBackbone or a function returning MammothBackbone")
-
-        parsable_args = {}
-        for arg_name, value in list(signature.parameters.items()):
-            if arg_name != 'self' and not arg_name.startswith('_'):
-                default = value.default
-                tp = str if default is inspect.Parameter.empty or value.annotation is inspect._empty else type(default)
-                if default is inspect.Parameter.empty and arg_name != 'num_classes':
-                    parsable_args[arg_name] = {
-                        'type': tp,
-                        'required': True
-                    }
-                else:
-                    parsable_args[arg_name] = {
-                        'type': tp,
-                        'required': False,
-                        'default': default if default is not inspect.Parameter.empty else None
-                    }
-
-        REGISTERED_BACKBONES[name] = {'class': cls, 'parsable_args': parsable_args}
-        return cls
-
-    return register_network_fn
+    return register_dynamic_module_fn(name, REGISTERED_BACKBONES, MammothBackbone)
 
 
 def get_backbone_class(name: str, return_args=False) -> MammothBackbone:

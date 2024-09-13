@@ -56,15 +56,15 @@ Attributes and utility methods
 
 The base class (:ref:`ContinualModel <module-models.utils.continual_model>`) includes the **NAME** and **COMPATIBILITY** attributes, which are used to identify the model and to check its compatibility with the chosen **setting** (see :ref:`module-datasets` for more details). The **NAME** attribute is a string that identifies the model, while the **COMPATIBILITY** attribute is a list of strings that identify the compatible settings. For example, :ref:`module-models.der` includes compatibility with ``['class-il', 'domain-il', 'task-il', 'general-continual']`` settings, and thus is compatible with all the datasets included in the framework. However, as it includes no compatibility with the ``'cssl'`` setting, it cannot take advantage of unlabeled samples (available if ``--label_perc_by_task`` or ``--label_perc_by_class`` is set to a value between ``0`` and ``1``).
 
-Backbone model
-~~~~~~~~~~~~~~
+Basic model class
+~~~~~~~~~~~~~~~~~
 
-The **ContinualModel** loads the backbone model (i.e., the model used to compute the output of the model) during the initialization. By default, the backbone model is defined by the chosen **dataset** (see :ref:`module-datasets` for more details). Once loaded, the backbone model can be accessed through the **net** attribute.
+The **ContinualModel** loads the backbone model (i.e., the model used to compute the output of the model, see :ref:`module-backbones`) during the initialization. By default, the backbone model is defined by the chosen **dataset** (see :ref:`module-datasets` for more details), but it can also be set with the ``--backbone`` CLI argument. Once loaded, the backbone model can be accessed through the **net** attribute.
 
-Begin and end task
-~~~~~~~~~~~~~~~~~~
+Handling Begin and End of tasks and epochs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Besides the **observe** and **forward** methods, the **ContinualModel** provides the **begin_task** and **end_task** methods, which are called at the beginning and at the end of each task, respectively. These methods can be overridden to implement custom behavior. For example, the **end_task** method can be used to save the model parameters at the end of each task.
+Besides the **observe** and **forward** methods, the **ContinualModel** provides the **begin_task** and **end_task** methods, which are called at the beginning and at the end of each task respectively, and the **begin_epoch** and **end_epoch** methods, which are called at the beginning and at the end of each epoch respectively. These methods can be overridden to implement custom behavior. For example, the **end_task** method can be used to save the model parameters at the end of each task.
 
 Automatic attributes
 ~~~~~~~~~~~~~~~~~~~~
@@ -138,6 +138,28 @@ The **get_parser** method is used to define the model-specific hyper-parameters.
     To remain backward compatible with the previous version of the framework, the `parser` parameter is *optional*. In this case, the method must create a new `argparse.ArgumentParser <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser>`_ object and return it.
 
 Once the model is selected with the command line option **--model**, the hyper-parameters are loaded and can be viewed with ``--help``.
+
+.. _model-configurations:
+
+Model configurations
+~~~~~~~~~~~~~~~~~~~~~
+
+To simplify the selection of the model hyper-parameters, the framework includes a few predefined configurations that can be loaded with the ``--model_config`` argument. The configurations are defined in the **models/configs** folder and can define:
+
+- **default**: the default configuration for the model, which does *NOT* depend on the dataset or buffer size. This configuration is used if the ``--model_config`` argument is set to ``default`` (or ``base``). This is the default behaviour. A similar effect of setting the ``--model_config`` argument to ``default`` can be achieved by setting the default values in the **get_parser** method, using the **set_defaults** method of the `argparse.ArgumentParser <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser>`_ object. The default values set in the **get_parser** method are always loaded, but can be overridden by the CLI arguments.
+
+- **best**: the best configuration for the model for a particular dataset (and buffer size, if applicable). This configuration is used if the ``--model_config`` argument is set to ``best``.
+
+Each configuration is defined in a file named **<model_name>.yaml** and placed in the **models/configs** folder. The configuration file is a `YAML <https://yaml.org/>`_ file that defines the hyper-parameters of the model. The hyper-parameters are defined as a dictionary with the hyper-parameter name as the key and the hyper-parameter value as the value. All hyper-parameters defined under the key ``default`` are loaded with the ``default`` configuration, while only the hyper-parameters defined at under the dataset name (and buffer size, if applicable) are loaded with the ``best`` configuration. For example, the following configuration file for **my_model** defines a default `optimizer` for the model, a `learning_rate` when trained on the **seq-cifar100** dataset, and a `optim_wd` when the buffer size is **100**:
+
+.. code-block:: yaml
+
+    default:
+        optimizer: adam # this optimizer is set to 'adam' by default (i.e., is ALWAYS loaded)
+    seq-cifar100: # all the hyper-parameters defined under 'seq-cifar100' are loaded only if the dataset is 'seq-cifar100'
+        learning_rate: 0.001
+        100: # all the hyper-parameters defined under '100' are loaded only if the buffer size is '100'
+            optim_wd: 1e-5
 
 Other utility methods
 ~~~~~~~~~~~~~~~~~~~~~

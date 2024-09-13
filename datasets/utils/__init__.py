@@ -128,6 +128,7 @@ def load_dataset_config(dataset_config: str, dataset: str) -> dict:
         dict: the configuration of the dataset
     """
     if dataset_config:
+        assert isinstance(dataset_config, str), f"Invalid dataset configuration file: {dataset_config}. Specify a string."
         filepath = smart_joint('datasets', 'configs', dataset, dataset_config + '.yaml')
         if not os.path.exists(filepath):
             raise FileNotFoundError(f'Dataset configuration file {dataset_config} not found in {filepath}')

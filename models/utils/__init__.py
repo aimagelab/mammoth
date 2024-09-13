@@ -51,5 +51,11 @@ def load_model_config(args: Namespace, buffer_size: int = None) -> dict:
         assert args.dataset in config, f'No best configuration found in {filepath} for dataset {args.dataset}.'
         if buffer_size is not None:
             assert buffer_size in config[args.dataset], f'No best configuration found in {filepath} for buffer size {buffer_size}.'
-            return {**default_config, **config[args.dataset][buffer_size]}
+
+            buffer_config = config[args.dataset][buffer_size]  # get arguments for the buffer size only
+
+            other_dataset_config = config[args.dataset]  # get arguments for the dataset only
+            del other_dataset_config[buffer_size]
+
+            return {**default_config, **other_dataset_config, **buffer_config}  # merge all arguments, with the buffer size overwriting the dataset
         return {**default_config, **config[args.dataset]}

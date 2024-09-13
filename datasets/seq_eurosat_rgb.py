@@ -154,10 +154,6 @@ class SequentialEuroSatRgb(ContinualDataset):
         self.class_names = classes
         return self.class_names
 
-    def __init__(self, args):
-        super().__init__(args)
-        self.args = args
-
     def get_data_loaders(self):
         train_dataset = MyEuroSat(base_path() + 'eurosat', split='train',
                                   transform=self.TRANSFORM)

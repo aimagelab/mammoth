@@ -37,14 +37,9 @@ sys.path.append(mammoth_path + '/models')
 from utils import setup_logging
 setup_logging()
 
-from utils.conf import base_path, get_device
-from models import get_model
-from datasets import get_dataset
-from utils.training import train
-from models.utils.future_model import FutureModel
-from backbone import get_backbone
-
 if __name__ == '__main__':
+    logging.info(f"Running Mammoth! on {socket.gethostname()}. (if you see this message more than once, you are probably importing something wrong)")
+
     from utils.conf import warn_once
     try:
         if os.getenv('MAMMOTH_TEST', '0') == '0':
@@ -94,6 +89,55 @@ def check_args(args, dataset=None):
         assert issubclass(dataset.__class__, ContinualDataset) or issubclass(dataset.__class__, GCLDataset), "Dataset must be an instance of `ContinualDataset` or `GCLDataset`"
 
 
+def load_configs(parser: ArgumentParser) -> dict:
+    from models import get_model_class
+    from models.utils import load_model_config
+
+    from datasets import get_dataset_class
+    from datasets.utils import get_default_args_for_dataset, load_dataset_config
+    from utils.args import fix_model_parser_backwards_compatibility, get_single_arg_value
+
+    args = parser.parse_known_args()[0]
+
+    # load the model configuration
+    # - get the model parser and fix the get_parser function for backwards compatibility
+    model_parser = get_model_class(args).get_parser(parser)
+    parser = fix_model_parser_backwards_compatibility(parser, model_parser)
+    is_rehearsal = any([p for p in parser._actions if p.dest == 'buffer_size'])
+    buffer_size = None
+    if is_rehearsal:  # get buffer size
+        buffer_size = get_single_arg_value(parser, 'buffer_size')
+        assert buffer_size is not None, "Buffer size not found in the arguments. Please specify it with --buffer_size."
+        try:
+            buffer_size = int(buffer_size)  # try convert to int, check if it is a valid number
+        except ValueError:
+            raise ValueError(f'--buffer_size must be an integer but found {buffer_size}')
+
+    # - get the defaults that were set with `set_defaults` in the parser
+    base_config = parser._defaults.copy()
+
+    # - get the configuration file for the model
+    model_config = load_model_config(args, buffer_size=buffer_size)
+
+    # update the dataset class with the configuration
+    dataset_class = get_dataset_class(args)
+
+    # load the dataset configuration. If the model specified a dataset config, use it. Otherwise, use the dataset configuration
+    base_dataset_config = get_default_args_for_dataset(args.dataset)
+    if 'dataset_config' in model_config:  # if the dataset specified a dataset config, use it
+        cnf_file_dataset_config = load_dataset_config(model_config['dataset_config'], args.dataset)
+    else:
+        cnf_file_dataset_config = load_dataset_config(args.dataset_config, args.dataset)
+
+    dataset_config = {**base_dataset_config, **cnf_file_dataset_config}
+    dataset_config = dataset_class.set_default_from_config(dataset_config, parser)  # the updated configuration file is cleaned from the dataset-specific arguments
+
+    # - merge the dataset and model configurations, with the model configuration taking precedence
+    config = {**dataset_config, **base_config, **model_config}
+
+    return config
+
+
 def parse_args():
     """
     Parse command line arguments for the mammoth program and sets up the `args` object.
@@ -104,75 +148,49 @@ def parse_args():
     from utils import create_if_not_exists
     from utils.conf import warn_once
     from utils.args import add_initial_args, add_management_args, add_experiment_args, add_configuration_args, clean_dynamic_args, \
-        check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args, fix_model_parser_backwards_compatibility, update_cli_defaults, \
-        get_single_arg_value
+        check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args, update_cli_defaults, get_single_arg_value
 
-    from models import get_all_models, get_model_class
-    from models.utils import load_model_config
-
-    from datasets import get_dataset_class
-    from datasets.utils import get_default_args_for_dataset, load_dataset_config
+    from models import get_all_models
 
     check_multiple_defined_arg_during_string_parse()
 
     parser = ArgumentParser(description='Mammoth - An Extendible (General) Continual Learning Framework for Pytorch', allow_abbrev=False)
-    add_initial_args(parser)  # 1) add arguments that include model, dataset, and backbone. These define the rest of the arguments.
-    args = parser.parse_known_args()[0]
 
-    models_dict = get_all_models()
-    if args.model is None:
-        print('No model specified. Please specify a model with --model to see all other options.')
-        print('Available models are: {}'.format(list(models_dict.keys())))
-        sys.exit(1)
+    # 1) add arguments that include model, dataset, and backbone. These define the rest of the arguments.
+    #   the backbone is optional as may be set by the dataset or the model. The dataset and model are required.
+    add_initial_args(parser)
+    args = parser.parse_known_args()[0]
 
     if args.backbone is None:
-        warn_once('No backbone specified. Using default backbone (set by the dataset).')
+        logging.warning('No backbone specified. Using default backbone (set by the dataset).')
 
-    # 2) add the rest of the main Mammoth arguments
+    # 2) load the configuration arguments for the dataset and model
     add_configuration_args(parser, args)
-    args = parser.parse_known_args()[0]
 
+    config = load_configs(parser)
+
+    # 3) add the remaining arguments
+
+    # - get the chosen backbone. The CLI argument takes precedence over the configuration file.
+    backbone = args.backbone
+    if backbone is None:
+        if 'backbone' in config:
+            backbone = config['backbone']
+        else:
+            backbone = get_single_arg_value(parser, 'backbone')
+    assert backbone is not None, "Backbone not found in the arguments. Please specify it with --backbone or in the model or dataset configuration file."
+
+    # - add the dynamic arguments defined by the chosen dataset and model
+    add_dynamic_parsable_args(parser, args.dataset, backbone)
+
+    # - add the main Mammoth arguments
     add_management_args(parser)
     add_experiment_args(parser)
 
-    # 3) load the default arguments defined by the dataset
-    parser.set_defaults(**get_default_args_for_dataset(args.dataset))
+    # 4) Once all arguments are in the parser, we can set the defaults using the loaded configuration
+    update_cli_defaults(parser, config)
 
-    # 4) load the configuration file for the dataset and update the parser with the dataset-specific arguments
-    dataset_config = load_dataset_config(args.dataset_config, args.dataset)
-    dataset_class = get_dataset_class(args)
-    dataset_class.set_default_from_config(dataset_config, parser)
-
-    # 5) get the model parser and fix the get_parser function for backwards compatibility
-    model_parser = get_model_class(args).get_parser(parser)
-    parser = fix_model_parser_backwards_compatibility(parser, model_parser)
-    is_rehearsal = any([p for p in parser._actions if p.dest == 'buffer_size'])
-    buffer_size = None
-    if is_rehearsal:  # get buffer size
-        buffer_size = get_single_arg_value(parser, 'buffer_size')
-        if buffer_size is not None:
-            try:
-                buffer_size = int(buffer_size)  # try convert to int, check if it is a valid number
-            except ValueError:
-                raise ValueError(f'--buffer_size must be an integer but found {buffer_size}')
-
-    # 6) add the configuration file for the model and update the parser with the model-specific arguments
-    model_config = load_model_config(args, buffer_size=buffer_size)
-    if 'dataset_config' in model_config:  # if the dataset specified a dataset config, use it
-        dataset_config = load_dataset_config(model_config['dataset_config'], args.dataset)
-        dataset_class.set_default_from_config(dataset_config, parser)
-    update_cli_defaults(parser, model_config, is_rehearsal=is_rehearsal)
-
-    args = parser.parse_known_args()[0]
-
-    if is_rehearsal:
-        assert args.buffer_size is not None, "Buffer size not found in the arguments."
-
-    # 7) add dynamic args defined by the backbones, datasets, etc.
-    # TODO: ADD DATASET DYNAMIC ARGS
-    add_dynamic_parsable_args(parser, args)
-
-    # 8) parse the arguments
+    # 5) parse the arguments
     if args.load_best_args:
         from utils.best_args import best_args
 
@@ -198,10 +216,11 @@ def parse_args():
     else:
         args = parser.parse_args()
 
-    # 9) clean dynamically loaded args
-    args = clean_dynamic_args(args)  # TODO: CHECK IF NEEDED
+    # 6) clean dynamically loaded args
+    args = clean_dynamic_args(args)
 
-    # 10) final checks and updates to the arguments
+    # 7) final checks and updates to the arguments
+    models_dict = get_all_models()
     args.model = models_dict[args.model]
 
     if args.lr_scheduler is not None:
@@ -290,6 +309,13 @@ def extend_args(args, dataset):
 
 
 def main(args=None):
+    from utils.conf import base_path, get_device
+    from models import get_model
+    from datasets import get_dataset
+    from utils.training import train
+    from models.utils.future_model import FutureModel
+    from backbone import get_backbone
+
     lecun_fix()
     if args is None:
         args = parse_args()
@@ -316,6 +342,8 @@ def main(args=None):
     check_args(args, dataset=dataset)
 
     backbone = get_backbone(args)
+    logging.info(f"Using backbone: {args.backbone}")
+
     if args.code_optimization == 3:
         # check if the model is compatible with torch.compile
         # from https://pytorch.org/tutorials/intermediate/torch_compile_tutorial.html

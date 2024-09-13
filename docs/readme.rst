@@ -29,7 +29,11 @@ With Mammoth, nothing is set in stone. You can easily add new models, datasets, 
 
 **NEW: DATASET CONFIGURATIONS** We now support *configuration files* for the datasets with the new ``--dataset_config`` argument. This allows for more flexibility in the dataset definition. See more in :ref:`dataset-configurations`.
 
-**NEW: REGISTRATION AND SELECTION OF BACKBONES** Backbone architectures can now be registered and made globally available with the `register_backbone` decorator. Once registered, they can be easily accessed with the new ``--backbone`` argument. See more in :ref:`backbone-registration`.
+**NEW: MODEL CONFIGURATIONS** Default and best arguments for a particular dataset (and buffer size, if applicable) can now be loaded with the ``--model_config`` argument. This can be set to ``default`` (or ``base``) or ``best``. The ``default`` configuration does not depend on datasets or buffers and is the default configuration for the model. More info in :ref:`model-configurations`.
+
+**NEW: REGISTRATION OF BACKBONES AND DATASETS** Backbone architectures and datasets can now be registered and made globally available with the `register_backbone` and `register_dataset` decorators. An overview of such a functionality is available :ref:`HERE <module-dynamic-registration>`. For the backbones, this allows to make them easily accessible with the new ``--backbone`` argument (see :ref:`backbone-registration`). For the datasets, this is already partially supported following the :ref:`legacy naming convention <dataset-naming-convention>`. However, the new registration system allows for more flexibility and control over the datasets. 
+
+**NEW: DYNAMIC ARGUMENTS FOR DATASETS AND BACKBONES** Datasets and backbones may need specific arguments to be passed to them. Instead of having to specify ALL the arguments of ALL the datasets and backbones and having a big list of unreadable parameters added to the main parser, we now support *dynamically* creating and adding the arguments *only for the chosen* dataset or backbone. See more in :ref:`dynamic-arguments`.
 
 .. list-table::
    :widths: 15 15 15 15 15 15
