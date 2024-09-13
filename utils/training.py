@@ -65,8 +65,8 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, retur
     Returns:
         a tuple of lists, containing the class-il and task-il accuracy for each task. If return_loss is True, the loss is also returned as a third element.
     """
-    status = model.net.training
-    model.net.eval()
+    status = model.training
+    model.eval()
     accs, accs_mask_classes = [], []
     n_classes = dataset.get_offsets()[1]
     loss_fn = dataset.get_loss()
@@ -119,7 +119,7 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, retur
         accs_mask_classes.append(correct_mask_classes / total * 100)
     pbar.close()
 
-    model.net.train(status)
+    model.train(status)
     if return_loss:
         return accs, accs_mask_classes, avg_loss / total
     return accs, accs_mask_classes
