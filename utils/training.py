@@ -25,6 +25,7 @@ from utils.checkpoints import mammoth_load_checkpoint
 from utils.loggers import log_extra_metrics, log_accs, Logger
 from utils.schedulers import get_scheduler
 from utils.stats import track_system_stats
+from utils import disable_logging
 
 try:
     import wandb
@@ -280,10 +281,11 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         if args.eval_future:
             assert isinstance(model, FutureModel), "Model must be an instance of FutureModel to evaluate on future tasks"
             eval_dataset = get_dataset(args)
-            for _ in range(dataset.N_TASKS):
-                eval_dataset.get_data_loaders()
-                model.change_transform(eval_dataset)
-                del eval_dataset.train_loader
+            with disable_logging():
+                for _ in range(dataset.N_TASKS):
+                    eval_dataset.get_data_loaders()
+                    model.change_transform(eval_dataset)
+                    del eval_dataset.train_loader
         else:
             eval_dataset = dataset
 
@@ -401,7 +403,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             if args.eval_future:
                 avg_transf = np.mean([np.mean(task_) for task_ in results_transf])
-                print(f"Transfer Metrics  -  AVG Transfer {avg_transf:.2f}")
+                print(f"Transfer Metrics  -  AVG Transfer {avg_transf:.2f}", file=sys.stderr)
                 if t < dataset.N_TASKS - 1:
                     log_accs(args, logger, transf_accs, t, dataset.SETTING, future=True)
 
