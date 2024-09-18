@@ -5,7 +5,7 @@ import sys
 import pytest
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.main import main
+from main import main
 
 
 @pytest.mark.parametrize('backbone', ['resnet18', 'resnet34'])

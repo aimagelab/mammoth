@@ -3,7 +3,7 @@ import sys
 
 import torch
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.main import main
+from main import main
 
 
 def test_der_cifar100_defaultscheduler(capsys):

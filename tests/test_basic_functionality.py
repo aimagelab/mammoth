@@ -27,7 +27,7 @@ def test_main_import_rehearsal(caplog):
                 '--debug_mode',
                 '1']
 
-    from utils.main import main
+    from main import main
     main()
 
     # check if the main file was imported multiple times
@@ -56,7 +56,7 @@ def test_main_import_base(caplog):
                 '--debug_mode',
                 '1']
 
-    from utils.main import main
+    from main import main
     main()
 
     # check if the main file was imported multiple times
