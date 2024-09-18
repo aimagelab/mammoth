@@ -58,7 +58,6 @@ def update_cli_defaults(parser: ArgumentParser, cnf: dict) -> None:
     Args:
         parser: the argument parser
         cnf: the configuration dictionary
-        is_rehearsal: if the arguments are for a rehearsal-based method
 
     Returns:
         None

@@ -1,4 +1,4 @@
-seq-cifar100-224:
+seq-cropdisease:
   batch_size: 128
   dataset_config: dap
   enable_test_time_majority_voting: 1

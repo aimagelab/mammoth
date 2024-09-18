@@ -6,6 +6,7 @@
 import sys
 from copy import deepcopy
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.optim import Adam
@@ -15,13 +16,14 @@ from utils import binary_to_boolean_type
 from utils.args import add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer, icarl_replay
+from utils.conf import create_seeded_dataloader
 
-# based on https://github.com/sairin1202/BIC
+# loosely based on https://github.com/sairin1202/BIC
 
 
-class BiC(ContinualModel):
+class BiCV2(ContinualModel):
     """Bias Correction."""
-    NAME = 'bic'
+    NAME = 'bic_v2'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
@@ -37,16 +39,42 @@ class BiC(ContinualModel):
         parser.add_argument('--wd_reg', type=float, default=None,
                             help='bias injector.')
         parser.add_argument('--distill_after_bic', type=binary_to_boolean_type, default=1)
+
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
         super().__init__(backbone, loss, args, transform, dataset=dataset)
 
-        self.buffer = Buffer(self.args.buffer_size)
+        self.max_val_size = int(self.args.valset_split * self.args.buffer_size)
+        self.buffer = Buffer(self.args.buffer_size - self.max_val_size)
 
         self.lamda = 0
 
     def begin_task(self, dataset):
+        if self.current_task == 0:
+            self.val_dataset = deepcopy(dataset.train_loader.dataset)
+
+        perm = torch.randperm(len(self.val_dataset))
+        if self.current_task == 0:  # fill validation set with all samples
+            val_idxs = perm[:self.max_val_size]
+            other_idxs = perm[self.max_val_size:]
+            self.val_dataset.data = self.val_dataset.data[val_idxs]
+            self.val_dataset.targets = self.val_dataset.targets[val_idxs]
+        else:  # make space for new samples, keep proportion of old samples
+            cur_task_items = self.max_val_size // (self.current_task + 1)
+            remaining_items = self.max_val_size - cur_task_items
+            val_idxs = perm[:cur_task_items]
+            other_idxs = perm[cur_task_items:]
+            new_data = dataset.train_loader.dataset.data[val_idxs]
+            new_targets = dataset.train_loader.dataset.targets[val_idxs]
+            self.val_dataset.data = np.concatenate(self.val_dataset.data[:remaining_items], new_data)
+            self.val_dataset.targets = np.concatenate(self.val_dataset.targets[:remaining_items], new_targets)
+
+        self.val_loader = create_seeded_dataloader(self.args, self.val_dataset, batch_size=self.args.batch_size, drop_last=False, shuffle=True)
+
+        dataset.train_loader.dataset.data = dataset.train_loader.dataset.data[other_idxs]  # remove validation set from training set
+        dataset.train_loader.dataset.targets = dataset.train_loader.dataset.targets[other_idxs]
+
         if self.current_task > 0:
 
             self.old_net = deepcopy(self.net.eval())
@@ -55,7 +83,7 @@ class BiC(ContinualModel):
             self.net.train()
             self.lamda = 1 / (self.current_task + 1)
 
-            icarl_replay(self, dataset, val_set_split=self.args.valset_split)
+            icarl_replay(self, dataset)
 
         if hasattr(self, 'corr_factors'):
             del self.corr_factors
@@ -95,11 +123,10 @@ class BiC(ContinualModel):
 
                     self.biasopt.zero_grad()
                     with torch.no_grad():
-                        out = self.forward(inputs)
+                        tout = self.forward(inputs)
 
                     start_last_task = self.n_past_classes
                     end_last_task = self.n_seen_classes
-                    tout = out + 0
                     tout[:, start_last_task:end_last_task] *= corr_factors[1].repeat_interleave(end_last_task - start_last_task)
                     tout[:, start_last_task:end_last_task] += corr_factors[0].repeat_interleave(end_last_task - start_last_task)
 

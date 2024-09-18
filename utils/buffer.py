@@ -16,7 +16,7 @@ from utils.augmentations import apply_transform
 from utils.conf import create_seeded_dataloader, get_device
 
 
-def icarl_replay(self: ContinualModel, dataset, val_set_split=0):
+def icarl_replay(self: ContinualModel, dataset: ContinualDataset, val_set_split=0):
     """
     Merge the replay buffer with the current task data.
     Optionally split the replay buffer into a validation set.

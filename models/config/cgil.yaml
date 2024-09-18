@@ -10,3 +10,4 @@ seq-eurosat-rgb:
   num_epochs_alignment: 150
   optim_alignment: adamw
   seed: 1992
+  permute_classes: 1

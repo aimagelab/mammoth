@@ -55,18 +55,17 @@ class MoEAdapters(FutureModel):
     @staticmethod
     def get_parser(parser) -> ArgumentParser:
         # Frozen hyperparameters
-        parser.set_defaults(batch_size=8, n_epochs=1, optimizer='adamw', lr=1e-3, scheduler_mode='iter', eval_future=1)
-        parser.add_argument("--virtual_bs_n", type=int, default=8, help="Virtual batch size iterations")
+        parser.set_defaults(batch_size=64, n_epochs=1, optimizer='adamw', lr=1e-3, eval_future=1)
+        parser.add_argument("--virtual_bs_n", type=int, default=1, help="Virtual batch size iterations")
 
         # Tunable hyperparameters
-        parser.add_argument("--clip_backbone", type=str, default='ViT-L/14', help="Clip backbone")
+        parser.add_argument("--clip_backbone", type=str, default='ViT-B/16', help="Clip backbone")
 
         parser.add_argument("--prompt_template", type=str, default='a bad photo of a {}.', help="Template string")
 
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
-        assert args.scheduler_mode == 'iter', "MoE Adapters only supports 'iter' scheduler mode."
         assert args.lr_scheduler is None, "MoE Adapters does not require a learning rate scheduler and will use a custom one."
 
         if args.optimizer != 'adamw':
@@ -93,7 +92,7 @@ class MoEAdapters(FutureModel):
 
         num_batches = len(dataset.train_loader)
         total_iterations = self.args.n_epochs * num_batches
-        self.scheduler = CosineSchedulerWithLinearWarmup(self.opt, self.args.lr, 30, total_iterations)
+        self.custom_scheduler = CosineSchedulerWithLinearWarmup(self.opt, self.args.lr, 30, total_iterations)
 
     def change_transform(self, dataset):
         dataset.train_loader.dataset.transform = self.net.clip_preprocess
@@ -118,5 +117,6 @@ class MoEAdapters(FutureModel):
         if (self.task_iteration > 0 or self.args.virtual_bs_n == 1) and self.task_iteration % self.args.virtual_bs_n == 0:
             self.opt.step()
             self.opt.zero_grad()
+            self.custom_scheduler.step()
 
         return loss.item()

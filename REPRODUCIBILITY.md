@@ -7,13 +7,13 @@ reproducibility of the results in the original papers.
 | ------------------------- | ------------------------ | ----------- | --------- | ----- |
 | A-GEM R                   | `agem_r`                 | X           |           |       |
 | A-GEM                     | `agem`                   | X           |           |       |
-| AttriClip                 | `attriclip`              | X           |           |       |
+| AttriClip                 | `attriclip`              | X           |           | The original repo does not reproduce. |
 | BiC                       | `bic`                    | X           |           |       |
-| CCIC                      | `ccic`                   | X           |           |       |
-| CGIL                      | `cgil`                   | X           |           |       |
-| CLIP                      | `clip`                   | X           |           |       |
+| CCIC                      | `ccic`                   | V           |           |       |
+| CGIL                      | `cgil`                   | V           |           |       |
+| CLIP                      | `clip`                   | V           |           |       |
 | Coda Prompt               | `coda_prompt`            | X           |           |       |
-| DAP                       | `dap`                    | X           |           |       |
+| DAP                       | `dap`                    | V           |           |       |
 | DER                       | `der`                    | X           |           |       |
 | DER++ LiDER               | `derpp_lider`            | X           |           |       |
 | DER++                     | `derpp`                  | X           |           |       |
@@ -42,7 +42,7 @@ reproducibility of the results in the original papers.
 | LwF                       | `lwf_mc`                 | X           |           |       |
 | MER                       | `lwf`                    | X           |           |       |
 | MoE Adapters              | `mer`                    | X           |           |       |
-| PNN                       | `moe_adapters`           | X           |           |       |
+| PNN                       | `moe_adapters`           | V           |           |       |
 | Puridiver                 | `pnn`                    | X           |           |       |
 | Ranpac                    | `puridiver`              | X           |           |       |
 | RPC                       | `ranpac`                 | X           |           |       |

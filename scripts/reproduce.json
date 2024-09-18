@@ -9,22 +9,23 @@
   {
     "model": "agem-r",
     "setting": "class-il",
-    "result": 22.06,
+    "result": 28.13,
     "as_main_paper": false,
     "notes": "reproduced not from main paper but from DER++. The main paper requires task descriptors",
-    "cmd": "--dataset=seq-cifar10 --model=agem_r --buffer_size=500 --lr=0.03"
+    "cmd": "--dataset=mnist-360 --model=agem_r --buffer_size=500 --lr=0.1 --minibatch_size 128 --batch_size 16"
   },
   {
     "model": "attriclip",
     "setting": "class-il",
-    "result": null,
-    "cmd": "--lr=0.001 --optimizer=sgd --model=attriclip --dataset=seq-cifar100-224 --batch_size=16"
+    "result": 81.4,
+    "notes": "The original repo was taken down as it did not reproduce either. Our result is 78.88 instead of 81.4",
+    "cmd": "--model=attriclip --dataset=seq-cifar100-224 --model_config=best"
   },
   {
     "model": "bic",
     "setting": "class-il",
-    "result": 36.02,
-    "cmd": "--model=bic --dataset=seq-cifar100 --lr 0.1 --buffer_size 2000 --n_epochs 250 --lr_scheduler multisteplr --lr_milestones 100 150 200 --sched_multistep_lr_gamma=0.1 --optim_wd 0.0002 --batch_size 128 --backbone resnet32"
+    "result": 56.69,
+    "cmd": "--model=bic --dataset=seq-cifar100 --model_config=best --buffer_size=2000"
   },
   {
     "model": "ccic",
@@ -41,7 +42,7 @@
   {
     "model": "clip",
     "setting": "class-il",
-    "result": 55.0,
+    "result": 59.9,
     "cmd": "--dataset=seq-eurosat-rgb --model=clip --clip_backbone=ViT-L/14"
   },
   {
@@ -53,8 +54,8 @@
   {
     "model": "dap",
     "setting": "class-il",
-    "result": 94.05,
-    "cmd": "--model dap --lr 0.01 --dataset seq-cifar100-224 --load_original_checkpoint 1 --enable_test_time_majority_voting 1 --batch_size 128 --dataset_config dap"
+    "result": 97.88,
+    "cmd": "--model dap --dataset seq-cropdisease --model_config best"
   },
   {
     "model": "der",
@@ -197,8 +198,8 @@
   {
     "model": "moe_adapters",
     "setting": "class-il",
-    "result": 82.3,
-    "cmd": "--dataset=seq-eurosat-rgb --model=moe_adapters"
+    "result": 77.52,
+    "cmd": "--dataset=seq-cifar100-224 --model=moe_adapters"
   },
   {
     "model": "pnn",

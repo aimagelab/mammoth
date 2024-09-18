@@ -1,4 +1,5 @@
-seq-cifar10:
-  500:
-    lr: 0.03
-    model: agem_r
+mnist-360:
+  500: 
+    lr: 0.1
+    batch_size: 16
+    minibatch_size: 128

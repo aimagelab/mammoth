@@ -1,0 +1,4 @@
+lr_scheduler: multisteplr
+batch_size: 64
+lr_milestones: [35, 45]
+n_epochs: 50
