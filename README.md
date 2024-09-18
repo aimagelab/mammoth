@@ -101,6 +101,7 @@ Mammoth currently supports **more than 50** models, with new releases covering t
 - Semantic Two-level Additive Residual Prompt (STAR-Prompt): `starprompt`. Also includes the first-stage only (`first_stage_starprompt`) and second-stage only (`second_stage_starprompt`) versions.
 - Transfer without Forgetting (TwF): `twf`.
 - eXtended-DER (X-DER): `xder` (full version), `xder_ce` (X-DER with CE), `xder_rpc` (X-DER with RPC).
+- Zero-Shot Continual Learning (ZSCL): `zscl`.
 
 ## Datasets
 
