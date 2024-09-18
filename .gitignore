@@ -101,3 +101,5 @@ val_permutations
 scripts/prepare_grid*
 
 docs/models/*_args.rst
+
+cache
