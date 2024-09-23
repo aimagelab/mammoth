@@ -11,29 +11,29 @@ In the [[paper](https://arxiv.org/abs/2407.15793)] we employ the following hyper
 - **Imagenet-R**
 
 ```bash
-python utils/main.py --dataset=seq-imagenet-r --model=cgil --backbone=ViT-L/14 --lr=0.01 --g_models=vae --optim_alignment=adamw --learning_rate_alignment=0.05 --eval_future=1 --seed=1992 --combo_context=1 --gr_vae_n_iters=500 --num_epochs_alignment=60
+python utils/main.py --dataset=seq-imagenet-r --model=cgil --clip_backbone=ViT-L/14 --lr=0.01 --g_models=vae --optim_alignment=adamw --learning_rate_alignment=0.05 --eval_future=1 --seed=1992 --combo_context=1 --gr_vae_n_iters=500 --num_epochs_alignment=60 --permute_classes=1
 ```
 
 - **Cars-196**
 
 ```bash
-python utils/main.py --dataset=seq-cars196 --model=cgil --backbone=ViT-L/14 --lr=0.01 --g_models=vae --optim_alignment=adamw --learning_rate_alignment=0.03 --eval_future=1 --seed=1992 --combo_context=1 --gr_vae_n_iters=500 --num_epochs_alignment=60
+python utils/main.py --dataset=seq-cars196 --model=cgil --clip_backbone=ViT-L/14 --lr=0.01 --g_models=vae --optim_alignment=adamw --learning_rate_alignment=0.03 --eval_future=1 --seed=1992 --combo_context=1 --gr_vae_n_iters=500 --num_epochs_alignment=60 --permute_classes=1
 ```
 
 - **CUB-200**
 
 ```bash
-python utils/main.py --dataset=seq-cub200 --model=cgil --backbone=ViT-L/14 --lr=0.01 --g_models=vae --optim_alignment=adamw --learning_rate_alignment=0.01 --eval_future=1 --seed=1992 --combo_context=1 --gr_vae_n_iters=500 --num_epochs_alignment=60
+python utils/main.py --dataset=seq-cub200 --model=cgil --clip_backbone=ViT-L/14 --lr=0.01 --g_models=vae --optim_alignment=adamw --learning_rate_alignment=0.01 --eval_future=1 --seed=1992 --combo_context=1 --gr_vae_n_iters=500 --num_epochs_alignment=60 --permute_classes=1
 ```
 
 - **EuroSAT-RGB**
 
 ```bash
-python utils/main.py --dataset=seq-eurosat-rgb --model=cgil --backbone=ViT-L/14 --lr=0.01 --g_models=vae --optim_alignment=adamw --learning_rate_alignment=0.03 --eval_future=1 --seed=1992 --combo_context=1 --gr_vae_n_iters=500 --num_epochs_alignment=150
+python utils/main.py --dataset=seq-eurosat-rgb --model=cgil --clip_backbone=ViT-L/14 --lr=0.01 --g_models=vae --optim_alignment=adamw --learning_rate_alignment=0.03 --eval_future=1 --seed=1992 --combo_context=1 --gr_vae_n_iters=500 --num_epochs_alignment=150 --permute_classes=1
 ```
 
 - **ISIC**
 
 ```bash
-python utils/main.py --dataset=seq-isic --model=cgil --backbone=ViT-L/14 --lr=0.01 --g_models=vae --optim_alignment=adamw --learning_rate_alignment=0.05 --eval_future=1 --seed=1992 --combo_context=1 --gr_vae_n_iters=750 --num_epochs_alignment=150
+python utils/main.py --dataset=seq-isic --model=cgil --clip_backbone=ViT-L/14 --lr=0.01 --g_models=vae --optim_alignment=adamw --learning_rate_alignment=0.05 --eval_future=1 --seed=1992 --combo_context=1 --gr_vae_n_iters=750 --num_epochs_alignment=150 --permute_classes=1
 ```
