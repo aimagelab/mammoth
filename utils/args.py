@@ -182,7 +182,7 @@ def add_dynamic_parsable_args(parser: ArgumentParser, dataset: str, backbone: st
     registered_datasets = get_dataset_names()
     if isinstance(dataset, dict):
         assert 'type' in dataset, "The dataset `type` (i.e., the registered name) must be defined in the dictionary."
-        bk_name = dataset['type'].replace('-', '_').lower()
+        bk_name = dataset['type'].replace('_', '-').lower()
         bk_args = {**registered_datasets[bk_name]['parsable_args'], **dataset['args']}
         dataset = bk_name
     else:
@@ -196,7 +196,7 @@ def add_dynamic_parsable_args(parser: ArgumentParser, dataset: str, backbone: st
         bk_args = {**REGISTERED_BACKBONES[bk_name]['parsable_args'], **backbone['args']}
         backbone = bk_name
     else:
-        bk_args = REGISTERED_BACKBONES[backbone.replace('-', '_').lower()]['parsable_args']
+        bk_args = REGISTERED_BACKBONES[backbone.replace('_', '-').lower()]['parsable_args']
     build_parsable_args(bk_group, bk_args)
 
     # model dynamic arguments? maybe in the future...

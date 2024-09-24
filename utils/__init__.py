@@ -167,7 +167,7 @@ def register_dynamic_module_fn(name: str, register: dict, tp: Type[T]):
         cls: the class to be registered
         tp: the type of the class, used to dynamically infer the arguments
     """
-    name = name.replace('-', '_').lower()
+    name = name.replace('_', '-').lower()
 
     def register_network_fn(target: T | Callable) -> T:
         # check if the name is already registered
@@ -187,3 +187,20 @@ def register_dynamic_module_fn(name: str, register: dict, tp: Type[T]):
         return target
 
     return register_network_fn
+
+
+class disable_logging:
+    """
+    Wrapper for disabling logging for a specific block of code.
+    """
+
+    def __init__(self, min_level=logging.CRITICAL):
+        self.logger = logging.getLogger()
+        self.min_level = min_level
+
+    def __enter__(self):
+        self.old_logging_level = self.logger.level
+        logging.disable(self.min_level)
+
+    def __exit__(self, exit_type, exit_value, exit_traceback):
+        logging.disable(self.old_logging_level)

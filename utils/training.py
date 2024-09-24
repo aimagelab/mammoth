@@ -21,6 +21,7 @@ from datasets.utils.gcl_dataset import GCLDataset
 from models.utils.continual_model import ContinualModel
 from models.utils.future_model import FutureModel
 
+from utils import disable_logging
 from utils.checkpoints import mammoth_load_checkpoint
 from utils.loggers import log_extra_metrics, log_accs, Logger
 from utils.schedulers import get_scheduler
@@ -280,10 +281,13 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         if args.eval_future:
             assert isinstance(model, FutureModel), "Model must be an instance of FutureModel to evaluate on future tasks"
             eval_dataset = get_dataset(args)
-            for _ in range(dataset.N_TASKS):
-                eval_dataset.get_data_loaders()
-                model.change_transform(eval_dataset)
-                del eval_dataset.train_loader
+
+            # disable logging for this loop
+            with disable_logging(logging.WARNING):
+                for _ in range(dataset.N_TASKS):
+                    eval_dataset.get_data_loaders()
+                    model.change_transform(eval_dataset)
+                    del eval_dataset.train_loader
         else:
             eval_dataset = dataset
 
