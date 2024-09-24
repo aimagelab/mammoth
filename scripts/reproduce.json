@@ -60,8 +60,8 @@
   {
     "model": "der",
     "setting": "class-il",
-    "result": 70.15,
-    "cmd": "--dataset=seq-cifar10 --model=der --buffer_size=500 --lr=0.03 --alpha=0.3"
+    "result": 36.60,
+    "cmd": "--dataset=seq-cifar100 --model=der --buffer_size=500 --model_config=best"
   },
   {
     "model": "derpp_lider",
@@ -72,8 +72,8 @@
   {
     "model": "derpp",
     "setting": "class-il",
-    "result": 37.13,
-    "cmd": "--dataset=seq-cifar100 --model=derpp_lider --buffer_size=500 --lr=0.1 --alpha=0.1 --beta=0.5"
+    "result": 38.25,
+    "cmd": "--dataset=seq-cifar100 --model=derpp --buffer_size=500 --model_config=best"
   },
   {
     "model": "dualprompt",
@@ -168,8 +168,8 @@
   {
     "model": "l2p",
     "setting": "class-il",
-    "result": 82.76,
-    "cmd": "--dataset=seq-cifar100-224 --model=l2p --lr=0.001 --dataset_config=l2p"
+    "result": 83.83,
+    "cmd": "--dataset=seq-cifar100-224 --model=l2p --model_config=best"
   },
   {
     "model": "lucir",

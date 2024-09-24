@@ -7,51 +7,51 @@ reproducibility of the results in the original papers.
 | ------------------------- | ------------------------ | ----------- | --------- | ----- |
 | A-GEM R                   | `agem_r`                 | X           |           |       |
 | A-GEM                     | `agem`                   | X           |           |       |
-| AttriClip                 | `attriclip`              | X           |           | The original repo does not reproduce. |
+| AttriClip                 | `attriclip`              | X           |           | The original repo was pulled because it did not reproduce. |
 | BiC                       | `bic`                    | X           |           |       |
 | CCIC                      | `ccic`                   | V           |           |       |
 | CGIL                      | `cgil`                   | V           |           |       |
 | CLIP                      | `clip`                   | V           |           |       |
 | Coda Prompt               | `coda_prompt`            | X           |           |       |
 | DAP                       | `dap`                    | V           |           |       |
-| DER                       | `der`                    | X           |           |       |
+| DER                       | `der`                    | V           |           |       |
 | DER++ LiDER               | `derpp_lider`            | X           |           |       |
-| DER++                     | `derpp`                  | X           |           |       |
+| DER++                     | `derpp`                  | V           |           |       |
 | DualPrompt                | `dualprompt`             | X           |           |       |
 | ER-ACE LiDER              | `er_ace_aer_abs`         | X           |           |       |
 | ER-ACE with AER and ABS   | `er_ace_lider`           | X           |           |       |
 | ER-ACE with Tricks        | `er_ace_tricks`          | X           |           |       |
 | ER-ACE                    | `er_ace`                 | X           |           |       |
-| ER                        | `er_tricks`              | X           |           |       |
 | EwC Online                | `er`                     | X           |           |       |
-| FDR                       | `ewc_on`                 | X           |           |       |
-| First-Stage STAR-Prompt   | `fdr`                    | X           |           |       |
-| GdumB LiDER               | `first_stage_starprompt` | X           |           |       |
-| GdumB                     | `gdumb_lider`            | X           |           |       |
-| GEM                       | `gdumb`                  | X           |           |       |
-| GSS                       | `gem`                    | X           |           |       |
-| HAL                       | `gss`                    | X           |           |       |
-| iCaRL LiDER               | `hal`                    | X           |           |       |
-| iCaRL                     | `icarl_lider`            | X           |           |       |
-| Joint GCL                 | `icarl`                  | X           |           |       |
-| Joint                     | `joint_gcl`              | X           |           |       |
-| L2P                       | `joint`                  | X           |           |       |
-| LLAVA                     | `l2p`                    | X           |           |       |
-| LUCIR                     | `llava`                  | X           |           |       |
-| LwF-MC                    | `lucir`                  | X           |           |       |
-| LwF                       | `lwf_mc`                 | X           |           |       |
-| MER                       | `lwf`                    | X           |           |       |
-| MoE Adapters              | `mer`                    | X           |           |       |
-| PNN                       | `moe_adapters`           | V           |           |       |
-| Puridiver                 | `pnn`                    | X           |           |       |
-| Ranpac                    | `puridiver`              | X           |           |       |
-| RPC                       | `ranpac`                 | X           |           |       |
-| Second-Stage STAR-Prompt  | `rpc`                    | X           |           |       |
-| SGD                       | `second_stage_starprompt`| X           |           |       |
-| SI                        | `sgd`                    | X           |           |       |
-| SLCA                      | `si`                     | X           |           |       |
-| STAP-Prompt               | `slca`                   | X           |           |       |
-| TwF                       | `starprompt`             | X           |           |       |
-| X-DER with CE             | `twf`                    | X           |           |       |
-| X-DER with RPC            | `xder_ce`                | X           |           |       |
-| X-DER                     | `xder_rpc`               | X           |           |       |
+| ER                        | `ewc_on`                 | X           |           |       |
+| FDR                       | `fdr`                    | X           |           |       |
+| First-Stage STAR-Prompt   | `first_stage_starprompt` | X           |           |       |
+| GdumB LiDER               | `gdumb_lider`            | X           |           |       |
+| GdumB                     | `gdumb`                  | X           |           |       |
+| GEM                       | `gem`                    | V           |           | Original work requires too much resources. We reproduced the results in DER. |
+| GSS                       | `gss`                    | X           |           |       |
+| HAL                       | `hal`                    | X           |           |       |
+| iCaRL LiDER               | `icarl_lider`            | X           |           |       |
+| iCaRL                     | `icarl`                  | X           |           |       |
+| Joint GCL                 | `joint_gcl`              | X           |           |       |
+| Joint                     | `joint`                  | X           |           |       |
+| L2P                       | `l2p`                    | X           |           |       |
+| LLAVA                     | `llava`                  | X           |           |       |
+| LUCIR                     | `lucir`                  | X           |           |       |
+| LwF-MC                    | `lwf_mc`                 | X           |           |       |
+| LwF                       | `lwf`                    | X           |           |       |
+| MER                       | `mer`                    | X           |           |       |
+| MoE Adapters              | `moe_adapters`           | V           |           |       |
+| PNN                       | `pnn`                    | X           |           |       |
+| Puridiver                 | `puridiver`              | X           |           |       |
+| Ranpac                    | `ranpac`                 | X           |           |       |
+| RPC                       | `rpc`                    | X           |           |       |
+| Second-Stage STAR-Prompt  | `second_stage_starprompt`| X           |           |       |
+| SGD                       | `sgd`                    | X           |           |       |
+| SI                        | `si`                     | X           |           |       |
+| SLCA                      | `slca`                   | X           |           |       |
+| STAP-Prompt               | `starprompt`             | X           |           |       |
+| TwF                       | `twf`                    | X           |           |       |
+| X-DER with CE             | `xder_ce`                | X           |           |       |
+| X-DER with RPC            | `xder_rpc`               | X           |           |       |
+| X-DER                     | `xder`                   | X           |           |       |

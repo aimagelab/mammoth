@@ -173,7 +173,7 @@ def get_backbone_class(name: str, return_args=False) -> MammothBackbone:
     Returns:
         the backbone class
     """
-    name = name.replace('-', '_').lower()
+    name = name.replace('_', '-').lower()
     assert name in REGISTERED_BACKBONES, "Attempted to access non-registered network"
     cl = REGISTERED_BACKBONES[name]['class']
     if return_args:

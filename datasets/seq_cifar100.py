@@ -97,11 +97,6 @@ class SequentialCIFAR100(ContinualDataset):
          transforms.ToTensor(),
          transforms.Normalize(MEAN, STD)])
 
-    def get_examples_number(self) -> int:
-        train_dataset = MyCIFAR100(base_path() + 'CIFAR10', train=True,
-                                   download=True)
-        return len(train_dataset.data)
-
     def get_data_loaders(self) -> Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         transform = self.TRANSFORM
 

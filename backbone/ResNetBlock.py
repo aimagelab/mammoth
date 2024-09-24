@@ -205,6 +205,21 @@ def resnet18(num_classes: int, num_filters: int = 64) -> ResNet:
     return ResNet(BasicBlock, [2, 2, 2, 2], num_classes, num_filters)
 
 
+@register_backbone("reduced-resnet18")
+def resnet18(num_classes: int) -> ResNet:
+    """
+    Instantiates a ResNet18 network with a third of the parameters, as used in `Gradient Episodic Memory for Continual Learning`
+
+    Args:
+        num_classes: number of output classes
+        num_filters: number of filters
+
+    Returns:
+        ResNet network
+    """
+    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes, 20)
+
+
 @register_backbone("resnet34")
 def resnet34(num_classes: int, num_filters: int = 64) -> ResNet:
     """

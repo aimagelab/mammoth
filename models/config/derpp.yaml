@@ -1,6 +1,7 @@
 seq-cifar100:
+  dataset_config: xder
   500:
-    alpha: 0.1
+    alpha: 0.3
     beta: 0.5
-    lr: 0.1
-    model: derpp_lider
+    lr: 0.03
+    model: derpp
