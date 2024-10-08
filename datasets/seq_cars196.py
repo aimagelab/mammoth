@@ -86,8 +86,8 @@ class MyCars196(Dataset):
             self.load_and_preprocess_dataset(root, train_str)
         else:
             print(f"Loading pre-processed {train_str} dataset...", file=sys.stderr)
-            self.data = torch.load(f'{root}/{train_str}_images.pt')
-            self.targets = torch.load(f'{root}/{train_str}_labels.pt')
+            self.data = torch.load(f'{root}/{train_str}_images.pt', weights_only=True)
+            self.targets = torch.load(f'{root}/{train_str}_labels.pt', weights_only=True)
 
         self.class_names = MyCars196.get_class_names()
 

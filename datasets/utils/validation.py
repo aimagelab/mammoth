@@ -101,7 +101,7 @@ def get_train_val(train: Dataset, test_transform: nn.Module,
     create_if_not_exists(directory)
     file_name = dataset + '.pt'
     if os.path.exists(directory + file_name):
-        perm = torch.load(directory + file_name)
+        perm = torch.load(directory + file_name, weights_only=True)
     else:
         perm = torch.randperm(dataset_length)
         torch.save(perm, directory + file_name)

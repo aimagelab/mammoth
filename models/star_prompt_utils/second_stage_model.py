@@ -156,7 +156,7 @@ class Prompter(torch.nn.Module):
             The arguments used in the first stage
         """
         print(f'Loading keys from {self.keys_ckpt_path}', file=sys.stderr)
-        st = torch.load(self.keys_ckpt_path)
+        st = torch.load(self.keys_ckpt_path, weights_only=True)
         if isinstance(st, dict):
             keys = st['keys'].to(self.device)
             self.old_args = st['args']

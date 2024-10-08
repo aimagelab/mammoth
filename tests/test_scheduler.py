@@ -46,7 +46,7 @@ def test_der_cifar100_defaultscheduler(capsys):
     for ckpt_path in ckpt_paths:
         assert os.path.exists(ckpt_path), f'Checkpoint file {ckpt_path} not found'
 
-        ckpt = torch.load(ckpt_path)
+        ckpt = torch.load(ckpt_path, weights_only=True)
         opt, sched = ckpt['optimizer']['param_groups'][0], ckpt['scheduler']
         assert opt['initial_lr'] == 0.03, f'Learning rate not updated correctly in {ckpt_path}'
         assert opt['lr'] == opt['initial_lr'] * 0.1 * 0.1, f'Learning rate not updated correctly in {ckpt_path}'
@@ -96,7 +96,7 @@ def test_der_cifar100_customscheduler(capsys):
     for ckpt_path in ckpt_paths:
         assert os.path.exists(ckpt_path), f'Checkpoint file {ckpt_path} not found'
 
-        ckpt = torch.load(ckpt_path)
+        ckpt = torch.load(ckpt_path, weights_only=True)
         opt, sched = ckpt['optimizer']['param_groups'][0], ckpt['scheduler']
         assert opt['initial_lr'] == 0.1, f'Learning rate not updated correctly in {ckpt_path}'
         assert opt['lr'] == opt['initial_lr'] * 0.1 * 0.1 * 0.1 * 0.1, f'Learning rate not updated correctly in {ckpt_path}'

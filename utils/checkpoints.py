@@ -150,7 +150,7 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
         if not os.path.exists(args.loadcheck):
             raise ValueError('The given checkpoint does not exist.')
 
-    saved_obj = torch.load(args.loadcheck, map_location=torch.device("cpu"))
+    saved_obj = torch.load(args.loadcheck, map_location=torch.device("cpu"), weights_only=True)
 
     if 'args' in saved_obj and 'model' in saved_obj:
         _check_loaded_args(args, saved_obj['args'])

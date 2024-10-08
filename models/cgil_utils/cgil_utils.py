@@ -268,7 +268,7 @@ class Prompter(torch.nn.Module):
             cache_path = Path(f'./cache/{dataset.NAME}_{self.current_task}_seed_{dataset.args.seed}_{clip_backbone}_{dataset.args.permute_classes}_features.pt')
 
         if cache_path.exists():
-            features_dict = torch.load(cache_path)
+            features_dict = torch.load(cache_path, weights_only=True)
             print(f'Loaded cached features from {cache_path}')
         else:
             with tqdm(total=len(dataset.train_loader), desc='Updating statistics for first stage Generative Replay') as pbar:
