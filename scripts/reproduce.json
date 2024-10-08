@@ -78,8 +78,8 @@
   {
     "model": "dualprompt",
     "setting": "class-il",
-    "result": 85.56,
-    "cmd": "--dataset=seq-cifar100-224 --model=dualprompt --lr=1e-3 --batch_size=128"
+    "result": 86.51,
+    "cmd": "--dataset=seq-cifar100-224 --model=dualprompt --model_config=best"
   },
   {
     "model": "er_ace_lider",

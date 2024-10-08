@@ -5,19 +5,24 @@ SIZE: [224, 224]
 MEAN: [0, 0, 0]
 STD: [1, 1, 1]
 TRANSFORM:
-  - RandomResizedCrop:
-      size: 224
-  - RandomHorizontalFlip
-  - ToTensor
-  - Normalize:
-      mean: [0, 0, 0]
-      std: [1, 1, 1]
+    - Resize:
+        size: 256
+    - RandomResizedCrop:
+        size: 224
+    - RandomHorizontalFlip
+    - ToTensor
+    - Normalize:
+        mean: [0, 0, 0]
+        std: [1, 1, 1]
 TEST_TRANSFORM:
-  - Resize:
-      size: 224
-  - ToTensor
-  - Normalize:
-      mean: [0, 0, 0]
-      std: [1, 1, 1]
+    - Resize:
+        size: 256
+        interpolation: 3
+    - CenterCrop:
+        size: 224
+    - ToTensor
+    - Normalize:
+        mean: [0, 0, 0]
+        std: [1, 1, 1]
 batch_size: 128
-n_epochs: 20
+n_epochs: 5
