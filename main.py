@@ -35,6 +35,8 @@ if os.path.dirname(__file__) == 'utils':
     sys.path.append(mammoth_path + '/datasets')
     sys.path.append(mammoth_path + '/backbone')
     sys.path.append(mammoth_path + '/models')
+else:
+    mammoth_path = os.path.dirname(os.path.abspath(__file__))
 
 from utils import setup_logging
 setup_logging()
@@ -241,7 +243,7 @@ def parse_args():
     # Add the current git commit hash to the arguments if available
     try:
         import git
-        repo = git.Repo(path=os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        repo = git.Repo(path=mammoth_path)
         args.conf_git_hash = repo.head.object.hexsha
     except Exception:
         logging.error("Could not retrieve git hash.")
