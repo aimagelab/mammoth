@@ -12,12 +12,12 @@ reproducibility of the results in the original papers.
 | CCIC                      | `ccic`                   | V           |           |       |
 | CGIL                      | `cgil`                   | V           |           |       |
 | CLIP                      | `clip`                   | V           |           |       |
-| Coda Prompt               | `coda_prompt`            | X           |           |       |
+| CODA-Prompt               | `coda_prompt`            | V           |           |       |
 | DAP                       | `dap`                    | V           |           |       |
 | DER                       | `der`                    | V           |           |       |
 | DER++ LiDER               | `derpp_lider`            | X           |           |       |
 | DER++                     | `derpp`                  | V           |           |       |
-| DualPrompt                | `dualprompt`             | X           |           |       |
+| DualPrompt                | `dualprompt`             | V           |           |       |
 | ER-ACE LiDER              | `er_ace_aer_abs`         | X           |           |       |
 | ER-ACE with AER and ABS   | `er_ace_lider`           | X           |           |       |
 | ER-ACE with Tricks        | `er_ace_tricks`          | X           |           |       |
@@ -35,7 +35,7 @@ reproducibility of the results in the original papers.
 | iCaRL                     | `icarl`                  | X           |           |       |
 | Joint GCL                 | `joint_gcl`              | X           |           |       |
 | Joint                     | `joint`                  | X           |           |       |
-| L2P                       | `l2p`                    | X           |           |       |
+| L2P                       | `l2p`                    | V           |           |       |
 | LLAVA                     | `llava`                  | X           |           |       |
 | LUCIR                     | `lucir`                  | X           |           |       |
 | LwF-MC                    | `lwf_mc`                 | X           |           |       |

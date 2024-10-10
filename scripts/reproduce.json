@@ -49,7 +49,7 @@
     "model": "coda_prompt",
     "setting": "class-il",
     "result": 86.25,
-    "cmd": "--dataset=seq-cifar100-224 --model=coda_prompt --lr=1e-3 --batch_size=128 --optimizer=adam --optim_mom=0.9"
+    "cmd": "--dataset=seq-cifar100-224 --model=coda_prompt --model_config best"
   },
   {
     "model": "dap",

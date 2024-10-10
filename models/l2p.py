@@ -59,7 +59,7 @@ class L2P(ContinualModel):
 
         del backbone
         print("-" * 20)
-        print(f"WARNING: L2P USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
+        print(f"WARNING: L2P USES A CUSTOM BACKBONE: `https://storage.googleapis.com/vit_models/imagenet21k/ViT-B_16.npz` (vit_base_patch16_224_in21k_fn_in1k_old).")
         print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
         print("-" * 20)
 

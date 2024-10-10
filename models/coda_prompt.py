@@ -19,11 +19,12 @@ class CodaPrompt(ContinualModel):
     """Continual Learning via CODA-Prompt: COntinual Decomposed Attention-based Prompting."""
     NAME = 'coda_prompt'
     COMPATIBILITY = ['class-il', 'task-il']
+    net: Model
 
     @staticmethod
     def get_parser(parser) -> ArgumentParser:
         parser.set_defaults(lr=0.001, optimizer='adam', optim_mom=0.9)
-        parser.add_argument('--mu', type=float, default=0.0, help='weight of prompt loss')
+        parser.add_argument('--mu', type=float, default=0.0, help='weight of ortho prompt loss')
         parser.add_argument('--pool_size', type=int, default=100, help='pool size')
         parser.add_argument('--prompt_len', type=int, default=8, help='prompt length')
         parser.add_argument('--virtual_bs_iterations', '--virtual_bs_n', dest='virtual_bs_iterations',
@@ -33,12 +34,11 @@ class CodaPrompt(ContinualModel):
     def __init__(self, backbone, loss, args, transform, dataset=None):
         del backbone
         print("-" * 20)
-        logging.info(f"CODA-Prompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
+        logging.info(f"CODA-Prompt USES A CUSTOM BACKBONE: `vit_base_patch16_224.augreg_in21k_ft_in1k`.")
         print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
         print("-" * 20)
 
-        if args.lr_scheduler is not None:
-            logging.info("CODA-Prompt uses a custom scheduler: cosine. Ignoring --lr_scheduler.")
+        assert args.lr_scheduler is None, "CODA-Prompt uses a custom scheduler: cosine. Ignoring --lr_scheduler."
 
         self.dataset = get_dataset(args)
         self.n_classes = self.dataset.N_CLASSES
@@ -80,12 +80,11 @@ class CodaPrompt(ContinualModel):
         logits[:, :self.offset_1] = -float('inf')
         loss_ce = self.loss(logits, labels)
         loss = loss_ce + self.args.mu * loss_prompt
-        if self.task_iteration == 0:
+        if self.epoch_iteration == 0:
             self.opt.zero_grad()
 
-        torch.cuda.empty_cache()
         (loss / float(self.args.virtual_bs_iterations)).backward()
-        if self.task_iteration > 0 and self.task_iteration % self.args.virtual_bs_iterations == 0:
+        if (self.epoch_iteration > 0 or self.args.virtual_bs_iterations == 1) and self.epoch_iteration % self.args.virtual_bs_iterations == 0:
             self.opt.step()
             self.opt.zero_grad()
 
