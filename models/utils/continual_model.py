@@ -28,7 +28,7 @@ import logging
 import sys
 from argparse import ArgumentParser, Namespace
 from contextlib import suppress
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Tuple, Union
 import inspect
 
 import kornia
@@ -63,7 +63,7 @@ class ContinualModel(nn.Module):
     opt: optim.Optimizer  # The optimizer to be used for training
     scheduler: optim.lr_scheduler._LRScheduler  # (optional) The scheduler for the optimizer. If defined, it will overwrite the one defined in the `dataset`
     # The transformation to be applied to the input data. The model will try to convert it to a kornia transform to be applicable to a batch of samples at once
-    transform: transforms.Compose | kornia.augmentation.AugmentationSequential
+    transform: Union[transforms.Compose, kornia.augmentation.AugmentationSequential]
     original_transform: transforms.Compose  # The original transformation to be applied to the input data. This is the one defined by the `dataset`
     task_iteration: int  # Number of iterations in the current task
     epoch_iteration: int  # Number of iterations in the current epoch. Updated if `epoch` is passed to observe
@@ -399,12 +399,22 @@ class ContinualModel(nn.Module):
         Args:
             dataset: the current task's dataset
         """
+        # update internal counters
         self._task_iteration = 0
         self._epoch_iteration = 0
         self._past_epoch = 0
         self._n_classes_current_task = self._cpt if isinstance(self._cpt, int) else self._cpt[self._current_task]
         self._n_past_classes, self._n_seen_classes = self.compute_offsets(self._current_task)
         self._n_remaining_classes = self.N_CLASSES - self._n_seen_classes
+
+        # reload optimizer if the model has no scheduler
+        if not hasattr(self, 'scheduler') or self.scheduler is None:
+            self.opt.zero_grad(set_to_none=True)
+            self.opt = self.get_optimizer()
+        else:
+            logging.warning("Model defines a custom scheduler. The optimizer will not be reloaded.")
+
+        # call the actual method
         self.begin_task(dataset)
 
     def meta_end_task(self, dataset):

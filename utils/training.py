@@ -334,6 +334,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     if dataset.SETTING == 'class-il':
                         results_mask_classes[t - 1] = results_mask_classes[t - 1] + accs[1]
 
+                # Scheduler is automatically reloaded after each task if defined in the dataset.
+                # If the model defines it, it becomes the job of the model to reload it.
                 scheduler = get_scheduler(model, args, reload_optim=True) if not hasattr(model, 'scheduler') else model.scheduler
 
                 epoch = 0

@@ -1,5 +1,6 @@
 from argparse import Namespace
 import math
+from typing import Union
 import numpy as np
 import torch
 from torch.optim import Optimizer
@@ -55,7 +56,7 @@ class CosineSchedule(_LRScheduler):
 
 
 class CosineSchedulerWithLinearWarmup(_LRScheduler):
-    def __init__(self, optimizer: Optimizer, base_lrs: list | float, warmup_length: int, steps: int):
+    def __init__(self, optimizer: Optimizer, base_lrs: Union[list, float], warmup_length: int, steps: int):
         """
         Apply cosine learning rate schedule with warmup to all the parameters in the optimizer.
         If more than one param_group is passed, the learning rate must either be a list of the same length or a float.

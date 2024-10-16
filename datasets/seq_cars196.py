@@ -4,7 +4,7 @@ import torch
 import torchvision.transforms as transforms
 import torch.nn.functional as F
 from PIL import Image
-from typing import Tuple
+from typing import Tuple, Union
 from tqdm import tqdm
 import json
 
@@ -22,7 +22,7 @@ from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
 
 
-def load_and_preprocess_cars196(train_str='train', names_only=False) -> Tuple[torch.Tensor, torch.Tensor, dict] | dict:
+def load_and_preprocess_cars196(train_str='train', names_only=False) -> Union[Tuple[torch.Tensor, torch.Tensor, dict], dict]:
     """
     Loads data from deeplake and preprocesses it to be stored locally.
 

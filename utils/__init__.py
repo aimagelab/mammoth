@@ -4,7 +4,7 @@ import sys
 import string
 import random
 import logging
-from typing import Callable, Type, TypeVar
+from typing import Callable, Type, TypeVar, Union
 T = TypeVar("T")
 
 
@@ -169,7 +169,7 @@ def register_dynamic_module_fn(name: str, register: dict, tp: Type[T]):
     """
     name = name.replace('_', '-').lower()
 
-    def register_network_fn(target: T | Callable) -> T:
+    def register_network_fn(target: Union[T, Callable]) -> T:
         # check if the name is already registered
         if name in register:
             raise ValueError(f"Name {name} already registered!")
