@@ -1,4 +1,5 @@
 
+import logging
 import random
 import string
 import numpy as np
@@ -33,6 +34,10 @@ def _load_mammoth_model(dict_keys, model: torch.nn.Module, args):
 
 
 def _load_net(dict_keys, model: torch.nn.Module, args, ignore_classifier=True):
+    """
+    Load a model from a checkpoint. Handles DataParallel and DistributedDataParallel checkpoints.
+    If ignore_classifier is True, the classifier weights are not loaded.
+    """
     for k in list(dict_keys):
         if args.distributed != 'dp':
             dict_keys[k.replace('module.', '')] = dict_keys.pop(k)
@@ -150,24 +155,42 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
         if not os.path.exists(args.loadcheck):
             raise ValueError('The given checkpoint does not exist.')
 
-    saved_obj = torch.load(args.loadcheck, map_location=torch.device("cpu"), weights_only=True)
+    if args.loadcheck.endswith('.safetensors'):
+        # Model only checkpoint, but safe
+        logging.info('Loading checkpoint with SafeTensors...')
+        try:
+            from safetensors import safe_open
+        except ImportError:
+            raise ImportError('SafeTensors is required to load safe checkpoints. Please install it with "pip install safetensors"')
 
-    if 'args' in saved_obj and 'model' in saved_obj:
-        _check_loaded_args(args, saved_obj['args'])
-        # Mammoth checkpoint
-        model = _load_mammoth_model(saved_obj['model'], model, args)
-        if 'buffer' in saved_obj:
-            loading_model = saved_obj['args'].model
-            if args.model != loading_model:
-                print(f'WARNING: The loaded model was trained with a different model: {loading_model}')
-            model.load_buffer(saved_obj['buffer'])
+        dict_keys = {}
+        with safe_open(dict_keys, framework='pt') as f:
+            for k in f.keys():
+                dict_keys[k] = f.get_tensor(k)
 
-        return model, saved_obj['results']
-    else:
-        # Model only checkpoint
-        model = _load_net(saved_obj, model, args, ignore_classifier=ignore_classifier)
+        model = _load_net(saved_obj, model, args, ignore_classifier=ignore_classifier, safe=True)
 
         return model, None
+    else:
+        logging.warning('Loading checkpoint with Pickle will be deprecated in future versions due to security reasons. Always make sure to load checkpoints from trusted sources.')
+        saved_obj = torch.load(args.loadcheck, map_location=torch.device("cpu"))
+
+        if 'args' in saved_obj and 'model' in saved_obj:
+            _check_loaded_args(args, saved_obj['args'])
+            # Mammoth checkpoint
+            model = _load_mammoth_model(saved_obj['model'], model, args)
+            if 'buffer' in saved_obj:
+                loading_model = saved_obj['args'].model
+                if args.model != loading_model:
+                    print(f'WARNING: The loaded model was trained with a different model: {loading_model}')
+                model.load_buffer(saved_obj['buffer'])
+
+            return model, saved_obj['results']
+        else:
+            # Model only checkpoint
+            model = _load_net(saved_obj, model, args, ignore_classifier=ignore_classifier)
+
+            return model, None
 
 
 def _check_loaded_args(args, loaded_args):

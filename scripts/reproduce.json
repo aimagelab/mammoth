@@ -67,7 +67,7 @@
     "model": "derpp_lider",
     "setting": "class-il",
     "result": 39.25,
-    "cmd": "--dataset=seq-cifar100 --model=derpp_lider --buffer_size=500 --lr=0.1 --alpha=0.3 --beta=0.3 --alpha_lip_lambda=0.3 --beta_lip_lambda=0.1"
+    "cmd": "--dataset=seq-cifar100 --model_config=best --model=derpp_lider --buffer_size=500"
   },
   {
     "model": "derpp",

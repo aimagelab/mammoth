@@ -15,7 +15,7 @@ reproducibility of the results in the original papers.
 | CODA-Prompt               | `coda_prompt`            | V           |           |       |
 | DAP                       | `dap`                    | V           |           |       |
 | DER                       | `der`                    | V           |           |       |
-| DER++ LiDER               | `derpp_lider`            | X           |           |       |
+| DER++ LiDER               | `derpp_lider`            | V           |           |       |
 | DER++                     | `derpp`                  | V           |           |       |
 | DualPrompt                | `dualprompt`             | V           |           |       |
 | ER-ACE LiDER              | `er_ace_aer_abs`         | X           |           |       |
