@@ -157,8 +157,8 @@ class LiderOptimizer(ContinualModel):
 
             budget_lip = torch.cat(all_lips, dim=0).mean(0).detach().clone()
 
-        inp = next(iter(dataset.train_loader))[0]
-        _, teacher_feats = self.net(inp.to(self.device), returnt='full')
+            inp = next(iter(dataset.train_loader))[0]
+            _, teacher_feats = self.net(inp.to(self.device), returnt='full')
 
         self.net.train(was_training)
 

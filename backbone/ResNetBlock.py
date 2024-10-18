@@ -109,10 +109,11 @@ class ResNet(MammothBackbone):
         self.layer3 = self._make_layer(block, nf * 4 * block.expansion, num_blocks[2], stride=2)
         if len(num_blocks) == 4:
             self.feature_dim = nf * 8 * block.expansion
-            self.layer4 = self._make_layer(block, self.feature_dim, num_blocks[2], stride=2)
+            self.layer4 = self._make_layer(block, self.feature_dim, num_blocks[3], stride=2)
         else:
             self.feature_dim = nf * 4 * block.expansion
             self.layer4 = nn.Identity()
+            self.layer4.return_prerelu = False
 
         self.classifier = nn.Linear(self.feature_dim, num_classes)
 
