@@ -15,13 +15,13 @@ Arguments
 	*Help*: Model name.
 
 	- *Default*: ``None``
-	- *Choices*: ``joint-gcl, second-stage-starprompt, lwf-mc, puridiver, gdumb-lider, joint, ewc-on, xder, ranpac, hal, er-ace-tricks, sgd, si, moe-adapters, first-stage-starprompt, er-ace-aer-abs, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, llava, attriclip, starprompt, coda-prompt, er-tricks, clip, pnn, er-ace, xder-ce, dualprompt, twf, mer, er-ace-lider, gdumb, dap, l2p, ccic, slca, agem-r, rpc, xder-rpc, gss, lwf, cgil, er, agem``
+	- *Choices*: ``joint-gcl, second-stage-starprompt, lwf-mc, puridiver, gdumb-lider, joint, ewc-on, xder, ranpac, hal, idefics, er-ace-tricks, sgd, si, moe-adapters, first-stage-starprompt, er-ace-aer-abs, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, llava, attriclip, starprompt, bic-v2, coda-prompt, er-tricks, clip, pnn, er-ace, xder-ce, dualprompt, twf, mer, er-ace-lider, gdumb, dap, l2p, ccic, slca, agem-r, rpc, xder-rpc, gss, lwf, cgil, er, agem``
 
 **\-\-backbone** : str (with underscores replaced by dashes)
 	*Help*: Backbone network name.
 
 	- *Default*: ``None``
-	- *Choices*: ``resnet18, resnet34, resnet50, resnet50_pt, mnistmlp, vit``
+	- *Choices*: ``resnet18, reduced-resnet18, resnet34, resnet32, resnet50, resnet50-pt, mnistmlp, resnet32-bic, vit``
 
 **\-\-load_best_args** : unknown
 	*Help*: (deprecated) Loads the best arguments for each method, dataset and memory buffer. NOTE: This option is deprecated and not up to date.

@@ -15,7 +15,6 @@ help:
 .PHONY: help Makefile
 
 clean:
-	rm models/*_args.rst
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 # rm -rf generated
 # rm -rf **/generated

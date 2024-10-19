@@ -27,13 +27,24 @@
    getting_started/fast_training.rst
    getting_started/scripts.rst
    Backbones and Datasets registration <getting_started/dynamic_args.rst>
-   Parseval <getting_started/parseval.rst>
+   Reproducibility <getting_started/reproduciblity.rst>
 
 .. toctree::
    :glob:
    :maxdepth: 1
    :hidden:
    :caption: Contents
+
+   Models <models/index.rst>
+   Datasets <datasets/index.rst>
+   Backbone <backbone/index.rst>
+   Utils <utils/index.rst>
+
+.. toctree::
+   :glob:
+   :maxdepth: 1
+   :hidden:
+   :caption: Code reference
 
    generated/models.rst
    generated/datasets.rst

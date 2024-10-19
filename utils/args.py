@@ -563,6 +563,11 @@ if __name__ == '__main__':
 
     from models import get_model_names
 
+    if os.path.exists('docs/model_args'):
+        import shutil
+        shutil.rmtree('docs/model_args')
+    os.makedirs('docs/model_args')
+
     for model_name, model_class in get_model_names().items():
         parser = model_class.get_parser(ArgumentParser())
 
@@ -572,9 +577,9 @@ if __name__ == '__main__':
                 continue
             model_args_groups.append(_parse_actions(group._group_actions, group.title, group.description))
         model_filename = model_name.replace("-", "_")
-        with open(f'docs/models/{model_filename}_args.rst', 'w') as f:
+        with open(f'docs/model_args/{model_filename}_args.rst', 'w') as f:
             f.write(f'Arguments\n')
             f.write(f'~~~~~~~~~~~\n\n')
             for arg in model_args_groups:
                 f.write(str(arg) + '\n\n')
-        print(f"Saving documentation in docs/models/{model_filename}_args.rst")
+        print(f"Saving documentation in docs/model_args/{model_filename}_args.rst")

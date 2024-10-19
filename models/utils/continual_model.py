@@ -28,21 +28,23 @@ import logging
 import sys
 from argparse import ArgumentParser, Namespace
 from contextlib import suppress
-from typing import Iterator, List, Tuple, Union
+from typing import Iterator, List, Tuple, Union, TYPE_CHECKING
 import inspect
 
 import kornia
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from backbone import MammothBackbone
 from datasets import get_dataset
-from datasets.utils.continual_dataset import ContinualDataset
 
 from utils.conf import get_device, warn_once
 from utils.kornia_utils import to_kornia_transform
 from utils.magic import persistent_locals
 from torchvision import transforms
+
+if TYPE_CHECKING:
+    from datasets.utils.continual_dataset import ContinualDataset
+    from backbone import MammothBackbone
 
 with suppress(ImportError):
     import wandb
@@ -58,7 +60,7 @@ class ContinualModel(nn.Module):
 
     args: Namespace  # The command line arguments
     device: torch.device  # The device to be used for training
-    net: MammothBackbone  # The backbone of the model (defined by the `dataset`)
+    net: 'MammothBackbone'  # The backbone of the model (defined by the `dataset`)
     loss: nn.Module  # The loss function to be used (defined by the `dataset`)
     opt: optim.Optimizer  # The optimizer to be used for training
     scheduler: optim.lr_scheduler._LRScheduler  # (optional) The scheduler for the optimizer. If defined, it will overwrite the one defined in the `dataset`
@@ -67,7 +69,7 @@ class ContinualModel(nn.Module):
     original_transform: transforms.Compose  # The original transformation to be applied to the input data. This is the one defined by the `dataset`
     task_iteration: int  # Number of iterations in the current task
     epoch_iteration: int  # Number of iterations in the current epoch. Updated if `epoch` is passed to observe
-    dataset: ContinualDataset  # The instance of the dataset. Used to update the number of classes in the current task
+    dataset: 'ContinualDataset'  # The instance of the dataset. Used to update the number of classes in the current task
     num_classes: int  # Total number of classes in the dataset
     n_tasks: int  # Total number of tasks in the dataset
 
@@ -178,7 +180,7 @@ class ContinualModel(nn.Module):
         self._cpt = value
 
     def __init__(self, backbone: nn.Module, loss: nn.Module,
-                 args: Namespace, transform: nn.Module, dataset: ContinualDataset = None) -> None:
+                 args: Namespace, transform: nn.Module, dataset: 'ContinualDataset' = None) -> None:
         super(ContinualModel, self).__init__()
         print("Using {} as backbone".format(backbone.__class__.__name__))
         self.net = backbone
@@ -293,34 +295,34 @@ class ContinualModel(nn.Module):
         """
         return 5
 
-    def begin_task(self, dataset: ContinualDataset) -> None:
+    def begin_task(self, dataset: 'ContinualDataset') -> None:
         """
         Prepares the model for the current task.
         Executed before each task.
         """
         pass
 
-    def end_task(self, dataset: ContinualDataset) -> None:
+    def end_task(self, dataset: 'ContinualDataset') -> None:
         """
         Prepares the model for the next task.
         Executed after each task.
         """
         pass
 
-    def begin_epoch(self, epoch: int, dataset: ContinualDataset) -> None:
+    def begin_epoch(self, epoch: int, dataset: 'ContinualDataset') -> None:
         """
         Prepares the model for the current epoch.
         """
         pass
 
-    def end_task(self, dataset: ContinualDataset) -> None:
+    def end_task(self, dataset: 'ContinualDataset') -> None:
         """
         Prepares the model for the next task.
         Executed after each task.
         """
         pass
 
-    def end_epoch(self, epoch: int, dataset: ContinualDataset) -> None:
+    def end_epoch(self, epoch: int, dataset: 'ContinualDataset') -> None:
         """
         Prepares the model for the next epoch.
         """

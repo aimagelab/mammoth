@@ -9,7 +9,6 @@ from utils.args import *
 from models.utils.continual_model import ContinualModel
 
 from datasets import get_dataset
-import wandb
 from models.attriclip_utils.model import CoOp
 from models.attriclip_utils.utils import cosine_loss
 from utils.conf import get_device
@@ -58,8 +57,7 @@ class Attriclip(ContinualModel):
             self.old_epoch = epoch
         labels = labels.long()
 
-        log_dict = {}
-        log_dict['lr'] = self.opt.param_groups[0]['lr']
+        lr = self.opt.param_groups[0]['lr']
 
         cur_iter_idx = epoch * self.per_epoch_steps + self.idx
         self.custom_scheduler.step(cur_iter_idx)
@@ -76,10 +74,7 @@ class Attriclip(ContinualModel):
         self.idx += 1
         self.iteration += 1
 
-        if not self.args.nowand:
-            wandb.log(log_dict)
-
-        return loss.item()
+        return {'loss': loss.item(), 'lr': lr}
 
     def forward(self, x):
         test_classes = self.class_names[:self.offset_2]
