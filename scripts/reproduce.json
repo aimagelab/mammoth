@@ -120,14 +120,14 @@
   {
     "model": "gdumb_lider",
     "setting": "class-il",
-    "result": 9.28,
-    "cmd": "--optim_wd=1e-6 --dataset=seq-cifar100 --model=gdumb_lider --buffer=500 --lr=0 --alpha_lip_lambda=0.3 --beta_lip_lambda=0.01"
+    "result": 10.22,
+    "cmd": "--optim_wd=1e-6 --dataset=seq-cifar100 --model=gdumb_lider --buffer_size=500 --model_config=best"
   },
   {
     "model": "gdumb",
     "setting": "class-il",
-    "result": 9.28,
-    "cmd": "--optim_wd=5e-5 --dataset=seq-cifar100 --model=gdumb --buffer=500 --lr=0"
+    "result": 45.8,
+    "cmd": "--dataset=seq-cifar10 --model=gdumb --buffer_size=500 --model_config=best"
   },
   {
     "model": "gem",

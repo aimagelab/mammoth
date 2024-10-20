@@ -1,7 +1,8 @@
 seq-cifar100:
-  alpha_lip_lambda: 0.3
-  beta_lip_lambda: 0.01
-  buffer: 500
-  lr: 0
-  model: gdumb_lider
-  optim_wd: 1e-6
+  dataset_config: lider
+  500:
+    alpha_lip_lambda: 0.01
+    beta_lip_lambda: 0.01
+    lr: 0
+    model: gdumb_lider
+    optim_wd: 1e-6

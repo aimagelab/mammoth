@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import logging
 from torch.optim import SGD, lr_scheduler
 
 from backbone import get_backbone
@@ -62,6 +63,7 @@ class GDumb(ContinualModel):
 
     @staticmethod
     def get_parser(parser) -> ArgumentParser:
+        parser.set_defaults(lr=0, n_epochs=1)  # lr is managed elsewhere, need only 1 epoch to fill buffer
         add_rehearsal_args(parser)
         parser.add_argument('--maxlr', type=float, default=5e-2,
                             help='Max learning rate.')
@@ -74,6 +76,10 @@ class GDumb(ContinualModel):
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
+        if args.n_epochs != 1:
+            args.n_epochs = 1
+            logging.info('GDumb needs only 1 epoch to fill the buffer.')
+
         super(GDumb, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
 

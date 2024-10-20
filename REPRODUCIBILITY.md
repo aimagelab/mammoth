@@ -26,8 +26,8 @@ reproducibility of the results in the original papers.
 | ER                        | `ewc_on`                 | X           |           |       |
 | FDR                       | `fdr`                    | X           |           |       |
 | First-Stage STAR-Prompt   | `first_stage_starprompt` | X           |           |       |
-| GdumB LiDER               | `gdumb_lider`            | X           |           |       |
-| GdumB                     | `gdumb`                  | X           |           |       |
+| GdumB LiDER               | `gdumb_lider`            | V           |           |       |
+| GdumB                     | `gdumb`                  | V           |           |       |
 | GEM                       | `gem`                    | V           |           | Original work requires too much resources. We reproduced the results in DER. |
 | GSS                       | `gss`                    | X           |           |       |
 | HAL                       | `hal`                    | X           |           |       |
