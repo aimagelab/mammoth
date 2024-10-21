@@ -1,0 +1,22 @@
+backbone: resnet32
+n_epochs: 70
+scheduler: multisteplr
+lr_milestones: 
+  - 49
+  - 63
+sched_multistep_lr_gamma: 0.2
+batch_size: 128
+seed: 1993
+permute_classes: 1
+MEAN: [0.5071, 0.4867, 0.4408]
+STD: [1,1,1]
+TRANSFORM:
+  - ToTensor
+  - Normalize:
+      mean: [0.5071, 0.4867, 0.4408]
+      std: [1,1,1]
+TEST_TRANSFORM:
+  - ToTensor
+  - Normalize:
+      mean: [0.5071, 0.4867, 0.4408]
+      std: [1,1,1]

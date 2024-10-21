@@ -1,5 +1,5 @@
 seq-cifar100:
-  500:
-    lr: 0.03
-    model: icarl
-    optim_wd: 1e-5
+  dataset_config: icarl
+  2000:
+    lr: 2
+    optim_wd: 0.00001

@@ -79,6 +79,53 @@ class BasicBlock(nn.Module):
         return out
 
 
+class IdentityShortcut(nn.Module):
+    def __init__(self, planes):
+        super(IdentityShortcut, self).__init__()
+        self.planes = planes
+        self.pad_dimension = planes // 4
+
+    def forward(self, x):
+        x = x[:, :, ::2, ::2]
+        # add padding to the channels dimension to match the output of the residual
+        return F.pad(x, (0, 0, 0, 0, self.pad_dimension, self.pad_dimension))
+
+
+class iCaRLBasicBlock(BasicBlock):
+    """
+    Basic block with ReLU before BN.
+    """
+
+    def __init__(self, in_planes: int, planes: int, stride: int = 1, is_last=False):
+        super(iCaRLBasicBlock, self).__init__(in_planes, planes, stride)
+        self.is_last = is_last
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != self.expansion * planes:
+            self.shortcut = IdentityShortcut(planes)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Compute a forward pass.
+
+        Args:
+            x: input tensor (batch_size, input_size)
+
+        Returns:
+            output tensor (10)
+        """
+        out = self.bn1(relu(self.conv1(x)))
+        out = self.bn2(self.conv2(out))
+        out += self.shortcut(x)
+
+        if self.return_prerelu:
+            self.prerelu = out.clone()
+
+        if not self.is_last:
+            out = relu(out)
+        return out
+
+
 class ResNet(MammothBackbone):
     """
     ResNet network architecture. Designed for complex datasets.
@@ -104,14 +151,18 @@ class ResNet(MammothBackbone):
         self.nf = nf
         self.conv1 = conv3x3(3, nf * 1 * block.expansion)
         self.bn1 = nn.BatchNorm2d(nf * 1 * block.expansion)
-        self.layer1 = self._make_layer(block, nf * 1 * block.expansion, num_blocks[0], stride=1)
-        self.layer2 = self._make_layer(block, nf * 2 * block.expansion, num_blocks[1], stride=2)
-        self.layer3 = self._make_layer(block, nf * 4 * block.expansion, num_blocks[2], stride=2)
         if len(num_blocks) == 4:
             self.feature_dim = nf * 8 * block.expansion
+            self.layer1 = self._make_layer(block, nf * 1 * block.expansion, num_blocks[0], stride=1)
+            self.layer2 = self._make_layer(block, nf * 2 * block.expansion, num_blocks[1], stride=2)
+            self.layer3 = self._make_layer(block, nf * 4 * block.expansion, num_blocks[2], stride=2)
             self.layer4 = self._make_layer(block, self.feature_dim, num_blocks[3], stride=2)
         else:
             self.feature_dim = nf * 4 * block.expansion
+            self.layer1 = self._make_layer(block, nf * 1 * block.expansion, num_blocks[0], stride=1)
+            self.layer2 = self._make_layer(block, nf * 2 * block.expansion, num_blocks[1], stride=2)
+            self.layer3 = self._make_layer(block, self.feature_dim, num_blocks[2], stride=2)
+            self.layer3._modules[f"{num_blocks[2]-1}"].is_last = True
             self.layer4 = nn.Identity()
             self.layer4.return_prerelu = False
 
@@ -124,7 +175,7 @@ class ResNet(MammothBackbone):
                 c.return_prerelu = enable
 
     def _make_layer(self, block: BasicBlock, planes: int,
-                    num_blocks: int, stride: int) -> nn.Module:
+                    num_blocks: int, stride: int) -> nn.Sequential:
         """
         Instantiates a ResNet layer.
 
@@ -155,10 +206,10 @@ class ResNet(MammothBackbone):
         Returns:
             output tensor (output_classes)
         """
-        out_0 = self.bn1(self.conv1(x))  # 64, 32, 32
+        out_0 = self.conv1(x)  # 64, 32, 32
         if self.return_prerelu:
             out_0_t = out_0.clone()
-        out_0 = relu(out_0)
+        out_0 = self.bn1(relu(out_0))
         if hasattr(self, 'maxpool'):
             out_0 = self.maxpool(out_0)
 
@@ -248,4 +299,4 @@ def resnet32(num_classes: int, num_filters: int = 16) -> ResNet:
     Returns:
         ResNet network
     """
-    return ResNet(BasicBlock, [5, 5, 5], num_classes, num_filters)
+    return ResNet(iCaRLBasicBlock, [5, 5, 5], num_classes, num_filters)
