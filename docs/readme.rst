@@ -80,7 +80,7 @@ Setup
 Models
 ------
 
-Mammoth currently supports **more than 40 models**, with new releases covering the main competitors in literature.
+Mammoth currently supports **more than 50 models**, with new releases covering the main competitors in literature.
 
 Datasets
 --------
@@ -98,14 +98,6 @@ All the code is under active development. Here are some of the features we are w
 
 - **New models**: We are working on adding new models to the repository.
 - **New training modalities**: We will introduce new CL training regimes, such as training with *noisy labels*, *regression*, *segmentation*, *detection*, etc.
-- **Openly accessible result dashboard**: We are working on a dashboard to visualize the results of all the models in both their respective settings (to prove their reproducibility) and in a general setting (to compare them). 
+- **Openly accessible result dashboard**: We are working on a dashboard to visualize the results of all the models in both their respective settings (to prove their :ref:`reproducibility <reproduce_mammoth>`) and in a general setting (to compare them). 
 
 All the new additions will try to preserve the current structure of the repository, making it easy to add new functionalities with a simple merge.
-
-Pretrained backbones
---------------------
-
-- `ResNet18 on cifar100 <https://onedrive.live.com/embed?cid=D3924A2D106E0039&resid=D3924A2D106E0039%21108&authkey=AFsCv4BR-bmTUII>`_
-- `ResNet18 on TinyImagenet resized (seq-tinyimg-r) <https://onedrive.live.com/embed?cid=D3924A2D106E0039&resid=D3924A2D106E0039%21106&authkey=AKTxp5LFQJ9z9Ok>`_
-- `ResNet50 on ImageNet (pytorch version) <https://onedrive.live.com/embed?cid=D3924A2D106E0039&resid=D3924A2D106E0039%21107&authkey=ADHhbeg9cUoqJ0M>`_
-- `ResNet18 on SVHN <https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/ETdCpRoA891KsAAuibMKWYwBX_3lfw3dMbE4DFEkhOm96A?e=NjdzLN>`_

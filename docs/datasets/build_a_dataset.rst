@@ -146,7 +146,7 @@ These classes provide some useful methods to create data loaders and store maske
 
     2. Define a *SINGLE* new class that inherits from `ContinualDataset` or `GCLDataset` and implements all the required methods and attributes.
 
-    3. Define the **get_data_loaders** method, which returns a list of train and test data loaders for each task (see more in section :ref:`Utils <dataset-index-utils>`). 
+    3. Define the **get_data_loaders** method, which returns a list of train and test data loaders for each task. 
 
     .. tip::
         For convenience, most datasets are initially created with all classes and then masked appropriately by the **store_masked_loaders** function. 

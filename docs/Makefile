@@ -15,6 +15,7 @@ help:
 .PHONY: help Makefile
 
 clean:
+	rm -rf $(BUILDDIR)/*
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 # rm -rf generated
 # rm -rf **/generated
