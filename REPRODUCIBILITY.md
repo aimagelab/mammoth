@@ -1,7 +1,6 @@
 # On the reproduction of methods in Mammoth
 
-The following table contains the list of models implemented in Mammoth and the state of 
-reproducibility of the results in the original papers. 
+The following table contains a list of models implemented in Mammoth and a checklist to indicate if we already have a reproduction of the results in the original papers.
 
 | Model                     | `--model`                | Reproduces? | WandB run | Notes |
 | ------------------------- | ------------------------ | ----------- | --------- | ----- |
@@ -32,7 +31,7 @@ reproducibility of the results in the original papers.
 | GSS                       | `gss`                    | X           |           |       |
 | HAL                       | `hal`                    | X           |           |       |
 | iCaRL LiDER               | `icarl_lider`            | X           |           |       |
-| iCaRL                     | `icarl`                  | X           |           |       |
+| iCaRL                     | `icarl`                  | V           |           |       |
 | Joint GCL                 | `joint_gcl`              | X           |           |       |
 | Joint                     | `joint`                  | X           |           |       |
 | L2P                       | `l2p`                    | V           |           |       |

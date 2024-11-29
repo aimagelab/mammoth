@@ -79,53 +79,6 @@ class BasicBlock(nn.Module):
         return out
 
 
-class IdentityShortcut(nn.Module):
-    def __init__(self, planes):
-        super(IdentityShortcut, self).__init__()
-        self.planes = planes
-        self.pad_dimension = planes // 4
-
-    def forward(self, x):
-        x = x[:, :, ::2, ::2]
-        # add padding to the channels dimension to match the output of the residual
-        return F.pad(x, (0, 0, 0, 0, self.pad_dimension, self.pad_dimension))
-
-
-class iCaRLBasicBlock(BasicBlock):
-    """
-    Basic block with ReLU before BN.
-    """
-
-    def __init__(self, in_planes: int, planes: int, stride: int = 1, is_last=False):
-        super(iCaRLBasicBlock, self).__init__(in_planes, planes, stride)
-        self.is_last = is_last
-
-        self.shortcut = nn.Sequential()
-        if stride != 1 or in_planes != self.expansion * planes:
-            self.shortcut = IdentityShortcut(planes)
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """
-        Compute a forward pass.
-
-        Args:
-            x: input tensor (batch_size, input_size)
-
-        Returns:
-            output tensor (10)
-        """
-        out = self.bn1(relu(self.conv1(x)))
-        out = self.bn2(self.conv2(out))
-        out += self.shortcut(x)
-
-        if self.return_prerelu:
-            self.prerelu = out.clone()
-
-        if not self.is_last:
-            out = relu(out)
-        return out
-
-
 class ResNet(MammothBackbone):
     """
     ResNet network architecture. Designed for complex datasets.
@@ -285,18 +238,3 @@ def resnet34(num_classes: int, num_filters: int = 64) -> ResNet:
         ResNet network
     """
     return ResNet(BasicBlock, [3, 4, 6, 3], num_classes, num_filters)
-
-
-@register_backbone("resnet32")
-def resnet32(num_classes: int, num_filters: int = 16) -> ResNet:
-    """
-    Instantiates a ResNet32 network.
-
-    Args:
-        num_classes: number of output classes
-        num_filters: number of filters
-
-    Returns:
-        ResNet network
-    """
-    return ResNet(iCaRLBasicBlock, [5, 5, 5], num_classes, num_filters)

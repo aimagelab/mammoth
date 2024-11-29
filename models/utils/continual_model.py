@@ -411,7 +411,8 @@ class ContinualModel(nn.Module):
 
         # reload optimizer if the model has no scheduler
         if not hasattr(self, 'scheduler') or self.scheduler is None:
-            self.opt.zero_grad(set_to_none=True)
+            if hasattr(self, 'opt'):
+                self.opt.zero_grad(set_to_none=True)
             self.opt = self.get_optimizer()
         else:
             logging.warning("Model defines a custom scheduler. The optimizer will not be reloaded.")

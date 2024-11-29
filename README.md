@@ -23,8 +23,6 @@ Ideally, all the code necessary to run the experiments is included _in the repos
 
 With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
 
-> ***All the models included in mammoth are verified against the original papers (or subsequent relevant papers) to reproduce their original results.***
-
 ## Documentation
 
 ### Check out the official [DOCUMENTATION](https://aimagelab.github.io/mammoth/) for more information on how to use Mammoth!
@@ -161,6 +159,26 @@ Mammoth currently includes **21** datasets, covering *toy classification problem
  year = {2020}
 }
 ```
+
+## Reproducibility
+
+
+On the reproducibility of Mammoth
+=================================
+
+We take great pride and care in the reproducibility of the models in Mammoth and we are commited to provide the community with the most accurate results possible. To this end, we provide a `REPRODUCIBILITY.md` file in the repository that contains the results of the models in Mammoth.
+
+The performance of each model is evaluated on the same dataset used in the paper and we report in `REPRODUCIBILITY.md` our results compared to the results reported in the paper. We also provide the exact command used to train the model (most times, it follows `python main.py --model <model-name> --dataset <dataset-name> --model_config best`).
+
+We encourage the community to report any issues with the reproducibility of the models in Mammoth. If you find any issues, please open an issue in the GitHub repository or contact us directly.
+
+**Disclaimer**: Since there are many models in Mammoth (and some of them predate PyTorch), the process of filling the `REPRODUCIBILITY.md` file is ongoing. We are working hard to fill the file with the results of all models in Mammoth. If you need the results of a specific model, please open an issue in the GitHub repository or contact us directly.
+
+> *Does this mean that the models that are not in the `REPRODUCIBILITY.md` file do not reproduce?*
+    
+  No! It means that we have not yet found the appropriate dataset and hyperparameters to fill the file with the results of that model. We are working hard to fill the file with the results of all models in Mammoth. If you need the results of a specific model, please open an issue in the GitHub repository or contact us directly.
+
+
 
 ## Awesome Papers using Mammoth
 

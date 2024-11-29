@@ -23,10 +23,6 @@ Ideally, all the code necessary to run the experiments is included *in the repos
 
 With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
 
-.. important::
-
-    **All the models included in mammoth are verified against the original papers (or subsequent relevant papers) to reproduce their original results.**
-
 **NEW: DATASET CONFIGURATIONS** We now support *configuration files* for the datasets with the new ``--dataset_config`` argument. This allows for more flexibility in the dataset definition. See more in :ref:`dataset-configurations`.
 
 **NEW: MODEL CONFIGURATIONS** Default and best arguments for a particular dataset (and buffer size, if applicable) can now be loaded with the ``--model_config`` argument. This can be set to ``default`` (or ``base``) or ``best``. The ``default`` configuration does not depend on datasets or buffers and is the default configuration for the model. More info in :ref:`model-configurations`.

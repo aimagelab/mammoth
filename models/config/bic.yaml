@@ -11,4 +11,4 @@ seq-cifar100:
     sched_multistep_lr_gamma: 0.1
     optim_wd: 0.0002
     batch_size: 128
-    backbone: resnet32_bic
+    backbone: resnet32

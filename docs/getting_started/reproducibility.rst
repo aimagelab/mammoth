@@ -15,4 +15,10 @@ We encourage the community to report any issues with the reproducibility of the 
 
 .. note::
 
-    Since there are many models in Mammoth (and some of them predate PyTorch), the process of filling the `REPRODUCIBILITY.md` file is ongoing. We are working hard to fill the file with the results of all models in Mammoth. If you need the results of a specific model, please open an issue in the GitHub repository or contact us directly.
+    Since there are many models in Mammoth (and some of them predate PyTorch), the process of filling the `REPRODUCIBILITY.md` file is ongoing. We are working hard to fill the file with the results of all models in Mammoth. 
+
+.. important::
+
+    *Does this mean that the models that are not in the `REPRODUCIBILITY.md` file do not reproduce?*
+    
+    No! It means that we have not yet found the appropriate dataset and hyperparameters to fill the file with the results of that model. We are working hard to fill the file with the results of all models in Mammoth. If you need the results of a specific model, please open an issue in the GitHub repository or contact us directly.
