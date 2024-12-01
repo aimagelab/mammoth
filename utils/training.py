@@ -22,7 +22,7 @@ from models.utils.continual_model import ContinualModel
 from models.utils.future_model import FutureModel
 
 from utils import disable_logging
-from utils.checkpoints import mammoth_load_checkpoint
+from utils.checkpoints import mammoth_load_checkpoint, save_mammoth_checkpoint
 from utils.loggers import log_extra_metrics, log_accs, Logger
 from utils.schedulers import get_scheduler
 from utils.stats import track_system_stats
@@ -412,24 +412,11 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     log_accs(args, logger, transf_accs, t, dataset.SETTING, future=True)
 
             if args.savecheck:
-                save_obj = {
-                    'model': model.state_dict(),
-                    'args': args,
-                    'results': [results, results_mask_classes, logger.dump()],
-                    'optimizer': model.opt.state_dict() if hasattr(model, 'opt') else None,
-                    'scheduler': scheduler.state_dict() if scheduler is not None else None,
-                }
-                if 'buffer_size' in model.args:
-                    save_obj['buffer'] = copy.deepcopy(model.buffer).to('cpu')
-
-                # Saving model checkpoint for the current task
-                checkpoint_name = None
-                if args.savecheck == 'task':
-                    checkpoint_name = f'checkpoints/{args.ckpt_name}_joint.pt' if args.joint else f'checkpoints/{args.ckpt_name}_{t}.pt'
-                elif args.savecheck == 'last' and t == end_task - 1:
-                    checkpoint_name = f'checkpoints/{args.ckpt_name}_joint.pt' if args.joint else f'checkpoints/{args.ckpt_name}_last.pt'
-                if checkpoint_name is not None:
-                    torch.save(save_obj, checkpoint_name)
+                save_mammoth_checkpoint(t, end_task, args,
+                                        model,
+                                        results=[results, results_mask_classes, logger.dump()],
+                                        optimizer_st=model.opt.state_dict() if hasattr(model, 'opt') else None,
+                                        scheduler_st=scheduler.state_dict() if scheduler is not None else None)
 
         if args.validation:
             # Final evaluation on the real test set

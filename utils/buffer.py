@@ -312,6 +312,15 @@ class Buffer:
         else:
             self.sample_selection_fn = ReservoirSampling(buffer_size, device)
 
+    def serialize(self, out_device='cpu'):
+        """
+        Serialize the buffer.
+
+        Returns:
+            A dictionary containing the buffer attributes.
+        """
+        return {attr_str: getattr(self, attr_str).to(out_device) for attr_str in self.attributes if hasattr(self, attr_str)}
+
     def to(self, device):
         """
         Move the buffer and its attributes to the specified device.

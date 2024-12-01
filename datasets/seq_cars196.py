@@ -10,6 +10,7 @@ import json
 
 try:
     import deeplake
+    assert int(deeplake.__version__.split('.')[0]) < 4, 'Deeplake version must be < 4. Install it with `pip install -U "deeplake<3.9"`.'
 except ImportError:
     raise NotImplementedError("Deeplake not installed. Please install with `pip install deeplake` to use this dataset.")
 

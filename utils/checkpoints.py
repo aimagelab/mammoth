@@ -1,16 +1,46 @@
 
-import logging
+from argparse import Namespace
+from collections.abc import Iterable
+import copy
 import random
 import string
+from typing import Dict, Union
 import numpy as np
 import torch
-from torch import distributed as dist
 import os
 
 from tqdm import tqdm
 import urllib.request as request
 
 from utils import smart_joint
+
+
+def to_parsable_obj(r: Union[Dict, Namespace, list, torch.Tensor, np.ndarray]) -> Union[Dict, list, str, int, float, bool]:
+    """
+    Convert a non-builtin object to a parsable (and loadable with `weights_only=True`) object.
+    Looking at you, Namespace.
+    """
+
+    if isinstance(r, Namespace):
+        return to_parsable_obj(vars(r))
+    if isinstance(r, list):
+        return [to_parsable_obj(x) for x in r]
+    if isinstance(r, dict):
+        return {k: to_parsable_obj(v) for k, v in r.items()}
+    else:
+        if isinstance(r, torch.Tensor):
+            r = r.detach().cpu().numpy().tolist()
+        elif isinstance(r, np.ndarray):
+            r = r.tolist()
+        if not isinstance(r, str) and isinstance(r, Iterable) and len(r) > 1:
+            return [to_parsable_obj(x) for x in r]
+        # check if type of r is builtin
+        if isinstance(r, (int, float, str, bool)):
+            try:
+                r = r.item()  # could be numpy scalar
+            except BaseException:
+                return r
+        return None
 
 
 def _load_mammoth_model(dict_keys, model: torch.nn.Module, args):
@@ -155,45 +185,72 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
         if not os.path.exists(args.loadcheck):
             raise ValueError('The given checkpoint does not exist.')
 
-    if args.loadcheck.endswith('.safetensors'):
-        # Model only checkpoint, but safe
-        logging.info('Loading checkpoint with SafeTensors...')
-        try:
-            from safetensors import safe_open
-        except ImportError:
-            raise ImportError('SafeTensors is required to load safe checkpoints. Please install it with "pip install safetensors"')
+    saved_obj = torch.load(args.loadcheck, map_location=torch.device("cpu"), weights_only=True)
 
-        dict_keys = {}
-        with safe_open(dict_keys, framework='pt') as f:
-            for k in f.keys():
-                dict_keys[k] = f.get_tensor(k)
+    if 'args' in saved_obj and 'model' in saved_obj:
+        saved_obj['args'] = Namespace(**saved_obj['args'])  # convert back to Namespace
+        _check_loaded_args(args, saved_obj['args'])
+        # Mammoth checkpoint
+        model = _load_mammoth_model(saved_obj['model'], model, args)
+        if 'buffer' in saved_obj:
+            loading_model = saved_obj['args'].model
+            if args.model != loading_model:
+                print(f'WARNING: The loaded model was trained with a different model: {loading_model}')
+            model.load_buffer(saved_obj['buffer'])
 
-        model = _load_net(saved_obj, model, args, ignore_classifier=ignore_classifier, safe=True)
+        return model, saved_obj['results']
+    else:
+        # Model only checkpoint
+        model = _load_net(saved_obj, model, args, ignore_classifier=ignore_classifier)
 
         return model, None
-    else:
-        logging.warning('Loading checkpoint with Pickle will be deprecated in future versions due to security reasons. Always make sure to load checkpoints from trusted sources.')
-        saved_obj = torch.load(args.loadcheck, map_location=torch.device("cpu"))
 
-        if 'args' in saved_obj and 'model' in saved_obj:
-            _check_loaded_args(args, saved_obj['args'])
-            # Mammoth checkpoint
-            model = _load_mammoth_model(saved_obj['model'], model, args)
-            if 'buffer' in saved_obj:
-                loading_model = saved_obj['args'].model
-                if args.model != loading_model:
-                    print(f'WARNING: The loaded model was trained with a different model: {loading_model}')
-                model.load_buffer(saved_obj['buffer'])
 
-            return model, saved_obj['results']
+def save_mammoth_checkpoint(task: int, end_task: int, args: Namespace, model: torch.nn.Module, results=None,
+                            optimizer_st: Dict[str, torch.Tensor] = None,
+                            scheduler_st: Dict[str, torch.Tensor] = None):
+    """
+    Save a checkpoint for the model for the given task.
+    Handles saving as a single file (will require `weights_only=False)` or separate weights (can be loaded safely with `weights_only=True`).
+    """
+    if args.savecheck == 'task':
+        checkpoint_name = f'checkpoints/{args.ckpt_name}_joint' if args.joint else f'checkpoints/{args.ckpt_name}_{task}'
+    elif args.savecheck == 'last':
+        if task == end_task - 1:
+            checkpoint_name = f'checkpoints/{args.ckpt_name}_joint' if args.joint else f'checkpoints/{args.ckpt_name}_last'
         else:
-            # Model only checkpoint
-            model = _load_net(saved_obj, model, args, ignore_classifier=ignore_classifier)
+            return
+    else:
+        raise ValueError(f'Invalid savecheck mode: {args.savecheck}')
 
-            return model, None
+    if args.save_checkpoint_mode == 'old_pickle':
+        save_obj = {
+            'model': model.state_dict(),
+            'args': args,
+            'results': results,
+            'optimizer': optimizer_st,
+            'scheduler': scheduler_st,
+        }
+        if 'buffer_size' in model.args:
+            save_obj['buffer'] = copy.deepcopy(model.buffer).to('cpu')
+    elif args.save_checkpoint_mode == 'safe':  # TODO CHECK
+        save_obj = {
+            'model': model.state_dict(),
+            'optimizer': optimizer_st,
+            'scheduler': scheduler_st,
+            'args': to_parsable_obj(vars(args)),  # avoid Namespace and other non-builtin types
+            'results': to_parsable_obj(results),  # avoid numpy, torch, and non-builtin types
+        }
+        if 'buffer_size' in model.args:
+            save_obj['buffer'] = model.buffer.serialize()
+
+    torch.save(save_obj, checkpoint_name + '.pt')
+    print(f"Checkpoint for task {task} saved at {checkpoint_name}")
 
 
 def _check_loaded_args(args, loaded_args):
+    pruned_original_args = to_parsable_obj(vars(args))
+
     def _check_arg(arg, loaded_arg):
         if isinstance(arg, (list, tuple)):
             return any([a != la for a, la in zip(arg, loaded_arg)])
@@ -206,8 +263,8 @@ def _check_loaded_args(args, loaded_args):
     ignored_args = ['loadcheck', 'start_from', 'stop_after', 'conf_jobnum', 'conf_host', 'conf_timestamp', 'distributed', 'examples_log', 'examples_full_log',
                     'intensive_savecheck', 'job_number', 'conf_git_commit', 'loss_log', 'tensorboard', 'seed', 'savecheck', 'notes', 'non_verbose', 'autorelaunch',
                     'force_compat', 'conf_external_path', 'ckpt_name']
-    mismatched_args = [x for x in vars(args) if x not in ignored_args and (
-        x not in vars(loaded_args) or _check_arg(getattr(args, x), getattr(loaded_args, x)))]
+    mismatched_args = [x for x in pruned_original_args if x not in ignored_args and (
+        x not in vars(loaded_args) or _check_arg(pruned_original_args[x], getattr(loaded_args, x)))]
 
     if len(mismatched_args):
         if 'force_compat' not in vars(args) or args.force_compat:

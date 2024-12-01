@@ -91,7 +91,8 @@ class DualPrompt(ContinualModel):
                 prev_idx = (slice(None), slice(None), slice(prev_start, prev_end)) if self.args.use_prefix_tune_for_e_prompt else (slice(None), slice(prev_start, prev_end))
 
                 with torch.no_grad():
-                    self.net.model.e_prompt.prompt.grad.zero_()
+                    if self.net.model.e_prompt.prompt.grad is not None:
+                        self.net.model.e_prompt.prompt.grad.zero_()
                     self.net.model.e_prompt.prompt[cur_idx] = self.net.model.e_prompt.prompt[prev_idx]
                     self.opt.param_groups[0]['params'] = self.net.model.parameters()
 

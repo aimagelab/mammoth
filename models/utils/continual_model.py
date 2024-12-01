@@ -37,6 +37,7 @@ import torch.nn as nn
 import torch.optim as optim
 from datasets import get_dataset
 
+from utils.buffer import Buffer
 from utils.conf import get_device, warn_once
 from utils.kornia_utils import to_kornia_transform
 from utils.magic import persistent_locals
@@ -233,9 +234,21 @@ class ContinualModel(nn.Module):
         """
         Default way to handle load buffer.
         """
-        assert buffer.examples.shape[0] == self.args.buffer_size, "Buffer size mismatch. Expected {} got {}".format(
-            self.args.buffer_size, buffer.examples.shape[0])
-        self.buffer = buffer
+
+        if isinstance(buffer, Buffer):
+            assert buffer.examples.shape[0] == self.args.buffer_size, "Buffer size mismatch. Expected {} got {}".format(
+                self.args.buffer_size, buffer.examples.shape[0])
+            self.buffer = buffer
+        elif isinstance(buffer, dict):  # serialized buffer
+            assert 'examples' in buffer, "Buffer does not contain examples"
+            assert self.buffer.buffer_size == buffer['examples'].shape[0], "Buffer size mismatch. Expected {} got {}".format(
+                self.buffer.buffer_size, buffer['examples'].shape[0])
+            for k, v in buffer.items():
+                setattr(self.buffer, k, v)
+            self.buffer.attributes = list(buffer.keys())
+            self.buffer.num_seen_examples = buffer['examples'].shape[0]
+        else:
+            raise ValueError("Buffer type not recognized")
 
     def get_parameters(self):
         """
@@ -258,6 +271,10 @@ class ContinualModel(nn.Module):
         """
 
         params = params if params is not None else self.get_parameters()
+        if params is None or len(list(params)) == 0:
+            logging.info("No parameters to optimize.")
+            return None
+
         lr = lr if lr is not None else self.args.lr
         # check if optimizer is in torch.optim
         supported_optims = {optim_name.lower(): optim_name for optim_name in dir(optim) if optim_name.lower() in self.AVAIL_OPTIMS}
@@ -411,7 +428,7 @@ class ContinualModel(nn.Module):
 
         # reload optimizer if the model has no scheduler
         if not hasattr(self, 'scheduler') or self.scheduler is None:
-            if hasattr(self, 'opt'):
+            if hasattr(self, 'opt') and self.opt is not None:
                 self.opt.zero_grad(set_to_none=True)
             self.opt = self.get_optimizer()
         else:

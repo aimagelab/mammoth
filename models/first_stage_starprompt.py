@@ -5,6 +5,7 @@ import torch
 from argparse import ArgumentParser
 
 from utils import binary_to_boolean_type
+from utils.checkpoints import to_parsable_obj
 try:
     import clip
 except ImportError:
@@ -91,7 +92,7 @@ class FirstStageStarprompt(ContinualModel):
             os.makedirs('./coop_keys', exist_ok=True)
             st = {
                 'keys': te_outputs,
-                'args': self.args,
+                'args': to_parsable_obj(self.args),
             }
             if self.args.save_first_stage_keys_filename is not None:
                 fname = f'./coop_keys/{self.args.save_first_stage_keys_filename}'

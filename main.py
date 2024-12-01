@@ -31,12 +31,10 @@ import torch
 # if file is launched inside the `utils` folder
 if os.path.dirname(__file__) == 'utils':
     mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    sys.path.append(mammoth_path)
-    sys.path.append(mammoth_path + '/datasets')
-    sys.path.append(mammoth_path + '/backbone')
-    sys.path.append(mammoth_path + '/models')
 else:
     mammoth_path = os.path.dirname(os.path.abspath(__file__))
+
+sys.path.insert(0, mammoth_path)
 
 from utils import setup_logging
 setup_logging()
