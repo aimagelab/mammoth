@@ -1,7 +1,4 @@
-seq-cifar100:
+seq-cifar10:
   500:
-    alpha_lip_lambda: 0.01
-    beta_lip_lambda: 0.001
-    lr: 1
-    model: icarl_lider
-    optim_wd: 1e-5
+    lr: 0.03
+    elrd: 0.99999935

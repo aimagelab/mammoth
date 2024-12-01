@@ -1,7 +1,5 @@
 import os
-import sys
 import pytest
-import logging
 
 
 @pytest.fixture(autouse=True)
@@ -16,6 +14,10 @@ def pytest_addoption(parser):
 
 def pytest_collection_modifyitems(config, items):
     reload_datasets = config.getoption("--include_dataset_reload")
+    if reload_datasets:
+        print("\nIncluding dataset reload tests.\n")
+    else:
+        print("\nExcluding dataset reload tests.\n")
 
     skip_listed = pytest.mark.skip()
     for item in items:

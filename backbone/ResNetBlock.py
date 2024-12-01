@@ -162,7 +162,7 @@ class ResNet(MammothBackbone):
         out_0 = self.conv1(x)  # 64, 32, 32
         if self.return_prerelu:
             out_0_t = out_0.clone()
-        out_0 = self.bn1(relu(out_0))
+        out_0 = relu(self.bn1(out_0))
         if hasattr(self, 'maxpool'):
             out_0 = self.maxpool(out_0)
 

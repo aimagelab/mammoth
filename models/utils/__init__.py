@@ -60,7 +60,7 @@ def load_model_config(args: Namespace, buffer_size: int = None) -> dict:
     with open(filepath, 'r') as f:
         config = yaml.safe_load(f)
 
-    if 'default' not in config:
+    if config is None or 'default' not in config:
         warn_once(f'No default configuration found in {filepath}.')
         default_config = {}
     else:

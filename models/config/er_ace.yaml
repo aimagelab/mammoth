@@ -1,4 +1,6 @@
-seq-cifar100:
-  500:
-    lr: 0.03
+seq-cifar10:
+  dataset_config: er_ace
+  task_free: 1
+  200:
+    lr: 0.1
     model: er_ace

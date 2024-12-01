@@ -180,7 +180,7 @@ class ContinualModel(nn.Module):
         warn_once("Setting the number of classes per task is not recommended.")
         self._cpt = value
 
-    def __init__(self, backbone: nn.Module, loss: nn.Module,
+    def __init__(self, backbone: 'MammothBackbone', loss: nn.Module,
                  args: Namespace, transform: nn.Module, dataset: 'ContinualDataset' = None) -> None:
         super(ContinualModel, self).__init__()
         print("Using {} as backbone".format(backbone.__class__.__name__))

@@ -85,13 +85,13 @@
     "model": "er_ace_lider",
     "setting": "class-il",
     "result": 38.43,
-    "cmd": "--dataset=seq-cifar100 --model=er_ace_lider --buffer_size=500 --lr=0.1 --alpha_lip_lambda=0.1 --beta_lip_lambda=0.3"
+    "cmd": "--dataset=seq-cifar100 --model=er_ace_lider --model_config=best --buffer_size=500"
   },
   {
     "model": "er_ace",
     "setting": "class-il",
-    "result": 36.48,
-    "cmd": "--dataset=seq-cifar100 --model=er_ace --buffer_size=500 --lr=0.03"
+    "result": 42.6,
+    "cmd": "--dataset=seq-cifar10 --model=er_ace --buffer_size=200 --model_config=best"
   },
   {
     "model": "er",
@@ -272,13 +272,13 @@
     "model": "er_ace_aer_abs",
     "setting": "class-il",
     "result": 40.3,
-    "cmd": "--model=er_ace_aer_abs --dataset=seq-cifar100 --buffer_size=2000 --lr=0.1 --noise_type=symmetric --noise_rate=0.4 --buffer_fitting_epochs 255 --buffer_fitting_type mixmatch"
+    "cmd": "--model=er_ace_aer_abs --dataset=seq-cifar100 --buffer_size=2000 --model_config=best --noise_type=symmetric --noise_rate=0.4"
   },
   {
     "model": "er_tricks",
     "setting": "class-il",
-    "result": 47.02,
-    "cmd": "--dataset=seq-cifar100 --model=icarl_lider --buffer_size=500 --lr=1 --optim_wd=1e-5 --alpha_lip_lambda=0.01 --beta_lip_lambda=0.001"
+    "result": 62.60,
+    "cmd": "--dataset=seq-cifar10 --model=er_tricks --buffer_size=500 --model_config=best"
   },
   {
     "model": "puridiver",
