@@ -271,7 +271,11 @@ class ContinualModel(nn.Module):
         """
 
         params = params if params is not None else self.get_parameters()
-        if params is None or len(list(params)) == 0:
+        if params is None:
+            logging.info("No parameters to optimize.")
+            return None
+        params = list(params)
+        if len(params) == 0:
             logging.info("No parameters to optimize.")
             return None
 
