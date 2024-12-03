@@ -114,8 +114,8 @@
   {
     "model": "first_stage_starprompt",
     "setting": "class-il",
-    "result": 90.82,
-    "cmd": "--dataset=seq-eurosat-rgb --model=first_stage_starprompt --num_monte_carlo_gr=2 --gr_mog_n_iters=200 --num_epochs_gr=10 --learning_rate_gr=0.05 --seed=1997 --lr 0.002 --optimizer sgd"
+    "result": 90.12,
+    "cmd": "--dataset=seq-eurosat-rgb --model=first_stage_starprompt --model_config=best"
   },
   {
     "model": "gdumb_lider",
@@ -215,12 +215,6 @@
     "cmd": "--model=rpc --dataset=seq-cifar10 --lr=0.0001 --buffer_size=100 --optimizer=adam --batch_size=128 --n_epochs=5"
   },
   {
-    "model": "first_stage_starprompt",
-    "setting": "class-il",
-    "result": 91.04,
-    "cmd": "--dataset=seq-eurosat-rgb --model=first_stage_starprompt --num_monte_carlo_gr=2 --gr_mog_n_iters=200 --num_epochs_gr=10 --learning_rate_gr=0.05 --seed=1993 --lr 0.002 --optimizer sgd --permute_classes=1 --save_first_stage_keys_filename=mammoth_test_keys.pt"
-  },
-  {
     "model": "second_stage_starprompt",
     "setting": "class-il",
     "result": 93.91,
@@ -242,13 +236,13 @@
     "model": "starprompt",
     "setting": "class-il",
     "result": 94.02,
-    "cmd": "--seed=1993 --optimizer=adam --dataset=seq-cropdisease --model=starprompt --lr=0.001 --lambda_ortho_second_stage=5 --learning_rate_gr_second_stage=0.001 --num_monte_carlo_gr_second_stage=5 --num_epochs_gr_second_stage=10 --gr_mog_n_iters_first_stage=500 --lambda_ortho_first_stage=30 --num_epochs_gr_first_stage=10 --num_monte_carlo_gr_first_stage=2 --learning_rate_gr_first_stage=0.01"
+    "cmd": "--dataset=seq-cropdisease --model=starprompt --model_config=best"
   },
   {
     "model": "twf",
     "setting": "class-il",
     "result": 81.9,
-    "cmd": "--loadcheck=https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EeWEOSls505AsMCTXAxWoLUBmeIjCiplFl40zDOCmB_lEw?e=Izv0jh --dataset=seq-cifar10 --model=twf --buffer_size=500 --lr=0.1 --der_alpha=0.3 --der_beta=1.2 --lambda_diverse_loss=0.3 --lambda_fp=0.03 --lambda_fp_replay=1.5"
+    "cmd": "--loadcheck=\"https://unimore365-my.sharepoint.com/:u:/r/personal/215580_unimore_it/Documents/checkpoints/rs18_cifar100_new.pth?csf=1&web=1&e=5XE8d3\" --dataset=seq-cifar10 --model=twf --buffer_size=500 --lr=0.1 --der_alpha=0.3 --der_beta=1.2 --lambda_diverse_loss=0.3 --lambda_fp=0.03 --lambda_fp_replay=1.5"
   },
   {
     "model": "xder",

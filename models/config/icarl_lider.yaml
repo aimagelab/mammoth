@@ -1,4 +1,5 @@
 seq-cifar100:
+  dataset_config: lider
   500:
     alpha_lip_lambda: 0.01
     beta_lip_lambda: 0.001

@@ -20,9 +20,15 @@ class ICarlLider(LiderOptimizer):
     def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         add_lipschitz_args(parser)
+
+        parser.add_argument('--wd_reg', type=float, required=True,
+                            help='L2 regularization applied to the parameters.')
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
+        if args.optim_wd != 0:
+            logging.warning('iCaRL uses a custom weight decay, the optimizer weight decay will be ignored.')
+            args.optim_wd = 0
         super().__init__(backbone, loss, args, transform, dataset=dataset)
 
         # Instantiate buffers
@@ -116,6 +122,12 @@ class ICarlLider(LiderOptimizer):
             loss = F.binary_cross_entropy_with_logits(outputs, comb_targets)
             assert loss >= 0
 
+        if self.args.wd_reg:
+            try:
+                loss += self.args.wd_reg * torch.sum(self.net.get_params() ** 2)
+            except BaseException:  # distributed
+                loss += self.args.wd_reg * torch.sum(self.net.module.get_params() ** 2)
+
         return loss, output_features
 
     def begin_task(self, dataset):
@@ -156,15 +168,12 @@ class ICarlLider(LiderOptimizer):
                  if labels[i].cpu() == _y]
             ).to(self.device)
             with bn_track_stats(self, False):
-                allt = None
+                all_features = []
                 while len(x_buf):
                     batch = x_buf[:self.args.batch_size]
                     x_buf = x_buf[self.args.batch_size:]
                     feats = self.net(batch, returnt='features').mean(0)
-                    if allt is None:
-                        allt = feats
-                    else:
-                        allt += feats
-                        allt /= 2
-                class_means.append(allt.flatten())
+                    all_features.append(feats)
+                all_features = torch.stack(all_features).mean(0)
+                class_means.append(all_features.flatten())
         self.class_means = torch.stack(class_means)
