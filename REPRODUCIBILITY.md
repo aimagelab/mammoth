@@ -30,7 +30,7 @@ The following table contains a list of models implemented in Mammoth and a check
 | GEM                       | `gem`                    | V         | Original work requires too much resources. We reproduced the results in `Dark Experience for General Continual Learning: a Strong, Simple Baseline`. |
 | GSS                       | `gss`                    | X         |       |
 | HAL                       | `hal`                    | X         |       |
-| iCaRL LiDER               | `icarl_lider`            | X         |       |
+| iCaRL LiDER               | `icarl_lider`            | V         |       |
 | iCaRL                     | `icarl`                  | V         |       |
 | Joint GCL                 | `joint_gcl`              | N/A       | There is no single paper for the "joint" model. |
 | Joint                     | `joint`                  | N/A       | There is no single paper for the "joint" model. |

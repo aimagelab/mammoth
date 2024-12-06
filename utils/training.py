@@ -115,6 +115,10 @@ def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, retur
                 _, pred = torch.max(outputs.data, 1)
                 correct_mask_classes += torch.sum(pred == labels).item()
 
+        if correct > correct_mask_classes:
+            logging.warning("Task-IL accuracy is LOWER than Class-IL accuracy. "
+                            "This should NEVER happen and probably means there is a bug somewhere. "
+                            "Hint: check if the dataloader returns the targets in the correct order.")
         accs.append(correct / total * 100
                     if 'class-il' in model.COMPATIBILITY or 'general-continual' in model.COMPATIBILITY else 0)
         accs_mask_classes.append(correct_mask_classes / total * 100)
@@ -155,9 +159,8 @@ def train_single_epoch(model: ContinualModel,
                        train_loader: Iterable,
                        args: Namespace,
                        epoch: int,
-                       current_task: int,
+                       pbar: tqdm,
                        system_tracker=None,
-                       data_len=None,
                        scheduler=None) -> int:
     """
     Trains the model for a single epoch.
@@ -167,23 +170,18 @@ def train_single_epoch(model: ContinualModel,
         train_loader: the data loader for the training set
         args: the arguments from the command line
         epoch: the current epoch
-        current_task: the current task index
         system_tracker: the system tracker to monitor the system stats
-        data_len: the length of the training data loader. If None, the progress bar will not show the training percentage
         scheduler: the scheduler for the current epoch
 
     Returns:
         the number of iterations performed in the current epoch
     """
     train_iter = iter(train_loader)
+    epoch_len = len(train_loader) if not isinstance(train_loader, GCLDataset) else None
 
     i = 0
     previous_time = time()
 
-    mininterval = 0.5 if data_len is not None and data_len > 1000 else 0.1
-    pbar = tqdm(train_iter, total=data_len,
-                desc=f"Task {current_task + 1} - Epoch {epoch + 1}",
-                disable=args.non_verbose, mininterval=mininterval)
     while True:
         try:
             data = next(train_iter)
@@ -218,8 +216,8 @@ def train_single_epoch(model: ContinualModel,
         time_diff = time() - previous_time
         previous_time = time()
         bar_log = {'loss': loss, 'lr': model.opt.param_groups[0]['lr']}
-        if data_len:
-            ep_h = 3600 / (data_len * time_diff)
+        if epoch_len:
+            ep_h = 3600 / (epoch_len * time_diff)
             bar_log['ep/h'] = ep_h
         pbar.set_postfix(bar_log, refresh=False)
         pbar.update()
@@ -342,15 +340,23 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 best_ea_metric = None
                 best_ea_model = None
                 cur_stopping_patience = args.early_stopping_patience
-                while True:
-                    data_len = None
-                    if not isinstance(dataset, GCLDataset):
-                        data_len = len(train_loader)
 
+                n_iterations = None
+                if not isinstance(dataset, GCLDataset):
+                    n_iterations = model.args.n_epochs * len(train_loader) if model.args.fitting_mode == 'epochs' else model.args.n_iters
+                mininterval = 0.2 if n_iterations is not None and n_iterations > 1000 else 0.1
+                train_pbar = tqdm(train_loader, total=n_iterations,  # train_loader is actually ignored, will update the progress bar manually
+                                  disable=args.non_verbose, mininterval=mininterval)
+                if args.non_verbose:
+                    logging.info(f"Task {t + 1}")  # at least print the task number
+
+                while True:
                     model.begin_epoch(epoch, dataset)
 
-                    train_single_epoch(model, train_loader, args, current_task=t, epoch=epoch,
-                                       system_tracker=system_tracker, data_len=data_len, scheduler=scheduler)
+                    train_pbar.set_description(f"Task {t + 1} - Epoch {epoch + 1}")
+
+                    train_single_epoch(model, train_loader, args, pbar=train_pbar, epoch=epoch,
+                                       system_tracker=system_tracker, scheduler=scheduler)
 
                     model.end_epoch(epoch, dataset)
 
@@ -389,6 +395,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                         epoch_accs = evaluate(model, eval_dataset)
 
                         log_accs(args, logger, epoch_accs, t, dataset.SETTING, epoch=epoch)
+
+                train_pbar.close()
 
             model.meta_end_task(dataset)
 

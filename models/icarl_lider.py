@@ -72,25 +72,25 @@ class ICarlLider(LiderOptimizer):
 
         # Lipschitz losses
         if not self.buffer.is_empty():
-            lip_inputs = [inputs] + output_features
+            future_mask = labels <= self.n_past_classes
+            if future_mask.sum() > 0:
+                inputs, output_features = inputs[future_mask], [f[future_mask] for f in output_features]
 
-            if self.args.alpha_lip_lambda > 0:
-                loss_lip_minimize = self.args.alpha_lip_lambda * self.minimization_lip_loss(lip_inputs)
-                loss += loss_lip_minimize
+                lip_inputs = [inputs] + output_features
 
-            if self.args.beta_lip_lambda > 0:
-                loss_lip_budget = self.args.beta_lip_lambda * self.dynamic_budget_lip_loss(lip_inputs)
-                loss += loss_lip_budget
+                if self.args.alpha_lip_lambda > 0:
+                    loss_lip_minimize = self.args.alpha_lip_lambda * self.minimization_lip_loss(lip_inputs)
+                    loss += loss_lip_minimize
+
+                if self.args.beta_lip_lambda > 0:
+                    loss_lip_budget = self.args.beta_lip_lambda * self.dynamic_budget_lip_loss(lip_inputs)
+                    loss += loss_lip_budget
 
         loss.backward()
 
         self.opt.step()
 
         return loss.item()
-
-    @staticmethod
-    def binary_cross_entropy(pred, y):
-        return -(pred.log() * y + (1 - y) * (1 - pred).log()).mean()
 
     def get_loss(self, inputs: torch.Tensor, labels: torch.Tensor,
                  task_idx: int, logits: torch.Tensor) -> Tuple[torch.Tensor, List[torch.Tensor]]:
@@ -123,10 +123,7 @@ class ICarlLider(LiderOptimizer):
             assert loss >= 0
 
         if self.args.wd_reg:
-            try:
-                loss += self.args.wd_reg * torch.sum(self.net.get_params() ** 2)
-            except BaseException:  # distributed
-                loss += self.args.wd_reg * torch.sum(self.net.module.get_params() ** 2)
+            loss += self.args.wd_reg * torch.sum(self.net.get_params() ** 2)
 
         return loss, output_features
 
@@ -172,8 +169,8 @@ class ICarlLider(LiderOptimizer):
                 while len(x_buf):
                     batch = x_buf[:self.args.batch_size]
                     x_buf = x_buf[self.args.batch_size:]
-                    feats = self.net(batch, returnt='features').mean(0)
+                    feats = self.net(batch, returnt='features')
                     all_features.append(feats)
-                all_features = torch.stack(all_features).mean(0)
+                all_features = torch.cat(all_features).mean(0)
                 class_means.append(all_features.flatten())
         self.class_means = torch.stack(class_means)

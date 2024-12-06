@@ -298,6 +298,8 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                            help='optimizer momentum.')
     opt_group.add_argument('--optim_nesterov', type=binary_to_boolean_type, default=0,
                            help='optimizer nesterov momentum.')
+    opt_group.add_argument('--drop_last', type=binary_to_boolean_type, default=0,
+                           help='Drop the last batch if it is not complete?')
     opt_group.add_argument('--lr_scheduler', type=str, help='Learning rate scheduler.')
     opt_group.add_argument('--scheduler_mode', type=str, choices=['epoch', 'iter'], default='epoch',
                            help='Scheduler mode. Possible values:'

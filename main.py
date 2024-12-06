@@ -192,6 +192,14 @@ def parse_args():
     # 4) Once all arguments are in the parser, we can set the defaults using the loaded configuration
     update_cli_defaults(parser, config)
 
+    # force call type on all default values to fix values (https://docs.python.org/3/library/argparse.html#type)
+    for action in parser._actions:
+        if action.default is not None and action.type is not None:
+            if action.nargs is None or action.nargs == 0:
+                action.default = action.type(action.default)
+            else:
+                action.default = [action.type(v) for v in action.default]
+
     # 5) parse the arguments
     if args.load_best_args:
         from utils.best_args import best_args

@@ -154,6 +154,15 @@ class ContinualDataset(object):
     AVAIL_SCHEDS = ['multisteplr']
     class_names: List[str] = None
 
+    @property
+    def current_task(self) -> int:
+        """
+        Returns the current task index.
+        """
+        if self.c_task == -1 and self.SETTING in ['task-il', 'class-il']:
+            raise ValueError('The dataset has not been initialized yet.')
+        return len(self.test_loaders)  # self.c_task is not updated in the case of domain-il
+
     def __init__(self, args: Namespace) -> None:
         """
         Initializes the train and test lists of dataloaders.
@@ -434,7 +443,7 @@ def store_masked_loaders(train_dataset: Dataset, test_dataset: Dataset,
 
     # Create dataloaders
     train_loader = create_seeded_dataloader(setting.args, train_dataset,
-                                            batch_size=setting.args.batch_size, shuffle=True)
+                                            batch_size=setting.args.batch_size, shuffle=True, drop_last=setting.args.drop_last)
     test_loader = create_seeded_dataloader(setting.args, test_dataset,
                                            batch_size=setting.args.batch_size, shuffle=False)
     setting.test_loaders.append(test_loader)

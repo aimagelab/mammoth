@@ -151,7 +151,7 @@
     "model": "icarl_lider",
     "setting": "class-il",
     "result": 47.02,
-    "cmd": "--dataset=seq-cifar100 --model=icarl_lider --buffer_size=500 --lr=1 --optim_wd=1e-5 --alpha_lip_lambda=0.01 --beta_lip_lambda=0.001"
+    "cmd": "--model icarl_lider --dataset seq-cifar100 --model_config best --buffer_size 500"
   },
   {
     "model": "icarl",
@@ -242,7 +242,7 @@
     "model": "twf",
     "setting": "class-il",
     "result": 81.9,
-    "cmd": "--loadcheck=\"https://unimore365-my.sharepoint.com/:u:/r/personal/215580_unimore_it/Documents/checkpoints/rs18_cifar100_new.pth?csf=1&web=1&e=5XE8d3\" --dataset=seq-cifar10 --model=twf --buffer_size=500 --lr=0.1 --der_alpha=0.3 --der_beta=1.2 --lambda_diverse_loss=0.3 --lambda_fp=0.03 --lambda_fp_replay=1.5"
+    "cmd": "--loadcheck=\"https://unimore365-my.sharepoint.com/:u:/r/personal/215580_unimore_it/Documents/checkpoints/rs18_cifar100_new.pth?csf=1&web=1&e=Zb6yxn\" --dataset=seq-cifar10 --model=twf --buffer_size=500 --lr=0.1 --der_alpha=0.3 --der_beta=1.2 --lambda_diverse_loss=0.3 --lambda_fp=0.03 --lambda_fp_replay=1.5"
   },
   {
     "model": "xder",
