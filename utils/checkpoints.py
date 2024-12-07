@@ -2,6 +2,7 @@
 from argparse import Namespace
 from collections.abc import Iterable
 import copy
+import logging
 import random
 import string
 from typing import Dict, Union
@@ -117,9 +118,9 @@ def _get_random_filename(length=10):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
 
-def _download_from_raw_url(url: str, root: str):
+def _download_from_raw_url(url: str, root: str, filename: str = None) -> str:
     os.makedirs(root, exist_ok=True)
-    filename = _get_random_filename()
+    filename = _get_random_filename() + '.pth' if filename is None else filename
 
     download_target = smart_joint(root, filename)
 
@@ -162,7 +163,7 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
             except ImportError:
                 raise ImportError('OneDriveDownloader is required to download from Sharepoint. Please install it with "pip install onedrivedownloader"')
 
-            print('Downloading checkpoint using OneDriveDownloader...')
+            logging.info('Downloading checkpoint using OneDriveDownloader...')
             args.loadcheck = download(args.loadcheck, filename='checkpoints/', unzip=True, unzip_path='checkpoints/', clean=True)
         elif 'drive.google.com' in args.loadcheck:
             try:
@@ -170,17 +171,21 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
             except ImportError:
                 raise ImportError('GoogleDriveDownloader is required to download from Google Drive. Please install it with "pip install googledrivedownloader"')
 
-            print('Downloading checkpoint using GoogleDriveDownloader...')
+            logging.info('Downloading checkpoint using GoogleDriveDownloader...')
             # get random filename
             filename = _get_random_filename()
             gdd.download_file_from_google_drive(file_id=args.loadcheck.split('/')[-2],
                                                 dest_path=f'checkpoints/{filename}', unzip=True)
             args.loadcheck = f'checkpoints/{filename}'
+        elif args.loadcheck.startswith('https://huggingface.co/'):
+            logging.info('Downloading checkpoints from HuggingFace...')
+            filename = args.loadcheck.split('/')[-1].split('?')[0]
+            args.loadcheck = _download_from_raw_url(args.loadcheck, 'checkpoints/', filename=filename)
         else:
-            print('Attempting to download raw checkpoint...')
+            logging.warning('Attempting to download raw checkpoint. Make sure to check the URL.')
             args.loadcheck = _download_from_raw_url(args.loadcheck, 'checkpoints/')
 
-        print(f'Checkpoint downloaded to {args.loadcheck}')
+        logging.info(f'Checkpoint downloaded to {args.loadcheck}')
     else:
         if not os.path.exists(args.loadcheck):
             raise ValueError('The given checkpoint does not exist.')
@@ -195,7 +200,7 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
         if 'buffer' in saved_obj:
             loading_model = saved_obj['args'].model
             if args.model != loading_model:
-                print(f'WARNING: The loaded model was trained with a different model: {loading_model}')
+                logging.warning(f'The loaded model was trained with a different model: {loading_model}')
             model.load_buffer(saved_obj['buffer'])
 
         return model, saved_obj['results']
@@ -245,7 +250,7 @@ def save_mammoth_checkpoint(task: int, end_task: int, args: Namespace, model: to
             save_obj['buffer'] = model.buffer.serialize()
 
     torch.save(save_obj, checkpoint_name + '.pt')
-    print(f"Checkpoint for task {task} saved at {checkpoint_name}")
+    logging.info(f"Checkpoint for task {task} saved at {checkpoint_name}")
 
 
 def _check_loaded_args(args, loaded_args):
@@ -268,9 +273,7 @@ def _check_loaded_args(args, loaded_args):
 
     if len(mismatched_args):
         if 'force_compat' not in vars(args) or args.force_compat:
-            print(
-                "WARNING: The following arguments do not match between loaded and current model:")
-            print(mismatched_args)
+            logging.warning("The following arguments do not match between loaded and current model:")
+            logging.warning(mismatched_args)
         else:
-            raise ValueError(
-                'The loaded model was trained with different arguments: {}'.format(mismatched_args))
+            raise ValueError('The loaded model was trained with different arguments: {}'.format(mismatched_args))
