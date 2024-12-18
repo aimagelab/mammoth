@@ -4,7 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 from argparse import ArgumentParser, Namespace
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Any
 
 import torch
 import numpy as np
@@ -32,14 +32,14 @@ class MammothDatasetWrapper(Dataset, object):
 
     is_init: bool = False
 
-    def __getattr__(self, name: str) -> torch.Any:
+    def __getattr__(self, name: str) -> Any:
         if self.is_init and hasattr(self.dataset, name):
             return getattr(self.dataset, name)
         if name not in vars(self):
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
         return super().__getattr__(name)
 
-    def __setattr__(self, name: str, value: torch.Any) -> None:
+    def __setattr__(self, name: str, value: Any) -> None:
         if self.is_init and hasattr(self.dataset, name):
             return setattr(self.dataset, name, value)
         return super().__setattr__(name, value)

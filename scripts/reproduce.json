@@ -248,7 +248,7 @@
     "model": "xder",
     "setting": "class-il",
     "result": 49.93,
-    "cmd": "--constr_eta=0.001 --alpha=0.3 --lr=0.03 --constr_margin=0.7 --beta=0.8 --optim_wd=1e-6 --model=xder --dataset=seq-cifar100 --batch_size=64 --minibatch_size=64 --n_epoch=50 --lr_scheduler=multisteplr --lr_milestones 35 45 --sched_multistep_lr_gamma=0.2 --buffer_size=500 --dp_weight=3000"
+    "cmd": "--model xder --dataset seq-cifar100 --buffer_size 500 --model_config=best"
   },
   {
     "model": "xder_ce",

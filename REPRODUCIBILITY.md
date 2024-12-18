@@ -50,7 +50,7 @@ The following table contains a list of models implemented in Mammoth and a check
 | SI                        | `si`                     | X         |       |
 | SLCA                      | `slca`                   | X         |       |
 | STAR-Prompt               | `starprompt`             | V         |       |
-| TwF                       | `twf`                    | X         |       |
+| TwF                       | `twf`                    | V         |       |
 | X-DER with CE             | `xder_ce`                | X         |       |
 | X-DER with RPC            | `xder_rpc`               | X         |       |
-| X-DER                     | `xder`                   | X         |       |
+| X-DER                     | `xder`                   | V         |       |
