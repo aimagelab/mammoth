@@ -1,13 +1,8 @@
 seq-cifar100:
+  dataset_config: xder
   500:
-    alpha: 0.3
-    batch_size: 64
+    alpha: 0.1
     beta: 0.5
-    eta: 0.001
     lr: 0.03
-    lr_milestones: [35, 45]
-    lr_scheduler: multisteplr
-    minibatch_size: 64
-    model: xder_ce
-    n_epoch: 50
-    sched_multistep_lr_gamma: 0.2
+    model: xder_rpc
+    align_bn: 1

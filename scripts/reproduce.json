@@ -254,13 +254,13 @@
     "model": "xder_ce",
     "setting": "class-il",
     "result": 47.67,
-    "cmd": "--lr=0.03 --model=xder_ce --dataset=seq-cifar100 --batch_size=64 --minibatch_size=64 --n_epoch=50 --lr_scheduler=multisteplr --lr_milestones 35 45 --sched_multistep_lr_gamma=0.2 --buffer_size=500 --alpha=0.3 --beta=0.5 --eta=5e-3"
+    "cmd": "--model=xder_ce --dataset=seq-cifar100 --buffer_size=500 --model_config=best"
   },
   {
     "model": "xder_rpc",
     "setting": "class-il",
     "result": 48.53,
-    "cmd": "--lr=0.03 --model=xder_ce --dataset=seq-cifar100 --batch_size=64 --minibatch_size=64 --n_epoch=50 --lr_scheduler=multisteplr --lr_milestones 35 45 --sched_multistep_lr_gamma=0.2 --buffer_size=500 --alpha=0.3 --beta=0.5 --eta=0.001"
+    "cmd": "--model=xder_rpc --dataset=seq-cifar100 --buffer_size=500 --dataset_config=best"
   },
   {
     "model": "er_ace_aer_abs",

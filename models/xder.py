@@ -15,7 +15,7 @@ from utils.batch_norm import bn_track_stats
 from utils.simclrloss import SupConLoss
 
 
-class XDerV2(ContinualModel):
+class XDer(ContinualModel):
     """Continual learning via eXtended Dark Experience Replay."""
     NAME = 'xder'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
