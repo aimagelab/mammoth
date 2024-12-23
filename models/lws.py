@@ -15,13 +15,15 @@ from models.utils.continual_model import ContinualModel
 
 
 class LwS(ContinualModel):
+    """
+    Implementation of "Towards Unbiased Continual Learning: Avoiding Forgetting in the Presence of Spurious Correlations"
+    """
     NAME = 'lws'
-    COMPATIBILITY = ['class-il', 'domain-il', 'task-il']
+    COMPATIBILITY = ['biased-class-il']
 
     @staticmethod
     def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
-        parser.set_defaults(buffer_size=1024, batch_size=64, n_epochs=25, optim_wd=1e-2)
 
         parser.add_argument('--buf_lambda_logits', type=float, default=1,
                             help='Penalty weight BCE past logits.')

@@ -33,6 +33,8 @@ and are defined in the **SETTING** attribute of each dataset. The following sett
 
 - `cssl`: this setting is the same as `class-il`, but with some of the labels missing due to limited supervision. This setting is used to simulate the case where a percentage of the labels is not available for training. For example, if ``--label_perc_by_task`` or ``--label_perc_by_class`` is set to ``0.5``, only 50% of the labels will be available for training. The remaining 50% will be masked with a label of ``-1`` and ignored during training if the currently used method does not support partial labels (check out the **COMPATIBILITY** attribute in :ref:`module-models`).
 
+- `biased-class-il`: similar to `class-il`, but with a *biased* distribution of the classes. This setting is derived from `Learning without Shortcuts <https://iris.unimore.it/retrieve/5890cf10-47bc-4891-8138-4b4999d2eccc/2025wacv_bias.pdf>`_. Datasets that support this setting must have a `bias_label` attribute, to be used during evaluation.
+
 .. admonition:: Experiments on the **joint** setting
     :class: hint
 
@@ -74,7 +76,7 @@ To allow for a more flexible configuration of the datasets, Mammoth supports the
 The configuration files are stored in **datasets/configs/<dataset name>/<configuration name>.yaml** and can be selected from the command line using the ``--dataset_config`` argument. 
 
 The configuration file may contain:
-- `SETTING`: the incremental setting of the dataset. This can be one of 'class-il', 'domain-il', 'general-continual', or 'cssl'.
+- `SETTING`: the incremental setting of the dataset. This can be one of 'class-il', 'domain-il', 'general-continual', 'cssl', or 'biased-class-il'.
 - `N_CLASSES_PER_TASK`: the number of classes per task. This can be a single integer or a list of integers (one for each task).
 - `N_TASKS`: the number of tasks.
 - `SIZE`: the size of the input data.

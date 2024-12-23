@@ -39,6 +39,7 @@ The following table contains a list of models implemented in Mammoth and a check
 | LUCIR                     | `lucir`                  | X         |       |
 | LwF-MC                    | `lwf_mc`                 | X         |       |
 | LwF                       | `lwf`                    | X         |       |
+| LwS                       | `lws`                    | V         |       |
 | MER                       | `mer`                    | X         |       |
 | MoE Adapters              | `moe_adapters`           | V         |       |
 | PNN                       | `pnn`                    | X         |       |

@@ -279,5 +279,12 @@
     "setting": "class-il",
     "result": 60.9,
     "cmd": "--noise_rate=0.4 --noise_type=symmetric --enable_cutmix=1 --lr=0.05 --buffer_size=1000 --model=puridiver --dataset=seq-cifar10 --buffer_fitting_epochs 255 --n_epochs 1 --batch_size 16"
+  },
+  {
+    "model": "lws",
+    "setting": "class-il",
+    "notes": "Results are worst-best accuracy on B-CelebA1",
+    "result": [58.84, 71.43],
+    "cmd": "--model lws --dataset seq-celeba --buffer_size 1024 --model_config best"
   }
 ]

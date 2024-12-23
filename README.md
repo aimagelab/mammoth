@@ -16,16 +16,14 @@ Official repository of:
 - [Semantic Residual Prompts for Continual Learning](https://arxiv.org/abs/2403.06870)
 - [CLIP with Generative Latent Replay: a Strong Baseline for Incremental Learning](https://arxiv.org/abs/2407.15793)
 
-Mammoth is a framework for continual learning research. With **more than 40 methods and 20 datasets**, it includes the most complete list competitors and benchmarks for research purposes.
+Mammoth is a framework for continual learning research. With **more than 50 methods and 20 datasets**, it includes the most complete list competitors and benchmarks for research purposes.
 
 The core idea of Mammoth is that it is designed to be modular, easy to extend, and - most importantly - _easy to debug_.
 Ideally, all the code necessary to run the experiments is included _in the repository_, without needing to check out other repositories or install additional packages.
 
 With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
 
-## Documentation
-
-### Check out the official [DOCUMENTATION](https://aimagelab.github.io/mammoth/) for more information on how to use Mammoth!
+**[Check out the official DOCUMENTATION](https://aimagelab.github.io/mammoth/) for more information on how to use Mammoth!**
 
 <p align="center">
   <img width="112" height="112" src="docs/_static/seq_mnist.gif" alt="Sequential MNIST">
@@ -49,7 +47,7 @@ All the code is under active development. Here are some of the features we are w
 
 - **Configurations for datasets**: Currently, each dataset represents a *specific configuration* (e.g., number of tasks, data augmentations, backbone, etc.). This makes adding a new *setting* a bit cumbersome. We are working on a more flexible way to define configurations, while leaving the current system as a default for retro-compatibility.
 - **New models**: We are working on adding new models to the repository.
-- **New training modalities**: We will introduce new CL training regimes, such as training with *noisy labels*, *regression*, *segmentation*, *detection*, etc.
+- **New training modalities**: We will introduce new CL training regimes, such a *regression*, *segmentation*, *detection*, etc.
 - **Openly accessible result dashboard**: We are working on a dashboard to visualize the results of all the models in both their respective settings (to prove their reproducibility) and in a general setting (to compare them). *This may take some time, since compute is not free.*
 
 All the new additions will try to preserve the current structure of the repository, making it easy to add new functionalities with a simple merge.
@@ -86,6 +84,7 @@ Mammoth currently supports **more than 50** models, with new releases covering t
 - Large Language and Vision Assistant (LLAVA): `llava` (*static* method with no learning).
 - Learning a Unified Classifier Incrementally via Rebalancing (LUCIR): `lucir`.
 - Learning without Forgetting (LwF): `lwf`.
+- Learning without Shortcuts (LwS): `lws`.
 - Learning without Forgetting adapted for Multi-Class classification (LwF.MC): `lwf_mc` (from the iCaRL paper).
 - Meta-Experience Replay (MER): `mer`.
 - Mixture-of-Experts Adapters (MoE Adapters): `moe_adapters`.
@@ -129,6 +128,7 @@ Mammoth currently includes **21** datasets, covering *toy classification problem
 - Sequential ChestX (_Class-Il / Task-IL_): `seq-chestx`.
 - Sequential MIT-67 (_Class-Il / Task-IL_): `seq-mit67`.
 - Sequential CropDisease (_Class-Il / Task-IL_): `seq-cropdisease`.
+- Sequential CelebA (_Biased-Class-Il_): `seq-celeba`. *This dataset is multi-label (i.e., trains with binary cross-entropy)*
 
 ## Citing the library
 

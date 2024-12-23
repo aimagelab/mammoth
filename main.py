@@ -16,8 +16,8 @@ To run the script, execute it directly or import it as a module and call the `ma
 # LICENSE file in the root directory of this source tree.
 
 # needed (don't change it)
-import logging
 import numpy  # noqa
+import logging
 import os
 import sys
 import time
@@ -25,7 +25,7 @@ import importlib
 import socket
 import datetime
 import uuid
-from argparse import ArgumentParser
+import argparse
 import torch
 torch.set_num_threads(2)
 
@@ -95,8 +95,13 @@ def check_args(args, dataset=None):
             assert not args.eval_future, 'Evaluation of future tasks is not supported for biased-class-il.'
             assert not args.enable_other_metrics, 'Other metrics are not supported for biased-class-il.'
 
+        # check if dataset is single-label multi-class (i.e, the `get_loss` returns the cross-entropy)
+        if 'cross_entropy' in str(dataset.get_loss()) or 'CrossEntropy' in str(dataset.get_loss()):
+            if args.label_noise != 1:
+                logging.warning('Label noise is not available with multi-label datasets. If this is not multi-label, ignore this warning.')
 
-def load_configs(parser: ArgumentParser) -> dict:
+
+def load_configs(parser: argparse.ArgumentParser) -> dict:
     from models import get_model_class
     from models.utils import load_model_config
 
@@ -108,8 +113,9 @@ def load_configs(parser: ArgumentParser) -> dict:
 
     # load the model configuration
     # - get the model parser and fix the get_parser function for backwards compatibility
-    model_parser = get_model_class(args).get_parser(parser)
-    parser = fix_model_parser_backwards_compatibility(parser, model_parser)
+    model_group_parser = parser.add_argument_group('Model-specific arguments')
+    model_parser = get_model_class(args).get_parser(model_group_parser)
+    parser = fix_model_parser_backwards_compatibility(model_group_parser, model_parser)
     is_rehearsal = any([p for p in parser._actions if p.dest == 'buffer_size'])
     buffer_size = None
     if is_rehearsal:  # get buffer size
@@ -145,6 +151,13 @@ def load_configs(parser: ArgumentParser) -> dict:
     return config
 
 
+def add_help(parser):
+    """
+    Add the help argument to the parser
+    """
+    parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS, help='Show this help message and exit.')
+
+
 def parse_args():
     """
     Parse command line arguments for the mammoth program and sets up the `args` object.
@@ -161,7 +174,7 @@ def parse_args():
 
     check_multiple_defined_arg_during_string_parse()
 
-    parser = ArgumentParser(description='Mammoth - An Extendible (General) Continual Learning Framework for Pytorch', allow_abbrev=False)
+    parser = argparse.ArgumentParser(description='Mammoth - A benchmark Continual Learning framework for Pytorch', allow_abbrev=False, add_help=False)
 
     # 1) add arguments that include model, dataset, and backbone. These define the rest of the arguments.
     #   the backbone is optional as may be set by the dataset or the model. The dataset and model are required.
@@ -175,6 +188,8 @@ def parse_args():
     add_configuration_args(parser, args)
 
     config = load_configs(parser)
+
+    add_help(parser)
 
     # 3) add the remaining arguments
 

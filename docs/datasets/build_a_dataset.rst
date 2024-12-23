@@ -42,7 +42,7 @@ Before returning the data loaders, you need to split the data for the current ta
 
     - If the ``--label_perc_by_task/--label_perc_by_class`` argument is set to a value between ``0`` and ``1``, it also randomly masks a percentage of the labels for each task/class (**Continual Semi-Supervised Learning** scenario)
 
-    - If the ``--noise_rate`` argument is set to a value between ``0`` and ``1``, it also adds noise to the labels for each task/class (**Continual Learning under Noisy Labels** scenario)
+    - If the ``--noise_rate`` argument is set to a value between ``0`` and ``1``, it also adds noise to the labels for each task/class (**Continual Learning under Noisy Labels** scenario). This option is available only if the task is a multi-class single-label classification task (*i.e.*, the `get_loss()` method returns `F.cross_entropy`).
 
 - *custom*: you can split data manually in the ``get_data_loaders`` method. This may be used for more complex scenarios (e.g., scenarios with blurry task boundaries) or if your scenario is composed of multiple datasets that need to be combined in a specific way.
 
