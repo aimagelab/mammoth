@@ -16,7 +16,7 @@ Official repository of:
 - `Semantic Residual Prompts for Continual Learning <https://arxiv.org/abs/2403.06870>`_
 - `CLIP with Generative Latent Replay: a Strong Baseline for Incremental Learning <https://arxiv.org/abs/2407.15793>`_
 
-Mammoth is a framework for continual learning research. With **more than 40 methods and 20 datasets**, it includes the most complete list competitors and benchmarks for research purposes.
+Mammoth is a framework for continual learning research. With **more than 50 methods and 20 datasets**, it includes the most complete list competitors and benchmarks for research purposes.
 
 The core idea of Mammoth is that it is designed to be modular, easy to extend, and - most importantly - *easy to debug*.
 Ideally, all the code necessary to run the experiments is included *in the repository*, without needing to check out other repositories or install additional packages.

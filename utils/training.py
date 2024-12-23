@@ -33,103 +33,6 @@ except ImportError:
     wandb = None
 
 
-def mask_classes(outputs: torch.Tensor, dataset: ContinualDataset, k: int) -> None:
-    """
-    Given the output tensor, the dataset at hand and the current task,
-    masks the former by setting the responses for the other tasks at -inf.
-    It is used to obtain the results for the task-il setting.
-
-    Args:
-        outputs: the output tensor
-        dataset: the continual dataset
-        k: the task index
-    """
-    num_classes = dataset.N_CLASSES
-    start_c, end_c = dataset.get_offsets(k)
-    outputs[:, :start_c] = -float('inf')
-    outputs[:, end_c:num_classes] = -float('inf')
-
-
-@torch.no_grad()
-def evaluate(model: ContinualModel, dataset: ContinualDataset, last=False, return_loss=False) -> Tuple[list, list]:
-    """
-    Evaluates the accuracy of the model for each past task.
-
-    The accuracy is evaluated for all the tasks up to the current one, only for the total number of classes seen so far.
-
-    Args:
-        model: the model to be evaluated
-        dataset: the continual dataset at hand
-        last: a boolean indicating whether to evaluate only the last task
-        return_loss: a boolean indicating whether to return the loss in addition to the accuracy
-
-    Returns:
-        a tuple of lists, containing the class-il and task-il accuracy for each task. If return_loss is True, the loss is also returned as a third element.
-    """
-    status = model.net.training
-    model.net.eval()
-    accs, accs_mask_classes = [], []
-    n_classes = dataset.get_offsets()[1]
-    loss_fn = dataset.get_loss()
-    avg_loss = 0
-    total_len = sum(len(x) for x in dataset.test_loaders) if hasattr(dataset.test_loaders[0], '__len__') else None
-
-    pbar = tqdm(dataset.test_loaders, total=total_len, desc='Evaluating', disable=model.args.non_verbose)
-    for k, test_loader in enumerate(dataset.test_loaders):
-        if last and k < len(dataset.test_loaders) - 1:
-            continue
-        correct, correct_mask_classes, total = 0.0, 0.0, 0.0
-        test_iter = iter(test_loader)
-        i = 0
-        while True:
-            try:
-                data = next(test_iter)
-            except StopIteration:
-                break
-            if model.args.debug_mode and i > model.get_debug_iters():
-                break
-            inputs, labels = data[0], data[1]
-            inputs, labels = inputs.to(model.device), labels.to(model.device)
-            if 'class-il' not in model.COMPATIBILITY and 'general-continual' not in model.COMPATIBILITY:
-                outputs = model(inputs, k)
-            else:
-                if model.args.eval_future and k >= model.current_task:
-                    outputs = model.future_forward(inputs)
-                else:
-                    outputs = model(inputs)
-
-            if return_loss:
-                loss = loss_fn(outputs, labels)
-                avg_loss += loss.item()
-
-            _, pred = torch.max(outputs[:, :n_classes].data, 1)
-            correct += torch.sum(pred == labels).item()
-            total += labels.shape[0]
-            i += 1
-            pbar.set_postfix({f'acc_task_{k+1}': max(0, correct / total * 100)}, refresh=False)
-            pbar.set_description(f"Evaluating Task {k+1}", refresh=False)
-            pbar.update(1)
-
-            if dataset.SETTING == 'class-il':
-                mask_classes(outputs, dataset, k)
-                _, pred = torch.max(outputs.data, 1)
-                correct_mask_classes += torch.sum(pred == labels).item()
-
-        if correct > correct_mask_classes:
-            logging.warning("Task-IL accuracy is LOWER than Class-IL accuracy. "
-                            "This should NEVER happen and probably means there is a bug somewhere. "
-                            "Hint: check if the dataloader returns the targets in the correct order.")
-        accs.append(correct / total * 100
-                    if 'class-il' in model.COMPATIBILITY or 'general-continual' in model.COMPATIBILITY else 0)
-        accs_mask_classes.append(correct_mask_classes / total * 100)
-    pbar.close()
-
-    model.net.train(status)
-    if return_loss:
-        return accs, accs_mask_classes, avg_loss / total
-    return accs, accs_mask_classes
-
-
 def initialize_wandb(args: Namespace) -> None:
     """
     Initializes wandb, if installed.
@@ -301,7 +204,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 # try to compute accuracy at the beginning of the task
                 try:
                     logging.info("Evaluating model before task (for Forward Transfer metric)...")
-                    random_res_class, random_res_task = evaluate(model, dataset, last=True)
+                    random_res_class, random_res_task = dataset.evaluate(model, dataset, last=True)
                     random_results_class.append(random_res_class)
                     random_results_task.append(random_res_task)
                 except Exception as e:
@@ -315,7 +218,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 if train_loader.dataset.num_times_iterated == 0:  # compute only if the model has not been trained yet
                     try:
                         logging.info("Evaluating model before task (for Forward Transfer metric)...")
-                        random_res_class, random_res_task = evaluate(model, dataset, last=True)
+                        random_res_class, random_res_task = dataset.evaluate(model, dataset, last=True)
                         random_results_class.append(random_res_class)
                         random_results_task.append(random_res_task)
                     except Exception as e:
@@ -327,7 +230,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             if not args.inference_only and args.n_epochs > 0:
                 if t and args.enable_other_metrics:
-                    accs = evaluate(model, eval_dataset, last=True)
+                    accs = dataset.evaluate(model, eval_dataset, last=True)
                     results[t - 1] = results[t - 1] + accs[0]
                     if dataset.SETTING == 'class-il':
                         results_mask_classes[t - 1] = results_mask_classes[t - 1] + accs[1]
@@ -366,7 +269,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     elif args.fitting_mode == 'iters' and model.task_iteration >= model.args.n_iters:
                         break
                     elif args.fitting_mode == 'early_stopping' and epoch % args.early_stopping_freq == 0 and epoch > 0:
-                        epoch_accs, _, epoch_loss = evaluate(model, eval_dataset, return_loss=True, last=True)
+                        epoch_accs, _, epoch_loss = dataset.evaluate(model, eval_dataset, return_loss=True, last=True)
 
                         if args.early_stopping_metric == 'accuracy':
                             ea_metric = np.mean(epoch_accs)  # Higher accuracy is better
@@ -392,15 +295,15 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                             cur_stopping_patience = args.early_stopping_patience
 
                     if args.eval_epochs is not None and (epoch > 0 or args.eval_epochs) and epoch % args.eval_epochs == 0 and epoch < model.args.n_epochs:
-                        epoch_accs = evaluate(model, eval_dataset)
+                        epoch_accs = dataset.evaluate(model, eval_dataset)
 
-                        log_accs(args, logger, epoch_accs, t, dataset.SETTING, epoch=epoch)
+                        dataset.log(args, logger, epoch_accs, t, dataset.SETTING, epoch=epoch)
 
                 train_pbar.close()
 
             model.meta_end_task(dataset)
 
-            accs = evaluate(model, eval_dataset)
+            accs = dataset.evaluate(model, eval_dataset)
 
             if args.eval_future and t < dataset.N_TASKS - 1:
                 transf_accs = accs[0][t + 1:], accs[1][t + 1:]
@@ -408,16 +311,20 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 results_transf.append(transf_accs[0])
                 results_mask_classes_transf.append(transf_accs[1])
 
-            results.append(accs[0])
-            results_mask_classes.append(accs[1])
+            logged_accs = dataset.log(args, logger, accs, t, dataset.SETTING)
 
-            log_accs(args, logger, accs, t, dataset.SETTING)
+            if dataset.SETTING != 'biased-class-il':
+                results.append(accs[0])
+                results_mask_classes.append(accs[1])
+            else:
+                results.append(logged_accs[0])  # avg
+                results_mask_classes.append(logged_accs[1])  # worst
 
             if args.eval_future:
                 avg_transf = np.mean([np.mean(task_) for task_ in results_transf])
                 print(f"Transfer Metrics  -  AVG Transfer {avg_transf:.2f}")
                 if t < dataset.N_TASKS - 1:
-                    log_accs(args, logger, transf_accs, t, dataset.SETTING, future=True)
+                    dataset.log(args, logger, transf_accs, t, dataset.SETTING, future=True)
 
             if args.savecheck:
                 save_mammoth_checkpoint(t, end_task, args,
@@ -436,9 +343,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             final_dataset = get_dataset(args)
             for _ in range(final_dataset.N_TASKS):
                 final_dataset.get_data_loaders()
-            accs = evaluate(model, final_dataset)
+            accs = dataset.evaluate(model, final_dataset)
 
-            log_accs(args, logger, accs, 'final', final_dataset.SETTING, prefix="FINAL")
+            dataset.log(args, logger, accs, 'final', final_dataset.SETTING, prefix="FINAL")
 
         if args.enable_other_metrics:
             bwt, bwt_mask_class = logger.add_bwt(results, results_mask_classes)

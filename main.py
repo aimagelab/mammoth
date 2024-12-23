@@ -91,6 +91,10 @@ def check_args(args, dataset=None):
 
         assert issubclass(dataset.__class__, ContinualDataset) or issubclass(dataset.__class__, GCLDataset), "Dataset must be an instance of `ContinualDataset` or `GCLDataset`"
 
+        if dataset.SETTING == 'biased-class-il':
+            assert not args.eval_future, 'Evaluation of future tasks is not supported for biased-class-il.'
+            assert not args.enable_other_metrics, 'Other metrics are not supported for biased-class-il.'
+
 
 def load_configs(parser: ArgumentParser) -> dict:
     from models import get_model_class

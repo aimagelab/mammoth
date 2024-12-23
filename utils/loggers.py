@@ -7,10 +7,11 @@
 This module contains the Logger class and related functions for logging accuracy values and other metrics.
 """
 
+from argparse import Namespace
 from contextlib import suppress
 import os
 import sys
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 import numpy as np
 
@@ -19,117 +20,6 @@ from utils.conf import base_path
 from utils.metrics import backward_transfer, forward_transfer, forgetting
 with suppress(ImportError):
     import wandb
-
-
-def log_accs(args, logger, accs, t: int, setting: str, epoch=None, prefix="RESULT", future=False):
-    """
-    Logs the accuracy values and other metrics.
-
-    All metrics are prefixed with `prefix` to be logged on wandb.
-
-    Args:
-        args: The arguments for logging.
-        logger: The Logger object.
-        accs: The accuracy values.
-        t: The task index.
-        setting: The setting of the benchmark (e.g., `class-il`).
-        epoch: The epoch number (optional).
-        prefix: The prefix for the metrics (default="RESULT").
-    """
-
-    mean_acc = print_mean_accuracy(accs, t + 1 if isinstance(t, (float, int)) else t,
-                                   setting, joint=args.joint,
-                                   epoch=epoch, future=future)
-
-    if not args.disable_log:
-        logger.log(mean_acc)
-        logger.log_fullacc(accs)
-
-    if not args.nowand:
-        postfix = "" if epoch is None else f"_epoch_{epoch}"
-        if future:
-            prefix += "_transf"
-        if isinstance(mean_acc, float):  # domain or gcl
-            d2 = {f'{prefix}_domain_mean_accs{postfix}': mean_acc,
-                  **{f'{prefix}_domain_acc_{i}{postfix}': a for i, a in enumerate(accs[0])},
-                  'Task': t}
-        else:
-            d2 = {f'{prefix}_class_mean_accs{postfix}': mean_acc[0], f'{prefix}_task_mean_accs{postfix}': mean_acc[1],
-                  **{f'{prefix}_class_acc_{i}{postfix}': a for i, a in enumerate(accs[0])},
-                  **{f'{prefix}_task_acc_{i}{postfix}': a for i, a in enumerate(accs[1])},
-                  'Task': t}
-
-        wandb.log(d2)
-
-
-def log_extra_metrics(args, metric: float, metric_mask_class: float, metric_name: str, t: int, prefix="RESULT"):
-    """
-    Logs the accuracy values and other metrics.
-
-    All metrics are prefixed with `prefix` to be logged on wandb.
-
-    Args:
-        args: The arguments for logging.
-        metric: Class-IL version of the metric `metric_name`.
-        metric_mask_class: Task-IL version of the metric `metric_name`.
-        metric_name: The name of the metric.
-        t: The task index.
-        epoch: The epoch number (optional).
-        prefix: The prefix for the metrics (default="RESULT").
-    """
-
-    print(f'{metric_name}: [Class-IL]: {metric:.2f} \t [Task-IL]: {metric_mask_class:.2f}', file=sys.stderr)
-    print(f'\tRaw {metric_name} values: Class-IL {metric} | Task-IL {metric_mask_class}', file=sys.stderr)
-
-    log_dict = {f'{prefix}_class_{metric_name}': metric, f'{prefix}_task_{metric_name}': metric_mask_class, 'Task': t}
-
-    if not args.nowand:
-        wandb.log(log_dict)
-
-
-def print_mean_accuracy(accs: np.ndarray, task_number: int,
-                        setting: str, joint=False, epoch=None, future=False) -> None:
-    """
-    Prints the mean accuracy on stderr.
-
-    Args:
-        accs: accuracy values per task
-        task_number: task index
-        setting: the setting of the benchmark
-        joint: whether it's joint accuracy or not
-        epoch: the epoch number (optional)
-
-    Returns:
-        The mean accuracy value.
-    """
-    mean_acc = np.mean(accs, axis=1)
-
-    if joint:
-        prefix = "Joint Accuracy" if epoch is None else f"Joint Accuracy (epoch {epoch})"
-        if setting == 'domain-il' or setting == 'general-continual':
-            mean_acc, _ = mean_acc
-            print('{}: \t [Domain-IL]: {} %'.format(prefix, round(mean_acc, 2), file=sys.stderr))
-            print('\tRaw accuracy values: Domain-IL {}'.format(accs[0]), file=sys.stderr)
-        else:
-            mean_acc_class_il, mean_acc_task_il = mean_acc
-            print('{}: \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, round(
-                mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
-            print('\tRaw accuracy values: Class-IL {} | Task-IL {}'.format(accs[0], accs[1]), file=sys.stderr)
-    else:
-        prefix = "Accuracy" if epoch is None else f"Accuracy (epoch {epoch})"
-        prefix = "Future " + prefix if future else prefix
-        if setting == 'domain-il' or setting == 'general-continual':
-            mean_acc, _ = mean_acc
-            print('{} for {} task(s): [Domain-IL]: {} %'.format(prefix,
-                                                                task_number, round(mean_acc, 2)), file=sys.stderr)
-            print('\tRaw accuracy values: Domain-IL {}'.format(accs[0]), file=sys.stderr)
-        else:
-            mean_acc_class_il, mean_acc_task_il = mean_acc
-            print('{} for {} task(s): \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, task_number, round(
-                mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
-            print('\tRaw accuracy values: Class-IL {} | Task-IL {}'.format(accs[0], accs[1]), file=sys.stderr)
-    print('\n', file=sys.stderr)
-    return mean_acc
 
 
 class Logger:
@@ -270,16 +160,14 @@ class Logger:
 
         return self.forgetting, self.forgetting_mask_classes
 
-    def log(self, mean_acc: np.ndarray) -> None:
+    def log(self, mean_acc: Union[np.ndarray, dict]) -> None:
         """
         Logs a mean accuracy value.
 
         Args:
             mean_acc: mean accuracy value
         """
-        if self.setting == 'general-continual':
-            self.accs.append(mean_acc)
-        elif self.setting == 'domain-il':
+        if self.setting in ['general-continual', 'domain-il', 'biased-class-il']:
             self.accs.append(mean_acc)
         else:
             mean_acc_class_il, mean_acc_task_il = mean_acc
@@ -297,6 +185,8 @@ class Logger:
             acc_class_il, acc_task_il = accs
             self.fullaccs.append(acc_class_il)
             self.fullaccs_mask_classes.append(acc_task_il)
+        elif self.setting == 'biased-class-il':
+            self.fullaccs.append(accs)
 
     def log_system_stats(self, cpu_res, gpu_res):
         """
@@ -371,3 +261,177 @@ class Logger:
             path = smart_joint(target_folder, "task-il", self.dataset, self.model, "logs.pyd")
             with open(path, 'a') as f:
                 f.write(str(wrargs) + '\n')
+
+
+def log_bias_accs(args: Namespace, logger: Logger, accs, t: int, setting: str, epoch=None, prefix="RESULT", future=False):
+    """
+    Logs the accuracy values and other metrics for the bias dataset.
+    """
+
+    attr_accuracies, group_statistics = accs
+
+    # Log the group statistics separately
+    group_log_dict = {f"ACC_{key}": group_statistics[key] for key in group_statistics}
+    print(group_log_dict)
+    if not args.nowand:
+        wandb.log(group_log_dict)
+
+    # Calculate and log worst and avg for each task
+    mean_avg_group, mean_worst_group, mean_best_group, mean_gap_group = [], [], [], []
+    print("Accuracy per task:")
+    for i in range(len(attr_accuracies)):
+        task_groups = [key for key in group_statistics if key.startswith(f"Attr_{i}_")]
+        task_accuracies = [group_statistics[group] for group in task_groups]
+        worst_group = min(task_accuracies)
+        best_group = max(task_accuracies)
+        avg_group = sum(task_accuracies) / len(task_accuracies)
+
+        mean_avg_group.append(avg_group)
+        mean_worst_group.append(worst_group)
+        mean_best_group.append(best_group)
+        mean_gap_group.append(best_group - worst_group)
+
+        print(f"\tTask {i+1} - Worst: {worst_group}, Best: {best_group}, Avg: {avg_group}, Gap: {best_group - worst_group}")
+        log_dict = {
+            f"worst/task_{i}": worst_group,
+            f"best/task_{i}": best_group,
+            f"avg/task_{i}": avg_group,
+            f"gap/task_{i}": best_group - worst_group
+        }
+        if not args.nowand:
+            wandb.log(log_dict)
+
+    if not args.disable_log:
+        logger.log_fullacc(log_dict)
+
+    mean_avg_group = sum(mean_avg_group) / len(mean_avg_group)
+    mean_worst_group = sum(mean_worst_group) / len(mean_worst_group)
+    mean_best_group = sum(mean_best_group) / len(mean_best_group)
+    mean_gap_group = sum(mean_gap_group) / len(mean_gap_group)
+
+    print(f"Mean at {t+1} - Worst: {mean_worst_group}, Best: {mean_best_group}, Avg: {mean_avg_group}, Gap: {mean_gap_group}")
+    log_dict = {
+        f"worst/mean": mean_worst_group,
+        f"best/mean": mean_best_group,
+        f"avg/mean": mean_avg_group,
+        f"gap/mean": mean_gap_group
+    }
+
+    if not args.nowand:
+        wandb.log(log_dict)
+
+    if not args.disable_log:
+        logger.log(log_dict)
+
+    return mean_avg_group, mean_worst_group, mean_best_group, mean_gap_group
+
+
+def log_accs(args: Namespace, logger: Logger, accs, t: int, setting: str, epoch=None, prefix="RESULT", future=False):
+    """
+    Logs the accuracy values and other metrics.
+
+    All metrics are prefixed with `prefix` to be logged on wandb.
+
+    Args:
+        args: The arguments for logging.
+        logger: The Logger object.
+        accs: The accuracy values.
+        t: The task index.
+        setting: The setting of the benchmark (e.g., `class-il`).
+        epoch: The epoch number (optional).
+        prefix: The prefix for the metrics (default="RESULT").
+    """
+
+    mean_acc = print_mean_accuracy(accs, t + 1 if isinstance(t, (float, int)) else t,
+                                   setting, joint=args.joint,
+                                   epoch=epoch, future=future)
+
+    if not args.disable_log:
+        logger.log(mean_acc)
+        logger.log_fullacc(accs)
+
+    if not args.nowand:
+        postfix = "" if epoch is None else f"_epoch_{epoch}"
+        if future:
+            prefix += "_transf"
+        if isinstance(mean_acc, float):  # domain or gcl
+            d2 = {f'{prefix}_domain_mean_accs{postfix}': mean_acc,
+                  **{f'{prefix}_domain_acc_{i}{postfix}': a for i, a in enumerate(accs[0])},
+                  'Task': t}
+        else:
+            d2 = {f'{prefix}_class_mean_accs{postfix}': mean_acc[0], f'{prefix}_task_mean_accs{postfix}': mean_acc[1],
+                  **{f'{prefix}_class_acc_{i}{postfix}': a for i, a in enumerate(accs[0])},
+                  **{f'{prefix}_task_acc_{i}{postfix}': a for i, a in enumerate(accs[1])},
+                  'Task': t}
+
+        wandb.log(d2)
+
+
+def log_extra_metrics(args, metric: float, metric_mask_class: float, metric_name: str, t: int, prefix="RESULT"):
+    """
+    Logs the accuracy values and other metrics.
+
+    All metrics are prefixed with `prefix` to be logged on wandb.
+
+    Args:
+        args: The arguments for logging.
+        metric: Class-IL version of the metric `metric_name`.
+        metric_mask_class: Task-IL version of the metric `metric_name`.
+        metric_name: The name of the metric.
+        t: The task index.
+        epoch: The epoch number (optional).
+        prefix: The prefix for the metrics (default="RESULT").
+    """
+
+    print(f'{metric_name}: [Class-IL]: {metric:.2f} \t [Task-IL]: {metric_mask_class:.2f}', file=sys.stderr)
+    print(f'\tRaw {metric_name} values: Class-IL {metric} | Task-IL {metric_mask_class}', file=sys.stderr)
+
+    log_dict = {f'{prefix}_class_{metric_name}': metric, f'{prefix}_task_{metric_name}': metric_mask_class, 'Task': t}
+
+    if not args.nowand:
+        wandb.log(log_dict)
+
+
+def print_mean_accuracy(accs: np.ndarray, task_number: int,
+                        setting: str, joint=False, epoch=None, future=False) -> None:
+    """
+    Prints the mean accuracy on stderr.
+
+    Args:
+        accs: accuracy values per task
+        task_number: task index
+        setting: the setting of the benchmark
+        joint: whether it's joint accuracy or not
+        epoch: the epoch number (optional)
+
+    Returns:
+        The mean accuracy value.
+    """
+    mean_acc = np.mean(accs, axis=1)
+
+    if joint:
+        prefix = "Joint Accuracy" if epoch is None else f"Joint Accuracy (epoch {epoch})"
+        if setting == 'domain-il' or setting == 'general-continual':
+            mean_acc, _ = mean_acc
+            print('{}: \t [Domain-IL]: {} %'.format(prefix, round(mean_acc, 2), file=sys.stderr))
+            print('\tRaw accuracy values: Domain-IL {}'.format(accs[0]), file=sys.stderr)
+        else:
+            mean_acc_class_il, mean_acc_task_il = mean_acc
+            print('{}: \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, round(
+                mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
+            print('\tRaw accuracy values: Class-IL {} | Task-IL {}'.format(accs[0], accs[1]), file=sys.stderr)
+    else:
+        prefix = "Accuracy" if epoch is None else f"Accuracy (epoch {epoch})"
+        prefix = "Future " + prefix if future else prefix
+        if setting == 'domain-il' or setting == 'general-continual':
+            mean_acc, _ = mean_acc
+            print('{} for {} task(s): [Domain-IL]: {} %'.format(prefix,
+                                                                task_number, round(mean_acc, 2)), file=sys.stderr)
+            print('\tRaw accuracy values: Domain-IL {}'.format(accs[0]), file=sys.stderr)
+        else:
+            mean_acc_class_il, mean_acc_task_il = mean_acc
+            print('{} for {} task(s): \t [Class-IL]: {} % \t [Task-IL]: {} %'.format(prefix, task_number, round(
+                mean_acc_class_il, 2), round(mean_acc_task_il, 2)), file=sys.stderr)
+            print('\tRaw accuracy values: Class-IL {} | Task-IL {}'.format(accs[0], accs[1]), file=sys.stderr)
+    print('\n', file=sys.stderr)
+    return mean_acc
