@@ -12,5 +12,6 @@ scikit-learn
 decorator
 accelerate
 transformers
+kmeans_pytorch
 -i https://pypi.org/simple
 bitsandbytes

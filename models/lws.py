@@ -5,9 +5,11 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-from torcheval.metrics.functional import binary_auroc
-from kmeans_pytorch import kmeans
 from tqdm import tqdm
+try:
+    from kmeans_pytorch import kmeans
+except ImportError:
+    raise ImportError('kmeans_pytorch not installed. Please run `pip install kmeans-pytorch`.')
 
 from utils.args import add_rehearsal_args
 from utils.buffer_lws import Buffer

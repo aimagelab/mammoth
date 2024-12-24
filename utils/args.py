@@ -575,7 +575,13 @@ if __name__ == '__main__':
     os.makedirs('docs/model_args')
 
     for model_name, model_class in get_model_names().items():
-        parser = model_class.get_parser(ArgumentParser())
+        if isinstance(model_class, Exception):
+            raise model_class
+        try:
+            parser = model_class.get_parser(ArgumentParser())
+        except Exception as e:
+            print('Troubles with model:', model_name)
+            raise e
 
         model_args_groups = []
         for group in parser._action_groups:
