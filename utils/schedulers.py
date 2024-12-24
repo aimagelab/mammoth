@@ -1,10 +1,10 @@
 from argparse import Namespace
 import math
+from typing import Union
 import numpy as np
 import torch
 from torch.optim import Optimizer
-from torch.optim.lr_scheduler import _LRScheduler
-import torch.optim.lr_scheduler as scheds
+from torch.optim.lr_scheduler import _LRScheduler, MultiStepLR, CosineAnnealingLR
 
 from datasets.utils.continual_dataset import ContinualDataset
 from models.utils.continual_model import ContinualModel
@@ -20,14 +20,14 @@ def get_scheduler(model: ContinualModel, args: Namespace, reload_optim=True) -> 
         if reload_optim or not hasattr(model, 'opt'):
             model.opt = model.get_optimizer()
         # check if lr_scheduler is in torch.optim.lr_scheduler
-        supported_scheds = {sched_name.lower(): sched_name for sched_name in dir(scheds) if sched_name.lower() in ContinualDataset.AVAIL_SCHEDS}
+        supported_scheds = [sched_name.lower() for sched_name in ContinualDataset.AVAIL_SCHEDS]
         sched = None
         if args.lr_scheduler.lower() in supported_scheds:
             if args.lr_scheduler.lower() == 'multisteplr':
                 assert args.lr_milestones is not None, 'MultiStepLR requires `--lr_milestones`'
-                sched = getattr(scheds, supported_scheds[args.lr_scheduler.lower()])(model.opt,
-                                                                                     milestones=args.lr_milestones,
-                                                                                     gamma=args.sched_multistep_lr_gamma)
+                sched = MultiStepLR(model.opt, milestones=args.lr_milestones, gamma=args.sched_multistep_lr_gamma)
+            elif args.lr_scheduler.lower() == 'cosine':
+                sched = CosineAnnealingLR(model.opt, T_max=args.n_epochs, verbose=True)
 
         if sched is None:
             raise ValueError('Unknown scheduler: {}'.format(args.lr_scheduler))
@@ -55,7 +55,7 @@ class CosineSchedule(_LRScheduler):
 
 
 class CosineSchedulerWithLinearWarmup(_LRScheduler):
-    def __init__(self, optimizer: Optimizer, base_lrs: list | float, warmup_length: int, steps: int):
+    def __init__(self, optimizer: Optimizer, base_lrs: Union[list, float], warmup_length: int, steps: int):
         """
         Apply cosine learning rate schedule with warmup to all the parameters in the optimizer.
         If more than one param_group is passed, the learning rate must either be a list of the same length or a float.

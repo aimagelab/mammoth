@@ -1,0 +1,13 @@
+seq-eurosat-rgb:
+  clip_backbone: ViT-L/14
+  combo_context: 1
+  eval_future: 1
+  g_models: vae
+  gr_vae_n_iters: 500
+  learning_rate_alignment: 0.03
+  lr: 0.01
+  model: cgil
+  num_epochs_alignment: 150
+  optim_alignment: adamw
+  seed: 1992
+  permute_classes: 1

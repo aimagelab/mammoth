@@ -1,0 +1,5 @@
+seq-cifar10:
+  500:
+    alpha: 1.0
+    lr: 0.03
+    model: fdr

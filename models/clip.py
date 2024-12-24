@@ -31,6 +31,25 @@ from utils.args import ArgumentParser
 from utils.conf import get_device
 
 
+CUSTOM_TEMPLATES = {  # from https://github.com/KaiyangZhou/CoOp
+    "OxfordPets": "a photo of a {}, a type of pet.",
+    "OxfordFlowers": "a photo of a {}, a type of flower.",
+    "FGVCAircraft": "a photo of a {}, a type of aircraft.",
+    "DescribableTextures": "{} texture.",
+    "EuroSAT": "a centered satellite photo of {}.",
+    "StanfordCars": "a photo of a {}.",
+    "Food101": "a photo of {}, a type of food.",
+    "SUN397": "a photo of a {}.",
+    "Caltech101": "a photo of a {}.",
+    "UCF101": "a photo of a person doing {}.",
+    "ImageNet": "a photo of a {}.",
+    "ImageNetSketch": "a photo of a {}.",
+    "ImageNetV2": "a photo of a {}.",
+    "ImageNetA": "a photo of a {}.",
+    "ImageNetR": "a photo of a {}.",
+}
+
+
 class FinalModel(nn.Module):
     @torch.no_grad()
     def __init__(self, clip_model, dataset: ContinualDataset, args) -> None:
@@ -50,7 +69,11 @@ class FinalModel(nn.Module):
                 text_inputs.append(t_inputs)
             self.text_features = torch.stack(text_inputs).mean(0)
         else:
-            text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in self.classes]).to(get_device())
+            template = "a photo of a {}"
+            cname = [cname for cname in CUSTOM_TEMPLATES if cname.lower() in self.dataset.NAME.lower().replace('-', '').replace('_', '')]
+            if len(cname) > 0:  # if dataset has custom templates
+                template = CUSTOM_TEMPLATES[cname[0]]
+            text_inputs = torch.cat([clip.tokenize(template.format(c)) for c in self.classes]).to(get_device())
             self.text_features = self.clip_model.encode_text(text_inputs)
 
         self.text_features /= self.text_features.norm(dim=-1, keepdim=True)  # double normalization if use templates is expected

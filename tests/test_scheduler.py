@@ -3,7 +3,7 @@ import sys
 
 import torch
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.main import main
+from main import main
 
 
 def test_der_cifar100_defaultscheduler(capsys):
@@ -46,12 +46,15 @@ def test_der_cifar100_defaultscheduler(capsys):
     for ckpt_path in ckpt_paths:
         assert os.path.exists(ckpt_path), f'Checkpoint file {ckpt_path} not found'
 
-        ckpt = torch.load(ckpt_path)
+        ckpt = torch.load(ckpt_path, weights_only=True)
         opt, sched = ckpt['optimizer']['param_groups'][0], ckpt['scheduler']
         assert opt['initial_lr'] == 0.03, f'Learning rate not updated correctly in {ckpt_path}'
         assert opt['lr'] == opt['initial_lr'] * 0.1 * 0.1, f'Learning rate not updated correctly in {ckpt_path}'
         assert list(sched['milestones'].keys()) == [35, 45], f'Milestones not updated correctly in {ckpt_path}'
         assert sched['base_lrs'] == [0.03], f'Base learning rate not updated correctly in {ckpt_path}'
+        assert 'buffer' in ckpt, f'Buffer not saved in {ckpt_path}'
+        assert all([k in ckpt['buffer'].keys() for k in ['examples', 'logits']]), f'Buffer not saved correctly in {ckpt_path}'
+        assert len(ckpt['buffer']['examples']) == 500, f'Buffer size not saved correctly in {ckpt_path}'
 
 
 def test_der_cifar100_customscheduler(capsys):
@@ -96,7 +99,7 @@ def test_der_cifar100_customscheduler(capsys):
     for ckpt_path in ckpt_paths:
         assert os.path.exists(ckpt_path), f'Checkpoint file {ckpt_path} not found'
 
-        ckpt = torch.load(ckpt_path)
+        ckpt = torch.load(ckpt_path, weights_only=True)
         opt, sched = ckpt['optimizer']['param_groups'][0], ckpt['scheduler']
         assert opt['initial_lr'] == 0.1, f'Learning rate not updated correctly in {ckpt_path}'
         assert opt['lr'] == opt['initial_lr'] * 0.1 * 0.1 * 0.1 * 0.1, f'Learning rate not updated correctly in {ckpt_path}'

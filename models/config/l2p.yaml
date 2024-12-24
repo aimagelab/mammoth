@@ -1,0 +1,6 @@
+seq-cifar100-224:
+  batchwise_prompt: 1
+  dataset_config: l2p
+  lr: 0.03
+  pull_constraint_coeff: 0.5
+  model: l2p

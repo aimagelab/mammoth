@@ -9,19 +9,19 @@ Arguments
 	*Help*: Which dataset to perform experiments on.
 
 	- *Default*: ``None``
-	- *Choices*: ``seq-tinyimg, seq-mit67, seq-cars196, seq-cifar100-224-rs, seq-cifar100-224, seq-chestx, seq-cifar10-224-rs, mnist-360, seq-cropdisease, seq-eurosat-rgb, seq-imagenet-r, seq-cifar100, seq-cifar10-224, perm-mnist, seq-cub200, seq-cifar10, rot-mnist, seq-resisc45, seq-mnist, seq-cub200-rs, seq-isic, seq-tinyimg-r``
+	- *Choices*: ``seq-mnist, seq-cub200, seq-chestx, seq-cifar100-224, seq-tinyimg, seq-tinyimg-r, seq-cropdisease, seq-eurosat-rgb, perm-mnist, seq-cifar100, seq-isic, seq-mit67, seq-cifar10-224-rs, seq-cifar10, mnist-360, seq-imagenet-r, seq-cub200-rs, rot-mnist, seq-resisc45, seq-cifar10-224, seq-cars196, seq-cifar100-224-rs``
 
 **\-\-model** : str (with underscores replaced by dashes)
 	*Help*: Model name.
 
 	- *Default*: ``None``
-	- *Choices*: ``joint-gcl, second-stage-starprompt, lwf-mc, puridiver, gdumb-lider, joint, ewc-on, xder, ranpac, hal, er-ace-tricks, sgd, si, moe-adapters, first-stage-starprompt, er-ace-aer-abs, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, llava, attriclip, starprompt, coda-prompt, er-tricks, clip, pnn, er-ace, xder-ce, dualprompt, twf, mer, er-ace-lider, gdumb, dap, l2p, ccic, slca, agem-r, rpc, xder-rpc, gss, lwf, cgil, er, agem``
+	- *Choices*: ``twf, derpp-lider, l2p, der, icarl, xder-rpc, rpc, pnn, bic, second-stage-starprompt, puridiver, slca, bic-v2, gdumb-lider, xder-ce, cgil, mer, coda-prompt, joint-gcl, ccic, ranpac, joint, gss, moe-adapters, gem, agem, ewc-on, er-ace-tricks, clip, er-ace, derpp, lwf, er, lwf-mc, idefics, icarl-lider, first-stage-starprompt, lucir, agem-r, er-ace-aer-abs, fdr, attriclip, starprompt, gdumb, dualprompt, dap, xder, sgd, er-tricks, er-ace-lider, hal, si, llava``
 
 **\-\-backbone** : str (with underscores replaced by dashes)
 	*Help*: Backbone network name.
 
 	- *Default*: ``None``
-	- *Choices*: ``resnet18, resnet34, resnet50, resnet50_pt, mnistmlp, vit``
+	- *Choices*: ``resnet18, reduced-resnet18, resnet34, resnet32, mnistmlp, vit, resnet50, resnet50-pt``
 
 **\-\-load_best_args** : unknown
 	*Help*: (deprecated) Loads the best arguments for each method, dataset and memory buffer. NOTE: This option is deprecated and not up to date.

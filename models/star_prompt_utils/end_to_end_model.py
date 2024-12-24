@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Tuple
+from typing import Tuple, Union
 import torch
 from torch import nn
 from torch.utils.data import TensorDataset
@@ -69,7 +69,7 @@ class STARPromptModel(nn.Module):
         first_stage_keys = self.first_stage.prompter.compute_keys(start_c, end_c)
         self.second_stage.prompter.set_keys(first_stage_keys, start_c, end_c)
 
-    def forward(self, x: torch.Tensor, cur_classes: int, frozen_past_classes=0, return_query=False) -> torch.Tensor | Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor, cur_classes: int, frozen_past_classes=0, return_query=False) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor]]:
         """
         Compute the complete forward pass of STAR-Prompt.
         This assumes that the keys are already pre-computed.
@@ -139,7 +139,7 @@ class STARPromptModel(nn.Module):
 
         return create_seeded_dataloader(self.args, TensorDataset(features, labels),
                                         batch_size=self.args.batch_size_gr,
-                                        shuffle=True, num_workers=0)
+                                        shuffle=True, num_workers=0, non_verbose=True)
 
     def train_alignment_epoch(self, classifier: torch.nn.Module, optim: torch.optim.Optimizer, n_seen_classes: int, current_task: int, loss_fn):
 

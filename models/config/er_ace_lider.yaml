@@ -1,0 +1,7 @@
+seq-cifar100:
+  dataset_config: lider
+  500:
+    alpha_lip_lambda: 0.1
+    beta_lip_lambda: 0.3
+    lr: 0.1
+    model: er_ace_lider

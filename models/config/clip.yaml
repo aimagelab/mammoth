@@ -1,0 +1,4 @@
+seq-eurosat-rgb:
+  clip_backbone: ViT-L/14
+  model: clip
+  joint: 1 # static models don't need to be trained incrementally

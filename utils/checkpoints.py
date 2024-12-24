@@ -1,15 +1,47 @@
 
+from argparse import Namespace
+from collections.abc import Iterable
+import copy
+import logging
 import random
 import string
+from typing import Dict, Union
 import numpy as np
 import torch
-from torch import distributed as dist
 import os
 
 from tqdm import tqdm
 import urllib.request as request
 
 from utils import smart_joint
+
+
+def to_parsable_obj(r: Union[Dict, Namespace, list, torch.Tensor, np.ndarray]) -> Union[Dict, list, str, int, float, bool]:
+    """
+    Convert a non-builtin object to a parsable (and loadable with `weights_only=True`) object.
+    Looking at you, Namespace.
+    """
+
+    if isinstance(r, Namespace):
+        return to_parsable_obj(vars(r))
+    if isinstance(r, list):
+        return [to_parsable_obj(x) for x in r]
+    if isinstance(r, dict):
+        return {k: to_parsable_obj(v) for k, v in r.items()}
+    else:
+        if isinstance(r, torch.Tensor):
+            r = r.detach().cpu().numpy().tolist()
+        elif isinstance(r, np.ndarray):
+            r = r.tolist()
+        if not isinstance(r, str) and isinstance(r, Iterable) and len(r) > 1:
+            return [to_parsable_obj(x) for x in r]
+        # check if type of r is builtin
+        if isinstance(r, (int, float, str, bool)):
+            try:
+                r = r.item()  # could be numpy scalar
+            except BaseException:
+                return r
+        return None
 
 
 def _load_mammoth_model(dict_keys, model: torch.nn.Module, args):
@@ -33,6 +65,10 @@ def _load_mammoth_model(dict_keys, model: torch.nn.Module, args):
 
 
 def _load_net(dict_keys, model: torch.nn.Module, args, ignore_classifier=True):
+    """
+    Load a model from a checkpoint. Handles DataParallel and DistributedDataParallel checkpoints.
+    If ignore_classifier is True, the classifier weights are not loaded.
+    """
     for k in list(dict_keys):
         if args.distributed != 'dp':
             dict_keys[k.replace('module.', '')] = dict_keys.pop(k)
@@ -82,9 +118,9 @@ def _get_random_filename(length=10):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
 
 
-def _download_from_raw_url(url: str, root: str):
+def _download_from_raw_url(url: str, root: str, filename: str = None) -> str:
     os.makedirs(root, exist_ok=True)
-    filename = _get_random_filename()
+    filename = _get_random_filename() + '.pth' if filename is None else filename
 
     download_target = smart_joint(root, filename)
 
@@ -127,7 +163,7 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
             except ImportError:
                 raise ImportError('OneDriveDownloader is required to download from Sharepoint. Please install it with "pip install onedrivedownloader"')
 
-            print('Downloading checkpoint using OneDriveDownloader...')
+            logging.info('Downloading checkpoint using OneDriveDownloader...')
             args.loadcheck = download(args.loadcheck, filename='checkpoints/', unzip=True, unzip_path='checkpoints/', clean=True)
         elif 'drive.google.com' in args.loadcheck:
             try:
@@ -135,31 +171,36 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
             except ImportError:
                 raise ImportError('GoogleDriveDownloader is required to download from Google Drive. Please install it with "pip install googledrivedownloader"')
 
-            print('Downloading checkpoint using GoogleDriveDownloader...')
+            logging.info('Downloading checkpoint using GoogleDriveDownloader...')
             # get random filename
             filename = _get_random_filename()
             gdd.download_file_from_google_drive(file_id=args.loadcheck.split('/')[-2],
                                                 dest_path=f'checkpoints/{filename}', unzip=True)
             args.loadcheck = f'checkpoints/{filename}'
+        elif args.loadcheck.startswith('https://huggingface.co/'):
+            logging.info('Downloading checkpoints from HuggingFace...')
+            filename = args.loadcheck.split('/')[-1].split('?')[0]
+            args.loadcheck = _download_from_raw_url(args.loadcheck, 'checkpoints/', filename=filename)
         else:
-            print('Attempting to download raw checkpoint...')
+            logging.warning('Attempting to download raw checkpoint. Make sure to check the URL.')
             args.loadcheck = _download_from_raw_url(args.loadcheck, 'checkpoints/')
 
-        print(f'Checkpoint downloaded to {args.loadcheck}')
+        logging.info(f'Checkpoint downloaded to {args.loadcheck}')
     else:
         if not os.path.exists(args.loadcheck):
             raise ValueError('The given checkpoint does not exist.')
 
-    saved_obj = torch.load(args.loadcheck, map_location=torch.device("cpu"))
+    saved_obj = torch.load(args.loadcheck, map_location=torch.device("cpu"), weights_only=True)
 
     if 'args' in saved_obj and 'model' in saved_obj:
+        saved_obj['args'] = Namespace(**saved_obj['args'])  # convert back to Namespace
         _check_loaded_args(args, saved_obj['args'])
         # Mammoth checkpoint
         model = _load_mammoth_model(saved_obj['model'], model, args)
         if 'buffer' in saved_obj:
             loading_model = saved_obj['args'].model
             if args.model != loading_model:
-                print(f'WARNING: The loaded model was trained with a different model: {loading_model}')
+                logging.warning(f'The loaded model was trained with a different model: {loading_model}')
             model.load_buffer(saved_obj['buffer'])
 
         return model, saved_obj['results']
@@ -170,7 +211,51 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
         return model, None
 
 
+def save_mammoth_checkpoint(task: int, end_task: int, args: Namespace, model: torch.nn.Module, results=None,
+                            optimizer_st: Dict[str, torch.Tensor] = None,
+                            scheduler_st: Dict[str, torch.Tensor] = None):
+    """
+    Save a checkpoint for the model for the given task.
+    Handles saving as a single file (will require `weights_only=False)` or separate weights (can be loaded safely with `weights_only=True`).
+    """
+    if args.savecheck == 'task':
+        checkpoint_name = f'checkpoints/{args.ckpt_name}_joint' if args.joint else f'checkpoints/{args.ckpt_name}_{task}'
+    elif args.savecheck == 'last':
+        if task == end_task - 1:
+            checkpoint_name = f'checkpoints/{args.ckpt_name}_joint' if args.joint else f'checkpoints/{args.ckpt_name}_last'
+        else:
+            return
+    else:
+        raise ValueError(f'Invalid savecheck mode: {args.savecheck}')
+
+    if args.save_checkpoint_mode == 'old_pickle':
+        save_obj = {
+            'model': model.state_dict(),
+            'args': args,
+            'results': results,
+            'optimizer': optimizer_st,
+            'scheduler': scheduler_st,
+        }
+        if 'buffer_size' in model.args:
+            save_obj['buffer'] = copy.deepcopy(model.buffer).to('cpu')
+    elif args.save_checkpoint_mode == 'safe':  # TODO CHECK
+        save_obj = {
+            'model': model.state_dict(),
+            'optimizer': optimizer_st,
+            'scheduler': scheduler_st,
+            'args': to_parsable_obj(vars(args)),  # avoid Namespace and other non-builtin types
+            'results': to_parsable_obj(results),  # avoid numpy, torch, and non-builtin types
+        }
+        if 'buffer_size' in model.args:
+            save_obj['buffer'] = model.buffer.serialize()
+
+    torch.save(save_obj, checkpoint_name + '.pt')
+    logging.info(f"Checkpoint for task {task} saved at {checkpoint_name}")
+
+
 def _check_loaded_args(args, loaded_args):
+    pruned_original_args = to_parsable_obj(vars(args))
+
     def _check_arg(arg, loaded_arg):
         if isinstance(arg, (list, tuple)):
             return any([a != la for a, la in zip(arg, loaded_arg)])
@@ -183,14 +268,12 @@ def _check_loaded_args(args, loaded_args):
     ignored_args = ['loadcheck', 'start_from', 'stop_after', 'conf_jobnum', 'conf_host', 'conf_timestamp', 'distributed', 'examples_log', 'examples_full_log',
                     'intensive_savecheck', 'job_number', 'conf_git_commit', 'loss_log', 'tensorboard', 'seed', 'savecheck', 'notes', 'non_verbose', 'autorelaunch',
                     'force_compat', 'conf_external_path', 'ckpt_name']
-    mismatched_args = [x for x in vars(args) if x not in ignored_args and (
-        x not in vars(loaded_args) or _check_arg(getattr(args, x), getattr(loaded_args, x)))]
+    mismatched_args = [x for x in pruned_original_args if x not in ignored_args and (
+        x not in vars(loaded_args) or _check_arg(pruned_original_args[x], getattr(loaded_args, x)))]
 
     if len(mismatched_args):
         if 'force_compat' not in vars(args) or args.force_compat:
-            print(
-                "WARNING: The following arguments do not match between loaded and current model:")
-            print(mismatched_args)
+            logging.warning("The following arguments do not match between loaded and current model:")
+            logging.warning(mismatched_args)
         else:
-            raise ValueError(
-                'The loaded model was trained with different arguments: {}'.format(mismatched_args))
+            raise ValueError('The loaded model was trained with different arguments: {}'.format(mismatched_args))

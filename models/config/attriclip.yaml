@@ -1,0 +1,7 @@
+seq-cifar100-224:
+  dataset_config: attriclip
+  batch_size: 32
+  lr: 0.001
+  model: attriclip
+  optimizer: sgd
+  n_epochs: 10

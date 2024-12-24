@@ -85,7 +85,7 @@ class ResNet(MammothBackbone):
     """
 
     def __init__(self, block: BasicBlock, num_blocks: List[int],
-                 num_classes: int, nf: int) -> None:
+                 num_classes: int, nf: int, initial_conv_k=3) -> None:
         """
         Instantiates the layers of the network.
 
@@ -94,6 +94,7 @@ class ResNet(MammothBackbone):
             num_blocks: the number of blocks per layer
             num_classes: the number of output classes
             nf: the number of filters
+            initial_conv_k: the kernel size of the initial convolution
         """
         super(ResNet, self).__init__()
         self.return_prerelu = False
@@ -102,15 +103,28 @@ class ResNet(MammothBackbone):
         self.block = block
         self.num_classes = num_classes
         self.nf = nf
-        self.conv1 = conv3x3(3, nf * 1)
-        self.bn1 = nn.BatchNorm2d(nf * 1)
-        self.layer1 = self._make_layer(block, nf * 1, num_blocks[0], stride=1)
-        self.layer2 = self._make_layer(block, nf * 2, num_blocks[1], stride=2)
-        self.layer3 = self._make_layer(block, nf * 4, num_blocks[2], stride=2)
-        self.layer4 = self._make_layer(block, nf * 8, num_blocks[3], stride=2)
-        self.classifier = nn.Linear(nf * 8 * block.expansion, num_classes)
+        if initial_conv_k != 3:
+            self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+            self.conv1 = nn.Conv2d(3, nf * 1 * block.expansion, kernel_size=initial_conv_k, stride=2, padding=3, bias=False)
+        else:
+            self.conv1 = conv3x3(3, nf * 1 * block.expansion)
+        self.bn1 = nn.BatchNorm2d(nf * 1 * block.expansion)
+        if len(num_blocks) == 4:
+            self.feature_dim = nf * 8 * block.expansion
+            self.layer1 = self._make_layer(block, nf * 1 * block.expansion, num_blocks[0], stride=1)
+            self.layer2 = self._make_layer(block, nf * 2 * block.expansion, num_blocks[1], stride=2)
+            self.layer3 = self._make_layer(block, nf * 4 * block.expansion, num_blocks[2], stride=2)
+            self.layer4 = self._make_layer(block, self.feature_dim, num_blocks[3], stride=2)
+        else:
+            self.feature_dim = nf * 4 * block.expansion
+            self.layer1 = self._make_layer(block, nf * 1 * block.expansion, num_blocks[0], stride=1)
+            self.layer2 = self._make_layer(block, nf * 2 * block.expansion, num_blocks[1], stride=2)
+            self.layer3 = self._make_layer(block, self.feature_dim, num_blocks[2], stride=2)
+            self.layer3._modules[f"{num_blocks[2]-1}"].is_last = True
+            self.layer4 = nn.Identity()
+            self.layer4.return_prerelu = False
 
-        self.feature_dim = nf * 8 * block.expansion
+        self.classifier = nn.Linear(self.feature_dim, num_classes)
 
     def set_return_prerelu(self, enable=True):
         self.return_prerelu = enable
@@ -119,7 +133,7 @@ class ResNet(MammothBackbone):
                 c.return_prerelu = enable
 
     def _make_layer(self, block: BasicBlock, planes: int,
-                    num_blocks: int, stride: int) -> nn.Module:
+                    num_blocks: int, stride: int) -> nn.Sequential:
         """
         Instantiates a ResNet layer.
 
@@ -199,6 +213,47 @@ def resnet18(num_classes: int, num_filters: int = 64) -> ResNet:
         ResNet network
     """
     return ResNet(BasicBlock, [2, 2, 2, 2], num_classes, num_filters)
+
+
+@register_backbone("resnet18_7x7_pt")
+def resnet18(num_classes: int) -> ResNet:
+    """
+    Instantiates a ResNet18 network with a 7x7 initial convolution and pretrained weights.
+
+    Args:
+        num_classes: number of output classes
+
+    Returns:
+        ResNet network
+    """
+    from torchvision.models import ResNet18_Weights
+    net = ResNet(BasicBlock, [2, 2, 2, 2], num_classes, 64, initial_conv_k=7)
+    pretrain_weights = ResNet18_Weights.DEFAULT
+    st = pretrain_weights.get_state_dict(progress=True, check_hash=True)
+    for k in list(st.keys()):
+        if 'downsample' in k:
+            st[k.replace('downsample', 'shortcut')] = st.pop(k)
+        elif k.startswith('fc'):
+            st.pop(k)
+    missing, unexp = net.load_state_dict(st, strict=False)
+    assert len([k for k in missing if not k.startswith('classifier')]) == 0, missing
+    assert len(unexp) == 0, unexp
+    return net
+
+
+@register_backbone("reduced-resnet18")
+def resnet18(num_classes: int) -> ResNet:
+    """
+    Instantiates a ResNet18 network with a third of the parameters, as used in `Gradient Episodic Memory for Continual Learning`
+
+    Args:
+        num_classes: number of output classes
+        num_filters: number of filters
+
+    Returns:
+        ResNet network
+    """
+    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes, 20)
 
 
 @register_backbone("resnet34")

@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 
 
+from typing import Union
 import PIL
 import numpy as np
 import torch
@@ -30,7 +31,7 @@ class DeNormalize(object):
         self.mean = mean
         self.std = std
 
-    def __call__(self, tensor: torch.Tensor | PIL.Image.Image):
+    def __call__(self, tensor: Union[torch.Tensor, PIL.Image.Image]):
         """
         Applies denormalization to the input tensor.
 

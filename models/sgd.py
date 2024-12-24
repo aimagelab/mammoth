@@ -8,7 +8,6 @@ This module implements the simplest form of incremental training, i.e., finetuni
 # LICENSE file in the root directory of this source tree.
 
 from models.utils.continual_model import ContinualModel
-from utils.args import ArgumentParser
 
 
 class Sgd(ContinualModel):

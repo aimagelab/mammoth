@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import torch
 
 from backbone import get_backbone
@@ -78,6 +79,7 @@ class GDumbLider(LiderOptimizer):
 
     @staticmethod
     def get_parser(parser) -> ArgumentParser:
+        parser.set_defaults(lr=0)  # lr is managed elsewhere
         add_rehearsal_args(parser)
         add_lipschitz_args(parser)
         parser.add_argument('--maxlr', type=float, default=5e-2,
@@ -91,6 +93,9 @@ class GDumbLider(LiderOptimizer):
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
+        if args.n_epochs != 1:
+            args.n_epochs = 1
+            logging.info('GDumb needs only 1 epoch to fill the buffer.')
         super().__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
 

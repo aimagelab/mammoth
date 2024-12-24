@@ -1,0 +1,15 @@
+MEAN: [0.5,0.5,0.5]
+STD: [2,2,2]
+TRANSFORM:
+  - ToTensor
+  - Normalize:
+      mean: [0.5,0.5,0.5]
+      std: [2,2,2]
+TEST_TRANSFORM:
+  - ToTensor
+  - Normalize:
+      mean: [0.5,0.5,0.5]
+      std: [2,2,2]
+n_epochs: 1
+backbone: reduced-resnet18
+batch_size: 10

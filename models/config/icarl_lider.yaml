@@ -1,0 +1,8 @@
+seq-cifar100:
+  dataset_config: lider
+  500:
+    alpha_lip_lambda: 0.1
+    beta_lip_lambda: 0.1
+    lr: 1
+    model: icarl_lider
+    wd_reg: 0.00001

@@ -1,0 +1,8 @@
+seq-cifar100-224:
+  dataset_config: coda_prompt
+  batch_size: 128
+  lr: 1e-3
+  model: coda_prompt
+  optim_mom: 0.9
+  optimizer: adam
+  n_epochs: 20

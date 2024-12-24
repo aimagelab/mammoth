@@ -1,4 +1,5 @@
-.. include:: ../{{ module }}/index.rst   
+{{ fullname }}
+{{ "=" * fullname | length }}
 
 Module attributes and functions
 -------------------------------

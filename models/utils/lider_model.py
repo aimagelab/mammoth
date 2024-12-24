@@ -122,7 +122,6 @@ class LiderOptimizer(ContinualModel):
             lip_values[i] = L
         return lip_values
 
-    @torch.no_grad()
     def init_net(self, dataset):
         """
         Compute the target Lipschitz coefficients for the network and initialize the network's Lipschitz coefficients to match them.
@@ -134,36 +133,39 @@ class LiderOptimizer(ContinualModel):
         self.net.eval()
 
         all_lips = []
-        for i, data in enumerate(tqdm(dataset.train_loader, desc="Computing target L budget")):
-            inputs, labels = data[0], data[1]
-            if self.args.debug_mode and i > self.get_debug_iters():
-                continue
+        with torch.no_grad():
+            for i, data in enumerate(tqdm(dataset.train_loader, desc="Computing target L budget")):
+                inputs, labels = data[0], data[1]
+                if self.args.debug_mode and i > self.get_debug_iters():
+                    continue
 
-            inputs, labels = inputs.to(self.device), labels.to(self.device)
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
 
-            if len(inputs.shape) == 5:
-                B, n, C, H, W = inputs.shape
-                inputs = inputs.view(B * n, C, H, W)
+                if len(inputs.shape) == 5:
+                    B, n, C, H, W = inputs.shape
+                    inputs = inputs.view(B * n, C, H, W)
 
-            _, partial_features = self.net(inputs, returnt='full')
+                _, partial_features = self.net(inputs, returnt='full')
 
-            lip_inputs = [inputs] + partial_features
+                lip_inputs = [inputs] + partial_features
 
-            lip_values = self.get_feature_lip_coeffs(lip_inputs)
-            # (B, F)
-            lip_values = torch.stack(lip_values, dim=1)
+                lip_values = self.get_feature_lip_coeffs(lip_inputs)
+                # (B, F)
+                lip_values = torch.stack(lip_values, dim=1)
 
-            all_lips.append(lip_values)
+                all_lips.append(lip_values)
 
-        budget_lip = torch.cat(all_lips, dim=0).mean(0).detach().clone()
+            budget_lip = torch.cat(all_lips, dim=0).mean(0).detach().clone()
 
-        inp = next(iter(dataset.train_loader))[0]
-        _, teacher_feats = self.net(inp.to(self.device), returnt='full')
-
-        self.net.lip_coeffs = torch.autograd.Variable(torch.randn(len(teacher_feats), dtype=torch.float), requires_grad=True).to(self.device)
-        self.net.lip_coeffs.data = budget_lip
+            inp = next(iter(dataset.train_loader))[0]
+            _, teacher_feats = self.net(inp.to(self.device), returnt='full')
 
         self.net.train(was_training)
+
+        self.net.lip_coeffs = torch.autograd.Variable(torch.randn(len(teacher_feats), dtype=torch.float), requires_grad=True).to(self.device)
+        self.net.lip_coeffs.data = budget_lip.data
+
+        self.get_optimizer()  # reload optimizer
 
     def get_norm(self, t: torch.Tensor):
         """
@@ -203,7 +205,6 @@ class LiderOptimizer(ContinualModel):
         Returns:
             torch.Tensor: The dynamic budget Lipschitz loss.
         """
-        loss = 0
         lip_values = self.get_feature_lip_coeffs(features)
         # (B, F)
         lip_values = torch.stack(lip_values, dim=1)
@@ -217,6 +218,6 @@ class LiderOptimizer(ContinualModel):
 
         tgt = tgt.unsqueeze(0).expand(lip_values.shape)
 
-        loss += F.l1_loss(lip_values, tgt)
+        loss = F.l1_loss(lip_values, tgt)
 
         return loss

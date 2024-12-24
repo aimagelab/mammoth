@@ -1,0 +1,8 @@
+rot-mnist:
+  200:
+    beta: 0.01
+    gamma: 0.03
+    lr: 0.1
+    minibatch_size: 25
+    model: mer
+    n_epochs: 1

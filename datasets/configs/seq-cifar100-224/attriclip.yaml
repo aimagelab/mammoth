@@ -1,0 +1,23 @@
+MEAN: [0.48145466, 0.4578275, 0.40821073]
+STD: [0.26862954,0.26130258, 0.27577711]
+TRANSFORM:
+  - Resize:
+      size: 224
+      interpolation: 3
+  - CenterCrop:
+      size: 224
+  # - RandomHorizontalFlip
+  - ToTensor
+  - Normalize:
+      mean: [0.48145466, 0.4578275, 0.40821073]
+      std: [0.26862954,0.26130258, 0.27577711]
+TEST_TRANSFORM:
+  - Resize:
+      size: 224
+      interpolation: 3
+  - CenterCrop:
+      size: 224
+  - ToTensor
+  - Normalize:
+      mean: [0.48145466, 0.4578275, 0.40821073]
+      std: [0.26862954,0.26130258, 0.27577711]

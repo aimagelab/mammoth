@@ -1,8 +1,3 @@
-.. Mammoth documentation master file, created by
-   sphinx-quickstart on Tue Dec  5 23:41:27 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 .. autosummary::
    :toctree: generated
    :hidden:
@@ -27,7 +22,8 @@
    getting_started/fast_training.rst
    getting_started/scripts.rst
    Backbones and Datasets registration <getting_started/dynamic_args.rst>
-   Parseval <getting_started/parseval.rst>
+   Reproducibility <getting_started/reproducibility.rst>
+
 
 .. toctree::
    :glob:
@@ -35,10 +31,10 @@
    :hidden:
    :caption: Contents
 
-   generated/models.rst
-   generated/datasets.rst
-   generated/backbone.rst
-   generated/utils.rst
+   Models <models/index.rst>
+   Datasets <datasets/index.rst>
+   Backbone <backbone/index.rst>
+   Utils <utils/index.rst>
 
 .. toctree::
    :glob:
@@ -48,5 +44,25 @@
 
    Upgrade to the new Mammoth! <how_to_upgrade/index.rst>
    Run STAR-Prompt <how_to_run/starprompt.rst>
+
+.. toctree::
+   :glob:
+   :maxdepth: 1
+   :hidden:
+   :caption: Code reference
+
+   generated/models.rst
+   generated/datasets.rst
+   generated/backbone.rst
+   generated/utils.rst
    
 .. include:: readme.rst
+
+.. toctree::
+   :glob:
+   :maxdepth: 1
+   :hidden:
+   :caption: Awesome works with Mammoth
+
+   Our papers <related/our_papers.rst>
+   Works that use Mammoth <related/other_works.rst>

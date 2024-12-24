@@ -160,6 +160,8 @@ def to_kornia_transform(transform: transforms.Compose, apply: bool = True) -> Un
             ts.extend(to_kornia_transform(t, apply=False))
         elif isinstance(t, transforms.ToTensor) or isinstance(t, transforms.ToPILImage):
             pass
+        elif isinstance(t, transforms.CenterCrop):
+            ts.append(kornia.augmentation.CenterCrop(size=t.size))
         elif isinstance(t, transforms.Normalize):
             ts.append(kornia.augmentation.Normalize(mean=t.mean, std=t.std, p=1))
         elif isinstance(t, transforms.Resize):

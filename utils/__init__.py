@@ -4,8 +4,28 @@ import sys
 import string
 import random
 import logging
-from typing import Callable, Type, TypeVar
+from typing import Callable, Type, TypeVar, Union, get_args
 T = TypeVar("T")
+
+
+def check_fn_dynamic_type(fn: T, tp: Type[T], strict=True) -> bool:
+    """
+    Controls if the function respects the type `tp`.
+    The function must have the same number of arguments as the type `tp` and the same type for each argument.
+
+    Args:
+        fn: the function to be checked
+        tp: the type to be respected
+        strict: if True, raises an error if the function does not respect the type `tp`
+    """
+    type_args = [str(arg).split("'")[1].split("'")[0] for arg in get_args(tp)[0]]
+    fn_args = [v._annotation if v._annotation != inspect._empty else str(type(v.default)).split("'")[1].split("'")[0]
+               for k, v in inspect.signature(fn).parameters.items()]
+    if not all([f == t for f, t in zip(fn_args, type_args)]):
+        if strict:
+            raise ValueError(f'{fn} does not respect type {tp}')
+        return False
+    return True
 
 
 def setup_logging():
@@ -167,9 +187,9 @@ def register_dynamic_module_fn(name: str, register: dict, tp: Type[T]):
         cls: the class to be registered
         tp: the type of the class, used to dynamically infer the arguments
     """
-    name = name.replace('-', '_').lower()
+    name = name.replace('_', '-').lower()
 
-    def register_network_fn(target: T | Callable) -> T:
+    def register_network_fn(target: Union[T, Callable]) -> T:
         # check if the name is already registered
         if name in register:
             raise ValueError(f"Name {name} already registered!")
@@ -187,3 +207,20 @@ def register_dynamic_module_fn(name: str, register: dict, tp: Type[T]):
         return target
 
     return register_network_fn
+
+
+class disable_logging:
+    """
+    Wrapper for disabling logging for a specific block of code.
+    """
+
+    def __init__(self, min_level=logging.CRITICAL):
+        self.logger = logging.getLogger()
+        self.min_level = min_level
+
+    def __enter__(self):
+        self.old_logging_level = self.logger.level
+        logging.disable(self.min_level)
+
+    def __exit__(self, exit_type, exit_value, exit_traceback):
+        logging.disable(self.old_logging_level)

@@ -1,0 +1,10 @@
+seq-cifar10:
+  1000:
+    batch_size: 16
+    buffer_fitting_epochs: 255
+    enable_cutmix: 1
+    lr: 0.05
+    model: puridiver
+    n_epochs: 1
+    noise_rate: 0.4
+    noise_type: symmetric

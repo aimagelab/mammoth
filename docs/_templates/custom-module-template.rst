@@ -2,7 +2,7 @@
 
 .. currentmodule:: {{ fullname }}
 
-.. include:: ../models/{{ name }}_args.rst   
+.. include:: ../model_args/{{ name }}_args.rst   
 
 .. automodule:: {{ fullname }}
 

@@ -18,9 +18,9 @@ class VisionTransformer(MammothVP):
 
     def __init__(
             self, prompt_length=None, embedding_key='cls', prompt_init='uniform', prompt_pool=False, prompt_key=False, pool_size=None,
-            top_k=None, batchwise_prompt=False, prompt_key_init='uniform', head_type='token', use_prompt_mask=False,
-            use_g_prompt=False, g_prompt_length=None, g_prompt_layer_idx=None, use_prefix_tune_for_g_prompt=False,
-            use_e_prompt=False, e_prompt_layer_idx=None, use_prefix_tune_for_e_prompt=False, same_key_value=False, args=None, **kwargs):
+            top_k=None, batchwise_prompt=False, prompt_key_init='uniform', head_type='token', use_prompt_mask=False, use_g_prompt=False,
+            g_prompt_length=None, g_prompt_layer_idx=None, use_prefix_tune_for_g_prompt=False, use_e_prompt=False, e_prompt_layer_idx=None,
+            use_prefix_tune_for_e_prompt=False, same_key_value=False, args=None, **kwargs):
 
         if not (use_g_prompt or use_e_prompt):
             attn_layer = LoRAAttention
@@ -34,6 +34,7 @@ class VisionTransformer(MammothVP):
         super().__init__(args=args, attn_layer=attn_layer, **kwargs)
 
         self.prompt_pool = prompt_pool
+        self.use_permute_fix = args.use_permute_fix if hasattr(args, 'use_permute_fix') else False
         self.head_type = head_type
         self.use_prompt_mask = use_prompt_mask
         self.use_g_prompt = use_g_prompt
@@ -84,7 +85,7 @@ class VisionTransformer(MammothVP):
             self.e_prompt = EPrompt(length=prompt_length, embed_dim=self.embed_dim, embedding_key=embedding_key, prompt_init=prompt_init,
                                     prompt_pool=prompt_pool, prompt_key=prompt_key, pool_size=pool_size, top_k=top_k, batchwise_prompt=batchwise_prompt,
                                     prompt_key_init=prompt_key_init, num_layers=num_e_prompt, use_prefix_tune_for_e_prompt=use_prefix_tune_for_e_prompt,
-                                    num_heads=self.num_heads, same_key_value=same_key_value)
+                                    num_heads=self.num_heads, same_key_value=same_key_value, use_permute_fix=self.use_permute_fix)
 
         self.total_prompt_len = 0
         if self.prompt_pool:
@@ -259,5 +260,5 @@ def vit_base_patch16_224_dualprompt(pretrained=False, **kwargs):
     ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
     """
     model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, **kwargs)
-    model = create_vision_transformer('vit_base_patch16_224', base_class=VisionTransformer, filter_fn=checkpoint_filter_fn, pretrained=pretrained, **model_kwargs)
+    model = create_vision_transformer('vit_base_patch16_224_in21k_fn_in1k_old', base_class=VisionTransformer, filter_fn=checkpoint_filter_fn, pretrained=pretrained, **model_kwargs)
     return model

@@ -60,6 +60,7 @@ from timm.layers import PatchEmbed, Mlp as TimmMlp, DropPath, trunc_normal_, lec
     resample_abs_pos_embed
 from timm.models._builder import build_model_with_cfg
 from timm.models._manipulate import named_apply
+from timm.models.vision_transformer import _load_weights
 
 from backbone.utils.layers import IncrementalClassifier
 from backbone import MammothBackbone, register_backbone
@@ -244,6 +245,8 @@ class VisionTransformer(MammothBackbone):
         super().__init__()
         assert global_pool in ('', 'avg', 'token')
         assert class_token or global_pool != 'token'
+
+        self.attn_pool = None
         use_fc_norm = global_pool == 'avg' if fc_norm is None else fc_norm
         norm_layer = norm_layer or partial(nn.LayerNorm, eps=1e-6)
         self.act_layer = act_layer or nn.GELU
@@ -280,8 +283,8 @@ class VisionTransformer(MammothBackbone):
         num_patches = self.patch_embed.num_patches
 
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim)) if class_token else None
-        embed_len = num_patches if no_embed_class else num_patches + self.num_prefix_tokens
-        self.pos_embed = nn.Parameter(torch.randn(1, embed_len, embed_dim) * .02)
+        self.embed_len = num_patches if no_embed_class else num_patches + self.num_prefix_tokens
+        self.pos_embed = nn.Parameter(torch.randn(1, self.embed_len, embed_dim) * .02)
         self.pos_drop = nn.Dropout(p=drop_rate)
         self.norm_pre = norm_layer(embed_dim) if pre_norm else nn.Identity()
 
@@ -452,6 +455,10 @@ class VisionTransformer(MammothBackbone):
             if not discard_classifier or not 'head' in kk:
                 grads.append(pp.grad.view(-1))
         return torch.cat(grads)
+
+    @torch.jit.ignore()
+    def load_pretrained(self, checkpoint_path: str, prefix: str = '') -> None:
+        _load_weights(self, checkpoint_path, prefix)
 
 
 def init_weights_vit_timm(module: nn.Module, name: str = ''):
@@ -639,8 +646,9 @@ def create_vision_transformer(variant, base_class=VisionTransformer, pretrained=
 
     if variant == 'vit_base_patch16_224_in21k_fn_in1k_old':
         from timm.models import resolve_pretrained_cfg
+        from backbone.utils.vit_default_cfg import default_cfgs
 
-        pretrained_cfg = resolve_pretrained_cfg(variant, pretrained_cfg=kwargs.pop('pretrained_cfg', None))
+        pretrained_cfg = resolve_pretrained_cfg(variant, pretrained_cfg=default_cfgs[variant].default)
         pretrained_cfg.custom_load = True
 
         return build_model_with_cfg(

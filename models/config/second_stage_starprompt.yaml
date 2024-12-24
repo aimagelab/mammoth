@@ -1,0 +1,13 @@
+seq-eurosat-rgb:
+  batch_size: 32
+  enable_data_aug_query: 1
+  keys_ckpt_path: coop_keys/mammoth_test_keys.pt
+  lambda_ortho_second_stage: 5.0
+  learning_rate_gr: 0.1
+  lr: 0.001
+  model: second_stage_starprompt
+  num_monte_carlo_gr: 2
+  optimizer: adam
+  permute_classes: 1
+  seed: 1997
+  virtual_bs_n: 1

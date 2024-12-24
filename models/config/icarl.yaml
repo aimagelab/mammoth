@@ -1,0 +1,7 @@
+seq-cifar100:
+  dataset_config: icarl
+  optim_nesterov: True
+  compute_theoretical_best: True
+  use_original_icarl_transform: True
+  2000:
+    lr: 2

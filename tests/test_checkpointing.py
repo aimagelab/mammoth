@@ -2,7 +2,7 @@ import os
 import sys
 import uuid
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from utils.main import main
+from main import main
 import pytest
 
 

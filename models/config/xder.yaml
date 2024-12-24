@@ -1,0 +1,10 @@
+seq-cifar100:
+  dataset_config: xder
+  500:
+    alpha: 0.3
+    beta: 0.8
+    dp_weight: 3000
+    lr: 0.03
+    model: xder
+    align_bn: 1
+    simclr_num_aug: 4

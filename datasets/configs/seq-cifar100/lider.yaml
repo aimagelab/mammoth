@@ -1,0 +1,22 @@
+lr_scheduler: multisteplr
+batch_size: 64
+lr_milestones: [35, 45]
+sched_multistep_lr_gamma: 0.1
+n_epochs: 50
+MEAN: [0.5071, 0.4867, 0.4408]
+STD: [0.2675, 0.2565, 0.2761]
+drop_last: 1
+TRANSFORM:
+  - RandomCrop:
+      size: 32
+      padding: 4
+  - RandomHorizontalFlip
+  - ToTensor
+  - Normalize:
+      mean: [0.5071, 0.4867, 0.4408]
+      std: [0.2675, 0.2565, 0.2761]
+TEST_TRANSFORM:
+  - ToTensor
+  - Normalize:
+      mean: [0.5071, 0.4867, 0.4408]
+      std: [0.2675, 0.2565, 0.2761]

@@ -46,17 +46,14 @@ class ErACELider(LiderOptimizer):
         if self.current_task > 0:
             logits = logits.masked_fill(mask == 0, torch.finfo(logits.dtype).min)
 
-        loss = self.loss(logits, labels)
-        tot_loss = loss.item()
-        loss.backward()
+        loss: torch.Tensor = self.loss(logits, labels)
 
         if self.current_task > 0:
             # sample from buffer
             buf_inputs, buf_labels = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, device=self.device)
             loss_re = self.loss(self.net(buf_inputs), buf_labels)
-            tot_loss += loss_re.item()
-            loss_re.backward()
+            loss += loss_re
 
         if not self.buffer.is_empty():
             if self.args.alpha_lip_lambda > 0:
@@ -65,9 +62,8 @@ class ErACELider(LiderOptimizer):
 
                 lip_inputs = [buf_inputs] + buf_output_features
 
-                loss_lip_minimize = self.args.alpha_lip_lambda * self.minimization_lip_loss(lip_inputs)
-                tot_loss += loss_lip_minimize.item()
-                loss_lip_minimize.backward()
+                loss_lip_minimize = self.minimization_lip_loss(lip_inputs)
+                loss += self.args.alpha_lip_lambda * loss_lip_minimize
 
             if self.args.beta_lip_lambda > 0:
                 buf_inputs, _ = self.buffer.get_data(self.args.minibatch_size, transform=self.transform, device=self.device)
@@ -75,13 +71,13 @@ class ErACELider(LiderOptimizer):
 
                 lip_inputs = [buf_inputs] + buf_output_features
 
-                loss_lip_dyn_budget = self.args.beta_lip_lambda * self.dynamic_budget_lip_loss(lip_inputs)
-                tot_loss += loss_lip_dyn_budget.item()
-                loss_lip_dyn_budget.backward()
+                loss_lip_dyn_budget = self.dynamic_budget_lip_loss(lip_inputs)
+                loss += self.args.beta_lip_lambda * loss_lip_dyn_budget
 
+        loss.backward()
         self.opt.step()
 
         self.buffer.add_data(examples=not_aug_inputs,
                              labels=labels)
 
-        return tot_loss
+        return loss.item()

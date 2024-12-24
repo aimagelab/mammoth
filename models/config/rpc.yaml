@@ -1,0 +1,7 @@
+seq-cifar10:
+  100:
+    batch_size: 128
+    lr: 0.0001
+    model: rpc
+    n_epochs: 5
+    optimizer: adam
