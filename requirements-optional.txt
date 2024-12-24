@@ -10,5 +10,7 @@ timm==0.9.8
 clip @ git+https://github.com/openai/CLIP.git
 scikit-learn
 decorator
-bitsandbytes
 accelerate
+transformers
+-i https://pypi.org/simple
+bitsandbytes
