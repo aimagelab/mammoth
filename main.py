@@ -97,7 +97,7 @@ def check_args(args, dataset=None):
 
         # check if dataset is single-label multi-class (i.e, the `get_loss` returns the cross-entropy)
         if 'cross_entropy' in str(dataset.get_loss()) or 'CrossEntropy' in str(dataset.get_loss()):
-            if args.label_noise != 1:
+            if args.noise_rate != 1:
                 logging.warning('Label noise is not available with multi-label datasets. If this is not multi-label, ignore this warning.')
 
 
@@ -218,7 +218,8 @@ def parse_args():
             if action.nargs is None or action.nargs == 0:
                 action.default = action.type(action.default)
             else:
-                action.default = [action.type(v) for v in action.default]
+                if not isinstance(action.default, (list, tuple)) or (action.type is not list and action.type is not tuple):
+                    action.default = [action.type(v) for v in action.default]
 
     # 5) parse the arguments
     if args.load_best_args:

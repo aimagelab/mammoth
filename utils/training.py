@@ -80,7 +80,7 @@ def train_single_epoch(model: ContinualModel,
         the number of iterations performed in the current epoch
     """
     train_iter = iter(train_loader)
-    epoch_len = len(train_loader) if not isinstance(train_loader, GCLDataset) else None
+    epoch_len = len(train_loader) if hasattr(train_loader, "__len__") else None
 
     i = 0
     previous_time = time()
@@ -204,7 +204,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 # try to compute accuracy at the beginning of the task
                 try:
                     logging.info("Evaluating model before task (for Forward Transfer metric)...")
-                    random_res_class, random_res_task = dataset.evaluate(model, dataset, last=True)
+                    random_res_class, random_res_task = dataset.evaluate(model, dataset, last=True)  # the ugliness of this line is for backward compatibility
                     random_results_class.append(random_res_class)
                     random_results_task.append(random_res_task)
                 except Exception as e:
@@ -230,7 +230,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             if not args.inference_only and args.n_epochs > 0:
                 if t and args.enable_other_metrics:
-                    accs = dataset.evaluate(model, eval_dataset, last=True)
+                    accs = eval_dataset.evaluate(model, eval_dataset, last=True)
                     results[t - 1] = results[t - 1] + accs[0]
                     if dataset.SETTING == 'class-il':
                         results_mask_classes[t - 1] = results_mask_classes[t - 1] + accs[1]
@@ -269,7 +269,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     elif args.fitting_mode == 'iters' and model.task_iteration >= model.args.n_iters:
                         break
                     elif args.fitting_mode == 'early_stopping' and epoch % args.early_stopping_freq == 0 and epoch > 0:
-                        epoch_accs, _, epoch_loss = dataset.evaluate(model, eval_dataset, return_loss=True, last=True)
+                        epoch_accs, _, epoch_loss = eval_dataset.evaluate(model, eval_dataset, return_loss=True, last=True)
 
                         if args.early_stopping_metric == 'accuracy':
                             ea_metric = np.mean(epoch_accs)  # Higher accuracy is better
@@ -295,15 +295,15 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                             cur_stopping_patience = args.early_stopping_patience
 
                     if args.eval_epochs is not None and (epoch > 0 or args.eval_epochs) and epoch % args.eval_epochs == 0 and epoch < model.args.n_epochs:
-                        epoch_accs = dataset.evaluate(model, eval_dataset)
+                        epoch_accs = eval_dataset.evaluate(model, eval_dataset)
 
-                        dataset.log(args, logger, epoch_accs, t, dataset.SETTING, epoch=epoch)
+                        eval_dataset.log(args, logger, epoch_accs, t, dataset.SETTING, epoch=epoch)
 
                 train_pbar.close()
 
             model.meta_end_task(dataset)
 
-            accs = dataset.evaluate(model, eval_dataset)
+            accs = eval_dataset.evaluate(model, eval_dataset)
 
             if args.eval_future and t < dataset.N_TASKS - 1:
                 transf_accs = accs[0][t + 1:], accs[1][t + 1:]
@@ -311,7 +311,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 results_transf.append(transf_accs[0])
                 results_mask_classes_transf.append(transf_accs[1])
 
-            logged_accs = dataset.log(args, logger, accs, t, dataset.SETTING)
+            logged_accs = eval_dataset.log(args, logger, accs, t, dataset.SETTING)
 
             if dataset.SETTING != 'biased-class-il':
                 results.append(accs[0])
@@ -324,7 +324,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 avg_transf = np.mean([np.mean(task_) for task_ in results_transf])
                 print(f"Transfer Metrics  -  AVG Transfer {avg_transf:.2f}")
                 if t < dataset.N_TASKS - 1:
-                    dataset.log(args, logger, transf_accs, t, dataset.SETTING, future=True)
+                    eval_dataset.log(args, logger, transf_accs, t, dataset.SETTING, future=True)
 
             if args.savecheck:
                 save_mammoth_checkpoint(t, end_task, args,
@@ -343,9 +343,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             final_dataset = get_dataset(args)
             for _ in range(final_dataset.N_TASKS):
                 final_dataset.get_data_loaders()
-            accs = dataset.evaluate(model, final_dataset)
+            accs = final_dataset.evaluate(model, final_dataset)
 
-            dataset.log(args, logger, accs, 'final', final_dataset.SETTING, prefix="FINAL")
+            final_dataset.log(args, logger, accs, 'final', final_dataset.SETTING, prefix="FINAL")
 
         if args.enable_other_metrics:
             bwt, bwt_mask_class = logger.add_bwt(results, results_mask_classes)

@@ -107,8 +107,7 @@ class BiCV2(ContinualModel):
         if self.current_task > 0:
             self.net.eval()
 
-            from utils.training import evaluate
-            print("EVAL PRE", evaluate(self, dataset))
+            print("EVAL PRE", dataset.evaluate(self, dataset))
 
             self.evaluate_bias('pre')
 

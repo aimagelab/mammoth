@@ -21,7 +21,7 @@ class ICarlLider(LiderOptimizer):
         add_rehearsal_args(parser)
         add_lipschitz_args(parser)
 
-        parser.add_argument('--wd_reg', type=float, required=True,
+        parser.add_argument('--wd_reg', type=float, default=0.00001,
                             help='L2 regularization applied to the parameters.')
         return parser
 

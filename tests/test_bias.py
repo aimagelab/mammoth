@@ -21,7 +21,7 @@ def test_lws(split_id):
                 '--batch_size',
                 '2',
                 '--buffer_size',
-                '20'
+                '20',
                 '--non_verbose',
                 '1',
                 '--num_workers',

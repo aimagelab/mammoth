@@ -35,7 +35,7 @@ Mammoth includes a few tests to ensure that the code is working as expected for 
 
     pytest
 
-The tests are quite long, as they evaluate most of the functionality of Mammoth. The estimated runtime is around 1 hour and a half on a RTX 4080 GPU.
+The tests are quite long, as they evaluate most of the functionality of Mammoth. The estimated runtime is about 2 hours.
 
 .. important::
 

@@ -108,6 +108,10 @@ def get_device(avail_devices: str = None) -> torch.device:
             avail_devices = [int(d) for d in avail_devices.split(',')]
         else:
             avail_devices = list(range(torch.cuda.device_count())) if torch.cuda.is_available() else []
+        visible_device = os.environ.get('CUDA_VISIBLE_DEVICES', None)
+        if visible_device is not None:
+            avail_devices = [int(d) for d in visible_device.split(',') if d != '' and int(d) in avail_devices]
+
         get_device.device = _get_device(avail_devices=avail_devices)
         logging.info(f'Using device {get_device.device}')
 
