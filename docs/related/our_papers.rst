@@ -2,11 +2,34 @@ Our papers included in Mammoth
 ==============================
 
 
+- `Towards Unbiased Continual Learning: Avoiding Forgetting in the Presence of Spurious Correlations <https://iris.unimore.it/handle/11380/1362535>`_ (**WACV 2025**)
+
+  .. code-block:: bibtex
+
+      @inproceedings{capitani2025towards,
+        title={Towards Unbiased Continual Learning: Avoiding Forgetting in the Presence of Spurious Correlations},
+        author={Capitani, Giacomo and Bonicelli, Lorenzo and Porrello, Angelo and Bolelli, Federico and Calderara, Simone and Ficarra, Elisa and others},
+        booktitle={Proceedings of IEEE/CVF Winter Conference on Applications of Computer Vision 2025},
+        year={2025}
+      }
+    
+
+- `May the Forgetting Be with You: Alternate Replay for Learning with Noisy Labels <https://arxiv.org/abs/2408.14284>`_ (**BMVC 2024**)
+
+  .. code-block:: bibtex
+
+     @inproceedings{millunzi2024may,
+       title={CLIP with Generative Latent Replay: a Strong Baseline for Incremental Learning},
+       author={Millunzi, Monica and Bonicelli, Lorenzo and Porrello, Angelo and Credi, Jacopo and Kolm, Petter and Calderara, Simone},
+       booktitle={35th British Machine Vision Conference},
+       year={2024}
+     }
+
 - `CLIP with Generative Latent Replay: a Strong Baseline for Incremental Learning <https://arxiv.org/abs/2407.15793>`_ (**BMVC 2024**)
 
   .. code-block:: bibtex
 
-     @inproceedings{heng2022enhancing,
+     @inproceedings{frascaroli2024clip,
        title={CLIP with Generative Latent Replay: a Strong Baseline for Incremental Learning},
        author={Frascaroli, Emanuele and Panariello, Aniello and Buzzega, Pietro and Bonicelli, Lorenzo and Porrello, Angelo and Calderara, Simone},
        booktitle={35th British Machine Vision Conference},

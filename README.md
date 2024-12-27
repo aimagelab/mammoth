@@ -10,12 +10,6 @@
 
 # Mammoth - An Extendible (General) Continual Learning Framework for Pytorch
 
-Official repository of:
-- [Class-Incremental Continual Learning into the eXtended DER-verse](https://arxiv.org/abs/2201.00766)
-- [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html)
-- [Semantic Residual Prompts for Continual Learning](https://arxiv.org/abs/2403.06870)
-- [CLIP with Generative Latent Replay: a Strong Baseline for Incremental Learning](https://arxiv.org/abs/2407.15793)
-
 Mammoth is a framework for continual learning research. With **more than 50 methods and 20 datasets**, it includes the most complete list competitors and benchmarks for research purposes.
 
 The core idea of Mammoth is that it is designed to be modular, easy to extend, and - most importantly - _easy to debug_.
@@ -37,7 +31,7 @@ With Mammoth, nothing is set in stone. You can easily add new models, datasets, 
 ## Setup
 
 - Install with `pip install -r requirements.txt`. NOTE: Pytorch version >= 2.1.0 is required for scaled_dot_product_attention (see: https://github.com/Lightning-AI/litgpt/issues/763). If you cannot support this requirement, uncomment the lines 136-139 under `scaled_dot_product_attention` in `backbone/vit.py`.
-- Use `./utils/main.py` to run experiments.
+- Use `main.py` or `./utils/main.py` to run experiments.
 - New models can be added to the `models/` folder.
 - New datasets can be added to the `datasets/` folder.
 
@@ -167,9 +161,7 @@ We encourage the community to report any issues with the reproducibility of the 
     
   No! It means that we have not yet found the appropriate dataset and hyperparameters to fill the file with the results of that model. We are working hard to fill the file with the results of all models in Mammoth. If you need the results of a specific model, please open an issue in the GitHub repository or contact us directly.
 
-## Awesome Papers using Mammoth
-
-### Contributing
+## Contributing
 
 Pull requests welcome!
 
@@ -179,7 +171,7 @@ Please use `autopep8` with parameters:
 - `--max-line-length=200`
 - `--ignore=E402`
 
-## Previous versions
+### Previous versions
 
 If you're interested in a version of this repo that only includes the original code for [Dark Experience for General Continual Learning: a Strong, Simple Baseline](https://papers.nips.cc/paper/2020/hash/b704ea2c39778f07c617f6b7ce480e9e-Abstract.html) or [Class-Incremental Continual Learning into the eXtended DER-verse](https://arxiv.org/abs/2201.00766>), please use the following tags:
 
