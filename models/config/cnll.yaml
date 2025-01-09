@@ -1,0 +1,6 @@
+seq-cifar10:
+  dataset_config: online
+  noise: sym
+  noise_rate: 0.2
+  500:
+    unlimited_buffer: 1

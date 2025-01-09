@@ -394,6 +394,10 @@ class ContinualModel(nn.Module):
         observe_args = inspect.signature(self.observe).parameters.keys()
         if 'kwargs' not in observe_args:
             kwargs = {k: v for k, v in kwargs.items() if k in observe_args}
+        missing_args = [arg for arg in observe_args if arg not in kwargs and arg not in ['inputs', 'labels', 'not_aug_inputs']]
+        assert len(missing_args) == 0, f"Some arguments required by observe are missing: {missing_args}. "
+        "Suggestion: if the missing argument is `true_labels`, you are probably missing "
+        "the `--noise_rate` and `--noise_type` arguments."
 
         if 'wandb' in sys.modules and not self.args.nowand:
             pl = persistent_locals(self.observe)

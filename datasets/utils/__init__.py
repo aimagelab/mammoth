@@ -63,6 +63,9 @@ def set_default_from_args(arg_name: str):
                 # if no arguments are passed, return the function
                 return func(None)
 
+            if len(inspect.signature(func).parameters) == 0:  # functions may have no 'self' parameter
+                return func()
+
             return func(*args)
         return wrapper
     return decorator_set_default_from_args

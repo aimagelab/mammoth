@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+from argparse import Namespace
 from copy import deepcopy
 from typing import List, Tuple, TYPE_CHECKING
 
@@ -290,6 +291,8 @@ class Buffer:
         Note:
             If during the `get_data` the transform is PIL, data will be moved to cpu and then back to the device. This is why the device is set to cpu by default.
         """
+        self._dl_transform = None
+        self._it_index = 0
         self._buffer_size = buffer_size
         self.device = device
         self.num_seen_examples = 0
@@ -396,6 +399,9 @@ class Buffer:
         """
         return [attr_str for attr_str in self.attributes if hasattr(self, attr_str)]
 
+    def is_full(self):
+        return self.num_seen_examples >= self.buffer_size
+
     def add_data(self, examples, labels=None, logits=None, task_labels=None, attention_maps=None, true_labels=None, sample_selection_scores=None):
         """
         Adds the data to the memory buffer according to the reservoir strategy.
@@ -441,7 +447,7 @@ class Buffer:
                     self.true_labels[index] = true_labels[i].to(self.device)
 
     def get_data(self, size: int, transform: nn.Module = None, return_index=False, device=None,
-                 mask_task_out=None, cpt=None, return_not_aug=False, not_aug_transform=None) -> Tuple:
+                 mask_task_out=None, cpt=None, return_not_aug=False, not_aug_transform=None, force_indexes=None) -> Tuple:
         """
         Random samples a batch of size items.
 
@@ -453,6 +459,7 @@ class Buffer:
             cpt: the number of classes per task (required if mask_task is not None and task_labels are not present)
             return_not_aug: if True, also returns the not augmented items
             not_aug_transform: the transformation to be applied to the not augmented items (if `return_not_aug` is True)
+            forced_indexes: if not None, forces the selection of the samples with the given indexes
 
         Returns:
             a tuple containing the requested items. If return_index is True, the tuple contains the indexes as first element.
@@ -470,7 +477,10 @@ class Buffer:
         if size > min(num_avail_samples, self.examples.shape[0]):
             size = min(num_avail_samples, self.examples.shape[0])
 
-        choice = np.random.choice(num_avail_samples, size=size, replace=False)
+        if force_indexes is not None:
+            choice = force_indexes if isinstance(force_indexes, np.ndarray) else np.array(force_indexes)
+        else:
+            choice = np.random.choice(num_avail_samples, size=size, replace=False)
         if transform is None:
             def transform(x): return x
 
@@ -555,6 +565,60 @@ class Buffer:
             if hasattr(self, attr_str):
                 delattr(self, attr_str)
         self.num_seen_examples = 0
+
+    def __iter__(self):
+        """
+        Initializes and returns a iterator object for the buffer.
+        """
+        self._it_index = 0
+
+        return self
+
+    def __next__(self):
+        """
+        Returns the next item in the buffer.
+        """
+        if self._it_index >= self.__len__():
+            raise StopIteration
+        return self.__getitem__(self._it_index, transform=self._dl_transform)
+
+    def get_dataloader(self, args: Namespace, batch_size: int, shuffle=False, drop_last=False, transform=None, sampler=None) -> torch.utils.data.DataLoader:
+        """
+        Return a DataLoader for the buffer.
+
+        Args:
+            args: the arguments from the CLI
+            batch_size: the batch size
+            shuffle: if True, shuffle the data
+            drop_last: if True, drop the last incomplete batch
+            transform: the transformation to be applied (data augmentation)
+            sampler: the sampler to be used
+
+        Returns:
+            DataLoader
+        """
+        self._dl_transform = transform
+        self._it_index = 0
+
+        return create_seeded_dataloader(args, self, batch_size=batch_size,
+                                        shuffle=shuffle, drop_last=drop_last,
+                                        sampler=sampler, num_workers=0,
+                                        non_verbose=True)
+
+    def __getitem__(self, index, transform=None):
+        """
+        Returns the item in the buffer at the given index.
+
+        Args:
+            index: the index of the item
+            transform: (optional) a transformation to be applied
+
+        Returns:
+            a tuple containing the requested items. The returned items depend on the attributes stored in the buffer from previous calls to `add_data`.
+        """
+        data = self.get_data(size=1, transform=transform if self._dl_transform is None or transform is not None else self._dl_transform, force_indexes=[index])
+
+        return [d.squeeze(0) for d in data]
 
 
 @torch.no_grad()
