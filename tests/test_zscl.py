@@ -9,7 +9,7 @@ def test_zscl():
                 '--model',
                 'zscl',
                 '--dataset',
-                'seq-eurosat-rgb',
+                'seq-cifar100',
                 '--non_verbose',
                 '1',
                 '--num_workers',

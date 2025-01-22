@@ -41,7 +41,8 @@ class ZSCL(FutureModel):
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
         assert args.scheduler_mode == 'iter', "ZSCL only supports 'iter' scheduler mode."
-        assert args.lr_scheduler is None, "ZSCL does not require a learning rate scheduler and will use a custom one."
+        if args.lr_scheduler is not None:
+            logging.warning("ZSCL does not require a learning rate scheduler and will use a custom one.")
 
         if args.optimizer != 'adamw':
             logging.warning("ZSCL should use AdamW optimizer.")
