@@ -1,35 +1,28 @@
-# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
-# All rights reserved.
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
 from copy import deepcopy
 
 import torch
 import torch.nn.functional as F
-from datasets import get_dataset
 
-from models.utils.continual_model import ContinualModel
 from utils.args import add_rehearsal_args, ArgumentParser
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer, fill_buffer, icarl_replay
+from models.cscct_utils.cscct_model import CscCtModel
 
 
-class ICarl(ContinualModel):
-    """Continual Learning via iCaRL."""
-    NAME = 'icarl'
+class ICarlCscCt(CscCtModel):
+    """Continual Learning via iCaRL. Treated with CSCCT!"""
+    NAME = 'icarl_cscct'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
     def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
+        CscCtModel.add_cscct_args(parser)
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
         super().__init__(backbone, loss, args, transform, dataset=dataset)
 
-        # Instantiate buffers
-        self.buffer = Buffer(self.args.buffer_size)
         self.eye = torch.eye(self.num_classes).to(self.device)
 
         self.class_means = None
@@ -62,6 +55,15 @@ class ICarl(ContinualModel):
                 logits = torch.sigmoid(self.old_net(inputs))
         self.opt.zero_grad()
         loss = self.get_loss(inputs, labels, self.current_task, logits)
+
+        if self.current_task > 0 and self.args.csc_weight > 0 and self.args.ct_weight > 0:
+            # concatenate stream with buf
+            buf_inputs, buf_labels = self.buffer.get_data(self.args.minibatch_size, transform=self.transform)
+            full_inputs = torch.cat([inputs, buf_inputs], dim=0)
+            full_targets = torch.cat([labels, buf_labels], dim=0)
+            cscct_loss = self.get_cscct_loss(full_inputs, full_targets)
+            loss += cscct_loss
+
         loss.backward()
 
         self.opt.step()

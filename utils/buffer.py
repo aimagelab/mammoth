@@ -128,6 +128,45 @@ class ReservoirSampling(BaseSampleSelection):
             return -1
 
 
+class BalancoirSampling(BaseSampleSelection):
+    def __init__(self, buffer_size: int, device):
+        super().__init__(buffer_size, device)
+        self.unique_map = np.empty((0,), dtype=np.int32)
+
+    def update_unique_map(self, label_in, label_out=None):
+        while len(self.unique_map) <= label_in:
+            self.unique_map = np.concatenate((self.unique_map, np.zeros((len(self.unique_map) * 2 + 1), dtype=np.int32)), axis=0)
+        self.unique_map[label_in] += 1
+        if label_out is not None:
+            self.unique_map[label_out] -= 1
+
+    def __call__(self, num_seen_examples: int, labels: torch.Tensor, proposed_class: int) -> int:
+        """
+        Balancoir sampling algorithm.
+
+        Args:
+            num_seen_examples: the number of seen examples
+            buffer_size: the maximum buffer size
+            labels: the set of buffer labels
+            proposed_class: the class of the current example
+
+        Returns:
+            the target index if the current image is sampled, else -1
+        """
+        if num_seen_examples < self.buffer_size:
+            return num_seen_examples
+
+        rand = np.random.randint(0, num_seen_examples + 1)
+        if rand < self.buffer_size or len(self.unique_map) <= proposed_class or self.unique_map[proposed_class] < np.median(
+                self.unique_map[self.unique_map > 0]):
+            target_class = np.argmax(self.unique_map)
+            # e = rand % self.unique_map.max()
+            idx = np.arange(self.buffer_size)[labels.cpu() == target_class][rand % self.unique_map.max()]
+            return idx
+        else:
+            return -1
+
+
 class LARSSampling(BaseSampleSelection):
     def __init__(self, buffer_size: int, device):
         super().__init__(buffer_size, device)
@@ -282,7 +321,7 @@ class Buffer:
         Args:
             buffer_size (int): The maximum size of the buffer.
             device (str, optional): The device to store the buffer on. Defaults to "cpu".
-            sample_selection_strategy: The sample selection strategy. Defaults to 'reservoir'. Options: 'reservoir', 'lars', 'labrs', 'abs'.
+            sample_selection_strategy: The sample selection strategy. Defaults to 'reservoir'. Options: 'reservoir', 'lars', 'labrs', 'abs', 'balancoir'.
 
         Note:
             If during the `get_data` the transform is PIL, data will be moved to cpu and then back to the device. This is why the device is set to cpu by default.
@@ -294,7 +333,7 @@ class Buffer:
         self.attention_maps = [None] * buffer_size
         self.sample_selection_strategy = sample_selection_strategy
 
-        assert sample_selection_strategy.lower() in ['reservoir', 'lars', 'labrs', 'abs'], f"Invalid sample selection strategy: {sample_selection_strategy}"
+        assert sample_selection_strategy.lower() in ['reservoir', 'lars', 'labrs', 'abs', 'balancoir'], f"Invalid sample selection strategy: {sample_selection_strategy}"
 
         if sample_selection_strategy.lower() == 'abs':
             assert 'dataset' in kwargs, "The dataset is required for ABS sample selection"
@@ -303,6 +342,8 @@ class Buffer:
             self.sample_selection_fn = LARSSampling(buffer_size, device)
         elif sample_selection_strategy.lower() == 'labrs':
             self.sample_selection_fn = LossAwareBalancedSampling(buffer_size, device)
+        elif sample_selection_strategy.lower() == 'balancoir':
+            self.sample_selection_fn = BalancoirSampling(buffer_size, device)
         else:
             self.sample_selection_fn = ReservoirSampling(buffer_size, device)
 
@@ -378,10 +419,14 @@ class Buffer:
         for i in range(examples.shape[0]):
             if self.sample_selection_strategy == 'abs' or self.sample_selection_strategy == 'labrs':
                 index = self.sample_selection_fn(self.num_seen_examples, labels=self.labels)
+            elif self.sample_selection_strategy == 'balancoir':
+                index = self.sample_selection_fn(self.num_seen_examples, labels=self.labels, proposed_class=labels[i])
             else:
                 index = self.sample_selection_fn(self.num_seen_examples)
             self.num_seen_examples += 1
             if index >= 0:
+                if self.sample_selection_strategy == 'balancoir':
+                    self.sample_selection_fn.update_unique_map(labels[i], self.labels[index] if index < self.num_seen_examples else None)
                 self.examples[index] = examples[i].to(self.device)
                 if labels is not None:
                     self.labels[index] = labels[i].to(self.device)
@@ -450,6 +495,58 @@ class Buffer:
             return ret_tuple
         else:
             return (torch.tensor(choice).to(target_device), ) + ret_tuple
+
+    def get_balanced_data(self, size: int, transform=None, n_classes=-1) -> Tuple:
+        """
+        Random samples a batch of size items only from n_classes, balancing the samples per class.
+
+        Args:
+            size: the number of requested items
+            transform: the transformation to be applied (data augmentation)
+            n_classes: the number of classes to sample from
+
+        Returns:
+            a tuple containing the requested items.
+        """
+        if size > min(self.num_seen_examples, self.examples.shape[0]):
+            size = min(self.num_seen_examples, self.examples.shape[0])
+
+        tot_classes, class_counts = torch.unique(self.labels[:self.num_seen_examples], return_counts=True)
+        if n_classes == -1:
+            n_classes = len(tot_classes)
+
+        finished = False
+        selected = tot_classes
+        while not finished:
+            n_classes = min(n_classes, len(selected))
+            size_per_class = torch.full([n_classes], size // n_classes)
+            size_per_class[:size % n_classes] += 1
+            selected = tot_classes[class_counts >= size_per_class[0]]
+            if n_classes <= len(selected):
+                finished = True
+            if len(selected) == 0:
+                print('WARNING: no class has enough examples')
+                return self.get_data(size, transform=transform)
+
+        selected = selected[torch.randperm(len(selected))[:n_classes]]
+
+        choice = []
+        for i, id_class in enumerate(selected):
+            choice += np.random.choice(torch.where(self.labels[:self.num_seen_examples] == id_class)[0].cpu(),
+                                       size=size_per_class[i].item(),
+                                       replace=False).tolist()
+        choice = np.array(choice)
+
+        if transform is None:
+            def transform(x): return x
+        # ret_tuple = (torch.stack([transform(ee.cpu()) for ee in self.examples[choice]]).to(self.device),)
+        ret_tuple = (apply_transform(self.examples[choice], transform=transform).to(self.device),)
+        for attr_str in self.attributes[1:]:
+            if hasattr(self, attr_str):
+                attr = getattr(self, attr_str)
+                ret_tuple += (attr[choice],)
+
+        return ret_tuple
 
     def get_data_by_index(self, indexes, transform: nn.Module = None, device=None) -> Tuple:
         """

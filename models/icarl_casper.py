@@ -1,35 +1,28 @@
-# Copyright 2022-present, Lorenzo Bonicelli, Pietro Buzzega, Matteo Boschini, Angelo Porrello, Simone Calderara.
-# All rights reserved.
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-
 from copy import deepcopy
 
 import torch
 import torch.nn.functional as F
-from datasets import get_dataset
 
-from models.utils.continual_model import ContinualModel
-from utils.args import add_rehearsal_args, ArgumentParser
+from models.casper_utils.casper_model import CasperModel
+from utils.args import ArgumentParser, add_rehearsal_args
 from utils.batch_norm import bn_track_stats
 from utils.buffer import Buffer, fill_buffer, icarl_replay
 
 
-class ICarl(ContinualModel):
-    """Continual Learning via iCaRL."""
-    NAME = 'icarl'
+class ICarlCasper(CasperModel):
+    """Continual Learning via iCaRL. Treated with CaSpeR!"""
+    NAME = 'icarl_casper'
     COMPATIBILITY = ['class-il', 'task-il']
 
     @staticmethod
     def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
+        CasperModel.add_casper_args(parser)
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
         super().__init__(backbone, loss, args, transform, dataset=dataset)
 
-        # Instantiate buffers
-        self.buffer = Buffer(self.args.buffer_size)
         self.eye = torch.eye(self.num_classes).to(self.device)
 
         self.class_means = None
@@ -62,6 +55,11 @@ class ICarl(ContinualModel):
                 logits = torch.sigmoid(self.old_net(inputs))
         self.opt.zero_grad()
         loss = self.get_loss(inputs, labels, self.current_task, logits)
+
+        if self.current_task > 0 and self.args.casper_batch > 0 and self.args.rho > 0:
+            casper_loss = self.get_casper_loss()
+            loss += casper_loss * self.args.rho
+
         loss.backward()
 
         self.opt.step()
