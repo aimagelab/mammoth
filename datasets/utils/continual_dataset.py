@@ -32,14 +32,14 @@ class MammothDatasetWrapper(Dataset, object):
 
     is_init: bool = False
 
-    def __getattr__(self, name: str) -> torch.Any:
+    def __getattr__(self, name: str):
         if self.is_init and hasattr(self.dataset, name):
             return getattr(self.dataset, name)
         if name not in vars(self):
             raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
         return super().__getattr__(name)
 
-    def __setattr__(self, name: str, value: torch.Any) -> None:
+    def __setattr__(self, name: str, value) -> None:
         if self.is_init and hasattr(self.dataset, name):
             return setattr(self.dataset, name, value)
         return super().__setattr__(name, value)
@@ -266,7 +266,7 @@ class ContinualDataset(object):
         """
         raise NotImplementedError
 
-    def get_backbone() -> str:
+    def get_backbone(self) -> str:
         """Returns the name of the backbone to be used for the current dataset. This can be changes using the `--backbone` argument or by setting it in the `dataset_config`."""
         raise NotImplementedError
 
