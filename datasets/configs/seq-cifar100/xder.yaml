@@ -1,0 +1,5 @@
+lr_scheduler: multisteplr
+batch_size: 32
+lr_milestones: [35, 45]
+sched_multistep_lr_gamma: 0.2
+n_epochs: 50

@@ -39,7 +39,7 @@ def get_convnet(feature_extractor_type, pretrained=False):
             print("Please download the model from https://drive.google.com/file/d/1bshDu4jEKztZZvwpTVXSAuCsDoXwCkfy/view?usp=share_link")
             sys.exit(1)
 
-        ckpt = torch.load('mocov3-vit-base-300ep.pth', map_location='cpu')['model']  # from the original implementation
+        ckpt = torch.load('mocov3-vit-base-300ep.pth', map_location='cpu', weights_only=True)['model']  # from the original implementation
         state_dict = model.state_dict()
         state_dict.update(ckpt)
         model.load_state_dict(state_dict)

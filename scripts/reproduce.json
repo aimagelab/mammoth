@@ -1,260 +1,290 @@
 [
   {
     "model": "agem",
-    "cmd": "--dataset=seq-cifar10 --model=agem --buffer_size=500 --lr=0.03",
+    "setting": "class-il",
     "result": 19.94,
-    "setting": "class-il"
+    "notes": "reproduced not from main paper but from DER++. The main paper requires task descriptors",
+    "cmd": "--dataset=seq-cifar10 --model=agem --buffer_size=500 --lr=0.03"
   },
   {
     "model": "agem-r",
-    "cmd": "--dataset=seq-cifar10 --model=agem_r --buffer_size=500 --lr=0.03",
-    "result": 22.06,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 28.13,
+    "as_main_paper": false,
+    "notes": "reproduced not from main paper but from DER++. The main paper requires task descriptors",
+    "cmd": "--dataset=mnist-360 --model=agem_r --buffer_size=500 --lr=0.1 --minibatch_size 128 --batch_size 16"
   },
   {
     "model": "attriclip",
-    "cmd": "--lr=0.001 --optimizer=sgd --model=attriclip --dataset=seq-cifar100-224 --batch_size=16 --freeze_clip=1 --seed=1996",
-    "result": null,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 81.4,
+    "notes": "The original repo was taken down as it did not reproduce either. Our result is 78.88 instead of 81.4",
+    "cmd": "--model=attriclip --dataset=seq-cifar100-224 --model_config=best"
   },
   {
     "model": "bic",
-    "cmd": "--model=bic --dataset=seq-cifar10 --lr 0.03",
-    "result": 36.02,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 56.69,
+    "cmd": "--model=bic --dataset=seq-cifar100 --model_config=best --buffer_size=2000"
   },
   {
     "model": "ccic",
-    "cmd": "--dataset=seq-cifar10 --optimizer=adam --model=ccic --lr=0.0001 --mixmatch_alpha=0.75 --memory_penalty=0.7 --label_perc=0.25 --buffer_size=500 --knn_k=2",
+    "setting": "class-il",
     "result": 63.9,
-    "setting": "class-il"
+    "cmd": "--dataset=seq-cifar10 --optimizer=adam --model=ccic --lr=0.0001 --mixmatch_alpha=0.75 --memory_penalty=0.7 --label_perc=0.25 --buffer_size=500 --knn_k=2"
   },
   {
     "model": "cgil",
-    "cmd": "--dataset=seq-eurosat-rgb --model=cgil --clip_backbone=ViT-L/14 --lr=0.01 --g_models=vae --optim_alignment=adamw --learning_rate_alignment=0.03 --eval_future=1 --seed=1992 --combo_context=1 --gr_vae_n_iters=500 --num_epochs_alignment=150",
+    "setting": "class-il",
     "result": 96.17,
-    "setting": "class-il"
+    "cmd": "--dataset=seq-eurosat-rgb --model=cgil --clip_backbone=ViT-L/14 --lr=0.01 --g_models=vae --optim_alignment=adamw --learning_rate_alignment=0.03 --eval_future=1 --seed=1992 --combo_context=1 --gr_vae_n_iters=500 --num_epochs_alignment=150"
   },
   {
     "model": "clip",
-    "cmd": "--dataset=seq-eurosat-rgb --model=clip --clip_backbone=ViT-L/14",
-    "result": 55.0,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 59.9,
+    "cmd": "--dataset=seq-eurosat-rgb --model=clip --clip_backbone=ViT-L/14"
   },
   {
     "model": "coda_prompt",
-    "cmd": "--dataset=seq-cifar100-224 --model=coda_prompt --lr=1e-3 --batch_size=16 --virtual_bs_n=8",
+    "setting": "class-il",
     "result": 86.25,
-    "setting": "class-il"
+    "cmd": "--dataset=seq-cifar100-224 --model=coda_prompt --model_config best"
   },
   {
     "model": "dap",
-    "cmd": "--dataset seq-cropdisease --model dap --lr 0.01 --enable_test_time_majority_voting=1  --batch_size 32 --seed 42 --virtual_bs_n 4 --load_original_checkpoint=1",
-    "result": 98.18,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 97.88,
+    "cmd": "--model dap --dataset seq-cropdisease --model_config best"
   },
   {
     "model": "der",
-    "cmd": "--dataset=seq-cifar10 --model=der --buffer_size=500 --lr=0.03 --alpha=0.3",
-    "result": 70.15,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 36.60,
+    "cmd": "--dataset=seq-cifar100 --model=der --buffer_size=500 --model_config=best"
   },
   {
     "model": "derpp_lider",
-    "cmd": "--dataset=seq-cifar100 --model=derpp_lider --buffer_size=500 --lr=0.1 --alpha=0.3 --beta=0.3 --alpha_lip_lambda=0.3 --beta_lip_lambda=0.1",
+    "setting": "class-il",
     "result": 39.25,
-    "setting": "class-il"
+    "cmd": "--dataset=seq-cifar100 --model_config=best --model=derpp_lider --buffer_size=500"
   },
   {
     "model": "derpp",
-    "cmd": "--dataset=seq-cifar100 --model=derpp_lider --buffer_size=500 --lr=0.1 --alpha=0.1 --beta=0.5",
-    "result": 37.13,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 38.25,
+    "cmd": "--dataset=seq-cifar100 --model=derpp --buffer_size=500 --model_config=best"
   },
   {
     "model": "dualprompt",
-    "cmd": "--dataset=seq-cifar100-224 --model=dualprompt --lr=1e-3 --batch_size=16 --virtual_bs_n=8",
-    "result": 85.56,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 86.51,
+    "cmd": "--dataset=seq-cifar100-224 --model=dualprompt --model_config=best"
   },
   {
     "model": "er_ace_lider",
-    "cmd": "--dataset=seq-cifar100 --model=er_ace_lider --buffer_size=500 --lr=0.1 --alpha_lip_lambda=0.1 --beta_lip_lambda=0.3",
+    "setting": "class-il",
     "result": 38.43,
-    "setting": "class-il"
+    "cmd": "--dataset=seq-cifar100 --model=er_ace_lider --model_config=best --buffer_size=500"
   },
   {
     "model": "er_ace",
-    "cmd": "--dataset=seq-cifar100 --model=er_ace --buffer_size=500 --lr=0.03",
-    "result": 36.48,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 42.6,
+    "cmd": "--dataset=seq-cifar10 --model=er_ace --buffer_size=200 --model_config=best"
   },
   {
     "model": "er",
-    "cmd": "--dataset=seq-cifar10 --model=er --buffer_size=500 --lr=0.1",
+    "setting": "class-il",
     "result": 63.39,
-    "setting": "class-il"
+    "cmd": "--dataset=seq-cifar10 --model=er --buffer_size=z500 --lr=0.1"
   },
   {
     "model": "ewc_on",
-    "cmd": "--dataset=seq-cifar10 --model=ewc_on --n_epochs=50 --lr=0.1 --e_lambda=10 --gamma=1",
+    "setting": "class-il",
     "result": 20.11,
-    "setting": "class-il"
+    "cmd": "--dataset=seq-cifar10 --model=ewc_on --n_epochs=50 --lr=0.1 --e_lambda=10 --gamma=1"
   },
   {
     "model": "fdr",
-    "cmd": "--dataset=seq-cifar10 --model=fdr --buffer_size=500 --lr=0.03 --alpha=1.0",
+    "setting": "class-il",
     "result": 30.33,
-    "setting": "class-il"
+    "cmd": "--dataset=seq-cifar10 --model=fdr --buffer_size=500 --lr=0.03 --alpha=1.0"
   },
   {
     "model": "first_stage_starprompt",
-    "cmd": "--dataset=seq-eurosat-rgb --model=first_stage_starprompt --num_monte_carlo_gr=2 --gr_mog_n_iters=200 --num_epochs_gr=10 --learning_rate_gr=0.05 --seed=1997 --lr 0.002 --optimizer sgd",
-    "result": 90.82,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 90.12,
+    "cmd": "--dataset=seq-eurosat-rgb --model=first_stage_starprompt --model_config=best"
   },
   {
     "model": "gdumb_lider",
-    "cmd": "--optim_wd=1e-6 --dataset=seq-cifar100 --model=gdumb_lider --buffer=500 --lr=0 --alpha_lip_lambda=0.3 --beta_lip_lambda=0.01",
-    "result": 9.28,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 10.22,
+    "cmd": "--optim_wd=1e-6 --dataset=seq-cifar100 --model=gdumb_lider --buffer_size=500 --model_config=best"
   },
   {
     "model": "gdumb",
-    "cmd": "--optim_wd=5e-5 --dataset=seq-cifar100 --model=gdumb --buffer=500 --lr=0",
-    "result": 9.28,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 45.8,
+    "cmd": "--dataset=seq-cifar10 --model=gdumb --buffer_size=500 --model_config=best"
   },
   {
     "model": "gem",
-    "cmd": "--model=gem --lr=0.03 --buffer_size=500 --dataset=seq-cifar10",
+    "setting": "class-il",
     "result": 26.2,
-    "setting": "class-il"
+    "cmd": "--model=gem --lr=0.03 --buffer_size=500 --dataset=seq-cifar10"
   },
   {
     "model": "gss",
-    "cmd": "--dataset=seq-cifar10 --n_epochs=1 --model=gss --buffer_size=500 --lr=0.05 --gss_minibatch_size=10 --batch_size=10",
+    "setting": "class-il",
     "result": 33.56,
-    "setting": "class-il"
+    "cmd": "--dataset=seq-cifar10 --n_epochs=1 --model=gss --buffer_size=500 --lr=0.05 --gss_minibatch_size=10 --batch_size=10"
   },
   {
     "model": "hal",
-    "cmd": "--dataset=seq-cifar100 --model=hal --buffer_size=500 --lr=0.03 --hal_lambda=0.1 --beta=0.3 --gamma=0.1",
+    "setting": "class-il",
     "result": 47.34,
-    "setting": "class-il"
+    "cmd": "--dataset=seq-cifar100 --model=hal --buffer_size=500 --lr=0.03 --hal_lambda=0.1 --beta=0.3 --gamma=0.1"
   },
   {
     "model": "icarl_lider",
-    "cmd": "--model=icarl_lider --buffer_size=500 --lr=1 --optim_wd=1e-5 --alpha_lip_lambda=0.01 --beta_lip_lambda=0.001",
+    "setting": "class-il",
     "result": 47.02,
-    "setting": "class-il"
+    "cmd": "--model icarl_lider --dataset seq-cifar100 --model_config best --buffer_size 500"
   },
   {
     "model": "icarl",
-    "cmd": "--model=icarl --buffer_size=500 --lr=0.03 --optim_wd=1e-5",
-    "result": 44.04,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 49.66,
+    "cmd": "--dataset=seq-cifar100 --model=icarl --buffer_size=2000 --model_config=best",
+    "notes": "Compared against the original repo `https://github.com/srebuffi/iCaRL` while disabling random class order (for easier debugging)"
   },
   {
     "model": "joint_gcl",
-    "cmd": "--model=joint_gcl --dataset=mnist-360 --lr=0.1 --batch_size=4",
+    "setting": "general-continual",
     "result": 82.98,
-    "setting": "general-continual"
+    "cmd": "--model=joint_gcl --dataset=mnist-360 --lr=0.1 --batch_size=4"
   },
   {
     "model": "l2p",
-    "cmd": "--model=seq-eurosat-rgb --model=l2p --lr=0.001",
-    "result": 46.34,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 83.83,
+    "cmd": "--dataset=seq-cifar100-224 --model=l2p --model_config=best"
   },
   {
     "model": "lucir",
-    "cmd": "--model=lucir --dataset=seq-cifar10 --batch_size=128 --lr=0.1 --lr_scheduler=multisteplr --lr_milestones=80,120 --sched_multistep_lr_gamma=0.1 --n_epochs=160",
+    "setting": "class-il",
     "result": 50.0,
-    "setting": "class-il"
+    "cmd": "--model=lucir --dataset=seq-cifar100 --batch_size=128 --lr=0.1 --lr_scheduler=multisteplr --lr_milestones 80 120 --sched_multistep_lr_gamma=0.1 --n_epochs=160 --buffer_size=2000"
   },
   {
     "model": "lwf_mc",
-    "cmd": "--model=lwf_mc --dataset=seq-cifar100 --lr=0.03 --optim_wd=5e-4",
+    "setting": "class-il",
     "result": 16.22,
-    "setting": "class-il"
+    "cmd": "--model=lwf_mc --dataset=seq-cifar100 --lr=0.03 --optim_wd=5e-4"
   },
   {
     "model": "lwf",
-    "cmd": "--model=lwf --lr=0.03 --dataset=seq-cifar10",
+    "setting": "class-il",
     "result": 19.61,
-    "setting": "class-il"
+    "cmd": "--model=lwf --lr=0.03 --dataset=seq-cifar10"
   },
   {
     "model": "mer",
-    "cmd": "--dataset=rot-mnist --model=mer --lr=0.03 --beta=0.03 --gamma=1 --n_epochs 1 --buffer_size=5120 --minibatch_size 128 --batch_size 25 --batch_num 10 --n_epochs 1",
-    "result": 89.56,
-    "setting": "domain-il"
+    "setting": "domain-il",
+    "result": 73.74,
+    "cmd": "--dataset=rot-mnist --model=mer --lr=0.1 --beta=0.01 --gamma=0.03 --buffer_size=200 --minibatch_size 25 --n_epochs 1"
   },
   {
     "model": "moe_adapters",
-    "cmd": "--dataset=seq-eurosat-rgb --model=moe_adapters",
-    "result": 82.3,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 77.52,
+    "cmd": "--dataset=seq-cifar100-224 --model=moe_adapters"
   },
   {
     "model": "pnn",
-    "cmd": "--model=pnn --lr=0.03 --dataset=seq-cifar10",
+    "setting": "task-il",
     "result": 95.13,
-    "setting": "task-il"
+    "cmd": "--model=pnn --lr=0.03 --dataset=seq-cifar10"
   },
   {
     "model": "rpc",
-    "cmd": "--model=rpc --dataset=seq-cifar10 --lr=0.0001 --buffer_size=100 --optimizer=adam --batch_size=128 --n_epochs=5",
+    "setting": "class-il",
     "result": 31.8,
-    "setting": "class-il"
+    "cmd": "--model=rpc --dataset=seq-cifar10 --lr=0.0001 --buffer_size=100 --optimizer=adam --batch_size=128 --n_epochs=5"
   },
   {
     "model": "second_stage_starprompt",
-    "cmd": "--num_monte_carlo_gr=2 --model=second_stage_starprompt --optimizer=adam --dataset=seq-eurosat-rgb --lr=0.001 --lambda_ortho=5.0 --learning_rate_gr=0.1 --seed=1993 --batch_size=32 --virtual_bs_n=1 --keys_ckpt_path=data/first_stage_keys.json --enable_data_aug_query=1",
+    "setting": "class-il",
     "result": 93.91,
-    "setting": "class-il"
+    "cmd": "--permute_classes=1 --num_monte_carlo_gr=2 --model=second_stage_starprompt --optimizer=adam --dataset=seq-eurosat-rgb --lr=0.001 --lambda_ortho=5.0 --learning_rate_gr=0.1 --seed=1993 --batch_size=32 --virtual_bs_n=1 --keys_ckpt_path=coop_keys/mammoth_test_keys.pt --enable_data_aug_query=1"
   },
   {
     "model": "si",
-    "cmd": "--model=si --dataset=seq-mnist --lr=0.1 --c=1 --xi=1",
-    "result": 19.48,
-    "setting": "class-il"
+    "setting": "domain-il",
+    "result": 97.5,
+    "cmd": "--model=si --dataset=perm-mnist --lr=0.001 --c=0.1 --xi=0.1 --mlp_hidden_size=2000 --optimizer=adam --batch_size=256 --n_epochs=20 --dataset_config 10tasks"
   },
   {
     "model": "slca",
-    "cmd": "--model=slca --lr=0.01 --dataset=seq-cifar100-224",
+    "setting": "class-il",
     "result": 91.53,
-    "setting": "class-il"
+    "cmd": "--model=slca --lr=0.01 --dataset=seq-cifar100-224 --dataset_config=slca"
   },
   {
     "model": "starprompt",
-    "cmd": "--seed=1993 --optimizer=adam --dataset=seq-cropdisease --model=starprompt --lr=0.001 --lambda_ortho=5 --learning_rate_gr_second_stage=0.001 --num_monte_carlo_gr_second_stage=5 --num_epochs_gr_second_stage=10 --gr_mog_n_iters_first_stage=500 --lambda_ortho_coop=30 --num_epochs_gr_first_stage=10 --num_monte_carlo_gr_first_stage=2 --learning_rate_gr_first_stage=0.01",
+    "setting": "class-il",
     "result": 94.02,
-    "setting": "class-il"
+    "cmd": "--dataset=seq-cropdisease --model=starprompt --model_config=best"
   },
   {
     "model": "twf",
-    "cmd": "--loadcheck=https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EeWEOSls505AsMCTXAxWoLUBmeIjCiplFl40zDOCmB_lEw?e=Izv0jh --dataset=seq-cifar10 --model=twf --buffer_size=500 --lr=0.1 --der_alpha=0.3 --der_beta=1.2 --lambda_diverse_loss=0.3 --lambda_fp=0.03 --lambda_fp_replay=1.5",
-    "result": 81.9,
-    "setting": "class-il"
+    "setting": "class-il",
+    "result": 83.65,
+    "cmd": "--dataset=seq-cifar10 --model=twf --buffer_size=500 --model_config=best"
   },
   {
     "model": "xder",
-    "cmd": "--constr_eta=0.001 --alpha=0.3 --lr=0.03 --constr_margin=0.7 --beta=0.8 --optim_wd=1e-6 --model=xder --dataset=seq-cifar100 --batch_size=64 --minibatch_size=64 --n_epoch=50 --lr_scheduler=multisteplr --lr_milestones 35 45 --sched_multistep_lr_gamma=0.2 --buffer_size=500 --dp_weight=3000",
+    "setting": "class-il",
     "result": 49.93,
-    "setting": "class-il"
+    "cmd": "--model xder --dataset seq-cifar100 --buffer_size 500 --model_config=best"
   },
   {
     "model": "xder_ce",
-    "cmd": "--lr=0.03 --model=xder_ce --dataset=seq-cifar100 --batch_size=64 --minibatch_size=64 --n_epoch=50 --lr_scheduler=multisteplr --lr_milestones 35 45 --sched_multistep_lr_gamma=0.2 --buffer_size=500 --alpha=0.3 --beta=0.5 --eta=5e-3",
+    "setting": "class-il",
     "result": 47.67,
-    "setting": "class-il"
+    "cmd": "--model=xder_ce --dataset=seq-cifar100 --buffer_size=500 --model_config=best"
   },
   {
     "model": "xder_rpc",
-    "cmd": "--lr=0.03 --model=xder_ce --dataset=seq-cifar100 --batch_size=64 --minibatch_size=64 --n_epoch=50 --lr_scheduler=multisteplr --lr_milestones 35 45 --sched_multistep_lr_gamma=0.2 --buffer_size=500 --alpha=0.3 --beta=0.5 --eta=0.001",
+    "setting": "class-il",
     "result": 48.53,
-    "setting": "class-il"
+    "cmd": "--model=xder_rpc --dataset=seq-cifar100 --buffer_size=500 --dataset_config=best"
+  },
+  {
+    "model": "er_ace_aer_abs",
+    "setting": "class-il",
+    "result": 40.3,
+    "cmd": "--model=er_ace_aer_abs --dataset=seq-cifar100 --buffer_size=2000 --model_config=best --noise_type=symmetric --noise_rate=0.4"
+  },
+  {
+    "model": "er_tricks",
+    "setting": "class-il",
+    "result": 62.60,
+    "cmd": "--dataset=seq-cifar10 --model=er_tricks --buffer_size=500 --model_config=best"
+  },
+  {
+    "model": "puridiver",
+    "setting": "class-il",
+    "result": 60.9,
+    "cmd": "--noise_rate=0.4 --noise_type=symmetric --enable_cutmix=1 --lr=0.05 --buffer_size=1000 --model=puridiver --dataset=seq-cifar10 --buffer_fitting_epochs 255 --n_epochs 1 --batch_size 16"
+  },
+  {
+    "model": "lws",
+    "setting": "class-il",
+    "notes": "Results are worst-best accuracy on B-CelebA1",
+    "result": [58.84, 71.43],
+    "cmd": "--model lws --dataset seq-celeba --buffer_size 1024 --model_config best"
   }
 ]

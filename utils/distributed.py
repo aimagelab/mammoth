@@ -112,13 +112,29 @@ def make_ddp(model: torch.nn.Module) -> None:
 
 class CustomDP(DataParallel):
     """
-    Custom DataParallel class to avoid using `.module` when accessing `intercept_names` attributes.
+    Custom DataParallel class to avoid using `.module`.
 
-    Attributes:
-        intercept_names (list): List of attribute names to intercept.
     """
 
-    intercept_names = ['classifier', 'num_classes', 'set_return_prerelu']
+    is_init = False
+
+    def __init__(self, module, device_ids=None, output_device=None, dim=0):
+        """
+        Initialize the CustomDP class.
+
+        Args:
+            module: The module to be wrapped with DataParallel.
+            device_ids: The device IDs to be used.
+            output_device: The output device.
+            dim: The dimension to be used for parallelization.
+
+        Returns:
+            None
+        """
+        self.original_names = [name for name in module.__dict__ if not name.startswith('_')]
+        super().__init__(module, device_ids, output_device, dim)
+
+        self.is_init = True
 
     def __getattr__(self, name: str):
         """
@@ -130,7 +146,13 @@ class CustomDP(DataParallel):
         Returns:
             The value of the attribute.
         """
-        if name in self.intercept_names:
+        if not self.is_init:
+            return super().__getattr__(name)
+
+        if name == 'module':
+            return super().__getattr__(name)
+
+        if not name.startswith('_') and name not in self.original_names:
             return getattr(self.module, name)
         else:
             return super().__getattr__(name)
@@ -146,10 +168,13 @@ class CustomDP(DataParallel):
         Returns:
             None
         """
-        if name in self.intercept_names:
-            setattr(self.module, name, value)
-        else:
+        if not self.is_init:
             super().__setattr__(name, value)
+        else:
+            if not name.startswith('_') and name not in self.original_names:
+                setattr(self.module, name, value)
+            else:
+                super().__setattr__(name, value)
 
 
 def make_dp(model):

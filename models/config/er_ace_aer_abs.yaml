@@ -1,0 +1,6 @@
+seq-cifar100:
+  2000:
+    buffer_fitting_epochs: 255
+    buffer_fitting_type: mixmatch
+    lr: 0.1
+    model: er_ace_aer_abs

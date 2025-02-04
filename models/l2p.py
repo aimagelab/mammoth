@@ -6,9 +6,11 @@ Note:
     The backbone is a ViT-B/16 pretrained on Imagenet 21k and finetuned on ImageNet 1k.
 """
 
+import logging
 import torch
 
 from models.utils.continual_model import ContinualModel
+from utils import binary_to_boolean_type
 from utils.args import ArgumentParser
 from timm import create_model  # noqa
 from models.l2p_utils.l2p_model import L2PModel
@@ -30,7 +32,8 @@ class L2P(ContinualModel):
         parser.add_argument('--prompt_key', default=True, type=bool, help='Use learnable prompt key')
         parser.add_argument('--prompt_key_init', default='uniform', type=str, help='initialization type for key\'s prompts')
         parser.add_argument('--use_prompt_mask', default=False, type=bool)
-        parser.add_argument('--batchwise_prompt', default=True, type=bool)
+        parser.add_argument('--batchwise_prompt', default=0, type=binary_to_boolean_type,
+                            help='Use batch-wise prompting (i.e., majority voting) during test? NOTE: this may lead to unfair comparison with other methods.')
         parser.add_argument('--embedding_key', default='cls', type=str)
         parser.add_argument('--predefined_key', default='', type=str)
         parser.add_argument('--pull_constraint', default=True)
@@ -41,33 +44,26 @@ class L2P(ContinualModel):
         parser.add_argument('--freeze', default=['blocks', 'patch_embed', 'cls_token', 'norm', 'pos_embed'], nargs='*', type=list, help='freeze part in backbone model')
 
         # Learning rate schedule parameters
-        parser.add_argument('--sched', default='constant', type=str, metavar='SCHEDULER', help='LR scheduler (default: "constant"')
-        parser.add_argument('--lr-noise', type=float, nargs='+', default=None, metavar='pct, pct', help='learning rate noise on/off epoch percentages')
-        parser.add_argument('--lr-noise-pct', type=float, default=0.67, metavar='PERCENT', help='learning rate noise limit percent (default: 0.67)')
-        parser.add_argument('--lr-noise-std', type=float, default=1.0, metavar='STDDEV', help='learning rate noise std-dev (default: 1.0)')
-        parser.add_argument('--warmup-lr', type=float, default=1e-6, metavar='LR', help='warmup learning rate (default: 1e-6)')
-        parser.add_argument('--min-lr', type=float, default=1e-5, metavar='LR', help='lower lr bound for cyclic schedulers that hit 0 (1e-5)')
-        parser.add_argument('--decay-epochs', type=float, default=30, metavar='N', help='epoch interval to decay LR')
-        parser.add_argument('--warmup-epochs', type=int, default=5, metavar='N', help='epochs to warmup LR, if scheduler supports')
-        parser.add_argument('--cooldown-epochs', type=int, default=10, metavar='N', help='epochs to cooldown LR at min_lr, after cyclic schedule ends')
-        parser.add_argument('--patience-epochs', type=int, default=10, metavar='N', help='patience epochs for Plateau LR scheduler (default: 10')
-        parser.add_argument('--decay-rate', '--dr', type=float, default=0.1, metavar='RATE', help='LR decay rate (default: 0.1)')
-        parser.add_argument('--unscale_lr', type=bool, default=True, help='scaling lr by batch size (default: True)')
-
         parser.add_argument('--clip_grad', type=float, default=1, help='Clip gradient norm')
+
+        parser.add_argument('--use_original_ckpt', type=binary_to_boolean_type, default=0, help='Use original checkpoint from `https://storage.googleapis.com/vit_models/imagenet21k/ViT-B_16.npz`')
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
         """
-        L2P re-defines the backbone model to include the prompt parameters. This is done *before* calling the super constructor, so that the backbone is already initialized when the super constructor is called.
+        L2P re-defines the backbone model to include the prompt parameters.
+        This is done *before* calling the super constructor, so that the backbone is already initialized when the super constructor is called.
         """
+        if args.batchwise_prompt:
+            logging.warning("Using batch-wise prompting (i.e., majority voting) during test may lead to unfair comparison with other methods.")
+
         del backbone
         print("-" * 20)
-        print(f"WARNING: L2P USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
+        print(f"WARNING: L2P USES A CUSTOM BACKBONE: `https://storage.googleapis.com/vit_models/imagenet21k/ViT-B_16.npz` (vit_base_patch16_224_in21k_fn_in1k_old).")
         print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
         print("-" * 20)
 
-        args.lr = args.lr * args.batch_size / 256.0
+        args.lr = args.lr * args.batch_size / 256.0  # scale learning rate by batch size
         backbone = L2PModel(args)
 
         super().__init__(backbone, loss, args, transform, dataset=dataset)
@@ -81,15 +77,16 @@ class L2P(ContinualModel):
         self.opt = self.get_optimizer()
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
-        outputs = self.net(inputs, return_outputs=True)
+        outputs = self.net(inputs, return_reduce_sim_loss=True)
         logits = outputs['logits']
+        reduce_sim = outputs['reduce_sim']
 
         # here is the trick to mask out classes of non-current tasks
         logits[:, :self.n_past_classes] = -float('inf')
 
         loss = self.loss(logits[:, :self.n_seen_classes], labels)
-        if self.args.pull_constraint and 'reduce_sim' in outputs:
-            loss = loss - self.args.pull_constraint_coeff * outputs['reduce_sim']
+        if self.args.pull_constraint and reduce_sim is not None:
+            loss = loss - self.args.pull_constraint_coeff * reduce_sim.mean()  # the mean is needed for data-parallel (concatenates instead of averaging)
 
         self.opt.zero_grad()
         loss.backward()

@@ -1,0 +1,6 @@
+seq-cifar100-224:
+  dataset_config: l2p
+  batch_size: 128
+  lr: 0.03
+  model: dualprompt
+  use_fix_permute: 0

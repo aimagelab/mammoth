@@ -32,15 +32,17 @@ def init_twf(model, dataset):
         ret = []
         x = x.to(self.device)
         x = self.bn1(self.conv1(x))
-
         ret.append(x.clone().detach())
         x = F.relu(x)
+
         if hasattr(self, 'maxpool'):
             x = self.maxpool(x)
         x = self.layer1(x)
         ret.append(self.layer1[-1].prerelu.clone().detach())
+
         x = self.layer2(x)
         ret.append(self.layer2[-1].prerelu.clone().detach())
+
         x = self.layer3(x)
         ret.append(self.layer3[-1].prerelu.clone().detach())
 
@@ -56,9 +58,9 @@ def init_twf(model, dataset):
         model.teacher.forward = types.MethodType(
             _teacher_forward, model.teacher)
 
-    # # Initialize classifier
-    # model.net.classifier = torch.nn.Linear(
-    #     model.net.classifier.in_features, model.num_classes).to(model.device)
+    # Initialize classifier
+    model.net.classifier = torch.nn.Linear(
+        model.net.classifier.in_features, model.num_classes).to(model.device)
 
     # --- Create adapters ---
     # Retrieve features to get shapes

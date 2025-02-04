@@ -9,7 +9,6 @@ from utils.args import *
 from models.utils.continual_model import ContinualModel
 
 from datasets import get_dataset
-import wandb
 from models.attriclip_utils.model import CoOp
 from models.attriclip_utils.utils import cosine_loss
 from utils.conf import get_device
@@ -25,9 +24,12 @@ class Attriclip(ContinualModel):
         parser.add_argument("--num_prompt", type=int, default=10, help='num_prompt')
         parser.add_argument("--text_prompt", type=int, default=3, help='text_prompt')
         parser.add_argument('--freeze_clip', type=int, default=1, help='freeze_clip')
+        parser.add_argument('--matching_loss_lambda', type=float, default=0.7, help='lambda_k in the main paper')  # 0.5 in the original code
+        parser.add_argument('--orthogonalize_loss_lambda', type=float, default=0.3, help='lambda_p in the main paper')  # 0.1 in the original code
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
+        assert args.lr_scheduler is None, 'Attriclip does not support lr_scheduler, uses a custom one.'
         seq_dataset = get_dataset(args) if dataset is None else dataset
         self.device = get_device()
         self.class_names = seq_dataset.get_class_names()
@@ -55,8 +57,7 @@ class Attriclip(ContinualModel):
             self.old_epoch = epoch
         labels = labels.long()
 
-        log_dict = {}
-        log_dict['lr'] = self.opt.param_groups[0]['lr']
+        lr = self.opt.param_groups[0]['lr']
 
         cur_iter_idx = epoch * self.per_epoch_steps + self.idx
         self.custom_scheduler.step(cur_iter_idx)
@@ -64,7 +65,7 @@ class Attriclip(ContinualModel):
         output, ima_feat, key_choose, loss_m = self.net.model(inputs)
         loss_main = self.loss(output, labels - self.offset_1)
         loss_k = cosine_loss(ima_feat, key_choose)
-        loss = loss_main + 0.7 * loss_k + 0.3 * loss_m
+        loss = loss_main + self.args.matching_loss_lambda * loss_k + self.args.orthogonalize_loss_lambda * loss_m
 
         self.opt.zero_grad()
         loss.backward()
@@ -73,10 +74,7 @@ class Attriclip(ContinualModel):
         self.idx += 1
         self.iteration += 1
 
-        if not self.args.nowand:
-            wandb.log(log_dict)
-
-        return loss.item()
+        return {'loss': loss.item(), 'lr': lr}
 
     def forward(self, x):
         test_classes = self.class_names[:self.offset_2]

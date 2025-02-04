@@ -1,0 +1,3 @@
+seq-cifar10:
+  lr: 0.03
+  model: lwf

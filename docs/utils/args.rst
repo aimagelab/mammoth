@@ -9,19 +9,19 @@ Arguments
 	*Help*: Which dataset to perform experiments on.
 
 	- *Default*: ``None``
-	- *Choices*: ``seq-tinyimg, seq-mit67, seq-cars196, seq-cifar100-224-rs, seq-cifar100-224, seq-chestx, seq-cifar10-224-rs, mnist-360, seq-cropdisease, seq-eurosat-rgb, seq-imagenet-r, seq-cifar100, seq-cifar10-224, perm-mnist, seq-cub200, seq-cifar10, rot-mnist, seq-resisc45, seq-mnist, seq-cub200-rs, seq-isic, seq-tinyimg-r``
+	- *Choices*: ``seq-tinyimg, seq-mit67, seq-cars196, seq-cifar100-224-rs, seq-cifar100-224, seq-chestx, seq-celeba, seq-cifar10-224-rs, mnist-360, seq-cropdisease, seq-eurosat-rgb, seq-imagenet-r, seq-cifar100, seq-cifar10-224, perm-mnist, seq-cub200, seq-cifar10, rot-mnist, seq-resisc45, seq-mnist, seq-cub200-rs, seq-isic, seq-tinyimg-r``
 
 **\-\-model** : str (with underscores replaced by dashes)
 	*Help*: Model name.
 
 	- *Default*: ``None``
-	- *Choices*: ``joint-gcl, second-stage-starprompt, lwf-mc, puridiver, gdumb-lider, joint, ewc-on, xder, ranpac, hal, er-ace-tricks, sgd, si, moe-adapters, first-stage-starprompt, er-ace-aer-abs, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, llava, attriclip, starprompt, coda-prompt, er-tricks, clip, pnn, er-ace, xder-ce, dualprompt, twf, mer, er-ace-lider, gdumb, dap, l2p, ccic, slca, agem-r, rpc, xder-rpc, gss, lwf, cgil, er, agem``
+	- *Choices*: ``joint-gcl, second-stage-starprompt, lwf-mc, puridiver, gdumb-lider, joint, ewc-on, xder, ranpac, hal, idefics, er-ace-tricks, sgd, si, moe-adapters, first-stage-starprompt, er-ace-aer-abs, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, llava, attriclip, starprompt, lws, coda-prompt, er-tricks, clip, pnn, er-ace, xder-ce, dualprompt, twf, mer, er-ace-lider, gdumb, dap, l2p, ccic, slca, agem-r, rpc, xder-rpc, gss, lwf, cgil, er, agem``
 
 **\-\-backbone** : str (with underscores replaced by dashes)
 	*Help*: Backbone network name.
 
 	- *Default*: ``None``
-	- *Choices*: ``resnet18, resnet34, resnet50, resnet50_pt, mnistmlp, vit``
+	- *Choices*: ``resnet18, resnet18-7x7-pt, reduced-resnet18, resnet34, resnet50, resnet50-pt, resnet32, mnistmlp, vit``
 
 **\-\-load_best_args** : unknown
 	*Help*: (deprecated) Loads the best arguments for each method, dataset and memory buffer. NOTE: This option is deprecated and not up to date.
@@ -60,11 +60,10 @@ Arguments
 
 	- *Default*: ``0``
 	- *Choices*: ``0, 1``
-**\-\-eval_future** : int
+**\-\-eval_future** : 0|1|True|False -> bool
 	*Help*: Evaluate future tasks?
 
-	- *Default*: ``0``
-	- *Choices*: ``0, 1``
+	- *Default*: ``False``
 
 .. rubric:: Validation and fitting arguments
 
@@ -129,6 +128,10 @@ Arguments
 	- *Default*: ``0.0``
 **\-\-optim_nesterov** : 0|1|True|False -> bool
 	*Help*: optimizer nesterov momentum.
+
+	- *Default*: ``0``
+**\-\-drop_last** : 0|1|True|False -> bool
+	*Help*: Drop the last batch if it is not complete?
 
 	- *Default*: ``0``
 **\-\-lr_scheduler** : str
@@ -243,6 +246,11 @@ Arguments
 
 	- *Default*: ``None``
 	- *Choices*: ``last, task``
+**\-\-save_checkpoint_mode** : str
+	*Help*: Save the model checkpoint with metadata in a single pickle file with the old structure (`old_pickle`) or with the new, `safe` structure (default)?. NOTE: the `old_pickle` structure requires `weights_only=False`, which will be deprecated by PyTorch.
+
+	- *Default*: ``safe``
+	- *Choices*: ``old_pickle, safe``
 **\-\-loadcheck** : str
 	*Help*: Path of the checkpoint to load (.pt file for the specific task)
 

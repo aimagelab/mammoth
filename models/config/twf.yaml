@@ -1,0 +1,10 @@
+seq-cifar10:
+  500:
+    der_alpha: 0.3
+    der_beta: 0.9
+    lambda_diverse_loss: 0.1
+    lambda_fp: 0.0005
+    lambda_fp_replay: 0.1
+    loadcheck: https://huggingface.co/loribonna/mammoth/resolve/main/resnet18/cifar100-twf-pretrain.pth?download=true
+    lr: 0.03
+    model: twf

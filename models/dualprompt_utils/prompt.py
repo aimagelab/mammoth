@@ -5,7 +5,7 @@ import torch.nn as nn
 class EPrompt(nn.Module):
     def __init__(self, length=5, embed_dim=768, embedding_key='mean', prompt_init='uniform', prompt_pool=False,
                  prompt_key=False, pool_size=None, top_k=None, batchwise_prompt=False, prompt_key_init='uniform',
-                 num_layers=1, use_prefix_tune_for_e_prompt=False, num_heads=-1, same_key_value=False,):
+                 num_layers=1, use_prefix_tune_for_e_prompt=False, num_heads=-1, same_key_value=False, use_permute_fix=False):
         super().__init__()
 
         self.length = length
@@ -18,6 +18,7 @@ class EPrompt(nn.Module):
         self.batchwise_prompt = batchwise_prompt
         self.num_layers = num_layers
         self.use_prefix_tune_for_e_prompt = use_prefix_tune_for_e_prompt
+        self.use_permute_fix = use_permute_fix
         self.num_heads = num_heads
         self.same_key_value = same_key_value
 
@@ -117,9 +118,12 @@ class EPrompt(nn.Module):
             if self.use_prefix_tune_for_e_prompt:
                 batched_prompt_raw = self.prompt[:, :, idx]  # num_layers, B, top_k, length, C
                 num_layers, dual, batch_size, top_k, length, num_heads, heads_embed_dim = batched_prompt_raw.shape
-                batched_prompt = batched_prompt_raw.reshape(
-                    num_layers, batch_size, dual, top_k * length, num_heads, heads_embed_dim
-                )
+                if self.use_permute_fix:  # this fixes issue #56
+                    batched_prompt_raw = batched_prompt_raw.permute(0, 2, 1, 3, 4, 5, 6)
+                else:  # this follows the original implementation from https://github.dev/google-research/l2p
+                    batched_prompt = batched_prompt_raw.reshape(
+                        num_layers, batch_size, dual, top_k * length, num_heads, heads_embed_dim
+                    )
             else:
                 batched_prompt_raw = self.prompt[:, idx]
                 num_layers, batch_size, top_k, length, embed_dim = batched_prompt_raw.shape

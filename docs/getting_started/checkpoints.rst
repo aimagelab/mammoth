@@ -60,3 +60,14 @@ Mammoth supports loading checkpoint both from the local machine **and from a rem
 Checkpoints can be loaded either following the mammoth format (defined above) or from a simple ``.pt`` file. In the latter case, the checkpoint file should contain all the parameters of the *backbone* of the model. The other parameters (optimizer, scheduler, etc.) will be initialized from scratch.
 
 The loading functions are available in :ref:`module-utils.checkpoints` and should take care of loading all the parameters regardless of the presence of module parallelism (see :ref:`module-fast-training`).
+
+Pretrained backbones
+--------------------
+
+A series of pretrained backbones are available on HuggingFaces' model hub, at the following link: `https://huggingface.co/loribonna/mammoth`.
+
+These backbones can be loaded using the ``--loadcheck`` argument, by supplying the URL of the checkpoint file.
+
+.. note:: 
+
+        Mammoth does not support loading the models from the HuggingFaces model hub directly. The user should download the model and load it using the ``--loadcheck`` argument.

@@ -139,7 +139,7 @@ class SecondStageStarprompt(ContinualModel):
 
         return create_seeded_dataloader(self.args, TensorDataset(features, labels),
                                         batch_size=self.args.batch_size_gr,
-                                        shuffle=True, num_workers=0)
+                                        shuffle=True, num_workers=0, non_verbose=True)
 
     def train_alignment_epoch(self, classifier: torch.nn.Module, optim: torch.optim.Optimizer, epoch: int):
 

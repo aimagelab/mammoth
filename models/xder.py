@@ -15,7 +15,7 @@ from utils.batch_norm import bn_track_stats
 from utils.simclrloss import SupConLoss
 
 
-class XDerV2(ContinualModel):
+class XDer(ContinualModel):
     """Continual learning via eXtended Dark Experience Replay."""
     NAME = 'xder'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
@@ -27,18 +27,18 @@ class XDerV2(ContinualModel):
         parser.add_argument('--beta', type=float, required=True, help='Penalty weight.')
 
         parser.add_argument('--simclr_temp', type=float, default=5, help='Temperature for SimCLR loss')
-        parser.add_argument('--gamma', type=float, default=0.85, help='Weight for logit update')
+        parser.add_argument('--gamma', type=float, default=0.85, help='Weight for logit update')  # log_update_weight
         parser.add_argument('--simclr_batch_size', type=int, default=64, help='Batch size for SimCLR loss')
         parser.add_argument('--simclr_num_aug', type=int, default=4, help='Number of augmentations for SimCLR loss')
-        parser.add_argument('--lambd', type=float, default=0.05, help='Weight for consistency loss')
-        parser.add_argument('--constr_eta', type=float, default=0.1, help='Regularization weight for past/future constraints')
+        parser.add_argument('--lambd', type=float, default=0.05, help='Weight for consistency loss')  # simclr_weight
+        parser.add_argument('--constr_eta', type=float, default=0.1, help='Regularization weight for past/future constraints')  # constr_weight
         parser.add_argument('--constr_margin', type=float, default=0.3, help='Margin for past/future constraints')
 
         parser.add_argument('--dp_weight', type=float, default=0, help='Weight for distance preserving loss')
 
-        parser.add_argument('--past_constraint', type=binary_to_boolean_type, default=1, help='Enable past constraint')
+        parser.add_argument('--past_constraint', type=binary_to_boolean_type, default=0, help='Enable past constraint')
         parser.add_argument('--future_constraint', type=binary_to_boolean_type, default=1, help='Enable future constraint')
-        parser.add_argument('--align_bn', type=binary_to_boolean_type, default=0, help='Use BatchNorm alignment')
+        parser.add_argument('--align_bn', type=binary_to_boolean_type, default=1, help='Use BatchNorm alignment')
 
         return parser
 

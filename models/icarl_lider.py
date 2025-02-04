@@ -20,9 +20,15 @@ class ICarlLider(LiderOptimizer):
     def get_parser(parser) -> ArgumentParser:
         add_rehearsal_args(parser)
         add_lipschitz_args(parser)
+
+        parser.add_argument('--wd_reg', type=float, default=0.00001,
+                            help='L2 regularization applied to the parameters.')
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
+        if args.optim_wd != 0:
+            logging.warning('iCaRL uses a custom weight decay, the optimizer weight decay will be ignored.')
+            args.optim_wd = 0
         super().__init__(backbone, loss, args, transform, dataset=dataset)
 
         # Instantiate buffers
@@ -66,25 +72,25 @@ class ICarlLider(LiderOptimizer):
 
         # Lipschitz losses
         if not self.buffer.is_empty():
-            lip_inputs = [inputs] + output_features
+            future_mask = labels <= self.n_past_classes
+            if future_mask.sum() > 0:
+                inputs, output_features = inputs[future_mask], [f[future_mask] for f in output_features]
 
-            if self.args.alpha_lip_lambda > 0:
-                loss_lip_minimize = self.args.alpha_lip_lambda * self.minimization_lip_loss(lip_inputs)
-                loss += loss_lip_minimize
+                lip_inputs = [inputs] + output_features
 
-            if self.args.beta_lip_lambda > 0:
-                loss_lip_budget = self.args.beta_lip_lambda * self.dynamic_budget_lip_loss(lip_inputs)
-                loss += loss_lip_budget
+                if self.args.alpha_lip_lambda > 0:
+                    loss_lip_minimize = self.args.alpha_lip_lambda * self.minimization_lip_loss(lip_inputs)
+                    loss += loss_lip_minimize
+
+                if self.args.beta_lip_lambda > 0:
+                    loss_lip_budget = self.args.beta_lip_lambda * self.dynamic_budget_lip_loss(lip_inputs)
+                    loss += loss_lip_budget
 
         loss.backward()
 
         self.opt.step()
 
         return loss.item()
-
-    @staticmethod
-    def binary_cross_entropy(pred, y):
-        return -(pred.log() * y + (1 - y) * (1 - pred).log()).mean()
 
     def get_loss(self, inputs: torch.Tensor, labels: torch.Tensor,
                  task_idx: int, logits: torch.Tensor) -> Tuple[torch.Tensor, List[torch.Tensor]]:
@@ -115,6 +121,9 @@ class ICarlLider(LiderOptimizer):
             comb_targets = torch.cat((logits[:, :self.n_past_classes], targets), dim=1)
             loss = F.binary_cross_entropy_with_logits(outputs, comb_targets)
             assert loss >= 0
+
+        if self.args.wd_reg:
+            loss += self.args.wd_reg * torch.sum(self.net.get_params() ** 2)
 
         return loss, output_features
 
@@ -156,15 +165,12 @@ class ICarlLider(LiderOptimizer):
                  if labels[i].cpu() == _y]
             ).to(self.device)
             with bn_track_stats(self, False):
-                allt = None
+                all_features = []
                 while len(x_buf):
                     batch = x_buf[:self.args.batch_size]
                     x_buf = x_buf[self.args.batch_size:]
-                    feats = self.net(batch, returnt='features').mean(0)
-                    if allt is None:
-                        allt = feats
-                    else:
-                        allt += feats
-                        allt /= 2
-                class_means.append(allt.flatten())
+                    feats = self.net(batch, returnt='features')
+                    all_features.append(feats)
+                all_features = torch.cat(all_features).mean(0)
+                class_means.append(all_features.flatten())
         self.class_means = torch.stack(class_means)

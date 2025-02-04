@@ -160,7 +160,7 @@ class Model(nn.Module):
                                       num_heads=12, drop_path_rate=0)
 
         if pt:
-            load_dict = create_vision_transformer('vit_base_patch16_224', base_class=VisionTransformer, pretrained=True, num_classes=0).state_dict()
+            load_dict = create_vision_transformer('vit_base_patch16_224.augreg_in21k_ft_in1k', base_class=VisionTransformer, pretrained=True, num_classes=0).state_dict()
             if 'head.weight' in load_dict:
                 del load_dict['head.weight']
                 del load_dict['head.bias']

@@ -22,21 +22,20 @@ class PromptLearner(nn.Module):
         self.dtype = dtype
 
         prompt_prefix = ' '.join(['x'] * n_ctx * self.args.text_prompt)
-        prompts = [prompt_prefix + ' ' + name + '.' for name in class_names]  # xxxxxx classe
-        classnames = [name.replace('_', ' ') for name in class_names]
+        prompts = [prompt_prefix + ' ' + name + '.' for name in class_names]  # xxxxxx class
         self.name_lens = [len(_tokenizer.encode(name)) for name in class_names]
         self.prompt_pos = prompt_pos
 
         self.text_prompt = text_prompt
-        tokenized_prompts = torch.cat([tokenize(p) for p in prompts])  # conversione frase testuale in numeri
-        self.tokenized_prompts = tokenized_prompts  # token
+        tokenized_prompts = torch.cat([tokenize(p) for p in prompts])  # tokenize class names
+        self.tokenized_prompts = tokenized_prompts
         with torch.no_grad():
             embedding = clip_model.token_embedding(tokenized_prompts.to(self.device)).type(self.dtype)
-        self.register_buffer('token_prefix', embedding[:, :1, :])  # prende token del SOS (start of sequence)
-        self.register_buffer('token_suffix', embedding[:, 1 + (n_ctx * self.args.text_prompt):, :])  # prende token CLS, EOS
+        self.register_buffer('token_prefix', embedding[:, :1, :])  # first token is SOS (start of sequence)
+        self.register_buffer('token_suffix', embedding[:, 1 + (n_ctx * self.args.text_prompt):, :])
 
         nc_prompts = [prompt_prefix + '.']  # xxxxxxxxxxxxxxxxxxxxx.
-        nc_tokenized_prompts = torch.cat([tokenize(p) for p in nc_prompts])  # conversione della frase senza la classe
+        nc_tokenized_prompts = torch.cat([tokenize(p) for p in nc_prompts])
         self.nc_tokenized_prompts = nc_tokenized_prompts
         with torch.no_grad():
             embedding = clip_model.token_embedding(nc_tokenized_prompts.to(self.device)).type(self.dtype)
@@ -205,7 +204,7 @@ class CoOp:
         super().__init__()
         self.device = device
         self.args = args
-        clip_model, _ = load('ViT-L/14')
+        clip_model, _ = load('ViT-L/14', device=device)
         clip_model.eval()
         if use_float32:
             clip_model.float()

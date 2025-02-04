@@ -1,0 +1,5 @@
+mnist-360:
+  500: 
+    lr: 0.1
+    batch_size: 16
+    minibatch_size: 128

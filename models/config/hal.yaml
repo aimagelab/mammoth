@@ -1,0 +1,7 @@
+seq-cifar100:
+  500:
+    beta: 0.3
+    gamma: 0.1
+    hal_lambda: 0.1
+    lr: 0.03
+    model: hal

@@ -1,0 +1,14 @@
+seq-cifar100:
+  dataset_config: 5tasks
+  seed: 1993
+  permute_classes: 1
+  2000:
+    lr: 0.1
+    model: bic
+    n_epochs: 250
+    lr_scheduler: multisteplr
+    lr_milestones: [100, 150, 200]
+    sched_multistep_lr_gamma: 0.1
+    optim_wd: 0.0002
+    batch_size: 128
+    backbone: resnet32

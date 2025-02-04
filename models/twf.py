@@ -40,7 +40,7 @@ class TwF(ContinualModel):
                             help='Diverse loss hyperparameter.')
         parser.add_argument('--lambda_fp_replay', type=float, default=0,
                             help='weight of feature propagation loss replay')
-        parser.add_argument('--resize_maps', type=binary_to_boolean_type, default=0,
+        parser.add_argument('--resize_maps', type=binary_to_boolean_type, default=1,
                             help='Apply downscale and upscale to feature maps before save in buffer?')
         parser.add_argument('--min_resize_threshold', type=int, default=16,
                             help='Min size of feature maps to be resized?')
@@ -203,7 +203,7 @@ class TwF(ContinualModel):
         stream_pret_partial_features = [p[:B] for p in all_pret_partial_features]
 
         loss = self.loss(
-            stream_logits[:, self.n_past_classes:self.n_seen_classes], labels % self.n_classes_current_task)
+            stream_logits[:, self.n_past_classes:self.n_seen_classes], labels - self.n_past_classes)
 
         loss_er = torch.tensor(0.)
         loss_der = torch.tensor(0.)

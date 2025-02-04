@@ -65,6 +65,15 @@ class VisionTransformer(MammothVP):
         if self.weight_init != 'skip':
             self.init_weights(self.weight_init)
 
+    @torch.jit.ignore()
+    def load_pretrained(self, checkpoint_path: str, prefix: str = '') -> None:
+        perv_pos_embed = self.pos_embed.clone()
+        c_device = next(self.parameters()).device
+        self.pos_embed = nn.Parameter(torch.randn(1, self.embed_len, self.embed_dim, device=c_device) * .02)
+        super().load_pretrained(checkpoint_path, prefix)
+        self.pos_embed.data = resize_pos_embed(self.pos_embed, perv_pos_embed, num_prefix_tokens=self.num_prefix_tokens, gs_new=self.patch_embed.grid_size)
+        # TODO: CHECK
+
     def forward_features(self, x, task_id=-1, cls_features=None, train=False):
         x = self.patch_embed(x)
 
@@ -194,5 +203,6 @@ def vit_base_patch16_224_l2p(pretrained=False, **kwargs):
     ImageNet-1k weights fine-tuned from in21k @ 224x224, source https://github.com/google-research/vision_transformer.
     """
     model_kwargs = dict(patch_size=16, embed_dim=768, depth=12, num_heads=12, **kwargs)
-    model = create_vision_transformer('vit_base_patch16_224', base_class=VisionTransformer, filter_fn=checkpoint_filter_fn, pretrained=pretrained, **model_kwargs)
+    model = create_vision_transformer('vit_base_patch16_224_in21k_fn_in1k_old', base_class=VisionTransformer,
+                                      pretrained=pretrained, filter_fn=checkpoint_filter_fn, **model_kwargs)
     return model

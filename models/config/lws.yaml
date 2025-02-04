@@ -1,0 +1,6 @@
+seq-celeba:
+  1024:
+    n_epochs: 25
+    batch_size: 64
+    lr: 1e-3
+    optim_wd: 1e-2

@@ -4,12 +4,13 @@ import torch
 import torchvision.transforms as transforms
 import torch.nn.functional as F
 from PIL import Image
-from typing import Tuple
+from typing import Tuple, Union
 from tqdm import tqdm
 import json
 
 try:
     import deeplake
+    assert int(deeplake.__version__.split('.')[0]) < 4, 'Deeplake version must be < 4. Install it with `pip install -U "deeplake<3.9"`.'
 except ImportError:
     raise NotImplementedError("Deeplake not installed. Please install with `pip install deeplake` to use this dataset.")
 
@@ -22,7 +23,7 @@ from torchvision.transforms.functional import InterpolationMode
 from utils.prompt_templates import templates
 
 
-def load_and_preprocess_cars196(train_str='train', names_only=False) -> Tuple[torch.Tensor, torch.Tensor, dict] | dict:
+def load_and_preprocess_cars196(train_str='train', names_only=False) -> Union[Tuple[torch.Tensor, torch.Tensor, dict], dict]:
     """
     Loads data from deeplake and preprocesses it to be stored locally.
 
@@ -86,8 +87,8 @@ class MyCars196(Dataset):
             self.load_and_preprocess_dataset(root, train_str)
         else:
             print(f"Loading pre-processed {train_str} dataset...", file=sys.stderr)
-            self.data = torch.load(f'{root}/{train_str}_images.pt')
-            self.targets = torch.load(f'{root}/{train_str}_labels.pt')
+            self.data = torch.load(f'{root}/{train_str}_images.pt', weights_only=True)
+            self.targets = torch.load(f'{root}/{train_str}_labels.pt', weights_only=True)
 
         self.class_names = MyCars196.get_class_names()
 

@@ -28,21 +28,24 @@ import logging
 import sys
 from argparse import ArgumentParser, Namespace
 from contextlib import suppress
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Tuple, Union, TYPE_CHECKING
 import inspect
 
 import kornia
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from backbone import MammothBackbone
 from datasets import get_dataset
-from datasets.utils.continual_dataset import ContinualDataset
 
+from utils.buffer import Buffer
 from utils.conf import get_device, warn_once
 from utils.kornia_utils import to_kornia_transform
 from utils.magic import persistent_locals
 from torchvision import transforms
+
+if TYPE_CHECKING:
+    from datasets.utils.continual_dataset import ContinualDataset
+    from backbone import MammothBackbone
 
 with suppress(ImportError):
     import wandb
@@ -58,16 +61,16 @@ class ContinualModel(nn.Module):
 
     args: Namespace  # The command line arguments
     device: torch.device  # The device to be used for training
-    net: MammothBackbone  # The backbone of the model (defined by the `dataset`)
+    net: 'MammothBackbone'  # The backbone of the model (defined by the `dataset`)
     loss: nn.Module  # The loss function to be used (defined by the `dataset`)
     opt: optim.Optimizer  # The optimizer to be used for training
     scheduler: optim.lr_scheduler._LRScheduler  # (optional) The scheduler for the optimizer. If defined, it will overwrite the one defined in the `dataset`
     # The transformation to be applied to the input data. The model will try to convert it to a kornia transform to be applicable to a batch of samples at once
-    transform: transforms.Compose | kornia.augmentation.AugmentationSequential
+    transform: Union[transforms.Compose, kornia.augmentation.AugmentationSequential]
     original_transform: transforms.Compose  # The original transformation to be applied to the input data. This is the one defined by the `dataset`
     task_iteration: int  # Number of iterations in the current task
     epoch_iteration: int  # Number of iterations in the current epoch. Updated if `epoch` is passed to observe
-    dataset: ContinualDataset  # The instance of the dataset. Used to update the number of classes in the current task
+    dataset: 'ContinualDataset'  # The instance of the dataset. Used to update the number of classes in the current task
     num_classes: int  # Total number of classes in the dataset
     n_tasks: int  # Total number of tasks in the dataset
 
@@ -177,8 +180,8 @@ class ContinualModel(nn.Module):
         warn_once("Setting the number of classes per task is not recommended.")
         self._cpt = value
 
-    def __init__(self, backbone: nn.Module, loss: nn.Module,
-                 args: Namespace, transform: nn.Module, dataset: ContinualDataset = None) -> None:
+    def __init__(self, backbone: 'MammothBackbone', loss: nn.Module,
+                 args: Namespace, transform: nn.Module, dataset: 'ContinualDataset' = None) -> None:
         super(ContinualModel, self).__init__()
         print("Using {} as backbone".format(backbone.__class__.__name__))
         self.net = backbone
@@ -231,9 +234,21 @@ class ContinualModel(nn.Module):
         """
         Default way to handle load buffer.
         """
-        assert buffer.examples.shape[0] == self.args.buffer_size, "Buffer size mismatch. Expected {} got {}".format(
-            self.args.buffer_size, buffer.examples.shape[0])
-        self.buffer = buffer
+
+        if isinstance(buffer, Buffer):
+            assert buffer.examples.shape[0] == self.args.buffer_size, "Buffer size mismatch. Expected {} got {}".format(
+                self.args.buffer_size, buffer.examples.shape[0])
+            self.buffer = buffer
+        elif isinstance(buffer, dict):  # serialized buffer
+            assert 'examples' in buffer, "Buffer does not contain examples"
+            assert self.buffer.buffer_size == buffer['examples'].shape[0], "Buffer size mismatch. Expected {} got {}".format(
+                self.buffer.buffer_size, buffer['examples'].shape[0])
+            for k, v in buffer.items():
+                setattr(self.buffer, k, v)
+            self.buffer.attributes = list(buffer.keys())
+            self.buffer.num_seen_examples = buffer['examples'].shape[0]
+        else:
+            raise ValueError("Buffer type not recognized")
 
     def get_parameters(self):
         """
@@ -256,6 +271,14 @@ class ContinualModel(nn.Module):
         """
 
         params = params if params is not None else self.get_parameters()
+        if params is None:
+            logging.info("No parameters to optimize.")
+            return None
+        params = list(params)
+        if len(params) == 0:
+            logging.info("No parameters to optimize.")
+            return None
+
         lr = lr if lr is not None else self.args.lr
         # check if optimizer is in torch.optim
         supported_optims = {optim_name.lower(): optim_name for optim_name in dir(optim) if optim_name.lower() in self.AVAIL_OPTIMS}
@@ -293,34 +316,34 @@ class ContinualModel(nn.Module):
         """
         return 5
 
-    def begin_task(self, dataset: ContinualDataset) -> None:
+    def begin_task(self, dataset: 'ContinualDataset') -> None:
         """
         Prepares the model for the current task.
         Executed before each task.
         """
         pass
 
-    def end_task(self, dataset: ContinualDataset) -> None:
+    def end_task(self, dataset: 'ContinualDataset') -> None:
         """
         Prepares the model for the next task.
         Executed after each task.
         """
         pass
 
-    def begin_epoch(self, epoch: int, dataset: ContinualDataset) -> None:
+    def begin_epoch(self, epoch: int, dataset: 'ContinualDataset') -> None:
         """
         Prepares the model for the current epoch.
         """
         pass
 
-    def end_task(self, dataset: ContinualDataset) -> None:
+    def end_task(self, dataset: 'ContinualDataset') -> None:
         """
         Prepares the model for the next task.
         Executed after each task.
         """
         pass
 
-    def end_epoch(self, epoch: int, dataset: ContinualDataset) -> None:
+    def end_epoch(self, epoch: int, dataset: 'ContinualDataset') -> None:
         """
         Prepares the model for the next epoch.
         """
@@ -399,12 +422,23 @@ class ContinualModel(nn.Module):
         Args:
             dataset: the current task's dataset
         """
+        # update internal counters
         self._task_iteration = 0
         self._epoch_iteration = 0
         self._past_epoch = 0
         self._n_classes_current_task = self._cpt if isinstance(self._cpt, int) else self._cpt[self._current_task]
         self._n_past_classes, self._n_seen_classes = self.compute_offsets(self._current_task)
         self._n_remaining_classes = self.N_CLASSES - self._n_seen_classes
+
+        # reload optimizer if the model has no scheduler
+        if not hasattr(self, 'scheduler') or self.scheduler is None:
+            if hasattr(self, 'opt') and self.opt is not None:
+                self.opt.zero_grad(set_to_none=True)
+            self.opt = self.get_optimizer()
+        else:
+            logging.warning("Model defines a custom scheduler. The optimizer will not be reloaded.")
+
+        # call the actual method
         self.begin_task(dataset)
 
     def meta_end_task(self, dataset):

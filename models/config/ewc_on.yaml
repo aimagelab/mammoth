@@ -1,0 +1,6 @@
+seq-cifar10:
+  e_lambda: 10
+  gamma: 1
+  lr: 0.1
+  model: ewc_on
+  n_epochs: 50

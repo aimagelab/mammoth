@@ -1,3 +1,4 @@
+from argparse import Namespace
 import os
 import sys
 import json
@@ -156,10 +157,10 @@ class Prompter(torch.nn.Module):
             The arguments used in the first stage
         """
         print(f'Loading keys from {self.keys_ckpt_path}', file=sys.stderr)
-        st = torch.load(self.keys_ckpt_path)
+        st = torch.load(self.keys_ckpt_path, weights_only=True)
         if isinstance(st, dict):
             keys = st['keys'].to(self.device)
-            self.old_args = st['args']
+            self.old_args = Namespace(**st['args'])
             assert self.num_classes == keys.shape[0]
             assert self.args.dataset == self.old_args.dataset
             assert self.args.permute_classes == self.old_args.permute_classes

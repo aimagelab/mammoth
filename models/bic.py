@@ -8,7 +8,6 @@ from copy import deepcopy
 
 import torch
 import torch.nn.functional as F
-from datasets import get_dataset
 from torch.optim import Adam
 
 from models.utils.continual_model import ContinualModel
@@ -38,7 +37,6 @@ class BiC(ContinualModel):
         parser.add_argument('--wd_reg', type=float, default=None,
                             help='bias injector.')
         parser.add_argument('--distill_after_bic', type=binary_to_boolean_type, default=1)
-
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
@@ -81,8 +79,7 @@ class BiC(ContinualModel):
         if self.current_task > 0:
             self.net.eval()
 
-            from utils.training import evaluate
-            print("EVAL PRE", evaluate(self, dataset))
+            print("EVAL PRE", dataset.evaluate(self, dataset))
 
             self.evaluate_bias('pre')
 

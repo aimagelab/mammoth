@@ -1,0 +1,7 @@
+seq-cropdisease:
+  batch_size: 128
+  dataset_config: dap
+  enable_test_time_majority_voting: 1
+  load_original_checkpoint: 1
+  lr: 0.01
+  model: dap

@@ -1,0 +1,11 @@
+seq-eurosat-rgb:
+  gr_mog_n_iters: 200
+  learning_rate_gr: 0.05
+  lr: 0.002
+  model: first_stage_starprompt
+  num_epochs_gr: 10
+  num_monte_carlo_gr: 2
+  optimizer: sgd
+  permute_classes: 1
+  save_first_stage_keys_filename: mammoth_test_keys.pt
+  seed: 1997

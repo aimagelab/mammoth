@@ -1,0 +1,4 @@
+seq-cifar100:
+  lr: 0.03
+  model: lwf_mc
+  optim_wd: 5e-4

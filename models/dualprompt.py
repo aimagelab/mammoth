@@ -11,6 +11,7 @@ import torch
 from models.dualprompt_utils.model import Model
 
 from models.utils.continual_model import ContinualModel
+from utils import binary_to_boolean_type
 from utils.args import ArgumentParser
 
 from datasets import get_dataset
@@ -23,43 +24,36 @@ class DualPrompt(ContinualModel):
 
     @staticmethod
     def get_parser(parser) -> ArgumentParser:
-        parser.add_argument('--train_mask', default=True, type=bool, help='if using the class mask at training')
-        parser.add_argument('--pretrained', default=True, help='Load pretrained model or not')
-        parser.add_argument('--drop', type=float, default=0.0, metavar='PCT', help='Dropout rate (default: 0.)')
-        parser.add_argument('--drop-path', type=float, default=0.0, metavar='PCT', help='Drop path rate (default: 0.)')
+        parser.set_defaults(optimizer='adam', batch_size=128)
+
+        parser.add_argument('--pretrained', default=1, type=binary_to_boolean_type, help='Load pretrained model or not')
+        parser.add_argument('--use_fix_permute', type=binary_to_boolean_type, default=0, help='Apply fix to reshape issue from original implementation (ref: issue #56)')
 
         # Optimizer parameters
         parser.add_argument('--clip_grad', type=float, default=1.0, metavar='NORM', help='Clip gradient norm (default: None, no clipping)')
 
         # G-Prompt parameters
-        parser.add_argument('--use_g_prompt', default=True, type=bool, help='if using G-Prompt')
         parser.add_argument('--g_prompt_length', default=5, type=int, help='length of G-Prompt')
         parser.add_argument('--g_prompt_layer_idx', default=[0, 1], type=int, nargs="+", help='the layer index of the G-Prompt')
-        parser.add_argument('--use_prefix_tune_for_g_prompt', default=True, type=bool, help='if using the prefix tune for G-Prompt')
+        parser.add_argument('--use_prefix_tune_for_g_prompt', default=1, type=binary_to_boolean_type, help='if using the prefix tune for G-Prompt')
 
         # E-Prompt parameters
-        parser.add_argument('--use_e_prompt', default=True, type=bool, help='if using the E-Prompt')
         parser.add_argument('--e_prompt_layer_idx', default=[2, 3, 4], type=int, nargs="+", help='the layer index of the E-Prompt')
-        parser.add_argument('--use_prefix_tune_for_e_prompt', default=True, type=bool, help='if using the prefix tune for E-Prompt')
+        parser.add_argument('--use_prefix_tune_for_e_prompt', type=binary_to_boolean_type, default=1, help='if using the prefix tune for E-Prompt')
 
         # Use prompt pool in L2P to implement E-Prompt
-        parser.add_argument('--prompt_pool', default=True, type=bool,)
         parser.add_argument('--size', default=10, type=int,)
         parser.add_argument('--length', default=5, type=int, )
         parser.add_argument('--top_k', default=1, type=int, )
         parser.add_argument('--initializer', default='uniform', type=str,)
-        parser.add_argument('--prompt_key', default=True, type=bool,)
         parser.add_argument('--prompt_key_init', default='uniform', type=str)
-        parser.add_argument('--use_prompt_mask', default=True, type=bool)
-        parser.add_argument('--mask_first_epoch', default=False, type=bool)
-        parser.add_argument('--shared_prompt_pool', default=True, type=bool)
-        parser.add_argument('--shared_prompt_key', default=False, type=bool)
-        parser.add_argument('--batchwise_prompt', default=True, type=bool)
+        parser.add_argument('--batchwise_prompt', default=1, type=binary_to_boolean_type, help='Use batch-wise promting? (NOTE: '
+                            'This should be avoided as it is not a fair comparison with other methods.)')
         parser.add_argument('--embedding_key', default='cls', type=str)
         parser.add_argument('--predefined_key', default='', type=str)
-        parser.add_argument('--pull_constraint', default=True)
+        parser.add_argument('--pull_constraint', default=1, type=binary_to_boolean_type)
         parser.add_argument('--pull_constraint_coeff', default=1.0, type=float)
-        parser.add_argument('--same_key_value', default=False, type=bool)
+        parser.add_argument('--same_key_value', default=0, type=binary_to_boolean_type)
 
         # ViT parameters
         parser.add_argument('--global_pool', default='token', choices=['token', 'avg'], type=str, help='type of global pooling for final sequence')
@@ -70,7 +64,7 @@ class DualPrompt(ContinualModel):
     def __init__(self, backbone, loss, args, transform, dataset=None):
         del backbone
         print("-" * 20)
-        logging.info(f"DualPrompt USES A CUSTOM BACKBONE: `vit_base_patch16_224`.")
+        logging.info(f"DualPrompt USES A CUSTOM BACKBONE: `https://storage.googleapis.com/vit_models/imagenet21k/ViT-B_16.npz` (vit_base_patch16_224_in21k_fn_in1k_old).")
         print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
         print("-" * 20)
 
@@ -97,7 +91,8 @@ class DualPrompt(ContinualModel):
                 prev_idx = (slice(None), slice(None), slice(prev_start, prev_end)) if self.args.use_prefix_tune_for_e_prompt else (slice(None), slice(prev_start, prev_end))
 
                 with torch.no_grad():
-                    self.net.model.e_prompt.prompt.grad.zero_()
+                    if self.net.model.e_prompt.prompt.grad is not None:
+                        self.net.model.e_prompt.prompt.grad.zero_()
                     self.net.model.e_prompt.prompt[cur_idx] = self.net.model.e_prompt.prompt[prev_idx]
                     self.opt.param_groups[0]['params'] = self.net.model.parameters()
 
@@ -117,8 +112,7 @@ class DualPrompt(ContinualModel):
         logits = outputs['logits']
 
         # here is the trick to mask out classes of non-current tasks
-        if self.args.train_mask:
-            logits[:, :self.offset_1] = -float('inf')
+        logits[:, :self.offset_1] = -float('inf')
 
         loss_clf = self.loss(logits[:, :self.offset_2], labels)
         loss = loss_clf

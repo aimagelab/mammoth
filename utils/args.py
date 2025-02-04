@@ -182,7 +182,7 @@ def add_dynamic_parsable_args(parser: ArgumentParser, dataset: str, backbone: st
     registered_datasets = get_dataset_names()
     if isinstance(dataset, dict):
         assert 'type' in dataset, "The dataset `type` (i.e., the registered name) must be defined in the dictionary."
-        bk_name = dataset['type'].replace('-', '_').lower()
+        bk_name = dataset['type'].replace('_', '-').lower()
         bk_args = {**registered_datasets[bk_name]['parsable_args'], **dataset['args']}
         dataset = bk_name
     else:
@@ -196,7 +196,7 @@ def add_dynamic_parsable_args(parser: ArgumentParser, dataset: str, backbone: st
         bk_args = {**REGISTERED_BACKBONES[bk_name]['parsable_args'], **backbone['args']}
         backbone = bk_name
     else:
-        bk_args = REGISTERED_BACKBONES[backbone.replace('-', '_').lower()]['parsable_args']
+        bk_args = REGISTERED_BACKBONES[backbone.replace('_', '-').lower()]['parsable_args']
     build_parsable_args(bk_group, bk_args)
 
     # model dynamic arguments? maybe in the future...
@@ -259,7 +259,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
     exp_group.add_argument('--label_perc_by_class', '--lpc', type=float, default=1, dest='label_perc_by_class',
                            help='Percentage in (0-1] of labeled examples per task.')
     exp_group.add_argument('--joint', type=int, choices=(0, 1), default=0, help='Train model on Joint (single task)?')
-    exp_group.add_argument('--eval_future', type=int, choices=(0, 1), default=0, help='Evaluate future tasks?')
+    exp_group.add_argument('--eval_future', type=binary_to_boolean_type, default=False, help='Evaluate future tasks?')
 
     validation_group = parser.add_argument_group('Validation and fitting arguments', 'Arguments used to define the validation strategy and the method used to fit the model.')
 
@@ -298,6 +298,8 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                            help='optimizer momentum.')
     opt_group.add_argument('--optim_nesterov', type=binary_to_boolean_type, default=0,
                            help='optimizer nesterov momentum.')
+    opt_group.add_argument('--drop_last', type=binary_to_boolean_type, default=0,
+                           help='Drop the last batch if it is not complete?')
     opt_group.add_argument('--lr_scheduler', type=str, help='Learning rate scheduler.')
     opt_group.add_argument('--scheduler_mode', type=str, choices=['epoch', 'iter'], default='epoch',
                            help='Scheduler mode. Possible values:'
@@ -369,6 +371,10 @@ def add_management_args(parser: ArgumentParser) -> None:
                            '3: Use BF16 and `torch.compile`. BEWARE: torch.compile may break your code if you change the model after the first run! Use with caution.')
     mng_group.add_argument('--distributed', type=str, default='no', choices=['no', 'dp', 'ddp'], help='Enable distributed training?')
     mng_group.add_argument('--savecheck', choices=['last', 'task'], type=str, help='Save checkpoint every `task` or at the end of the training (`last`).')
+    mng_group.add_argument('--save_checkpoint_mode', choices=['old_pickle', 'safe'], type=str, default='safe',
+                           help='Save the model checkpoint with metadata in a single pickle file with the old structure (`old_pickle`) '
+                           'or with the new, `safe` structure (default)?. NOTE: the `old_pickle` structure requires `weights_only=False`, which will be '
+                           'deprecated by PyTorch.')
     mng_group.add_argument('--loadcheck', type=str, default=None, help='Path of the checkpoint to load (.pt file for the specific task)')
     mng_group.add_argument('--ckpt_name', type=str, help='(optional) checkpoint save name.')
     mng_group.add_argument('--start_from', type=int, default=None, help="Task to start from")
@@ -563,8 +569,19 @@ if __name__ == '__main__':
 
     from models import get_model_names
 
+    if os.path.exists('docs/model_args'):
+        import shutil
+        shutil.rmtree('docs/model_args')
+    os.makedirs('docs/model_args')
+
     for model_name, model_class in get_model_names().items():
-        parser = model_class.get_parser(ArgumentParser())
+        if isinstance(model_class, Exception):
+            raise model_class
+        try:
+            parser = model_class.get_parser(ArgumentParser())
+        except Exception as e:
+            print('Troubles with model:', model_name)
+            raise e
 
         model_args_groups = []
         for group in parser._action_groups:
@@ -572,9 +589,9 @@ if __name__ == '__main__':
                 continue
             model_args_groups.append(_parse_actions(group._group_actions, group.title, group.description))
         model_filename = model_name.replace("-", "_")
-        with open(f'docs/models/{model_filename}_args.rst', 'w') as f:
+        with open(f'docs/model_args/{model_filename}_args.rst', 'w') as f:
             f.write(f'Arguments\n')
             f.write(f'~~~~~~~~~~~\n\n')
             for arg in model_args_groups:
                 f.write(str(arg) + '\n\n')
-        print(f"Saving documentation in docs/models/{model_filename}_args.rst")
+        print(f"Saving documentation in docs/model_args/{model_filename}_args.rst")

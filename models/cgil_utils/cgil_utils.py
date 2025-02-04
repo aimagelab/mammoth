@@ -263,12 +263,12 @@ class Prompter(torch.nn.Module):
 
         Path('./cache').mkdir(parents=True, exist_ok=True)
         clip_backbone = self.args.clip_backbone.replace('/', '_')
-        cache_path = Path(f'./cache/{dataset.NAME}_{self.current_task}_{clip_backbone}_features.pt')
+        cache_path = Path(f'./cache/{dataset.NAME}_{self.current_task}_{clip_backbone}_{dataset.args.permute_classes}_features.pt')
         if dataset.args.seed is not None:
-            cache_path = Path(f'./cache/{dataset.NAME}_{self.current_task}_seed_{dataset.args.seed}_{clip_backbone}_features.pt')
+            cache_path = Path(f'./cache/{dataset.NAME}_{self.current_task}_seed_{dataset.args.seed}_{clip_backbone}_{dataset.args.permute_classes}_features.pt')
 
         if cache_path.exists():
-            features_dict = torch.load(cache_path)
+            features_dict = torch.load(cache_path, weights_only=True)
             print(f'Loaded cached features from {cache_path}')
         else:
             with tqdm(total=len(dataset.train_loader), desc='Updating statistics for first stage Generative Replay') as pbar:

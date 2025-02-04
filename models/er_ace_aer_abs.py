@@ -1,5 +1,6 @@
 
 import copy
+from typing import Union
 from sklearn.mixture import GaussianMixture
 import torch
 from torch import nn
@@ -26,7 +27,7 @@ class CustomDataset(torch.utils.data.Dataset):
         self.probs = (torch.ones(len(self.data)) / len(self.data)).to(device)
         self.extra = extra
 
-    def set_probs(self, probs: np.ndarray | torch.Tensor):
+    def set_probs(self, probs: Union[np.ndarray, torch.Tensor]):
         """
         Set the probability of each data point being correct (i.e., belonging to the Gaussian with the lowest mean)
         """

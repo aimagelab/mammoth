@@ -67,8 +67,8 @@ class XDerRPC(ContinualModel):
         parser.add_argument('--beta', type=float, required=True, help='Penalty weight.')
 
         parser.add_argument('--gamma', type=float, default=0.85)
-        parser.add_argument('--eta', type=float, default=0.1)
-        parser.add_argument('--m', type=float, default=0.3)
+        parser.add_argument('--constr_eta', type=float, default=0.1)
+        parser.add_argument('--constr_margin', type=float, default=0.3)
 
         parser.add_argument('--clip_grad', type=none_or_float, default=None, metavar='NORM', help='Clip gradient norm (default: None, no clipping)')
         parser.add_argument('--align_bn', type=binary_to_boolean_type, default=0, help='Use BatchNorm alignment')
@@ -90,7 +90,7 @@ class XDerRPC(ContinualModel):
         x = self.net(x)[:, :-1]
         if x.dtype != self.rpc_head.dtype:
             self.rpc_head = self.rpc_head.type(x.dtype)
-        x = x @ self.rpc_head[:x.shape[1]]
+        x = x @ self.rpc_head  # [:x.shape[1]]
         return x
 
     def end_task(self, dataset):
@@ -188,25 +188,26 @@ class XDerRPC(ContinualModel):
 
         self.opt.zero_grad()
 
-        with bn_track_stats(self, not self.args.align_bn or self.current_task == 0):
-            outputs = self(inputs)
+        # with bn_track_stats(self, not self.args.align_bn or self.current_task == 0):
+        outputs = self(inputs)
 
         # Present head
-        loss_stream = self.loss(outputs[:, self.n_past_classes:self.n_seen_classes], labels % self.n_classes_current_task)
+        loss_stream = self.loss(outputs[:, self.n_past_classes:self.n_seen_classes], labels - self.n_past_classes)
 
         loss_der, loss_derpp = torch.tensor(0.), torch.tensor(0.)
         if not self.buffer.is_empty():
             # Distillation Replay Loss (all heads)
             buf_idx1, buf_inputs1, buf_labels1, buf_logits1, buf_tl1 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
-            if self.args.align_bn:
-                buf_inputs1 = torch.cat([buf_inputs1, inputs[:self.args.minibatch_size // self.current_task]])
+            # if self.args.align_bn:
+            #     buf_inputs1 = torch.cat([buf_inputs1, inputs[:self.args.minibatch_size // self.current_task]])
 
-            buf_outputs1 = self(buf_inputs1)
+            with bn_track_stats(self, False):
+                buf_outputs1 = self(buf_inputs1)
 
-            if self.args.align_bn:
-                buf_inputs1 = buf_inputs1[:self.args.minibatch_size]
-                buf_outputs1 = buf_outputs1[:self.args.minibatch_size]
+            # if self.args.align_bn:
+            #     buf_inputs1 = buf_inputs1[:self.args.minibatch_size]
+            #     buf_outputs1 = buf_outputs1[:self.args.minibatch_size]
 
             buf_logits1 = buf_logits1.type(buf_outputs1.dtype)
             mse = F.mse_loss(buf_outputs1, buf_logits1, reduction='none')
@@ -215,7 +216,7 @@ class XDerRPC(ContinualModel):
             # Label Replay Loss (past heads)
             buf_idx2, buf_inputs2, buf_labels2, buf_logits2, buf_tl2 = self.buffer.get_data(
                 self.args.minibatch_size, transform=self.transform, return_index=True, device=self.device)
-            with bn_track_stats(self, not self.args.align_bn):
+            with bn_track_stats(self, False):  # not self.args.align_bn
                 buf_outputs2 = self(buf_inputs2).float()
 
             buf_ce = self.loss(buf_outputs2[:, :self.n_past_classes], buf_labels2)
@@ -251,20 +252,20 @@ class XDerRPC(ContinualModel):
                     self.buffer.logits[buf_idx[chosen], :] = to_transplant.to(self.buffer.device)
                     self.buffer.task_labels[buf_idx[chosen]] = self.current_task
 
-        # Past Logits Constraint
-        loss_constr_past = torch.tensor(0.).type(loss_stream.dtype)
-        if self.current_task > 0:
-            chead = F.softmax(outputs[:, :self.n_seen_classes], 1)
+        # # Past Logits Constraint
+        # loss_constr_past = torch.tensor(0.).type(loss_stream.dtype)
+        # if self.current_task > 0:
+        #     chead = F.softmax(outputs[:, :self.n_seen_classes], 1)
 
-            good_head = chead[:, self.n_past_classes:self.n_seen_classes]
-            bad_head = chead[:, :self.n_past_classes]
+        #     good_head = chead[:, self.n_past_classes:self.n_seen_classes]
+        #     bad_head = chead[:, :self.n_past_classes]
 
-            loss_constr = bad_head.max(1)[0].detach() + self.args.m - good_head.max(1)[0]
+        #     loss_constr = bad_head.max(1)[0].detach() + self.args.m - good_head.max(1)[0]
 
-            mask = loss_constr > 0
+        #     mask = loss_constr > 0
 
-            if (mask).any():
-                loss_constr_past = self.args.eta * loss_constr[mask].mean()
+        #     if (mask).any():
+        #         loss_constr_past = self.args.constr_eta * loss_constr[mask].mean()
 
         # Future Logits Constraint
         loss_constr_futu = torch.tensor(0.)
@@ -277,13 +278,13 @@ class XDerRPC(ContinualModel):
                 bad_head = torch.cat([bad_head, buf_outputs[:, self.n_seen_classes:]])
                 good_head = torch.cat([good_head, torch.stack(buf_outputs.split(self.n_classes_current_task, 1), 1)[torch.arange(len(buf_tlgt)), buf_tlgt]])
 
-            loss_constr = bad_head.max(1)[0] + self.args.m - good_head.max(1)[0]
+            loss_constr = bad_head.max(1)[0] + self.args.constr_margin - good_head.max(1)[0]
 
             mask = loss_constr > 0
             if (mask).any():
-                loss_constr_futu = self.args.eta * loss_constr[mask].mean()
+                loss_constr_futu = self.args.constr_eta * loss_constr[mask].mean()
 
-        loss = loss_stream + loss_der + loss_derpp + loss_constr_futu + loss_constr_past
+        loss = loss_stream + loss_der + loss_derpp + loss_constr_futu  # + loss_constr_past
 
         loss.backward()
         if self.args.clip_grad is not None:
