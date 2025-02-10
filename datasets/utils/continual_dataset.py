@@ -320,7 +320,7 @@ class ContinualDataset(object):
         """
         raise NotImplementedError
 
-    def get_backbone() -> str:
+    def get_backbone(self) -> str:
         """Returns the name of the backbone to be used for the current dataset. This can be changes using the `--backbone` argument or by setting it in the `dataset_config`."""
         raise NotImplementedError
 
