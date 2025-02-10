@@ -322,7 +322,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             if args.eval_future:
                 avg_transf = np.mean([np.mean(task_) for task_ in results_transf])
-                print(f"Transfer Metrics  -  AVG Transfer {avg_transf:.2f}")
+                print(f"Transfer Metrics  -  AVG Transfer {avg_transf:.2f}", file=sys.stderr)
                 if t < dataset.N_TASKS - 1:
                     eval_dataset.log(args, logger, transf_accs, t, dataset.SETTING, future=True)
 

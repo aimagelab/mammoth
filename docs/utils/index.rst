@@ -35,7 +35,7 @@ Other arguments such as the size of the training batch and the number of epochs 
 
 .. code-block:: bash
 
-  python utils/main.py --dataset seq-cifar10 --model der --buffer_size 500 --lr 0.03 --batch_size 128 --epochs 10
+  python utils/main.py --dataset seq-cifar10 --model der --buffer_size 500 --lr 0.03 --batch_size 128 --n_epochs 10
 
 .. note::
     To ease hyper-parameter tuning, all boolean arguments follow the convention: ``--<argument>=1`` for ``True`` and ``--<argument>=0`` for ``False``.
