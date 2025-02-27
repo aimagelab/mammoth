@@ -233,6 +233,7 @@ def add_initial_args(parser) -> ArgumentParser:
     parser.add_argument('--load_best_args', action='store_true',
                         help='(deprecated) Loads the best arguments for each method, dataset and memory buffer. '
                         'NOTE: This option is deprecated and not up to date.')
+    parser.add_argument('--cog_cl', type=int, choices=(0, 1), default=0, required=True)
 
     return parser
 
@@ -248,7 +249,7 @@ def add_experiment_args(parser: ArgumentParser) -> None:
         None
     """
     exp_group = parser.add_argument_group('Experiment arguments', 'Arguments used to define the experiment settings.')
-
+    # exp_group.add_argument('--joint', type=int, choices=(0, 1), default=0, help='Train model on Joint (single task)?')
     exp_group.add_argument('--lr', required=True, type=float, help='Learning rate. This should either be set as default by the model '
                            '(with `set_defaults <https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser.set_defaults>`_),'
                            ' by the dataset (with `set_default_from_args`, see :ref:`module-datasets.utils`), or with `--lr=<value>`.')

@@ -202,7 +202,17 @@ class ContinualDataset(object):
             if not hasattr(self.args, 'class_order'):  # set only once
                 if self.args.seed is not None:
                     np.random.seed(self.args.seed)
-                self.args.class_order = np.random.permutation(self.N_CLASSES)
+                self.args.class_order = np.array([87,  0, 52, 58, 44, 91, 68, 97, 51, 15,
+                    94, 92, 10, 72, 49, 78, 61, 14,  8, 86,
+                    84, 96, 18, 24, 32, 45, 88, 11,  4, 67,
+                    69, 66, 77, 47, 79, 93, 29, 50, 57, 83,
+                    17, 81, 41, 12, 37, 59, 25, 20, 80, 73,
+                    1, 28,  6, 46, 62, 82, 53,  9, 31, 75,
+                    38, 63, 33, 74, 27, 22, 36,  3, 16, 21,
+                    60, 19, 70, 90, 89, 43,  5, 42, 65, 76,
+                    40, 30, 23, 85,  2, 95, 56, 48, 71, 64,
+                    98, 13, 99,  7, 34, 55, 54, 26, 35, 39])    
+                # self.args.class_order = np.random.permutation(self.N_CLASSES)
 
         if args.label_perc != 1 or args.label_perc_by_class != 1:
             self.unlabeled_rng = np.random.RandomState(args.seed)

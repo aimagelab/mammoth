@@ -1,0 +1,68 @@
+{
+    "television": [
+        "-a flat rectangular screen",
+        "a power cord",
+        "a remote control (while not inherent to the function, it's strongly associated)",
+        "ability to display moving images and sound (this is the defining functional feature)",
+        "buttons/controls on the device itself"
+    ],
+    "apple": [
+        "-round shape",
+        "red, green, or yellow skin",
+        "smooth skin (mostly)While other features like  size, specific shade of color, or the presence of a dimple at the bottom can be helpful, the three listed above are the most consistently defining features across different apple varieties.",
+        "stem on top"
+    ],
+    "oak_tree": [
+        "-a sturdy trunk",
+        "a broad, spreading crown of branches",
+        "acorns (fruit)The order within each list isn't strictly hierarchical;  it represents common salient features.  Some features (like the color of a goldfish) are more variable than others (like the presence of a trunk on an oak tree).",
+        "leaves with lobed edges",
+        "rough, bark-covered trunk"
+    ],
+    "pickup_truck": [
+        "-four wheels",
+        "a cab (for the driver)",
+        "a relatively high ground clearance",
+        "a truck bed"
+    ],
+    "lizard": [
+        "-scaly skin",
+        "a long tail",
+        "elongated bodyWhile features like color and specific head shape can be helpful, they are less consistent across all lizard species than the above.  The presence of scales, a tail, and typically four legs are far more definitive.",
+        "four legs (although some lizards are legless)"
+    ],
+    "trout": [
+        "-streamlined body shape",
+        "fins (dorsal, pectoral, anal, caudal)",
+        "gills",
+        "pointed headWhile color can vary widely in trout, it's less important for identification than the body shape and presence of fins and scales.",
+        "scales"
+    ],
+    "road": [
+        "-a relatively flat surface",
+        "designed for vehicles (cars, bikes, etc.) to travel on",
+        "made of hard material (asphalt, concrete, etc.)",
+        "often has markings (lines, signs)The key difference in the lists above is the shift from primarily visual features (color, shape) for the goldfish and beerglass to a combination of visual and functional features for the road.  The function of a road is crucial to its identification.",
+        "usually long and continuous"
+    ],
+    "wolf": [
+        "-four legs",
+        "a long, bushy tail",
+        "furry body",
+        "pointed ears",
+        "powerful buildWhile color (grey/brown) is common, it's less crucial than the structural features for identification.  A wolf's size relative to other animals is also helpful in identification, but again, less crucial than the core structural features.",
+        "sharp teeth (though not always visible)"
+    ],
+    "mushroom": [
+        "-a cap (pileus)",
+        "a stem (stipe)",
+        "gills or pores (hymenophore) under the capWhile some mushrooms might have other features like a ring (annulus) or volva, the cap, stem, and hymenophore are the defining characteristics.  Color and shape are highly variable and unreliable for identification."
+    ],
+    "camel": [
+        "-a hump on its back (or humps)",
+        "a relatively small head compared to its body",
+        "long legs",
+        "long neck",
+        "thick, shaggy fur (depending on the species and climate)The order of importance can shift slightly depending on the context (e.g., seeing it from afar vs. up close), but these are the most defining features for each object."
+    ]
+}

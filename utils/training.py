@@ -25,7 +25,10 @@ from utils.checkpoints import mammoth_load_checkpoint, save_mammoth_checkpoint
 from utils.loggers import log_extra_metrics, Logger
 from utils.schedulers import get_scheduler
 from utils.stats import track_system_stats
-
+from utils.integrated_dissect_score import IcarlDissectandScore
+import utils.similarity
+import clip
+import copy
 try:
     import wandb
 except ImportError:
@@ -142,6 +145,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         logger = Logger(args, dataset.SETTING, dataset.NAME, model.NAME)
 
     model.net.to(model.device)
+    clip_model, clip_preprocess = clip.load("ViT-B/32", device=model.device)
     torch.cuda.empty_cache()
 
     with track_system_stats(logger) as system_tracker:
@@ -244,6 +248,52 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     logging.info(f"Task {t + 1}")  # at least print the task number
 
                 while True:
+
+                    if args.cog_cl==1 and t>0:
+                        each_labels = [train_loader.dataset[i][1].item() for i in range(len(train_loader.dataset))]
+                        # print("Each_labels:", each_labels)
+                        task_labels =args.class_order[t*10:(t+1)*10]
+                        up_task_labels = list(range(t*10,(t+1)*10))
+                        # print("Task_labels:", task_labels)  
+                        # print("Up_task_labels:", up_task_labels)
+                        model_copy=copy.deepcopy(model.net)
+                        IcarlDissect_Score = IcarlDissectandScore(model=model_copy, protocol=train_loader.dataset, similarity_fn= similarity.soft_wpmi, class_order=args.class_order, curent_experience=t, current_experience_classes=task_labels, device=model.device)
+                        IcarlDissect_Score.dissect("ours_saved_activation")
+                        scores = IcarlDissect_Score.scoring_function(clip_model=clip_model, filtered_concept_set=None, next_exp_concept_set_path="/home/shivank2/gokhale_user/shivanand/icarl-pytorch/data/concept_sets/decider_cifar100_concepts.json", indices=task_labels, device=model.device)                                                                                                                                                                                                                                                                    
+                        # print("Scores:", scores)
+                        # scores = scores.tolist()
+                        scores = torch.tensor(scores, dtype=torch.float)
+                        # scores = rank_based_normalize(scores)
+                        scores = [score.item() for score in scores]
+                            
+                        scores_dict = dict(zip(up_task_labels, scores))
+                        
+                        #HW2
+                        # per_label_weights = [(scores_dict[j] *(1-  (epoch/(dataset_setting.n_epochs-1)) ) )  + ((epoch/(dataset_setting.n_epochs-1))*(1/10)) for j in up_task_labels]
+                        #HW3
+                        per_label_weights = [((1/10) *(1-  (epoch/(args.n_epochs-1)) ) )  + ((epoch/(args.n_epochs-1))* scores_dict[j]) for j in up_task_labels]
+                        # per_label_weights = [scores_dict[j] for j in task_labels]
+                        #rand
+                        # random_scores = [random.uniform(0, 1) for j in task_labels]
+                        # random_scores_dict = dict(zip(task_labels, random_scores))
+                        # per_label_weights = [((1/10) *(1-  (epoch/(epochs-1)) ) )  + ((epoch/(epochs-1))* random_scores_dict[j]) for j in task_labels]
+
+                        
+                        per_label_weights_dict = dict(zip(up_task_labels, per_label_weights))
+                        sample_weights=[]
+                        # I am assigning the weights to the samples based on the scores of the concepts
+                        for label in each_labels:
+                            if label in up_task_labels:
+                                # print("0:yess")
+                                sample_weights.append(per_label_weights_dict[label])
+                            else:
+                                # sample_weights.append(1/(10* task_idx))
+                                # print("1:yess")
+                                sample_weights.append(1)    
+                        # sample_weights = [per_label_weights[label] for label in each_labels]
+                        sampler = torch.utils.data.sampler.WeightedRandomSampler(sample_weights, len(sample_weights), replacement=True)
+                        train_loader = torch.utils.data.DataLoader(dataset.train_loader.dataset, batch_size=args.batch_size, sampler=sampler, num_workers=4)
+
                     model.begin_epoch(epoch, dataset)
 
                     train_pbar.set_description(f"Task {t + 1} - Epoch {epoch + 1}")
