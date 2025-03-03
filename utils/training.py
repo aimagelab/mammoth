@@ -9,8 +9,7 @@ import math
 import os
 import sys
 from argparse import Namespace
-from time import time
-from typing import Iterable, Tuple
+from typing import Iterable
 import logging
 import torch
 from tqdm import tqdm
@@ -23,7 +22,7 @@ from models.utils.future_model import FutureModel
 
 from utils import disable_logging
 from utils.checkpoints import mammoth_load_checkpoint, save_mammoth_checkpoint
-from utils.loggers import log_extra_metrics, log_accs, Logger
+from utils.loggers import log_extra_metrics, Logger
 from utils.schedulers import get_scheduler
 from utils.stats import track_system_stats
 
@@ -80,10 +79,7 @@ def train_single_epoch(model: ContinualModel,
         the number of iterations performed in the current epoch
     """
     train_iter = iter(train_loader)
-    epoch_len = len(train_loader) if hasattr(train_loader, "__len__") else None
-
     i = 0
-    previous_time = time()
 
     while True:
         try:
@@ -116,13 +112,7 @@ def train_single_epoch(model: ContinualModel,
         system_tracker()
         i += 1
 
-        time_diff = time() - previous_time
-        previous_time = time()
-        bar_log = {'loss': loss, 'lr': model.opt.param_groups[0]['lr']}
-        if epoch_len:
-            ep_h = 3600 / (epoch_len * time_diff)
-            bar_log['ep/h'] = ep_h
-        pbar.set_postfix(bar_log, refresh=False)
+        pbar.set_postfix({'loss': loss, 'lr': model.opt.param_groups[0]['lr']}, refresh=False)
         pbar.update()
 
     if scheduler is not None and args.scheduler_mode == 'epoch':
@@ -207,8 +197,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     random_res_class, random_res_task = dataset.evaluate(model, dataset, last=True)  # the ugliness of this line is for backward compatibility
                     random_results_class.append(random_res_class)
                     random_results_task.append(random_res_task)
-                except Exception as e:
-                    logging.info(f"Could not evaluate before `begin_task`, will try after")
+                except Exception:
+                    logging.info("Could not evaluate before `begin_task`, will try after")
                     # will try after the begin_task in case the model needs to setup something
                     can_compute_fwd_beforetask = False
 
