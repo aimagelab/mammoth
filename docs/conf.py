@@ -14,7 +14,7 @@ from jinja2.filters import FILTERS
 import torch
 
 mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(mammoth_path)
+sys.path.insert(0, mammoth_path)
 os.chdir(mammoth_path)
 
 from datetime import date
@@ -42,8 +42,8 @@ github_repository = 'mammoth'
 
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
-    'torch': ('https://pytorch.org/docs/master/', None),
-    'torchvision': ('https://pytorch.org/docs/master/', None),
+    'torch': ('https://packaging.python.org/en/latest/', None),
+    'torchvision': ('https://packaging.python.org/en/latest/', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
 }
 
@@ -87,7 +87,7 @@ pygments_style = 'friendly'
 html_theme = "furo"
 html_title = "Mammoth"
 html_static_path = ['_static']
-html_favicon = '_static/logo.png'
+html_favicon = '_static/mammoth_logo.svg'
 
 autosummary_generate = True
 numpydoc_show_class_members = False

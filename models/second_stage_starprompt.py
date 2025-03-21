@@ -127,7 +127,7 @@ class SecondStageStarprompt(ContinualModel):
 
         for _ti in range(self.current_task + 1):
 
-            prev_t_size, cur_t_size = self.compute_offsets(_ti)
+            prev_t_size, cur_t_size = self.get_offsets(_ti)
 
             for class_idx in range(prev_t_size, cur_t_size):
                 current_samples = self.distributions[class_idx](self.args.num_samples_gr)

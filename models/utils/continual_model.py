@@ -297,7 +297,7 @@ class ContinualModel(nn.Module):
             raise ValueError('Unknown optimizer: {}'.format(self.args.optimizer))
         return opt
 
-    def compute_offsets(self, task: int) -> Tuple[int, int]:
+    def get_offsets(self, task: int) -> Tuple[int, int]:
         """
         Compute the start and end offset given the task.
 
@@ -431,7 +431,7 @@ class ContinualModel(nn.Module):
         self._epoch_iteration = 0
         self._past_epoch = 0
         self._n_classes_current_task = self._cpt if isinstance(self._cpt, int) else self._cpt[self._current_task]
-        self._n_past_classes, self._n_seen_classes = self.compute_offsets(self._current_task)
+        self._n_past_classes, self._n_seen_classes = self.get_offsets(self._current_task)
         self._n_remaining_classes = self.N_CLASSES - self._n_seen_classes
 
         # reload optimizer if the model has no scheduler

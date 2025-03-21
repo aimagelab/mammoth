@@ -2,8 +2,6 @@ import logging
 import torch
 from argparse import ArgumentParser
 
-import torch
-
 from models.star_prompt_utils.end_to_end_model import STARPromptModel
 from models.utils.continual_model import ContinualModel
 from utils import binary_to_boolean_type

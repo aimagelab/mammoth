@@ -1,5 +1,6 @@
 <p align="center">
-  <img width="230" height="230" src="docs/_static/logo.png" alt="logo">
+  <!-- <img width="230" height="230" src="docs/_static/logo.png" alt="logo"> -->
+  <img width="1000" height="200" src="docs/_static/mammoth_banner.svg" alt="logo">
 </p>
 
 <p align="center">
@@ -10,7 +11,7 @@
 
 # Mammoth - An Extendible (General) Continual Learning Framework for Pytorch
 
-Mammoth is a framework for continual learning research. With **more than 50 methods and 20 datasets**, it includes the most complete list competitors and benchmarks for research purposes.
+Mammoth is a framework for continual learning research. With **more than 60 methods and 20 datasets**, it includes the most complete list competitors and benchmarks for research purposes.
 
 The core idea of Mammoth is that it is designed to be modular, easy to extend, and - most importantly - _easy to debug_.
 Ideally, all the code necessary to run the experiments is included _in the repository_, without needing to check out other repositories or install additional packages.
@@ -30,7 +31,7 @@ With Mammoth, nothing is set in stone. You can easily add new models, datasets, 
 
 ## Setup
 
-- Install with `pip install -r requirements.txt`. NOTE: Pytorch version >= 2.1.0 is required for scaled_dot_product_attention (see: https://github.com/Lightning-AI/litgpt/issues/763). If you cannot support this requirement, uncomment the lines 136-139 under `scaled_dot_product_attention` in `backbone/vit.py`.
+- Install with `pip install -r requirements.txt`. NOTE: PyTorch version >= 2.1.0 is required for scaled_dot_product_attention (see: https://github.com/Lightning-AI/litgpt/issues/763). If you cannot support this requirement, uncomment the lines 136-139 under `scaled_dot_product_attention` in `backbone/vit.py`.
 - Use `main.py` or `./utils/main.py` to run experiments.
 - New models can be added to the `models/` folder.
 - New datasets can be added to the `datasets/` folder.
@@ -48,7 +49,7 @@ All the new additions will try to preserve the current structure of the reposito
 
 ## Models
 
-Mammoth currently supports **more than 50** models, with new releases covering the main competitors in literature.
+Mammoth currently supports **more than 60** models, with new releases covering the main competitors in literature.
 
 - Efficient Lifelong Learning with A-GEM (A-GEM, A-GEM-R - A-GEM with reservoir buffer): `agem`, `agem_r`.
 - AttriCLIP: A Non-Incremental Learner for Incremental Knowledge Learning (AttriCLIP): `attriclip`.
@@ -102,7 +103,7 @@ Mammoth currently supports **more than 50** models, with new releases covering t
 - This can be changed by changing the `base_path` function in `utils/conf.py` or using the `--base_path` argument.
 - The `data/` folder should not be tracked by git and is created automatically if missing.
 
-Mammoth currently includes **21** datasets, covering *toy classification problems* (different versions of MNIST), *standard domains* (CIFAR, Imagenet-R, TinyImagenet, MIT-67), *fine-grained classification domains* (Cars-196, CUB-200), *aerial domains* (EuroSAT-RGB, Resisc45), *medical domains* (CropDisease, ISIC, ChestX).
+Mammoth currently includes **23** datasets, covering *toy classification problems* (different versions of MNIST), *standard domains* (CIFAR, Imagenet-R, TinyImagenet, MIT-67), *fine-grained classification domains* (Cars-196, CUB-200), *aerial domains* (EuroSAT-RGB, Resisc45), *medical domains* (CropDisease, ISIC, ChestX).
 
 - Sequential MNIST (_Class-Il / Task-IL_): `seq-mnist`.
 - Permuted MNIST (_Domain-IL_): `perm-mnist`.

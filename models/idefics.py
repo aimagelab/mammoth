@@ -17,8 +17,8 @@ except ImportError:
 try:
     from transformers import BitsAndBytesConfig, IdeficsForVisionText2Text, AutoProcessor
     from transformers.generation import GenerationConfig
-except ImportError:
-    raise ImportError("Please install the HuggingFace Transformers package by running: pip install transformers")
+except ImportError as err:
+    raise ImportError("Please install the HuggingFace Transformers package by running: pip install transformers>=4.49.0")
 
 from datasets.utils.continual_dataset import ContinualDataset
 from models.utils.continual_model import ContinualModel
