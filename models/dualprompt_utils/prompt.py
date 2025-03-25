@@ -120,10 +120,10 @@ class EPrompt(nn.Module):
                 num_layers, dual, batch_size, top_k, length, num_heads, heads_embed_dim = batched_prompt_raw.shape
                 if self.use_permute_fix:  # this fixes issue #56
                     batched_prompt_raw = batched_prompt_raw.permute(0, 2, 1, 3, 4, 5, 6)
-                else:  # this follows the original implementation from https://github.dev/google-research/l2p
-                    batched_prompt = batched_prompt_raw.reshape(
-                        num_layers, batch_size, dual, top_k * length, num_heads, heads_embed_dim
-                    )
+                # else this follows the original implementation from https://github.dev/google-research/l2p
+                batched_prompt = batched_prompt_raw.reshape(
+                    num_layers, batch_size, dual, top_k * length, num_heads, heads_embed_dim
+                )
             else:
                 batched_prompt_raw = self.prompt[:, idx]
                 num_layers, batch_size, top_k, length, embed_dim = batched_prompt_raw.shape
