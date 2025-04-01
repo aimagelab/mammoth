@@ -330,6 +330,21 @@ class ContinualModel(nn.Module):
         """
         pass
 
+    def meta_begin_epoch(self, epoch: int, dataset: 'ContinualDataset') -> None:
+        """
+        Wrapper for `begin_epoch` method.
+
+        Takes care of dropping updating some counters.
+        """
+        self._epoch_iteration = 0
+        self.end_epoch(epoch, dataset)
+
+    def meta_end_epoch(self, epoch: int, dataset: 'ContinualDataset') -> None:
+        """
+        Wrapper for `end_epoch` method.
+        """
+        self.end_epoch(epoch, dataset)
+
     def begin_epoch(self, epoch: int, dataset: 'ContinualDataset') -> None:
         """
         Prepares the model for the current epoch.

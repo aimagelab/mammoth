@@ -21,14 +21,14 @@ from torch.nn.functional import softmax
 
 def get_fisher_caller(args):
     if args.augmented_reg == 0:
-        fisher_caller = partial(UnbiasedFisherModule, ewc_lambda=args.ewc_lambda, use_identity=args.fisher_type == 'identity')
+        fisher_caller = partial(UnbiasedFisherModule, ewc_lambda=args.ewc_lambda)
     elif args.augmented_reg == 1:
         if args.ewc_ensemble_mode == 0:
             fisher_caller = partial(AugmentedFisherModule, ewc_lambda=args.ewc_lambda,
-                                    ewc_alpha=args.ewc_alpha, ewc_prior=args.ewc_prior, use_identity=args.fisher_type == 'identity')
+                                    ewc_alpha=args.ewc_alpha, ewc_prior=args.ewc_prior)
         elif args.ewc_ensemble_mode == 1:
             fisher_caller = partial(CombinedFisherModule, ewc_lambda=args.ewc_lambda,
-                                    ewc_alpha=args.ewc_alpha, ewc_prior=args.ewc_prior, use_identity=args.fisher_type == 'identity')
+                                    ewc_alpha=args.ewc_alpha, ewc_prior=args.ewc_prior)
         else:
             raise ValueError
     else:
@@ -119,7 +119,7 @@ class Model(torch.nn.Module):
         })
 
         self.fisher_dict_cls = torch.nn.ModuleDict({
-            n: UnbiasedFisherModule(p, args.ewc_cls_lambda, args.ewc_cls_prior, use_identity=False)
+            n: UnbiasedFisherModule(p, args.ewc_cls_lambda, args.ewc_cls_prior)
             for n, p in self.vit.head.heads[self.current_task].named_parameters()
         })
 
@@ -133,7 +133,7 @@ class Model(torch.nn.Module):
         if self.current_task > 0:
             device = self.fisher_dict_cls.weight.unnormalized_fisher.device
             self.fisher_dict_cls.update({
-                n: UnbiasedFisherModule(p, self.ewc_cls_lambda, self.ewc_cls_prior, use_identity=False).to(device)
+                n: UnbiasedFisherModule(p, self.ewc_cls_lambda, self.ewc_cls_prior).to(device)
                 for n, p in self.vit.head.heads[self.current_task].named_parameters()
             })
 
@@ -361,21 +361,6 @@ class Model(torch.nn.Module):
             param.requires_grad = req_grad
 
         return fisher, fisher_cls, num_of_examples
-
-    def __identity_fisher(self, param_lored, param_resolution_dict,
-                          param_cls, param_resolution_dict_cls,
-                          dataset, debug_mode: bool = False):
-        fisher = {
-            param_resolution_dict[n]: torch.ones_like(p) * len(dataset.train_loader.dataset)
-            for (n, p) in param_lored.items()
-        }
-
-        fisher_cls = {
-            param_resolution_dict_cls[n]: torch.ones_like(p) * len(dataset.train_loader.dataset)
-            for (n, p) in param_cls.items()
-        }
-
-        return fisher, fisher_cls, len(dataset.train_loader.dataset)
 
     def __compute_fisher_autograd(self, param_lored, param_resolution_dict,
                                   param_cls, param_resolution_dict_cls,

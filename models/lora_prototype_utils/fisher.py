@@ -3,14 +3,13 @@ import torch
 
 class UnbiasedFisherModule(torch.nn.Module):
 
-    def __init__(self, p, ewc_lambda: float, ewc_prior: float = 0.0, use_identity=False):
+    def __init__(self, p, ewc_lambda: float, ewc_prior: float = 0.0):
 
         super().__init__()
         self.register_buffer(f'unnormalized_fisher', torch.zeros(p.shape))
         self.num_elems = self.unnormalized_fisher.numel()
         self.num_examples = 0
         self.current_task = -1
-        self.use_identity = use_identity
 
         self.register_buffer('ewc_lambda', torch.ones(1) * ewc_lambda)
         self.register_buffer('ewc_prior', torch.ones(1) * ewc_prior)
@@ -64,8 +63,6 @@ class UnbiasedFisherModule(torch.nn.Module):
         return self.get_fisher_matrix().sum()
 
     def dist(self, delta):
-        if self.use_identity:
-            return (delta.pow(2)).sum()
         return (self.get_fisher_matrix().unsqueeze(0) *
                 delta.pow(2)).sum(dim=self.shape_sum)
 
@@ -93,7 +90,7 @@ class UnbiasedFisherModule(torch.nn.Module):
 class CombinedFisherModule(torch.nn.Module):
 
     def __init__(self, p, ewc_lambda: float,
-                 ewc_alpha: float, ewc_prior: float, use_identity=False):
+                 ewc_alpha: float, ewc_prior: float):
 
         super().__init__()
 
@@ -105,7 +102,6 @@ class CombinedFisherModule(torch.nn.Module):
         self.num_elems = self.unnormalized_fisher_pretrain.numel()
         self.num_examples = 0
         self.current_task = -1
-        self.use_identity = use_identity
 
         self.register_buffer('ewc_lambda', torch.ones(1) * ewc_lambda)
         self.register_buffer('ewc_alpha', torch.ones(1) * ewc_alpha)
@@ -172,8 +168,6 @@ class CombinedFisherModule(torch.nn.Module):
         return self.get_fisher_matrix().sum()
 
     def dist(self, delta):
-        if self.use_identity:
-            return (delta.pow(2)).sum()
         return (self.get_fisher_matrix().unsqueeze(0) *
                 delta.pow(2)).sum(dim=self.shape_sum)
 
@@ -201,12 +195,10 @@ class CombinedFisherModule(torch.nn.Module):
 class AugmentedFisherModule(torch.nn.Module):
 
     def __init__(self, p, ewc_lambda: float,
-                 ewc_alpha: float, ewc_prior: float, use_identity=False):
+                 ewc_alpha: float, ewc_prior: float):
 
         super().__init__()
         assert ewc_prior >= 0
-
-        self.use_identity = use_identity
 
         self.register_buffer(f'unnormalized_fisher', ewc_prior * torch.ones(p.shape))
         self.register_buffer(f'unnormalized_fisher_current', torch.zeros(p.shape))
@@ -285,8 +277,6 @@ class AugmentedFisherModule(torch.nn.Module):
         return self.get_fisher_matrix().sum()
 
     def dist(self, delta):
-        if self.use_identity:
-            return (delta.pow(2)).sum()
         return (self.get_fisher_matrix().unsqueeze(0) *
                 delta.pow(2)).sum(dim=self.shape_sum)
 

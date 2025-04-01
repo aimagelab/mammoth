@@ -4,6 +4,7 @@ from collections import defaultdict
 from models.lora_prototype_utils.utils import get_parameter
 from models.lora_prototype_utils.loralib.utils import _set_grad_to_zero
 
+
 class FullLorer(torch.nn.Module):
 
     def __init__(self, args, device, seq_dataset, embed_dim, mlp_ratio):
@@ -45,10 +46,10 @@ class FullLorer(torch.nn.Module):
                 setattr(self, f'B_fc2_{l}_{t}', BA_fc2)
 
                 if t == 0:
-                    self.register_buffer(f'base_B_qkv_{l}_{t}',   torch.zeros(BA_qkv.shape))
-                    self.register_buffer(f'base_B_proj_{l}_{t}',  torch.zeros(BA_proj.shape))
-                    self.register_buffer(f'base_B_fc1_{l}_{t}',   torch.zeros(BA_fc1.shape))
-                    self.register_buffer(f'base_B_fc2_{l}_{t}',   torch.zeros(BA_fc2.shape))
+                    self.register_buffer(f'base_B_qkv_{l}_{t}', torch.zeros(BA_qkv.shape))
+                    self.register_buffer(f'base_B_proj_{l}_{t}', torch.zeros(BA_proj.shape))
+                    self.register_buffer(f'base_B_fc1_{l}_{t}', torch.zeros(BA_fc1.shape))
+                    self.register_buffer(f'base_B_fc2_{l}_{t}', torch.zeros(BA_fc2.shape))
                     self.register_buffer(f'basegrad_B_qkv_{l}_{t}', torch.zeros(BA_qkv.shape))
                     self.register_buffer(f'basegrad_B_proj_{l}_{t}', torch.zeros(BA_proj.shape))
                     self.register_buffer(f'basegrad_B_fc1_{l}_{t}', torch.zeros(BA_fc1.shape))
@@ -175,7 +176,7 @@ class FullLorer(torch.nn.Module):
 
                 fmod = fisher_dict[f'{op}_{layer_idx}']
 
-                current_reg_loss = 0.5 * ((1-self.ratio) * (ewc_lambda * fmod.dist(nets))).sum()
+                current_reg_loss = 0.5 * ((1 - self.ratio) * (ewc_lambda * fmod.dist(nets))).sum()
                 current_dp_loss = 0.
 
                 with torch.no_grad():
@@ -197,38 +198,8 @@ class FullLorer(torch.nn.Module):
 
         return reg_term, dotprod_term
 
-    def compute_identity_fisher(self):
-        reg_term = torch.zeros(1)
-        lora_config = self.get_lora_config()
-
-        for op in ['qkv', 'proj', 'fc1', 'fc2']:
-
-            B_op = f'B_{op}'
-
-            if not lora_config[B_op][0]:
-                continue
-
-            for layer_idx in self.lora_layers:
-
-                my_var = self._get_matrix(B_op, layer_idx, self.current_task)
-
-                _set_grad_to_zero(my_var)
-
-                nets = self._get_matrix(B_op, layer_idx, self.current_task)
-                
-                base_loss = nets.pow(2).sum()
-                if self.args.ewc_alpha != 0:
-                    loss = self.args.ewc_alpha * base_loss
-                    loss.backward()
-                reg_term += base_loss.detach().cpu()
-
-        return reg_term
-
     def compute_fisher_loss(self, fisher_dict,
                             do_backward, do_loss_computation: bool = False):
-        if self.args.fisher_type == 'identity':
-            reg_term = self.compute_identity_fisher()
-            return reg_term, torch.zeros(1)
 
         if do_backward:
             self.fisher_loss_v1(fisher_dict)
@@ -246,7 +217,7 @@ class FullLorer(torch.nn.Module):
         return getattr(self, f'{namevar}_{layer_idx}_{task_idx}')
 
     def get_lora_matrices(self, train=True, task_weights=None):
-         return {
+        return {
             layer_idx: self.get_lora_matrices_by_layer(layer_idx, train)
             for layer_idx in self.lora_layers
         }
@@ -283,7 +254,7 @@ class FullLorer(torch.nn.Module):
 
         mats_past = getattr(self, f'base_{namevar}_{layer_idx}_0')
 
-        return mats_past + m * (1/(self.current_task+1))
+        return mats_past + m * (1 / (self.current_task + 1))
 
     def get_params_with_lora(self):
 
@@ -304,8 +275,8 @@ class FullLorer(torch.nn.Module):
 
     def build_lora_config(self):
         return {
-            'B_qkv':  [self.enable_lora_qkv],
+            'B_qkv': [self.enable_lora_qkv],
             'B_proj': [self.enable_lora_proj],
-            'B_fc1':  [self.enable_lora_fc],
-            'B_fc2':  [self.enable_lora_fc]
+            'B_fc1': [self.enable_lora_fc],
+            'B_fc2': [self.enable_lora_fc]
         }

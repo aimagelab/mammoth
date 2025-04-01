@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 from argparse import ArgumentParser
+import math
 import os
 import warnings
 import torch
@@ -12,6 +13,7 @@ import wandb
 from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 from copy import deepcopy
 from torch.utils.data import DataLoader
+from torch.optim.lr_scheduler import LRScheduler
 
 from datasets import get_dataset_class
 
@@ -23,7 +25,30 @@ from models.lora_prototype_utils.utils import AlignmentLoss
 from models.lora_prototype_utils.utils import linear_probing_epoch
 
 from utils import none_or_float
-from utils.schedulers import CosineSchedule
+
+
+class CosineSchedule(LRScheduler):
+
+    def __init__(self, optimizer, K, last_epoch=-1):
+        self.K = K
+        super().__init__(optimizer, last_epoch)
+        self.step(last_epoch + 1)
+        self.last_epoch = last_epoch
+
+    def cosine(self, base_lr):
+        if self.last_epoch == 0:
+            return base_lr
+        return base_lr * math.cos((99 * math.pi * (self.last_epoch)) / (200 * (self.K - 1)))
+
+    def get_lr(self):
+        return [self.cosine(base_lr) for base_lr in self.base_lrs]
+
+    def step(self, epoch=None):
+        if epoch is None:
+            epoch = self.last_epoch + 1
+        self.last_epoch = epoch
+        for param_group, lr in zip(self.optimizer.param_groups, self.get_lr()):
+            param_group['lr'] = lr
 
 
 def add_slca_args(parser, defaults=None):
@@ -66,7 +91,7 @@ def add_slca_args(parser, defaults=None):
     parser.add_argument("--momentum_alignment", type=float, default=0.0,
                         help="Learning rate for CA. Original paper 0.9.")
     parser.add_argument("--learning_rate_scheduler_alignment", type=str, default='none',
-                        choices=['none', 'cosine'], help="Lr scheduler for CA.")
+                        choices=['none', 'cosine'], help="Lr csscheduler for CA.")
     parser.add_argument('--decay_means_alignment', type=int, choices=[0, 1], default=0,
                         help='Apply time-dependent decay on means for CA. Original paper 1.')
     parser.add_argument('--weight_decay_alignment', type=float, default=0.0,
@@ -144,8 +169,6 @@ class SecondOrder(ContinualModel):
                             help="backbone type")
         parser.add_argument('--pret', type=str, default='in21k',
                             choices=['in21k_ft_in1k', 'in21k'])
-        parser.add_argument('--load_from_pret', type=str, default=None,)
-        parser.add_argument('--train_classifier', type=int, choices=[0, 1], default=1)
 
         # EWC REG
         parser.add_argument('--ewc_ensemble_mode', type=int,
@@ -206,8 +229,6 @@ class SecondOrder(ContinualModel):
         # TRAINING AS OPEN CLASSIFIER
         parser.add_argument('--semantic_classifier', type=int, choices=[0, 1], default=0)
         parser.add_argument('--tau', type=float, default=20.)
-
-        parser.add_argument('--mask_group_specialize_acc', type=int, default=0, choices=[0, 1, 2])
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset):
@@ -238,9 +259,6 @@ class SecondOrder(ContinualModel):
         pretrain_distributions = [self_distr() for _ in range(self.num_classes)]
         self.pretrain_distributions = torch.nn.ModuleList(pretrain_distributions).to(self.device)
 
-        self.old_epoch, self.iteration = 0, 0
-        self.scheduler = None
-
         self.use_wandb = self.args.nowand == 0
 
         self.alignment_loss = AlignmentLoss(args, self.dataset, self.device)
@@ -267,19 +285,7 @@ class SecondOrder(ContinualModel):
         # todo: remove, mantained only for retrocompatibility
         # assert args.pretrain_heads == 0
         assert args.lrw_scaler == 1.0
-        assert not hasattr(args, 'ewc_cls_strategy') or args.ewc_cls_strategy == 'generative'
-
-        if self.args.load_from_pret:
-            assert os.path.exists(self.args.load_from_pret)
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                st = torch.load(self.args.load_from_pret, map_location='cpu')
-                st = {k.replace('net.', 'vit.'): v for k, v in st.items()}
-                missing, unexp = self.net.load_state_dict(st, strict=False)
-                assert len([m for m in missing if 'head' not in m and 'lorer' not in m and 'fisher' not in m]) == 0
-                assert len([u for u in unexp if 'head' not in u]) == 0
-
-                self.pt_classifier = (st['vit.head.weight'], st['vit.head.bias'])
+        assert args.ewc_cls_strategy == 'generative'
 
     @torch.no_grad()
     def create_synthetic_features_dataset(self, distributions_to_sample_from=None, upto: int = None):
@@ -426,7 +432,7 @@ class SecondOrder(ContinualModel):
 
     def backup(self):
         print(f"BACKUP: Task - {self.current_task} - classes from "
-              f"{self.n_past_classes} - to {self.n_seen_classes}")
+              f"{self.offset_1} - to {self.offset_2}")
         self.net.vit.head.backup()
 
     def recall(self):
@@ -460,8 +466,6 @@ class SecondOrder(ContinualModel):
     def pretuning(self, dataset):
         self.compute_statistics(dataset, self.pretrain_distributions,
                                 use_lora=False)
-        if self.args.load_from_pret:
-            return
 
         lr = self.args.learning_rate_pretuning
         num_epochs = self.args.num_epochs_pretuning
@@ -532,28 +536,20 @@ class SecondOrder(ContinualModel):
         if not hasattr(self.args, 'load_only') or not self.args.load_only:
             self.pretuning(dataset)
 
-        if self.args.load_from_pret:
-            self.pretraining_classifier.heads[self.current_task].weight.data.copy_(self.pt_classifier[0][self.n_past_classes:self.n_seen_classes])
-            self.pretraining_classifier.heads[self.current_task].bias.data.copy_(self.pt_classifier[1][self.n_past_classes:self.n_seen_classes])
-
         if self.args.pretrain_heads == 1:
             self.net.vit.head.assign(self.pretraining_classifier,
                                      which_heads=[self.current_task])
 
         if not hasattr(self.args, 'load_only') or not self.args.load_only:
-            self.net.vit.head.requires_grad_(True)
             self.update_statistics(dataset)
-
-        if self.args.load_from_pret:
-            self.net.vit.head.requires_grad_(self.args.train_classifier == 1)
 
         if hasattr(self, 'opt'):
             self.opt.zero_grad()
             del self.opt
 
         self.opt = self.get_optimizer()
-        self.scheduler = self.get_scheduler(self.args.sched_type)
-        self.old_epoch, self.iteration = 0, 0
+        self.csscheduler = self.get_scheduler(self.args.sched_type)
+        self.old_epoch, self.iteration = -1, 0
 
         if self.buffergrad is not None:
             del self.buffergrad
@@ -675,16 +671,16 @@ class SecondOrder(ContinualModel):
 
         lr = 1.0
 
-        if self.scheduler is not None:
+        if self.csscheduler is not None:
             if self.args.sched_type == 'cosine':
-                base_lr = self.scheduler.base_lrs[id_group]
-                lr = self.scheduler.get_lr()[id_group] / base_lr
+                base_lr = self.csscheduler.base_lrs[id_group]
+                lr = self.csscheduler.get_lr()[id_group] / base_lr
             elif self.args.sched_type == 'cosine_warmup':
-                base_lr = self.scheduler._schedulers[1].base_lrs[id_group]
-                lr = self.scheduler.get_last_lr()[id_group] / base_lr
+                base_lr = self.csscheduler._schedulers[1].base_lrs[id_group]
+                lr = self.csscheduler.get_last_lr()[id_group] / base_lr
             else:
-                base_lr = self.scheduler.base_lrs[id_group]
-                lr = self.scheduler.get_last_lr()[id_group] / base_lr
+                base_lr = self.csscheduler.base_lrs[id_group]
+                lr = self.csscheduler.get_last_lr()[id_group] / base_lr
 
         self._apply_grads(lr, self.opt.param_groups[id_group]['params'],
                           clip_grad=self.args.clip_grad)
@@ -692,11 +688,12 @@ class SecondOrder(ContinualModel):
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         labels = labels.long()
 
-        if self.scheduler and self.old_epoch != epoch:
+        if self.csscheduler and self.old_epoch != epoch:
             if epoch > 0:
-                self.scheduler.step()
+                self.csscheduler.step()
             self.old_epoch = epoch
             self.iteration = 0
+            print("current lr:", [g['lr'] for g in self.opt.param_groups])
 
         self.net.iteration = self.iteration
 
@@ -737,13 +734,10 @@ class SecondOrder(ContinualModel):
                     self.net.compute_reg_loss(do_backward=self.ewc_loss_is_active,
                                               do_loss_computation=True)
 
-            if self.args.train_classifier:
-                with torch.set_grad_enabled(self.ewc_loss_cls_is_active):
-                    reg_cls = self.net.compute_classifier_reg_loss(
-                        cls_ref=self.pretraining_classifier,
-                        do_backward=self.ewc_loss_cls_is_active)
-            else:
-                reg_cls = torch.tensor(0.)
+            with torch.set_grad_enabled(self.ewc_loss_cls_is_active):
+                reg_cls = self.net.compute_classifier_reg_loss(
+                    cls_ref=self.pretraining_classifier,
+                    do_backward=self.ewc_loss_cls_is_active)
 
             with torch.no_grad():
                 log_dict['reg_loss'] = reg_loss.detach()
@@ -765,9 +759,8 @@ class SecondOrder(ContinualModel):
             self.opt.step()
             self.opt.zero_grad()
 
-        self.iteration += 1
-
         if self.use_wandb:
             wandb.log(log_dict)
+        self.iteration += 1
 
         return loss.item()

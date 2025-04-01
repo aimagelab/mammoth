@@ -244,14 +244,14 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     logging.info(f"Task {t + 1}")  # at least print the task number
 
                 while True:
-                    model.begin_epoch(epoch, dataset)
+                    model.meta_begin_epoch(epoch, dataset)
 
                     train_pbar.set_description(f"Task {t + 1} - Epoch {epoch + 1}")
 
                     train_single_epoch(model, train_loader, args, pbar=train_pbar, epoch=epoch,
                                        system_tracker=system_tracker, scheduler=scheduler)
 
-                    model.end_epoch(epoch, dataset)
+                    model.meta_end_epoch(epoch, dataset)
 
                     epoch += 1
                     if args.fitting_mode == 'epochs' and epoch >= model.args.n_epochs:

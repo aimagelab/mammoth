@@ -243,40 +243,8 @@ class TaskLorer(torch.nn.Module):
 
         return reg_term, dotprod_term
 
-    def compute_identity_fisher(self):
-        reg_term = torch.zeros(1)
-        lora_config = self.get_lora_config()
-
-        for op in ['qkv', 'proj', 'fc1', 'fc2']:
-
-            A_op, B_op = f'A_{op}', f'B_{op}'
-
-            enable_op = lora_config[A_op][0] and lora_config[B_op][0]
-
-            if not enable_op:
-                continue
-
-            for layer_idx in self.lora_layers:
-                var_A = getattr(self, f'A_{op}_{layer_idx}_{self.current_task}')
-                var_B = getattr(self, f'B_{op}_{layer_idx}_{self.current_task}')
-
-                _set_grad_to_zero(var_A)
-                _set_grad_to_zero(var_B)
-
-                nets = self._get_by_op_layer_and_task(op, layer_idx, self.current_task)
-                base_loss = nets.pow(2).sum()
-                if self.args.ewc_alpha != 0:
-                    loss = self.args.ewc_alpha * base_loss
-                    loss.backward()
-                reg_term += base_loss.detach().cpu()
-
-        return reg_term
-
     def compute_fisher_loss(self, fisher_dict, do_backward,
                             do_loss_computation: bool = False):
-        if self.args.fisher_type == 'identity':
-            reg_term = self.compute_identity_fisher()
-            return reg_term, torch.zeros(1)
 
         if do_backward:
             self.fisher_loss_v1(fisher_dict)
@@ -301,9 +269,9 @@ class TaskLorer(torch.nn.Module):
     def _get_matrix(self, namevar, layer_idx, task_idx):
         return getattr(self, f'{namevar}_{layer_idx}_{task_idx}')
 
-    def get_lora_matrices(self, train=True, task_weights=None, retain_grad=False):
+    def get_lora_matrices(self, train=True, task_weights=None):
         return {
-            layer_idx: self.get_lora_matrices_by_layer(layer_idx, train, task_weights=task_weights[layer_idx] if task_weights is not None else None, retain_grad=retain_grad)
+            layer_idx: self.get_lora_matrices_by_layer(layer_idx, train, task_weights=task_weights[layer_idx] if task_weights is not None else None)
             for layer_idx in self.lora_layers
         }
 
@@ -314,7 +282,7 @@ class TaskLorer(torch.nn.Module):
         weights = self.ones_buffer[:(self.current_task + 1)] / (self.current_task + 1)
         return weights.unsqueeze(-1).unsqueeze(-1)
 
-    def get_lora_matrices_by_layer(self, layer_idx, train, task_weights=None, retain_grad=False):
+    def get_lora_matrices_by_layer(self, layer_idx, train, task_weights=None):
 
         params_dict = {
             loravar: [self._gather_matrices(layer_idx, loravar, train)
@@ -342,14 +310,9 @@ class TaskLorer(torch.nn.Module):
                 w = weights * task_weights[:, None, None]
             else:
                 w = weights
-            A: torch.Tensor = A_m * w
-            B: torch.Tensor = B_m
-            if retain_grad:
-                A.retain_grad()
-                B.retain_grad()
             m[op] = {
-                "B": B,
-                "A": A
+                "B": B_m,
+                "A": A_m * w
             }
 
         return m
