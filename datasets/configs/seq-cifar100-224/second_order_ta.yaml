@@ -7,6 +7,7 @@ STD: [0.5, 0.5, 0.5]
 TRANSFORM:
     - RandomResizedCrop:
         size: 224
+        interpolation: 3
     - RandomHorizontalFlip
     - ToTensor
     - Normalize:

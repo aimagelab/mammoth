@@ -693,7 +693,6 @@ class SecondOrder(ContinualModel):
                 self.csscheduler.step()
             self.old_epoch = epoch
             self.iteration = 0
-            print("current lr:", [g['lr'] for g in self.opt.param_groups])
 
         self.net.iteration = self.iteration
 
