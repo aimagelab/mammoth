@@ -69,7 +69,7 @@ class CodaPrompt(ContinualModel):
             self.net.prompt.process_task_count()
             self.opt = self.get_optimizer()
 
-        self.scheduler = CosineSchedule(self.opt, K=self.args.n_epochs)
+        self.custom_scheduler = CosineSchedule(self.opt, K=self.args.n_epochs)
 
     def observe(self, inputs, labels, not_aug_inputs, epoch=0):
         labels = labels.long()

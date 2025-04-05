@@ -2,51 +2,50 @@
 # All rights reserved.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
-from argparse import ArgumentParser
-import math
-import torch
-from collections import defaultdict
-from tqdm import tqdm
-import wandb
-from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
-from copy import deepcopy
-from torch.utils.data import DataLoader
-from torch.optim.lr_scheduler import LRScheduler
 
-from datasets import get_dataset_class
+import torch
+from argparse import ArgumentParser
 
 from models.utils.continual_model import ContinualModel
-from models.lora_prototype_utils.lora_prompt import Model
-from models.lora_prototype_utils.utils import create_optimizer
-from models.lora_prototype_utils.utils import get_dist
-from models.lora_prototype_utils.utils import AlignmentLoss
-from models.lora_prototype_utils.utils import linear_probing_epoch
+from datasets import get_dataset, get_dataset_class
 
+from models.lora_prototype_utils_v2.lora_prompt import Model
+from models.lora_prototype_utils_v2.utils import create_optimizer
+from models.lora_prototype_utils_v2.utils import get_dist
+from models.lora_prototype_utils_v2.utils import AlignmentLoss
+from models.lora_prototype_utils_v2.utils import linear_probing_epoch
+
+from collections import defaultdict
+
+from utils.schedulers import CosineSchedule
 from utils import none_or_float
 
+from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 
-class CosineSchedule(LRScheduler):
+from tqdm import tqdm
+import wandb
 
-    def __init__(self, optimizer, K, last_epoch=-1):
-        self.K = K
-        super().__init__(optimizer, last_epoch)
-        self.step(last_epoch + 1)
-        self.last_epoch = last_epoch
+from copy import deepcopy
+from torch.utils.data import DataLoader
 
-    def cosine(self, base_lr):
-        if self.last_epoch == 0:
-            return base_lr
-        return base_lr * math.cos((99 * math.pi * (self.last_epoch)) / (200 * (self.K - 1)))
 
-    def get_lr(self):
-        return [self.cosine(base_lr) for base_lr in self.base_lrs]
+class FeaturesDataset(torch.utils.data.Dataset):
 
-    def step(self, epoch=None):
-        if epoch is None:
-            epoch = self.last_epoch + 1
-        self.last_epoch = epoch
-        for param_group, lr in zip(self.optimizer.param_groups, self.get_lr()):
-            param_group['lr'] = lr
+    def __init__(self, X, y):
+        # Your code
+        self.X, self.y = X, y
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
+
+    def __len__(self):
+        return len(self.X)
+
+
+def int_or_all(x):
+    if x == 'all':
+        return x
+    return str(x)
 
 
 def add_slca_args(parser, defaults=None):
@@ -89,7 +88,7 @@ def add_slca_args(parser, defaults=None):
     parser.add_argument("--momentum_alignment", type=float, default=0.0,
                         help="Learning rate for CA. Original paper 0.9.")
     parser.add_argument("--learning_rate_scheduler_alignment", type=str, default='none',
-                        choices=['none', 'cosine'], help="Lr csscheduler for CA.")
+                        choices=['none', 'cosine'], help="Lr scheduler for CA.")
     parser.add_argument('--decay_means_alignment', type=int, choices=[0, 1], default=0,
                         help='Apply time-dependent decay on means for CA. Original paper 1.')
     parser.add_argument('--weight_decay_alignment', type=float, default=0.0,
@@ -116,35 +115,13 @@ def add_slca_args(parser, defaults=None):
     return parser
 
 
-class FeaturesDataset(torch.utils.data.Dataset):
+class SecondOrderV2(ContinualModel):
 
-    def __init__(self, X, y):
-        # Your code
-        self.X, self.y = X, y
-
-    def __getitem__(self, idx):
-        return self.X[idx], self.y[idx]
-
-    def __len__(self):
-        return len(self.X)
-
-
-def int_or_all(x):
-    if x == 'all':
-        return x
-    return str(x)
-
-
-class SecondOrder(ContinualModel):
-
-    NAME = 'second_order'
+    NAME = 'second_order_v2'
     COMPATIBILITY = ['class-il', 'domain-il', 'task-il', 'general-continual']
-    net: Model
 
     @staticmethod
     def get_parser(parser: ArgumentParser) -> ArgumentParser:
-        parser.set_defaults(pretrain_type='in21k')
-
         slca_default = {
             'use_ca': 0,
             'distr_alignment': 'mog',
@@ -230,7 +207,7 @@ class SecondOrder(ContinualModel):
         parser.add_argument('--tau', type=float, default=20.)
         return parser
 
-    def __init__(self, backbone, loss, args, transform, dataset):
+    def __init__(self, backbone, loss, args, transform, dataset=None):
         if args.ewc_fisher_mc_classes == 'all':
             dset_cls = get_dataset_class(args)
             args.ewc_fisher_mc_classes = dset_cls.N_CLASSES_PER_TASK * dset_cls.N_TASKS if isinstance(dset_cls.N_CLASSES_PER_TASK, int) else sum(dset_cls.N_CLASSES_PER_TASK)
@@ -257,6 +234,10 @@ class SecondOrder(ContinualModel):
 
         pretrain_distributions = [self_distr() for _ in range(self.num_classes)]
         self.pretrain_distributions = torch.nn.ModuleList(pretrain_distributions).to(self.device)
+
+        self.offset_1, self.offset_2 = None, None
+        self.old_epoch, self.iteration = 0, 0
+        self.custom_scheduler = None
 
         self.use_wandb = self.args.nowand == 0
 
@@ -436,7 +417,7 @@ class SecondOrder(ContinualModel):
 
     def recall(self):
         print(f"RECALL: Task - {self.current_task} - classes from "
-              f"{self.n_past_classes} - to {self.n_seen_classes}")
+              f"{self.offset_1} - to {self.offset_2}")
         if (not self.args.use_ca) or (self.current_task == 0) \
                 or (not self.args.perform_recall_aligment):
             return
@@ -444,7 +425,7 @@ class SecondOrder(ContinualModel):
 
     def masked_loss(self, cls, x, labels):
         logits = cls(x)
-        logits[:, :self.n_past_classes] = -float('inf')
+        logits[:, :self.offset_1] = -float('inf')
         loss = self.loss(logits, labels)
         loss_val = loss.detach().item()
         return loss, {'ce_pretuning': loss_val}
@@ -523,11 +504,14 @@ class SecondOrder(ContinualModel):
         self.net.vit.head.recall()
 
     def begin_task(self, dataset):
+        self.offset_1, self.offset_2 = self.dataset.get_offsets(self.current_task)
+        num_classes = self.offset_2 - self.offset_1
+
         self.recall()
 
         if self.current_task > 0:
-            self.pretraining_classifier.update(nb_classes=self.n_classes_current_task)
-            self.net.vit.head.update(nb_classes=self.n_classes_current_task)
+            self.pretraining_classifier.update(nb_classes=num_classes)
+            self.net.vit.head.update(nb_classes=num_classes)
 
         self.alignment_loss.set_current_task(self.current_task)
         self.net.set_current_task(self.current_task)
@@ -547,8 +531,8 @@ class SecondOrder(ContinualModel):
             del self.opt
 
         self.opt = self.get_optimizer()
-        self.csscheduler = self.get_scheduler(self.args.sched_type)
-        self.old_epoch, self.iteration = -1, 0
+        self.custom_scheduler = self.get_scheduler(self.args.sched_type)
+        self.old_epoch, self.iteration = 0, 0
 
         if self.buffergrad is not None:
             del self.buffergrad
@@ -578,29 +562,27 @@ class SecondOrder(ContinualModel):
         self.net.ensemble(True)
 
         if self.args.use_ca:
-            if not self.args.load_from_pret:
-                self.compute_statistics(dataset, self.distributions, use_lora=True)
+            self.compute_statistics(dataset, self.distributions, use_lora=True)
 
-                self.backup()
-                if self.current_task > 0 or not self.args.perform_recall_aligment:
-                    self.ca()
+            self.backup()
+            if self.current_task > 0 or not self.args.perform_recall_aligment:
+                self.ca()
 
     def forward(self, x, task_weights=None, returnt='out'):
         assert returnt in ['out', 'features']
         logits = self.net(x, train=False, task_weights=task_weights, return_features=returnt == 'features')
-
         if returnt == 'features':
             return logits
-        return logits[:, :self.n_seen_classes]
+        return logits[:, :self.offset_2]
 
     def accuracy(self, pred, labels):
-        stream_preds = pred[:, :self.n_seen_classes].argmax(dim=1)
+        stream_preds = pred[:, :self.offset_2].argmax(dim=1)
         acc = (stream_preds == labels).sum().item() / len(labels)
         return acc
 
     def compute_loss(self, stream_logits, stream_labels):
-        stream_logits[:, :self.n_past_classes] = -float('inf')
-        loss = self.loss(stream_logits[:, :self.n_seen_classes], stream_labels)
+        stream_logits[:, :self.offset_1] = -float('inf')
+        loss = self.loss(stream_logits[:, :self.offset_2], stream_labels)
         return loss
 
     def _grad_backup(self, param_group, buffer, set_to_zero: bool):
@@ -670,16 +652,16 @@ class SecondOrder(ContinualModel):
 
         lr = 1.0
 
-        if self.csscheduler is not None:
+        if self.custom_scheduler is not None:
             if self.args.sched_type == 'cosine':
-                base_lr = self.csscheduler.base_lrs[id_group]
-                lr = self.csscheduler.get_lr()[id_group] / base_lr
+                base_lr = self.custom_scheduler.base_lrs[id_group]
+                lr = self.custom_scheduler.get_lr()[id_group] / base_lr
             elif self.args.sched_type == 'cosine_warmup':
-                base_lr = self.csscheduler._schedulers[1].base_lrs[id_group]
-                lr = self.csscheduler.get_last_lr()[id_group] / base_lr
+                base_lr = self.custom_scheduler._schedulers[1].base_lrs[id_group]
+                lr = self.custom_scheduler.get_last_lr()[id_group] / base_lr
             else:
-                base_lr = self.csscheduler.base_lrs[id_group]
-                lr = self.csscheduler.get_last_lr()[id_group] / base_lr
+                base_lr = self.custom_scheduler.base_lrs[id_group]
+                lr = self.custom_scheduler.get_last_lr()[id_group] / base_lr
 
         self._apply_grads(lr, self.opt.param_groups[id_group]['params'],
                           clip_grad=self.args.clip_grad)
@@ -687,11 +669,12 @@ class SecondOrder(ContinualModel):
     def observe(self, inputs, labels, not_aug_inputs, epoch=None):
         labels = labels.long()
 
-        if self.csscheduler and self.old_epoch != epoch:
+        if self.custom_scheduler and self.old_epoch != epoch:
             if epoch > 0:
-                self.csscheduler.step()
+                self.custom_scheduler.step()
             self.old_epoch = epoch
             self.iteration = 0
+            print("current lr:", [g['lr'] for g in self.opt.param_groups])
 
         self.net.iteration = self.iteration
 
@@ -703,7 +686,7 @@ class SecondOrder(ContinualModel):
         with torch.no_grad():
             log_dict['stream_class_il'] = self.accuracy(stream_logits, stream_labels)
 
-        stream_logits[:, :self.n_past_classes] = -float('inf')
+        stream_logits[:, :self.offset_1] = -float('inf')
 
         loss = self.compute_loss(stream_logits, stream_labels)
 
@@ -757,8 +740,9 @@ class SecondOrder(ContinualModel):
             self.opt.step()
             self.opt.zero_grad()
 
+        self.iteration += 1
+
         if self.use_wandb:
             wandb.log(log_dict)
-        self.iteration += 1
 
         return loss.item()

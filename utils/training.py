@@ -227,7 +227,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
                 # Scheduler is automatically reloaded after each task if defined in the dataset.
                 # If the model defines it, it becomes the job of the model to reload it.
-                scheduler = get_scheduler(model, args, reload_optim=True) if not hasattr(model, 'scheduler') else model.scheduler
+                scheduler = get_scheduler(model, args, reload_optim=True) if not hasattr(model, 'scheduler') else model.custom_scheduler
 
                 epoch = 0
                 best_ea_metric = None

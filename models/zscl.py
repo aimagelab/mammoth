@@ -36,7 +36,6 @@ class ZSCL(FutureModel):
         parser.add_argument('--avg_freq', type=int, default=100, help='Frequency of weight averaging')
         parser.add_argument('--ls', type=float, default=0.2, help='Label smoothing')
 
-
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
@@ -64,7 +63,8 @@ class ZSCL(FutureModel):
 
         self.ref_model, _, self.test_preprocess = clip.load(args.clip_backbone, device=self.device, jit=False)
 
-        assert Path(f"{base_path()}/conceptual_captions").exists(), f"Conceptual Captions dataset not found. Please follow the steps at https://github.com/Thunderbeee/ZSCL/blob/main/mtil/datasets.md (gather_cc.py is within models/zscl_utils) and put it in {base_path()}."
+        assert Path(f"{base_path()}/conceptual_captions").exists(
+        ), f"Conceptual Captions dataset not found. Please follow the steps at https://github.com/Thunderbeee/ZSCL/blob/main/mtil/datasets.md (gather_cc.py is within models/zscl_utils) and put it in {base_path()}."
         self.ref_dataset = conceptual_captions(
             self.test_preprocess,
             location=f"{base_path()}/conceptual_captions",
@@ -78,7 +78,6 @@ class ZSCL(FutureModel):
             ref_embeddings = torch.cat(
                 [self.ref_model(None, self.ref_texts[i:i + step]) for i in range(0, len(self.ref_texts), step)])
             self.ref_embeddings = ref_embeddings / ref_embeddings.norm(dim=-1, keepdim=True)
-
 
     def get_parameters(self):
         exclude_params_name = ["logit_scale"]
@@ -98,7 +97,7 @@ class ZSCL(FutureModel):
 
         num_batches = len(dataset.train_loader)
         total_iterations = self.args.n_epochs * num_batches
-        self.scheduler = CosineSchedulerWithLinearWarmup(self.opt, self.args.lr, 30, total_iterations)
+        self.custom_scheduler = CosineSchedulerWithLinearWarmup(self.opt, self.args.lr, 30, total_iterations)
 
         if self.args.we:
             self.we_model = copy.deepcopy(self.model).to(self.device)
@@ -125,7 +124,7 @@ class ZSCL(FutureModel):
 
         try:
             ref_images, ref_labels = next(self.ref_iter)
-        except:
+        except BaseException:
             ref_iter = iter(self.ref_dataset.train_loader)
             ref_images, ref_labels = next(ref_iter)
         ref_images, ref_labels = ref_images.to(self.device), ref_labels.to(self.device)

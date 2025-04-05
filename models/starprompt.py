@@ -139,7 +139,7 @@ class STARPrompt(ContinualModel):
         self.net.recall_classifier_second_stage(self.current_task, self.n_past_classes, self.n_seen_classes)
 
         self.opt = self.get_optimizer()
-        self.scheduler = self.get_scheduler()
+        self.custom_scheduler = self.get_scheduler()
 
     def forward(self, x):
         logits = self.net(x, cur_classes=self.n_seen_classes)

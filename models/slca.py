@@ -79,7 +79,7 @@ class SLCA(ContinualModel):
         self.net._cur_task += 1
         self.net._network.update_fc(self.offset_2 - self.offset_1)
         self.net._network.to(self.device)
-        self.opt, self.scheduler = self.net.get_optimizer()
+        self.opt, self.custom_scheduler = self.net.get_optimizer()
         self.net._network.train()
 
         self.opt.zero_grad()

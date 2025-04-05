@@ -280,7 +280,7 @@ class SecondStageStarprompt(ContinualModel):
             del self.opt
 
         self.opt = self.get_optimizer()
-        self.scheduler = self.get_scheduler()
+        self.custom_scheduler = self.get_scheduler()
 
     def forward(self, x):
         x, query_x = x[:, 0], x[:, 1]  # from repeated transform

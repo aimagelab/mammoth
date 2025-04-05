@@ -64,7 +64,7 @@ class ContinualModel(nn.Module):
     net: 'MammothBackbone'  # The backbone of the model (defined by the `dataset`)
     loss: nn.Module  # The loss function to be used (defined by the `dataset`)
     opt: optim.Optimizer  # The optimizer to be used for training
-    scheduler: optim.lr_scheduler._LRScheduler  # (optional) The scheduler for the optimizer. If defined, it will overwrite the one defined in the `dataset`
+    custom_scheduler: optim.lr_scheduler._LRScheduler  # (optional) The scheduler for the optimizer. If defined, it will overwrite the one defined in the `dataset`
     # The transformation to be applied to the input data. The model will try to convert it to a kornia transform to be applicable to a batch of samples at once
     transform: Union[transforms.Compose, kornia.augmentation.AugmentationSequential]
     original_transform: transforms.Compose  # The original transformation to be applied to the input data. This is the one defined by the `dataset`
@@ -450,7 +450,7 @@ class ContinualModel(nn.Module):
         self._n_remaining_classes = self.N_CLASSES - self._n_seen_classes
 
         # reload optimizer if the model has no scheduler
-        if not hasattr(self, 'scheduler') or self.scheduler is None:
+        if not hasattr(self, 'scheduler') or self.custom_scheduler is None:
             if hasattr(self, 'opt') and self.opt is not None:
                 self.opt.zero_grad(set_to_none=True)
             self.opt = self.get_optimizer()

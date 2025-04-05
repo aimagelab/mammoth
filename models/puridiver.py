@@ -399,7 +399,7 @@ class PuriDivER(ContinualModel):
                 pbar.set_postfix(loss=loss, buf_acc=buf_acc, true_buf_acc=true_buf_acc, perc_clean=perc_clean, lr=self.opt.param_groups[0]["lr"], refresh=False)
                 pbar.set_description(f'Epoch {epoch + 1}/{self.args.buffer_fitting_epochs} [{tp}]', refresh=False)
 
-                self.scheduler.step()
+                self.custom_scheduler.step()
 
     def end_task(self, dataset):
         # fit classifier on P
@@ -446,7 +446,7 @@ class PuriDivER(ContinualModel):
                     m.eps = 1e-6
 
         self.opt = self.get_optimizer()
-        self.scheduler = self.get_scheduler()
+        self.custom_scheduler = self.get_scheduler()
         for param_group in self.opt.param_groups:
             param_group["lr"] = self.args.lr
 

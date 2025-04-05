@@ -122,7 +122,7 @@ class RanPAC(ContinualModel):
 
         if self.current_task == 0:
             self.opt = self.get_optimizer()
-            self.scheduler = self.get_scheduler()
+            self.custom_scheduler = self.get_scheduler()
             self.opt.zero_grad()
 
     def freeze_backbone(self, is_first_session=False):
