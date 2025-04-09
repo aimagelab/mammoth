@@ -82,18 +82,6 @@ class BaseLearner(object):
 
         return ret
 
-    def eval_task(self):
-        y_pred, y_true = self._eval_cnn(self.test_loader)
-        cnn_accy = self._evaluate(y_pred, y_true)
-
-        if hasattr(self, '_class_means') and False:  # TODO
-            y_pred, y_true = self._eval_nme(self.test_loader, self._class_means)
-            nme_accy = self._evaluate(y_pred, y_true)
-        else:
-            nme_accy = None
-
-        return cnn_accy, nme_accy
-
     def incremental_train(self):
         pass
 

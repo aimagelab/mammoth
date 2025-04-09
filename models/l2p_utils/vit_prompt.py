@@ -72,7 +72,6 @@ class VisionTransformer(MammothVP):
         self.pos_embed = nn.Parameter(torch.randn(1, self.embed_len, self.embed_dim, device=c_device) * .02)
         super().load_pretrained(checkpoint_path, prefix)
         self.pos_embed.data = resize_pos_embed(self.pos_embed, perv_pos_embed, num_prefix_tokens=self.num_prefix_tokens, gs_new=self.patch_embed.grid_size)
-        # TODO: CHECK
 
     def forward_features(self, x, task_id=-1, cls_features=None, train=False):
         x = self.patch_embed(x)

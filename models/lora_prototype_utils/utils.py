@@ -1,17 +1,11 @@
 from typing import List
-from argparse import ArgumentTypeError
-from io import StringIO
-import csv
-
-import torch
 import math
-
-from torch import nn
 from copy import deepcopy
 
-from models.lora_prototype_utils.generative_replay import FullGaussian
-from models.lora_prototype_utils.generative_replay import Gaussian
-from models.lora_prototype_utils.generative_replay import MixtureOfGaussians
+import torch
+from torch import nn
+
+from .generative_replay import MixtureOfGaussians
 
 
 def create_optimizer(optimizer_name, optimizer_arg, momentum=0.9):
@@ -45,20 +39,13 @@ def get_parameter(shape, device, type_init: str = 'orto',
     return torch.nn.Parameter(param)
 
 
-def get_dist(dim: int, distr: str, n_comp: int, n_iters: int):
-    if distr == 'gaussian':
-        return Gaussian(dim)
-    elif distr == 'mog':
-        return MixtureOfGaussians(dim, n_components=n_comp,
-                                  n_iters=n_iters)
-    elif distr == 'full_gaussian':
-        return FullGaussian(dim)
-    else:
-        raise ValueError
+def get_dist(dim: int, n_comp: int = 5, n_iters: int = 500):
+    return MixtureOfGaussians(dim, n_components=n_comp,
+                              n_iters=n_iters)
 
 
 def linear_probing_epoch(data_loader, loss_fn, classifier,
-                         optim, lr_scheduler, device, logger_fn, debug_mode=False):
+                         optim, lr_scheduler, device, debug_mode=False):
 
     for i, (x, labels) in enumerate(data_loader):
         if debug_mode and i > 10:
@@ -66,37 +53,11 @@ def linear_probing_epoch(data_loader, loss_fn, classifier,
         optim.zero_grad()
         x, labels = x.to(device), labels.to(device)
         loss, loss_dict = loss_fn(classifier, x, labels)
-        logger_fn(loss_dict)
         loss.backward()
         optim.step()
 
     if lr_scheduler:
         lr_scheduler.step()
-
-
-def multiple_args(allowed: List[str], num_args: int):
-
-    def check_multiple_args(value):
-
-        try:
-            value = StringIO(value)
-            vals = csv.reader(value, delimiter=',')
-            vals = [row for row in vals]
-        except ValueError as e:
-            raise ArgumentTypeError(
-                f"{value} is not a comma-separated string of values") from e
-
-        if len(vals) != 1 and len(vals[0]) != num_args:
-            raise ArgumentTypeError(
-                f"{value} presents {len(vals)}. Expected {num_args}")
-
-        for v in vals[0]:
-            if v not in allowed:
-                raise ArgumentTypeError(f"{v} forbidden value.")
-
-        return vals[0]
-
-    return check_multiple_args
 
 
 class IncrementalClassifier(nn.Module):
@@ -164,7 +125,7 @@ class IncrementalClassifier(nn.Module):
 
         self.heads.append(_fc)
 
-    def build_optimizer_args(self, lr: float, wd: float):
+    def build_optimizer_args(self, lr: float, wd: float = 0):
 
         params = []
 
@@ -187,69 +148,15 @@ class IncrementalClassifier(nn.Module):
         return torch.cat(out, dim=1)
 
 
-class IncrementalSemanticClassifier(nn.Module):
-
-    def __init__(self, embed_dim, nb_classes,
-                 keys, tau, feat_expand=False):
-
-        super().__init__()
-
-        self.embed_dim = embed_dim
-
-        self.register_buffer("keys", torch.clone(keys))
-        self.register_buffer("tau", tau * torch.ones(1))
-
-        self.nb_classes = nb_classes
-
-    def backup(self):
-        # self.old_state_dict = deepcopy(self.state_dict())
-        pass
-
-    def recall(self):
-        # self.load_state_dict(self.old_state_dict)
-        pass
-
-    def assign(self, classifier):
-        raise NotImplementedError
-
-    def get_device(self):
-        return next(self.parameters()).device
-
-    def _set_training_state(self, mode):
-        for p in self.heads.parameters():
-            p.requires_grad = mode
-
-    def enable_training(self):
-        self._set_training_state(True)
-
-    def disable_training(self):
-        self._set_training_state(False)
-
-    def update(self, nb_classes, freeze_old=True):
-        self.nb_classes += nb_classes
-
-    def compute_logits(self, x, start_idx, end_idx):
-        B, D = x.shape
-        mymap = x.unsqueeze(1).expand(B, (end_idx - start_idx), D)
-        mymap = torch.nn.functional.normalize(mymap, dim=-1)
-        mymap = torch.einsum('bcd,cd->bc', mymap,
-                             self.keys[start_idx: end_idx])
-        mymap = mymap * self.tau
-        return mymap
-
-    def forward(self, x):
-        return self.compute_logits(x, 0, end_idx=self.nb_classes)
-
-
 class AlignmentLoss(torch.nn.Module):
 
-    def __init__(self, args, seq_dataset, device):
+    def __init__(self, seq_dataset, device):
         super(AlignmentLoss, self).__init__()
         self.device = device
         self.seq_dataset = seq_dataset
 
-        self.tau_alignment = args.tau_alignment
-        self.norm_type_alignment = args.norm_type_alignment
+        self.tau_alignment = 0.1
+        self.norm_type_alignment = 'all'
 
         self.cross_entropy = torch.nn.CrossEntropyLoss()
 

@@ -1,79 +1,40 @@
-import torch
+from typing import TYPE_CHECKING
 from tqdm import tqdm
-
 from functools import partial
+
+import torch
 
 from utils.conf import get_device
 
-from models.lora_prototype_utils.vit import vit_base_patch16_224_prompt_prototype as vit
+from models.lora_prototype_utils.fisher import UnbiasedFisherModule, AugmentedFisherModule
+from models.lora_prototype_utils.utils import IncrementalClassifier
+from models.lora_prototype_utils.lora_vit import VisionTransformer as LoRAViT
 
-from models.lora_prototype_utils.loralib.task_lorer import TaskLorer
-from models.lora_prototype_utils.loralib.full_lorer import FullLorer
-from models.lora_prototype_utils.loralib.ia3_lorer import Ia3Lorer
-
-from models.lora_prototype_utils.utils import IncrementalSemanticClassifier
-from models.lora_prototype_utils.fisher import UnbiasedFisherModule
-from models.lora_prototype_utils.fisher import AugmentedFisherModule
-from models.lora_prototype_utils.fisher import CombinedFisherModule
-
-from torch.nn.functional import softmax
+if TYPE_CHECKING:
+    from datasets.utils.continual_dataset import ContinualDataset
+    from backbone import MammothBackbone
 
 
 def get_fisher_caller(args):
-    if args.augmented_reg == 0:
-        fisher_caller = partial(UnbiasedFisherModule, ewc_lambda=args.ewc_lambda)
-    elif args.augmented_reg == 1:
-        if args.ewc_ensemble_mode == 0:
-            fisher_caller = partial(AugmentedFisherModule, ewc_lambda=args.ewc_lambda,
-                                    ewc_alpha=args.ewc_alpha, ewc_prior=args.ewc_prior)
-        elif args.ewc_ensemble_mode == 1:
-            fisher_caller = partial(CombinedFisherModule, ewc_lambda=args.ewc_lambda,
-                                    ewc_alpha=args.ewc_alpha, ewc_prior=args.ewc_prior)
-        else:
-            raise ValueError
+    if args.use_iel:
+        fisher_caller = partial(UnbiasedFisherModule, beta_iel=args.beta_iel)
     else:
-        raise ValueError
+        fisher_caller = partial(AugmentedFisherModule, beta_iel=args.beta_iel,
+                                alpha_ita=args.alpha_ita)
 
     return fisher_caller
 
 
-class NullEngine:
-
-    def __init__(self):
-        pass
-
-    def get_clip_dim(self):
-        raise NotImplementedError
-
-    def top_k(self, query, start_idx, end_idx,
-              train, top_k: int = None):
-        raise NotImplementedError
-
-    def get_keys(self, start_idx, end_idx):
-        raise NotImplementedError
-
-    def get_query(self, x):
-        raise NotImplementedError
-
-    def __call__(self, x):
-        raise NotImplementedError
-
-
 class Model(torch.nn.Module):
 
-    def __init__(self, args, seq_dataset):
+    def __init__(self, args, seq_dataset: 'ContinualDataset', backbone: 'MammothBackbone'):
 
         super().__init__()
 
-        self.compute_fisher = self.__compute_fisher_autograd
-        if hasattr(args, "fisher_type"):
-            if args.fisher_type == "hooks":
-                self.compute_fisher = self.__compute_fisher_hooks
-            elif args.fisher_type == "identity":
-                self.compute_fisher = self.__identity_fisher
+        self.compute_fisher = self.__compute_fisher_hooks
 
+        self.num_classes = seq_dataset.N_CLASSES
         self.num_tasks = seq_dataset.N_TASKS
-        self.args = args
 
         self.current_task = 0
         self.class_offsets = [seq_dataset.get_offsets(t) for t in range(self.num_tasks)]
@@ -81,35 +42,21 @@ class Model(torch.nn.Module):
 
         self.device = get_device()
 
-        nc_first_task = self.num_classes_per_task[0]
+        self.vit = LoRAViT.from_mammoth(backbone)
+        self.vit.head = IncrementalClassifier(self.vit.embed_dim, self.num_classes_per_task[0]).to(self.device)
 
-        self.vit = vit(pretrained=True, num_classes=nc_first_task,
-                       args=args).to(self.device)
         self.output_dim = self.vit.embed_dim
         self.embed_dim = self.vit.embed_dim
         self.mlp_ratio = self.vit.mlp_ratio
+        self.tuning_style = args.tuning_style
 
-        self.adapt_clip = args.adapt_clip
-        self.lora_style = args.lora_style
+        self.tuner = self.init_tuner(args, seq_dataset)
 
-        self.matching_engine = NullEngine()
+        param_lored, param_resolution_dict = self.get_params_to_tune()
 
-        self.lorer = self.init_lorer(args, seq_dataset)
-
-        if args.semantic_classifier == 1:
-            self.vit.head = IncrementalSemanticClassifier(self.output_dim,
-                                                          self.num_classes_per_task[0],
-                                                          keys=self.lorer.keys, tau=args.tau)
-
-        param_lored, param_resolution_dict = self.get_params_with_lora()
-
-        self.ewc_fisher_mc_classes = args.ewc_fisher_mc_classes
-        self.ewc_cls_lambda = args.ewc_cls_lambda
-        args.ewc_cls_identity_lambda = args.ewc_cls_identity_lambda if hasattr(args, 'ewc_cls_identity_lambda') else args.ewc_cls_lambda
-        self.ewc_cls_identity_lambda = args.ewc_cls_identity_lambda
-        self.ewc_cls_prior = args.ewc_cls_prior
-        args.ewc_cls_strategy = args.ewc_cls_strategy if hasattr(args, 'ewc_cls_strategy') else 'generative'
-        self.ewc_cls_strategy = args.ewc_cls_strategy
+        self.fisher_mc_classes = args.fisher_mc_classes
+        self.req_weight_cls = args.req_weight_cls
+        self.simple_reg_weight_cls = args.simple_reg_weight_cls
 
         fisher_caller = get_fisher_caller(args)
 
@@ -119,7 +66,7 @@ class Model(torch.nn.Module):
         })
 
         self.fisher_dict_cls = torch.nn.ModuleDict({
-            n: UnbiasedFisherModule(p, args.ewc_cls_lambda, args.ewc_cls_prior)
+            n: UnbiasedFisherModule(p, args.req_weight_cls)
             for n, p in self.vit.head.heads[self.current_task].named_parameters()
         })
 
@@ -128,43 +75,40 @@ class Model(torch.nn.Module):
 
     def set_current_task(self, task_id):
         self.current_task = task_id
-        self.lorer.set_current_task(task_id)
+        self.tuner.set_current_task(task_id)
 
         if self.current_task > 0:
             device = self.fisher_dict_cls.weight.unnormalized_fisher.device
             self.fisher_dict_cls.update({
-                n: UnbiasedFisherModule(p, self.ewc_cls_lambda, self.ewc_cls_prior).to(device)
+                n: UnbiasedFisherModule(p, self.req_weight_cls).to(device)
                 for n, p in self.vit.head.heads[self.current_task].named_parameters()
             })
 
-    def get_output_dim(self):
-        return self.output_dim
-
-    def get_embed_dim(self):
-        return self.embed_dim
-
-    def init_lorer(self, args, seq_dataset):
-
-        if args.lora_style == 'task':
-            return TaskLorer(args, self.device, seq_dataset,
+    def init_tuner(self, args, seq_dataset):
+        if args.tuning_style == 'lora':
+            from models.lora_prototype_utils.tuners.lora_tuner import LoRATuner
+            return LoRATuner(args, self.device, seq_dataset,
                              embed_dim=self.embed_dim,
                              mlp_ratio=self.mlp_ratio)
-        elif args.lora_style == 'full':
-            return FullLorer(args, self.device, seq_dataset,
+        elif args.tuning_style == 'full':
+            from models.lora_prototype_utils.tuners.full_tuner import FullTuner
+            return FullTuner(args, self.device, seq_dataset,
                              embed_dim=self.embed_dim,
                              mlp_ratio=self.mlp_ratio)
-        elif args.lora_style == 'ia3':
-            return Ia3Lorer(args, self.device, seq_dataset,
+        elif args.tuning_style == 'ia3':
+            from models.lora_prototype_utils.tuners.ia3_tuner import IA3Tuner
+            return IA3Tuner(args, self.device, seq_dataset,
                             embed_dim=self.embed_dim,
                             mlp_ratio=self.mlp_ratio,
                             orig_model=self.vit)
         else:
-            raise ValueError
+            raise ValueError(f"Unknown tuning style: {args.tuning_style}")
 
-    def build_optimizer_args(self, lr_params, lr_classifier,
-                             wd_params, wd_classifier):
+    def build_optimizer_args(self, lr_params, lr_classifier=None,
+                             wd_params: float = 0, wd_classifier: float = 0):
 
-        lora_vars = self.lorer.get_current_optimizing_parameters()
+        lora_vars = self.tuner.get_current_optimizing_parameters()
+        lr_classifier = lr_classifier if lr_classifier is not None else lr_params
 
         lora_params = {
             'params': lora_vars,
@@ -180,38 +124,7 @@ class Model(torch.nn.Module):
 
         return [lora_params, base_fc_params]
 
-    def get_base_parameters(self):
-        return [p for n, p in self.vit.named_parameters() if 'head' not in n]
-
-    def freeze_base_network(self):
-        for n, p in self.vit.named_parameters():
-            if 'head' not in n:
-                p.requires_grad = False
-
-    def unfreeze_base_network(self):
-        for n, p in self.vit.named_parameters():
-            if 'head' not in n:
-                p.requires_grad = True
-
-    def set_requires_grad_to(self, namevars, mode: bool):
-        checkset = set()
-        for n, p in self.vit.named_parameters():
-            if n in namevars:
-                p.requires_grad = mode
-                checkset.add(n)
-        assert checkset == namevars
-
-    def get_rescaled_squared_grads(self, namevars, rescale_factor=1.):
-        return {n: rescale_factor * p.grad.pow(2)
-                for n, p in self.vit.named_parameters() if n in namevars}
-
-    def get_params_with_lora(self):
-        if self.adapt_clip == 0:
-            return self.get_params_with_lora_timm()
-        return self.get_params_with_lora_openai()
-
-    def get_params_with_lora_timm(self):
-
+    def get_params_to_tune(self):
         paramname_lored = set()
         param_resolution_dict = dict()
 
@@ -222,7 +135,7 @@ class Model(torch.nn.Module):
             'fc2': 'mlp.fc2'
         }
 
-        for layer_idx, vars in self.lorer.get_params_with_lora().items():
+        for layer_idx, vars in self.tuner.get_params_to_tune().items():
             for v in vars:
                 key_param_name = f'blocks.{layer_idx}.{expansion[v]}.weight'
                 paramname_lored.add(key_param_name)
@@ -232,29 +145,9 @@ class Model(torch.nn.Module):
 
         return param_lored, param_resolution_dict
 
-    def get_params_with_lora_openai(self):
-        paramname_lored = set()
-        param_resolution_dict = dict()
-
-        expansion = {
-            'qkv': 'attn.qkv',
-            'proj': 'attn.proj',
-            'fc1': 'mlp.c_fc',
-            'fc2': 'mlp.c_proj'
-        }
-
-        for layer_idx, vars in self.lorer.get_params_with_lora().items():
-            for v in vars:
-                key_param_name = f'visual.transformer.resblocks.{layer_idx}.{expansion[v]}.weight'
-                paramname_lored.add(key_param_name)
-                param_resolution_dict[key_param_name] = f'{v}_{layer_idx}'
-
-        param_lored = {n: p for n, p in self.vit.named_parameters() if n in paramname_lored}
-        return param_lored, param_resolution_dict
-
     def train(self, mode=True):
         super().train(False)
-        self.lorer.train(False)
+        self.tuner.train(False)
         self.vit.train(mode)
         return self
 
@@ -322,10 +215,10 @@ class Model(torch.nn.Module):
             detached_probs = probs.detach()
             log_probs = torch.log(probs)
             fisher_sqrt = (detached_probs.sqrt() * log_probs).sum(0)
-            if self.ewc_fisher_mc_classes < detached_probs.shape[1]:
-                _, class_indices = torch.topk(detached_probs, self.ewc_fisher_mc_classes, dim=1)
+            if self.fisher_mc_classes < detached_probs.shape[1]:
+                _, class_indices = torch.topk(detached_probs, self.fisher_mc_classes, dim=1)
                 unique, counts = class_indices.unique(return_counts=True)
-                unique = unique[torch.argsort(-counts)][:self.ewc_fisher_mc_classes]
+                unique = unique[torch.argsort(-counts)][:self.fisher_mc_classes]
                 for i in unique:
                     fisher_sqrt[i].backward(
                         retain_graph=True if (i != unique[-1]) else False
@@ -359,84 +252,6 @@ class Model(torch.nn.Module):
 
         for param, req_grad in zip(self.vit.parameters(), require_grads_list):
             param.requires_grad = req_grad
-
-        return fisher, fisher_cls, num_of_examples
-
-    def __compute_fisher_autograd(self, param_lored, param_resolution_dict,
-                                  param_cls, param_resolution_dict_cls,
-                                  dataset, debug_mode: bool = False):
-
-        self.set_requires_grad_to(param_lored.keys(), True)
-
-        fisher = {
-            param_resolution_dict[n]: torch.zeros_like(p)
-            for (n, p) in param_lored.items()
-        }
-
-        fisher_cls = {
-            param_resolution_dict_cls[n]: torch.zeros_like(p)
-            for (n, p) in param_cls.items()
-        }
-
-        fake_optim = torch.optim.SGD(
-            params=[p for (n, p) in ({**param_lored, **param_cls}).items()],
-            lr=0.0
-        )
-
-        orig_mode = self.training
-        self.eval()
-
-        num_of_examples = 0
-
-        for i, data in tqdm(enumerate(dataset.train_loader),
-                            total=len(dataset.train_loader),
-                            desc='FISHER computation'):
-
-            if debug_mode and i > 5:
-                break
-
-            x, y, _ = data
-            x, y = x.to(self.device), y.to(self.device).long()
-
-            num_of_examples += data[0].shape[0]
-
-            for ex, ey in zip(x, y):
-                logits = self.forward(ex.unsqueeze(0), train=False, use_lora=False)
-
-                log_probs = self.logsoft(logits)
-
-                num_mc_classes = min(int(logits.shape[1]), self.ewc_fisher_mc_classes)
-
-                with torch.no_grad():
-                    probs = softmax(logits, dim=1).squeeze(0)
-                    vals, class_indices = torch.topk(probs, num_mc_classes)
-
-                for cnt_class in range(num_mc_classes):
-                    fake_optim.zero_grad()
-                    y_c = class_indices[cnt_class]
-                    log_prob = log_probs[0, y_c]
-                    prob = probs[y_c]
-
-                    log_prob.backward(retain_graph=cnt_class < num_mc_classes - 1)
-
-                    rescaled_squared_grads = \
-                        self.get_rescaled_squared_grads(param_lored.keys(), prob)
-
-                    for namevar in param_lored:
-                        fisher[param_resolution_dict[namevar]] += rescaled_squared_grads[namevar].detach()
-
-                    rescaled_squared_grads = \
-                        self.get_rescaled_squared_grads(param_cls.keys(), prob)
-
-                    for namevar in param_cls:
-                        fisher_cls[param_resolution_dict_cls[namevar]] += rescaled_squared_grads[namevar].detach()
-
-        fake_optim.zero_grad()
-
-        self.set_requires_grad_to(param_lored.keys(), False)
-        self.train(orig_mode)
-
-        del fake_optim
 
         return fisher, fisher_cls, num_of_examples
 
@@ -527,68 +342,6 @@ class Model(torch.nn.Module):
 
         return fisher_cls, num_of_examples
 
-    def compute_fisher_cls_generative(self, param_cls, param_resolution_dict_cls, generative_dataloader, debug_mode: bool = False):
-
-        fisher_cls = {
-            param_resolution_dict_cls[n]: torch.zeros_like(p)
-            for (n, p) in param_cls.items()
-        }
-
-        fake_optim = torch.optim.SGD(
-            params=[p for (n, p) in self.vit.head.named_parameters()],
-            lr=0.0
-        )
-
-        orig_mode = self.training
-        self.eval()
-
-        num_of_examples = 0
-
-        for i, data in tqdm(enumerate(generative_dataloader),
-                            total=len(generative_dataloader),
-                            desc='FISHER computation'):
-
-            if debug_mode and i > 5:
-                break
-
-            x, y = data
-            x, y = x.to(self.device), y.to(self.device).long()
-
-            num_of_examples += data[0].shape[0]
-
-            for ex, ey in zip(x, y):
-                if debug_mode and i > 5:
-                    break
-
-                logits = self.vit.head(ex.unsqueeze(0))
-
-                log_probs = self.logsoft(logits)
-
-                # on all classes
-                with torch.no_grad():
-                    probs = softmax(logits, dim=1).squeeze(0)
-
-                for cnt_class in range(logits.shape[1]):
-                    fake_optim.zero_grad()
-                    log_prob = log_probs[0, cnt_class]
-                    prob = probs[cnt_class]
-
-                    log_prob.backward(retain_graph=cnt_class < logits.shape[1] - 1)
-
-                    rescaled_squared_grads = \
-                        self.get_rescaled_squared_grads(param_cls.keys(), prob)
-
-                    for namevar in param_cls:
-                        fisher_cls[param_resolution_dict_cls[namevar]] += rescaled_squared_grads[namevar].detach()
-
-        fake_optim.zero_grad()
-
-        self.train(orig_mode)
-
-        del fake_optim
-
-        return fisher_cls, num_of_examples
-
     def get_params_of_classifier(self):
         param_resolution_dict_cls = {
             f'head.heads.{self.current_task}.weight': 'weight',
@@ -600,9 +353,9 @@ class Model(torch.nn.Module):
         }
         return param_cls, param_resolution_dict_cls
 
-    def update_fisher(self, dataset, generative_dataloader=None, logger_fn=None, debug_mode: bool = False):
+    def update_fisher(self, dataset, generative_dataloader=None, debug_mode: bool = False):
 
-        param_lored, param_resolution_dict = self.get_params_with_lora()
+        param_lored, param_resolution_dict = self.get_params_to_tune()
         param_cls, param_resolution_dict_cls = self.get_params_of_classifier()
 
         fisher, fisher_cls, num_of_examples = \
@@ -610,14 +363,12 @@ class Model(torch.nn.Module):
                                 param_cls, param_resolution_dict_cls, dataset, debug_mode)
 
         num_of_examples_cls = num_of_examples
-        if self.ewc_cls_strategy != "bugged":
-            for cnt, namevar in enumerate(param_cls.keys()):
-                namevar_mapped = param_resolution_dict_cls[namevar]
-                fisher_cls[namevar_mapped].zero_()
+        for cnt, namevar in enumerate(param_cls.keys()):
+            namevar_mapped = param_resolution_dict_cls[namevar]
+            fisher_cls[namevar_mapped].zero_()
 
-        if self.ewc_cls_strategy == "generative" and generative_dataloader is not None:
+        if generative_dataloader is not None:
             fisher_cls, num_of_examples_cls = self.compute_fisher_cls_generative_hooks(param_cls, param_resolution_dict_cls, generative_dataloader, debug_mode)
-            # fisher_cls, num_of_examples = self.compute_fisher_cls_generative(param_cls, param_resolution_dict_cls, generative_dataloader, debug_mode)
 
         with torch.no_grad():
 
@@ -643,29 +394,6 @@ class Model(torch.nn.Module):
                 sum_elem_cls += self.fisher_dict_cls[namevar_mapped].get_num_elems()
                 sum_trace_cls += self.fisher_dict_cls[namevar_mapped].trace()
 
-            if logger_fn is not None:
-                logger_fn({
-                    'fisher_norm': (sum_trace / sum_elem).item(),
-                    'fisher_norm_cls': (sum_trace_cls / sum_elem_cls).item()
-                })
-
-        del fisher
-        del fisher_cls
-
-    def update_prevtask_fisher(self, dataset, debug_mode: bool = False):
-
-        param_lored, param_resolution_dict = self.get_params_with_lora()
-        param_cls, param_resolution_dict_cls = self.get_params_of_classifier()
-
-        fisher, fisher_cls, num_of_examples = \
-            self.compute_fisher(param_lored, param_resolution_dict,
-                                param_cls, param_resolution_dict_cls, dataset, debug_mode)
-
-        with torch.no_grad():
-            for cnt, namevar in enumerate(param_lored.keys()):
-                namevar_mapped = param_resolution_dict[namevar]
-                self.fisher_dict[namevar_mapped].update_fisher_prev_task(fisher[namevar_mapped])
-
         del fisher
         del fisher_cls
 
@@ -684,56 +412,16 @@ class Model(torch.nn.Module):
                         self.fisher_dict_cls['bias'](tau_bias))
 
             if do_backward:
-                (reg_term * self.ewc_cls_lambda + reg_term_identity * self.ewc_cls_identity_lambda).backward()  # TODO: check if term multiplied with cls_prior has grad (should not)
+                (reg_term * self.req_weight_cls + reg_term_identity * self.simple_reg_weight_cls).backward()
 
         return reg_term
 
     def compute_reg_loss(self, do_backward: bool, do_loss_computation: bool):
-        return self.lorer.compute_fisher_loss(self.fisher_dict,
+        return self.tuner.compute_fisher_loss(self.fisher_dict,
                                               do_backward, do_loss_computation)
 
     def ensemble(self, mode=True):
-        self.lorer.ensemble(mode)
-
-    def compute_delta(self, module_param):
-        assert "B" in module_param.keys()
-        if "A" in module_param.keys():
-            B, A = module_param["B"], module_param["A"]
-            return (B @ A).sum(0)
-        else:
-            assert len(module_param.keys()) == 1
-            return module_param["B"].squeeze(0)
-
-    @torch.no_grad()
-    def add_lora_matrices(self, op: str):
-        assert op in ['add', 'sub']
-
-        if self.lora_style in ['standard']:
-            raise ValueError
-
-        AB = self.lorer.get_lora_matrices(train=False)
-
-        param_lored, param_resolution_dict = self.get_params_with_lora()
-        param_keys_list = list(param_resolution_dict.keys())
-        param_values_list = list(param_resolution_dict.values())
-
-        for layer_id, layer_dict in AB.items():
-            for module_id, module_param in layer_dict.items():
-                delta = self.compute_delta(module_param)
-                val_param_dict = f'{module_id}_{layer_id}'
-                name_param = param_keys_list[param_values_list.index(val_param_dict)]
-                for n1, p1 in self.vit.named_parameters():
-                    if n1 == name_param:
-                        if op == 'add':
-                            p1.add_(delta)
-                        else:
-                            p1.sub_(delta)
-
-    def merge_lora(self):
-        self.add_lora_matrices('add')
-
-    def unmerge_lora(self):
-        self.add_lora_matrices('sub')
+        self.tuner.ensemble(mode)
 
     def forward(self, x, train=True, return_all=False,
                 return_features=False, use_lora=True, task_weights=None):
@@ -741,7 +429,7 @@ class Model(torch.nn.Module):
         AB = {}
 
         if use_lora:
-            AB = self.lorer.get_lora_matrices(train=train, task_weights=task_weights)
+            AB = self.tuner.get_lora_matrices(train=train, task_weights=task_weights)
 
         features = self.vit.forward_features(x, AB)
 

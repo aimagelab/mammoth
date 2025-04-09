@@ -2,10 +2,10 @@ import torch
 from collections import defaultdict
 
 from models.lora_prototype_utils.utils import get_parameter
-from models.lora_prototype_utils.loralib.utils import _set_grad_to_zero
+from models.lora_prototype_utils.tuners.utils import set_grad_to_zero
 
 
-class FullLorer(torch.nn.Module):
+class FullTuner(torch.nn.Module):
 
     def __init__(self, args, device, seq_dataset, embed_dim, mlp_ratio):
 
@@ -20,7 +20,7 @@ class FullLorer(torch.nn.Module):
         self.current_task = 0
 
         self.num_tasks = seq_dataset.N_TASKS
-        self.scale_by_t = self.args.ewc_scale_by_t == 1
+        self.scale_by_t = not self.args.use_iel
 
         self.lora_layers = list(range(12))
         self.enable_lora_qkv = True
@@ -29,8 +29,8 @@ class FullLorer(torch.nn.Module):
 
         self.lora_config = self.build_lora_config()
 
-        self.register_buffer('ones_buffer', torch.ones((seq_dataset.get_num_classes(),)))
-        self.register_buffer('ewc_lambda', torch.ones(1) * args.ewc_lambda)
+        self.register_buffer('ones_buffer', torch.ones((seq_dataset.N_CLASSES,)))
+        self.register_buffer('beta_iel', torch.ones(1) * args.beta_iel)
         self.register_buffer('ratio', torch.ones(1))
 
         for t in range(self.num_tasks):
@@ -138,7 +138,7 @@ class FullLorer(torch.nn.Module):
 
                 my_var = self._get_matrix(B_op, layer_idx, self.current_task)
 
-                _set_grad_to_zero(my_var)
+                set_grad_to_zero(my_var)
 
                 if g is None:
                     g = my_var
@@ -157,7 +157,7 @@ class FullLorer(torch.nn.Module):
                 if self.scale_by_t == 1:
                     my_var.grad.mul_(self.ratio)
 
-    def fisher_loss_v2(self, fisher_dict, do_backward: bool, ewc_lambda: float):
+    def fisher_loss_v2(self, fisher_dict, do_backward: bool, beta_iel: float):
 
         reg_term, dotprod_term = torch.zeros(1), torch.zeros(1)
 
@@ -176,7 +176,7 @@ class FullLorer(torch.nn.Module):
 
                 fmod = fisher_dict[f'{op}_{layer_idx}']
 
-                current_reg_loss = 0.5 * ((1 - self.ratio) * (ewc_lambda * fmod.dist(nets))).sum()
+                current_reg_loss = 0.5 * ((1 - self.ratio) * (beta_iel * fmod.dist(nets))).sum()
                 current_dp_loss = 0.
 
                 with torch.no_grad():
@@ -186,7 +186,7 @@ class FullLorer(torch.nn.Module):
                     with torch.no_grad():
                         prev_nets = torch.cat([self._get_matrix(B_op, layer_idx, t)
                                                for t in range(self.current_task)], dim=0)
-                    current_dp_loss = (self.ratio * (ewc_lambda * fmod.full_dot_prod_no_grad(nets, prev_nets))).sum()
+                    current_dp_loss = (self.ratio * (beta_iel * fmod.full_dot_prod_no_grad(nets, prev_nets))).sum()
                     with torch.no_grad():
                         dotprod_term += current_dp_loss.detach().cpu()
 
@@ -209,7 +209,7 @@ class FullLorer(torch.nn.Module):
 
         with torch.no_grad():
             reg_term, dotprod_term = self.fisher_loss_v2(fisher_dict, do_backward=False,
-                                                         ewc_lambda=self.ones_buffer[0])
+                                                         beta_iel=self.ones_buffer[0])
 
         return reg_term, dotprod_term
 
@@ -256,7 +256,7 @@ class FullLorer(torch.nn.Module):
 
         return mats_past + m * (1 / (self.current_task + 1))
 
-    def get_params_with_lora(self):
+    def get_params_to_tune(self):
 
         params_with_lora = defaultdict(set)
 

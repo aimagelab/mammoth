@@ -1,11 +1,11 @@
-import numpy as np
 import torch
 from collections import defaultdict
 
 from models.lora_prototype_utils.utils import get_parameter
-from models.lora_prototype_utils.loralib.utils import _set_grad_to_zero
+from models.lora_prototype_utils.tuners.utils import set_grad_to_zero
 
-class Ia3Lorer(torch.nn.Module):
+
+class IA3Tuner(torch.nn.Module):
 
     def __init__(self, args, device, seq_dataset, embed_dim, mlp_ratio, orig_model):
 
@@ -20,7 +20,7 @@ class Ia3Lorer(torch.nn.Module):
         self.current_task = 0
 
         self.num_tasks = seq_dataset.N_TASKS
-        self.scale_by_t = self.args.ewc_scale_by_t == 1
+        self.scale_by_t = not self.args.use_iel
 
         self.lora_layers = list(range(12))
         self.enable_lora_qkv = True
@@ -29,9 +29,9 @@ class Ia3Lorer(torch.nn.Module):
 
         self.lora_config = self.build_lora_config()
 
-        self.register_buffer('ones_buffer', torch.ones((seq_dataset.get_num_classes(),)))
-        self.register_buffer('ewc_lambda', torch.ones(1) * args.ewc_lambda)
-        self.register_buffer('ewc_alpha', torch.ones(1) * args.ewc_alpha)
+        self.register_buffer('ones_buffer', torch.ones((seq_dataset.N_CLASSES,)))
+        self.register_buffer('beta_iel', torch.ones(1) * args.beta_iel)
+        self.register_buffer('alpha_ita', torch.ones(1) * args.alpha_ita)
         self.register_buffer('ratio', torch.ones(1))
 
         expansion = {
@@ -42,7 +42,7 @@ class Ia3Lorer(torch.nn.Module):
         }
 
         # save theta0 params
-        for layer_idx, vars in self.get_params_with_lora().items():
+        for layer_idx, vars in self.get_params_to_tune().items():
             for v in vars:
                 key_param_name = f'blocks.{layer_idx}.{expansion[v]}.weight'
                 register_name = f'theta0_L_{v}_{layer_idx}_0'
@@ -181,7 +181,7 @@ class Ia3Lorer(torch.nn.Module):
                 my_var = getattr(self, f'{L_op}_{layer_idx}_{self.current_task}')
                 orig_theta = getattr(self, f'theta0_{L_op}_{layer_idx}_0')
 
-                _set_grad_to_zero(my_var)
+                set_grad_to_zero(my_var)
 
                 if g is None:
                     g = self._get_matrix(L_op, layer_idx, self.current_task)
@@ -200,12 +200,12 @@ class Ia3Lorer(torch.nn.Module):
                 if self.scale_by_t == 1:
                     my_var.grad.mul_(self.ratio)
 
-    def fisher_loss_v2(self, fisher_dict, do_backward: bool, ewc_lambda: float):
+    def fisher_loss_v2(self, fisher_dict, do_backward: bool, beta_iel: float):
 
         reg_term, dotprod_term = torch.zeros(1), torch.zeros(1)
 
         lora_config = self.get_lora_config()
-        scalar = 0.5 * (1 - self.ratio) * ewc_lambda
+        scalar = 0.5 * (1 - self.ratio) * beta_iel
 
         for op in ['qkv', 'proj', 'fc1', 'fc2']:
 
@@ -222,7 +222,7 @@ class Ia3Lorer(torch.nn.Module):
 
                 if do_backward:
                     my_var = getattr(self, f'{L_op}_{layer_idx}_{self.current_task}')
-                    _set_grad_to_zero(my_var)
+                    set_grad_to_zero(my_var)
 
                 current_reg_loss = scalar * fmod.dist(nets).sum()
                 current_dp_loss = 0.
@@ -234,7 +234,7 @@ class Ia3Lorer(torch.nn.Module):
                     with torch.no_grad():
                         prev_nets = torch.cat([self._get_matrix(L_op, layer_idx, t).unsqueeze(0)
                                                for t in range(self.current_task)], dim=0)
-                    current_dp_loss = (self.ratio * (ewc_lambda * fmod.full_dot_prod_no_grad(nets, prev_nets))).sum()
+                    current_dp_loss = (self.ratio * (beta_iel * fmod.full_dot_prod_no_grad(nets, prev_nets))).sum()
                     with torch.no_grad():
                         dotprod_term += current_dp_loss.detach().cpu()
 
@@ -260,7 +260,7 @@ class Ia3Lorer(torch.nn.Module):
 
         with torch.no_grad():
             reg_term, dotprod_term = self.fisher_loss_v2(fisher_dict, do_backward=False,
-                                                         ewc_lambda=self.ones_buffer[0])
+                                                         beta_iel=self.ones_buffer[0])
         return reg_term, err_grad
 
     def _get_by_op_layer_and_task(self, op, layer_idx, task_idx):
@@ -314,7 +314,7 @@ class Ia3Lorer(torch.nn.Module):
         return m
 
     def _gather_matrices(self, layer_idx: int, namevar: str, train: bool,
-                         task_weights = None):
+                         task_weights=None):
 
         m = self._get_matrix(namevar, layer_idx, self.current_task).unsqueeze(0)
 
@@ -328,13 +328,13 @@ class Ia3Lorer(torch.nn.Module):
 
             with torch.no_grad():
                 mats = torch.stack([self._get_matrix(namevar, layer_idx, t)
-                                         for t in range(self.current_task+1)], dim=0)
+                                    for t in range(self.current_task + 1)], dim=0)
                 return (weights * mats).sum(0, keepdim=True)
 
         mats_past = getattr(self, f'base_{namevar}_{layer_idx}_0')
         return mats_past + m * (1 / (self.current_task + 1))
 
-    def get_params_with_lora(self):
+    def get_params_to_tune(self):
 
         params_with_lora = defaultdict(set)
 

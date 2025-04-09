@@ -1,16 +1,12 @@
-from dataclasses import dataclass
-import math
 import torch
 import numpy as np
 
 from math import pi
-import wandb
 
 
 class FeaturesDataset(torch.utils.data.Dataset):
 
     def __init__(self, X, y):
-        # Your code
         self.X, self.y = X, y
 
     def __getitem__(self, idx):
@@ -18,43 +14,6 @@ class FeaturesDataset(torch.utils.data.Dataset):
 
     def __len__(self):
         return len(self.X)
-
-
-class FullGaussian(torch.nn.Module):
-
-    def __init__(self, embed_dim):
-        super().__init__()
-        self.embed_dim = embed_dim
-        self.register_buffer("mean", torch.zeros(embed_dim))
-        self.register_buffer("cov", torch.ones(embed_dim, embed_dim))
-
-    def fit(self, x):
-        self.mean = torch.mean(x, dim=0)
-        self.cov = torch.cov(x.T) + torch.eye(self.mean.shape[-1], device=x.device) * 1e-5
-
-    def sample(self, n_sample, scale_mean):
-        return torch.distributions.multivariate_normal.MultivariateNormal(scale_mean * self.mean, self.cov).sample((n_sample,))
-
-    def forward(self, n_sample, scale_mean: float = 1.0):
-        return self.sample(n_sample, scale_mean)
-
-
-class Gaussian(torch.nn.Module):
-
-    def __init__(self, embed_dim):
-        super(Gaussian, self).__init__()
-        self.embed_dim = embed_dim
-        self.register_buffer("mean", torch.zeros(embed_dim))
-        self.register_buffer("std", torch.ones(embed_dim))
-
-    def fit(self, x):
-        self.std, self.mean = torch.std_mean(x, dim=0)
-
-    def sample(self, n_sample, scale_mean):
-        return torch.distributions.normal.Normal(scale_mean * self.mean, self.std).sample((n_sample,))
-
-    def forward(self, n_sample, scale_mean: float = 1.0):
-        return self.sample(n_sample, scale_mean)
 
 
 class MixtureOfGaussians(torch.nn.Module):
@@ -69,196 +28,6 @@ class MixtureOfGaussians(torch.nn.Module):
 
     def sample(self, n_sample):
         return self.gm.sample(n_sample)[0]
-
-    def forward(self, n_sample, scale_mean: float = 1.0):
-        return self.sample(n_sample)
-
-
-@dataclass
-class NoiseSchedule:
-    num_steps: int
-    beta_t: torch.Tensor
-    alpha_t: torch.Tensor
-    alpha_bar_t: torch.Tensor
-    img_weight: torch.Tensor
-    noise_weight: torch.Tensor
-
-    def init(
-        self,
-        num_steps: int,
-        beta_t: torch.Tensor,
-        alpha_t: torch.Tensor,
-        alpha_bar_t: torch.Tensor,
-        img_weight: torch.Tensor,
-        noise_weight: torch.Tensor,
-    ) -> None:
-        self.num_steps = num_steps
-        self.beta_t = beta_t
-        self.alpha_t = alpha_t
-        self.alpha_bar_t = alpha_bar_t
-        self.img_weight = img_weight
-        self.noise_weight = noise_weight
-
-    def to(self, device: torch.device):
-        self.beta_t = self.beta_t.to(device)
-        self.alpha_t = self.alpha_t.to(device)
-        self.alpha_bar_t = self.alpha_bar_t.to(device)
-        self.img_weight = self.img_weight.to(device)
-        self.noise_weight = self.noise_weight.to(device)
-        return self
-
-
-def get_cosine_schedule(num_steps: int, s: float = 0, exp: int = 2):
-    alpha_bar_t = torch.cos(
-        (torch.linspace(1, num_steps, steps=num_steps) / num_steps + s)
-        / (1 + s)
-        * math.pi
-        / 2
-    ).pow(exp)
-    beta_t = 1 - alpha_bar_t / (alpha_bar_t.roll(1))
-    beta_t[0] = max(2 * beta_t[1] - beta_t[2], 0)
-    alpha_t = 1 - beta_t
-    img_weight = torch.sqrt(alpha_bar_t)
-    noise_weight = torch.sqrt(1 - alpha_bar_t)
-    return NoiseSchedule(
-        num_steps, beta_t, alpha_t, alpha_bar_t, img_weight, noise_weight
-    )
-
-
-def sinusoidal_embedding(
-    index: torch.Tensor,
-    embedding_dim: int,
-    num_training_steps: int,
-    device: torch.device,
-) -> torch.Tensor:
-    assert len(index.shape) == 1
-
-    half_dim = embedding_dim // 2
-    emb = math.log(num_training_steps) / (half_dim - 1)
-    emb = torch.exp(torch.arange(half_dim, dtype=torch.float32, device=device) * -emb)
-    emb = index.unsqueeze(1) * emb.unsqueeze(0).to(device)
-    emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1)
-
-    if embedding_dim % 2 == 1:
-        emb = torch.nn.functional.pad(emb, (0, 1))
-    return emb
-
-
-class MLPDiffusion(torch.nn.Module):
-    def __init__(self, embed_dim, hidden_dim, num_hidden, num_steps, device) -> None:
-        super().__init__()
-        self.silu = torch.nn.SiLU()
-
-        self.fc_input = torch.nn.Linear(embed_dim, hidden_dim)
-        self.hidden_layers = torch.nn.ModuleList(
-            [torch.nn.Linear(hidden_dim, hidden_dim) for _ in range(num_hidden)]
-        )
-        self.fc_output = torch.nn.Linear(hidden_dim, embed_dim)
-        self.fc_emb1 = torch.nn.Linear(hidden_dim, hidden_dim)
-        self.fc_emb2 = torch.nn.Linear(hidden_dim, hidden_dim)
-
-        self.num_steps = num_steps
-        self.device = device
-        self.hidden_dim = hidden_dim
-
-    def forward(self, x, timestep):
-        t_emb = sinusoidal_embedding(timestep, self.hidden_dim, self.num_steps, self.device)
-        t_emb = self.silu(self.fc_emb1(t_emb))
-        t_emb = self.fc_emb2(t_emb)
-
-        x = self.silu(self.fc_input(x))
-        for layer in self.hidden_layers:
-            x = self.silu(layer(x) + t_emb)
-        return self.fc_output(x)
-
-
-class DiffusionCA(torch.nn.Module):
-
-    @staticmethod
-    def q_function(x, schedule, timestep=None):
-        if timestep is None:
-            timestep = torch.randint(low=0, high=schedule.num_steps, size=(x.shape[0],))
-
-        noise = torch.randn_like(x)
-
-        noise_weight = schedule.noise_weight[timestep].reshape(-1, 1)
-        img_weight = schedule.img_weight[timestep].reshape(-1, 1)
-
-        return x * img_weight + noise * noise_weight, noise, timestep
-
-    def __init__(self, args, embed_dim, device, hidden_dim=64, num_hidden=5, diffusion_steps=32, n_iters: int = 10000, greediness=2e-3, target="img"):
-        super().__init__()
-        self.args = args
-        self.n_iters = n_iters
-        self.embed_dim = embed_dim
-        self.hidden_dim = hidden_dim
-        self.device = device
-        self.schedule = get_cosine_schedule(diffusion_steps).to(device)
-        self.net = MLPDiffusion(embed_dim, hidden_dim, num_hidden, self.schedule.num_steps, device)
-        self.net = self.net.to(device)
-        self.signal_to_noise_ratio = torch.log(self.schedule.img_weight / self.schedule.noise_weight).clamp(1)
-        self.pred_weight = torch.linspace(1, 1 + greediness, steps=self.schedule.num_steps).to(device)
-        self.target = target
-        self.optimizer = torch.optim.AdamW(self.net.parameters(), lr=self.args.ca_diffusion_lr, weight_decay=self.args.ca_diffusion_wd)
-
-    def fit(self, x):
-        batch_size = 32
-        for epoch in range(self.args.ca_diffusion_n_epochs):
-            data = x[torch.randperm(x.shape[0])]
-            for batch_idx in range(x.shape[0] // batch_size + 1):
-                self.optimizer.zero_grad()
-                inputs = data[batch_idx * batch_size: (batch_idx + 1) * batch_size]
-
-                noisy_inputs, noise, timestep = self.q_function(inputs, self.schedule)
-                outputs = self.net(noisy_inputs, timestep.to(self.device) + 1)
-                if self.target == "noise":
-                    loss = torch.mean((outputs - noise) ** 2)
-                else:
-                    loss = (self.signal_to_noise_ratio[timestep] * torch.mean((outputs - inputs) ** 2, -1)).mean()
-                loss.backward()
-                self.optimizer.step()
-                if not self.args.nowand:
-                    wandb.log({"ca_diffusion_loss": loss.item(), "ca_diffusion_epoch": epoch})
-
-    def sample(self, n_sample):
-        x = torch.randn(n_sample, self.embed_dim).to(self.device)
-        if self.target == "noise":
-            for i in reversed(range(self.schedule.num_steps)):
-                out = self.net(x, torch.tensor([i + 1]).to(self.device))
-                x -= self.schedule.beta_t[i] / torch.sqrt(1 - self.schedule.alpha_bar_t[i]) * out
-                if i > 0:
-                    x += torch.randn_like(x) * torch.sqrt(self.schedule.beta_t[i])
-        else:
-            noise = torch.randn_like(x)
-            for i in reversed(range(self.schedule.num_steps)):
-                if i % self.args.ca_diffusion_sampling_power == 0:
-                    noise = torch.randn_like(x)
-                x = self.net(x, torch.tensor([i + 1]).to(self.device))
-                if i > 0:
-                    x = x * self.schedule.img_weight[i - 1] + noise * self.schedule.noise_weight[i - 1]
-
-        x1 = x.clone()
-
-        if self.args.ca_simo_mixmatch:
-            x = torch.randn(n_sample, self.embed_dim).to(self.device)
-            if self.target == "noise":
-                for i in reversed(range(self.schedule.num_steps)):
-                    out = self.net(x, torch.tensor([i + 1]).to(self.device))
-                    x -= self.schedule.beta_t[i] / torch.sqrt(1 - self.schedule.alpha_bar_t[i]) * out
-                    if i > 0:
-                        x += torch.randn_like(x) * torch.sqrt(self.schedule.beta_t[i])
-            else:
-                noise = torch.randn_like(x)
-                for i in reversed(range(self.schedule.num_steps)):
-                    if i % self.args.ca_diffusion_sampling_power == 0:
-                        noise = torch.randn_like(x)
-                    x = self.net(x, torch.tensor([i + 1]).to(self.device))
-                    if i > 0:
-                        x = x * self.schedule.img_weight[i - 1] + noise * self.schedule.noise_weight[i - 1]
-            x += x1
-            x /= 2
-
-        return x + torch.randn_like(x) * self.args.ca_diffusion_sampling_noise
 
     def forward(self, n_sample, scale_mean: float = 1.0):
         return self.sample(n_sample)

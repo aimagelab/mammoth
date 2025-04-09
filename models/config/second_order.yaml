@@ -3,36 +3,28 @@ seq-cropdisease:
   batch_size: 8
   virtual_bs_n: 16
   backbone_type: ViT-B/16
-  lora_style: task
-  ewc_scale_by_t: 1
-  augmented_reg: 1
-  ewc_ensemble_mode: 0
+  tuning_style: lora
   ewc_optim_style: adamw
-  ewc_lambda: 0.0
-  sched_type: cosine
+  beta_iel: 0.0
   optimizer: adamw
-  ewc_alpha: 5.0
+  alpha_ita: 5.0
   lr: 0.0003
   num_epochs_pretuning: 1
   learning_rate_pretuning: 0.01
-  ewc_cls_lambda: 0.1
-  ewc_cls_identity_lambda: 0.01
+  req_weight_cls: 0.1
+  simple_reg_weight_cls: 0.01
 seq-cifar100-224:
   dataset_config: second_order_ta
   batch_size: 8
   virtual_bs_n: 16
   backbone_type: ViT-B/16
-  lora_style: task
-  ewc_scale_by_t: 1
-  augmented_reg: 1
-  ewc_ensemble_mode: 0
+  tuning_style: lora
   ewc_optim_style: adamw
-  ewc_lambda: 0.0
-  sched_type: cosine
+  beta_iel: 0.0
   optimizer: adamw
-  ewc_alpha: 0.02
+  alpha_ita: 0.02
   lr: 0.0003
   num_epochs_pretuning: 3
   learning_rate_pretuning: 0.01
-  ewc_cls_lambda: 0.025
-  ewc_cls_identity_lambda: 0.001
+  req_weight_cls: 0.025
+  simple_reg_weight_cls: 0.001

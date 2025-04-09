@@ -7,12 +7,10 @@ This module contains utility functions for configuration settings.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import os
 import gc
 import logging
-import math
-import os
 import random
-import sys
 from functools import partial
 
 from typing import List

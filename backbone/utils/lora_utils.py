@@ -61,6 +61,8 @@ class LoRALinear(nn.Linear, LoRALayer):
         if AB is not None:
             A = None
             if isinstance(AB, dict):
+                assert 'B' in AB, "AB should contain 'B' key for LoRA parameters"
+
                 B = AB['B']
                 A = AB.get('A')
             else:
@@ -107,11 +109,16 @@ class LoRAAttention(nn.Module):
             AB: Dictionary containing LoRA-style parameters for the layer
         """
 
+        assert x.ndim == 3, f"Expected input to be 3D (B, N, C), got {x.ndim}D"
+        assert x.shape[2] % self.num_heads == 0, f"Input sequence length {x.shape[1]} is not divisible by num_heads {self.num_heads}"
+
         B, N, C = x.shape
 
         AB_qkv = None
 
         if AB is not None:
+            assert isinstance(AB, dict), "AB should be a dictionary"
+            assert 'qkv' in AB, "AB should contain 'qkv' key for LoRA parameters"
             AB_qkv = AB.get("qkv")
 
         qkv = self.qkv(x, AB_qkv)
@@ -132,6 +139,7 @@ class LoRAAttention(nn.Module):
         AB_proj = None
 
         if AB is not None:
+            assert 'proj' in AB, "AB should contain 'proj' key for LoRA parameters"
             AB_proj = AB.get("proj")
 
         x = self.proj(x, AB_proj)
@@ -195,6 +203,8 @@ class LoRAMlp(nn.Module):
         AB_fc2 = None
 
         if AB is not None:
+            assert isinstance(AB, dict), "AB should be a dictionary"
+            assert 'fc1' in AB and 'fc2' in AB, "AB should contain 'fc1' and 'fc2' keys for LoRA parameters"
             AB_fc1 = AB.get("fc1")
             AB_fc2 = AB.get("fc2")
 
