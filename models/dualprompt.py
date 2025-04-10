@@ -27,7 +27,7 @@ class DualPrompt(ContinualModel):
         parser.set_defaults(optimizer='adam', batch_size=128)
 
         parser.add_argument('--pretrained', default=1, type=binary_to_boolean_type, help='Load pretrained model or not')
-        parser.add_argument('--use_fix_permute', type=binary_to_boolean_type, default=0, help='Apply fix to reshape issue from original implementation (ref: issue #56)')
+        parser.add_argument('--use_permute_fix', type=binary_to_boolean_type, default=0, help='Apply fix to reshape issue from original implementation (ref: issue #56)')
 
         # Optimizer parameters
         parser.add_argument('--clip_grad', type=float, default=1.0, metavar='NORM', help='Clip gradient norm (default: None, no clipping)')
