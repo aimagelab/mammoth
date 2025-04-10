@@ -23,7 +23,7 @@ With Mammoth, nothing is set in stone. You can easily add new models, datasets, 
 
 <p align="center">
   <a href="https://aimagelab.github.io/mammoth/">
-    <em style="display: inline-block; margin-top: 8px; font-size: 16px; color: #4B73C9; background-color: #f8f9fa; padding: 8px 16px; border-radius: 0 0 8px 8px; border: 1px solid #4B73C9; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">Check out the documentation for guides on using Mammoth for continual learning research</em>
+    <em style="display: inline-block; margin-top: 8px; font-size: 16px; color: #4B73C9; background-color: #f8f9fa; padding: 8px 16px; border-radius: 0 0 8px 8px; border: 1px solid #4B73C9; border-top: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">Check out our guides on using Mammoth for continual learning research</em>
     <br/>
     <img src="https://img.shields.io/badge/Documentation-📚-4B73C9?style=for-the-badge&logo=gitbook&logoColor=white" alt="Documentation" height="40">
   </a>
