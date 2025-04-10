@@ -9,19 +9,19 @@ Arguments
 	*Help*: Which dataset to perform experiments on.
 
 	- *Default*: ``None``
-	- *Choices*: ``seq-mnist, seq-cub200, seq-chestx, seq-cifar100-224, seq-tinyimg, seq-tinyimg-r, seq-celeba, seq-cropdisease, seq-eurosat-rgb, perm-mnist, seq-cifar100, seq-isic, seq-mit67, seq-cifar10-224-rs, seq-cifar10, mnist-360, seq-imagenet-r, seq-cub200-rs, rot-mnist, seq-resisc45, seq-cifar10-224, seq-cars196, seq-cifar100-224-rs``
+	- *Choices*: ``seq-tinyimg, seq-mit67, seq-cars196, seq-cifar100-224-rs, seq-cifar100-224, seq-chestx, seq-celeba, seq-cifar10-224-rs, mnist-360, seq-cropdisease, seq-eurosat-rgb, seq-imagenet-r, seq-cifar100, seq-cifar10-224, perm-mnist, seq-cub200, seq-cifar10, rot-mnist, seq-resisc45, seq-mnist, seq-cub200-rs, seq-isic, seq-tinyimg-r``
 
 **\-\-model** : str (with underscores replaced by dashes)
 	*Help*: Model name.
 
 	- *Default*: ``None``
-	- *Choices*: ``lws, twf, derpp-lider, l2p, der, icarl, xder-rpc-cscct, xder-rpc, rpc, pnn, bic, zscl, second-stage-starprompt, puridiver, spr, slca, icarl-casper, derpp-casper, gdumb-lider, cnll, xder-ce, cgil, mer, coda-prompt, joint-gcl, ccic, ranpac, er-ace-casper, joint, gss, moe-adapters, gem, agem, ewc-on, er-ace-tricks, icarl-cscct, clip, er-ace, derpp, lwf, derpp-cscct, er, lwf-mc, idefics, icarl-lider, first-stage-starprompt, lucir, xder-rpc-casper, agem-r, er-ace-aer-abs, fdr, attriclip, starprompt, gdumb, dualprompt, dap, xder, sgd, er-tricks, er-ace-lider, second-order, er-ace-cscct, hal, si, llava``
+	- *Choices*: ``joint-gcl, second-stage-starprompt, lwf-mc, puridiver, xder-rpc-cscct, gdumb-lider, zscl, joint, cnll, ewc-on, xder, ranpac, hal, idefics, derpp-casper, er-ace-tricks, sgd, si, moe-adapters, first-stage-starprompt, er-ace-aer-abs, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, llava, er-ace-casper, attriclip, second-order, starprompt, lws, coda-prompt, er-tricks, clip, pnn, er-ace, xder-ce, icarl-cscct, dualprompt, twf, mer, er-ace-lider, gdumb, derpp-cscct, dap, l2p, ccic, slca, agem-r, rpc, er-ace-cscct, icarl-casper, xder-rpc, gss, spr, xder-rpc-casper, lwf, cgil, er, agem``
 
 **\-\-backbone** : str (with underscores replaced by dashes)
 	*Help*: Backbone network name.
 
 	- *Default*: ``None``
-	- *Choices*: ``resnet18, resnet18-7x7-pt, reduced-resnet18, resnet34, resnet32, mnistmlp, vit, resnet50, resnet50-pt``
+	- *Choices*: ``resnet18, resnet18-7x7-pt, reduced-resnet18, resnet34, resnet50, resnet50-pt, resnet32, mnistmlp, vit``
 
 **\-\-load_best_args** : unknown
 	*Help*: (deprecated) Loads the best arguments for each method, dataset and memory buffer. NOTE: This option is deprecated and not up to date.
