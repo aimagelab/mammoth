@@ -406,10 +406,15 @@ class ContinualModel(nn.Module):
                 args = [arg[labeled_mask] if isinstance(arg, torch.Tensor) and arg.shape[0] == args[0].shape[0] else arg for arg in args]
 
         # remove kwargs that are not needed by the observe method
-        observe_args = inspect.signature(self.observe).parameters.keys()
-        if 'kwargs' not in observe_args:
-            kwargs = {k: v for k, v in kwargs.items() if k in observe_args}
-        missing_args = [arg for arg in observe_args if arg not in kwargs and arg not in ['inputs', 'labels', 'not_aug_inputs']]
+        observe_args = inspect.signature(self.observe).parameters
+        if 'kwargs' not in observe_args.keys():
+            kwargs = {k: v for k, v in kwargs.items() if k in observe_args.keys()}
+        missing_args = [
+            arg for arg, val in observe_args.items() if arg not in kwargs and
+            arg not in ['inputs', 'labels', 'not_aug_inputs'] and  # ignore args that will always be present
+            val.default is val.empty and  # avoid matching args that have default values
+            val.kind in (val.POSITIONAL_OR_KEYWORD, val.KEYWORD_ONLY)  # avoid matching **kwargs
+        ]
         assert len(missing_args) == 0, f"Some arguments required by observe are missing: {missing_args}. "
         "Suggestion: if the missing argument is `true_labels`, you are probably missing "
         "the `--noise_rate` and `--noise_type` arguments."
