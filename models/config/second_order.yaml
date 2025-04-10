@@ -2,11 +2,7 @@ seq-cropdisease:
   dataset_config: second_order_ta
   batch_size: 8
   virtual_bs_n: 16
-  backbone_type: ViT-B/16
   tuning_style: lora
-  ewc_optim_style: adamw
-  beta_iel: 0.0
-  optimizer: adamw
   alpha_ita: 5.0
   lr: 0.0003
   num_epochs_pretuning: 1
@@ -17,11 +13,7 @@ seq-cifar100-224:
   dataset_config: second_order_ta
   batch_size: 8
   virtual_bs_n: 16
-  backbone_type: ViT-B/16
   tuning_style: lora
-  ewc_optim_style: adamw
-  beta_iel: 0.0
-  optimizer: adamw
   alpha_ita: 0.02
   lr: 0.0003
   num_epochs_pretuning: 3
