@@ -6,7 +6,6 @@
 <p align="center">
   <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/aimagelab/mammoth">
   <a href="https://aimagelab.github.io/mammoth/index.html"><img alt="Documentation" src="https://img.shields.io/badge/docs-mammoth-blue?style=flat&logo=readthedocs"></a>
-  <img alt="Discord" src="https://img.shields.io/discord/1164956257392799860">
   <img alt="GitHub stars" src="https://img.shields.io/github/stars/aimagelab/mammoth?style=social">
   <img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?&logo=PyTorch&logoColor=white">
 </p>
