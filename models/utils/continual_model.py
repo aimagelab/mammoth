@@ -183,7 +183,7 @@ class ContinualModel(nn.Module):
     def __init__(self, backbone: 'MammothBackbone', loss: nn.Module,
                  args: Namespace, transform: nn.Module, dataset: 'ContinualDataset' = None) -> None:
         super(ContinualModel, self).__init__()
-        print("Using {} as backbone".format(backbone.__class__.__name__))
+        logging.info("Using {} as backbone".format(backbone.__class__.__name__))
         self.net = backbone
         self.loss = loss
         self.args = args

@@ -1,3 +1,4 @@
+import logging
 import torch
 from copy import deepcopy
 from torch.utils.data import TensorDataset
@@ -214,13 +215,13 @@ class SecondStageStarprompt(ContinualModel):
             self.distributions[class_idx].fit(features_class_idx.to(self.device))
 
     def backup(self):
-        print(f"BACKUP: Task - {self.current_task} - classes from "
-              f"{self.n_past_classes} - to {self.n_seen_classes}")
+        logging.info(f"BACKUP: Task - {self.current_task} - classes from "
+                     f"{self.n_past_classes} - to {self.n_seen_classes}")
         self.classifier_state_dict = deepcopy(self.net.vit.head.state_dict())
 
     def recall(self):
-        print(f"RECALL: Task - {self.current_task} - classes from "
-              f"{self.n_past_classes} - to {self.n_seen_classes}")
+        logging.info(f"RECALL: Task - {self.current_task} - classes from "
+                     f"{self.n_past_classes} - to {self.n_seen_classes}")
 
         if self.current_task == 0 or not self.args.enable_gr:
             return
@@ -268,10 +269,10 @@ class SecondStageStarprompt(ContinualModel):
         #         logits = torch.einsum('bd,cd->bc', queries, self.net.prompter.keys.type(self.net.prompter.clip_model.dtype))
         #         task_corr += (logits.argmax(dim=-1) == labels).sum().item()
         #         task_tot += labels.shape[0]
-        #     print(f"CLIP on TASK {i+1}: {task_corr / task_tot}")
+        #     logging.info(f"CLIP on TASK {i+1}: {task_corr / task_tot}")
         #     tot_corr += task_corr
         #     tot_data += task_tot
-        # print(f"AVG CLIP ON TASKS: {tot_corr / tot_data}") # the avg of the avg != the avg of the total
+        # logging.info(f"AVG CLIP ON TASKS: {tot_corr / tot_data}") # the avg of the avg != the avg of the total
 
         # For later GR
         self.recall()

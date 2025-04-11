@@ -425,6 +425,50 @@ def check_multiple_defined_arg_during_string_parse() -> None:
         keys.add(arg_name)
 
 
+# =========================== Pretty print log function ===========================
+
+def pretty_format_args(args: Namespace, parser: ArgumentParser) -> str:
+    """
+    Format the args namespace for better readability in logs.
+    """
+
+    args_dict = vars(args)
+    formatted = "╔═══════════════════════ CONFIGURATION ═══════════════════════╗\n"
+
+    # Get argument groups
+    arg_groups = {}
+    for group in parser._action_groups:
+        gname = group.title if group.title != 'options' else 'Basic arguments'
+        group_dict = [a.dest for a in group._group_actions if a.dest != 'help']
+        arg_groups[gname] = group_dict
+
+    # Organize args by their groups
+    for group_name, group_args in arg_groups.items():
+        if not group_args:
+            continue
+
+        formatted += f"║ {group_name}:\n"
+        for key in sorted(group_args):
+            if args_dict[key] is not None:
+                value = args_dict[key]
+                # Format value based on type
+                if isinstance(value, float):
+                    value_str = f"{value:.6f}"
+                elif isinstance(value, (list, tuple)):
+                    value_str = str(value)[:50] + ("..." if len(str(value)) > 50 else "")
+                else:
+                    value_str = str(value)
+
+                formatted += f"║   • {key}: {value_str}\n"
+        formatted += "║\n"
+
+    formatted += "╚════════════════════════════════════════════════════════════╝"
+    return formatted
+
+
+# =========================== Utility functions for documentation generation ===========================
+
+
 class _DocsArgs:
     """
     This class is used to generate the documentation of the arguments.

@@ -39,7 +39,7 @@ class MyEuroSat(Dataset):
         self.totensor = transforms.ToTensor()
 
         if not os.path.exists(root + '/DONE'):
-            print('Preparing dataset...', file=sys.stderr)
+            logging.info('Preparing dataset...', file=sys.stderr)
             r = requests.get('https://zenodo.org/records/7711810/files/EuroSAT_RGB.zip?download=1')
             z = zipfile.ZipFile(io.BytesIO(r.content))
             z.extractall(root)
@@ -55,7 +55,7 @@ class MyEuroSat(Dataset):
             gdd.download_file_from_google_drive(file_id='1Ip7yaCWFi0eaOFUGga0lUdVi_DDQth1o',
                                                 dest_path=self.root + '/split.json')
 
-            print('Done', file=sys.stderr)
+            logging.info('Done', file=sys.stderr)
 
         self.data_split = pd.DataFrame(json.load(open(self.root + '/split.json', 'r'))[split])
         self.data = self.data_split[0].values

@@ -5,6 +5,7 @@
 
 from argparse import Namespace
 from copy import deepcopy
+import logging
 from typing import List, Tuple, TYPE_CHECKING
 
 import numpy as np
@@ -579,7 +580,7 @@ class Buffer:
             if n_classes <= len(selected):
                 finished = True
             if len(selected) == 0:
-                print('WARNING: no class has enough examples')
+                logging.error('No class has enough examples')
                 return self.get_data(size, transform=transform)
 
         selected = selected[torch.randperm(len(selected))[:n_classes]]
@@ -758,7 +759,7 @@ def fill_buffer(buffer: Buffer, dataset: 'ContinualDataset', t_idx: int, net: 'M
         samples_per_class = np.ceil(buffer.buffer_size / n_seen_classes).astype(int)
         new_bufsize = int(n_seen_classes * samples_per_class)
         if new_bufsize != buffer.buffer_size:
-            print('Buffer size has bee changed to:', new_bufsize)
+            logging.info('Buffer size has bee changed to:', new_bufsize)
         buffer.buffer_size = new_bufsize
     else:
         samples_per_class = buffer.buffer_size // n_seen_classes

@@ -1,4 +1,5 @@
 from copy import deepcopy
+import logging
 from typing import Tuple, Union
 import torch
 from torch import nn
@@ -32,7 +33,7 @@ class STARPromptModel(nn.Module):
         self.num_classes = num_classes
         self.device = device
         self.dataset = dataset
-        print("Loading first stage...")
+        logging.info("Loading first stage...")
         self.first_stage = FirstStageModel(args=args, num_classes=num_classes, dataset=dataset, device=device)
 
         # REMOVE ALL TRACK RUNNING STATS FROM CLIP
@@ -40,7 +41,7 @@ class STARPromptModel(nn.Module):
             if isinstance(m, (torch.nn.BatchNorm2d, torch.nn.BatchNorm1d)):
                 m.track_running_stats = False
 
-        print("Loading second stage...")
+        logging.info("Loading second stage...")
         self.second_stage = SecondStageModel(args=args, num_classes=num_classes,
                                              dataset=dataset, backbone=backbone,
                                              clip_model=self.first_stage.prompter.clip_model,
@@ -52,7 +53,7 @@ class STARPromptModel(nn.Module):
         self.second_stage_distributions = torch.nn.ModuleList([self._get_dist(embed_dim)
                                                                for _ in range(self.num_classes)]).to(self.device)
         self.classifier_state_dict = None
-        print("Done.")
+        logging.info("Done.")
 
     def _get_dist(self, embed_dim):
         assert self.args.gr_model in ['mog', 'gaussian'], f"Invalid GR model: {self.args.gr_model}"
@@ -65,7 +66,7 @@ class STARPromptModel(nn.Module):
 
     @torch.no_grad()
     def update_keys(self, start_c: int, end_c: int):
-        print('Updating keys for second stage...')
+        logging.info('Updating keys for second stage...')
         first_stage_keys = self.first_stage.prompter.compute_keys(start_c, end_c)
         self.second_stage.prompter.set_keys(first_stage_keys, start_c, end_c)
 
@@ -211,13 +212,13 @@ class STARPromptModel(nn.Module):
             self.second_stage_distributions[class_idx].fit(features_class_idx.to(self.device))
 
     def backup(self, current_task: int, n_past_classes: int, n_seen_classes: int):
-        print(f"BACKUP: Task - {current_task} - classes from "
-              f"{n_past_classes} - to {n_seen_classes}")
+        logging.info(f"BACKUP: Task - {current_task} - classes from "
+                     f"{n_past_classes} - to {n_seen_classes}")
         self.classifier_state_dict = deepcopy(self.second_stage.vit.head.state_dict())
 
     def recall_classifier_second_stage(self, current_task: int, n_past_classes: int, n_seen_classes: int):
-        print(f"RECALL: Task - {current_task} - classes from "
-              f"{n_past_classes} - to {n_seen_classes}")
+        logging.info(f"RECALL: Task - {current_task} - classes from "
+                     f"{n_past_classes} - to {n_seen_classes}")
 
         if current_task == 0 or not self.args.enable_gr:
             return
@@ -239,7 +240,7 @@ class STARPromptModel(nn.Module):
             n_seen_classes: The number of seen classes.
             loss_fn: The loss function.
         """
-        print("Starting training of first stage on task", current_task)
+        logging.info("Starting training of first stage on task", current_task)
         # BEGIN-TASK
         old_train_transform = dataset.train_loader.dataset.transform
         old_test_transform = dataset.test_loaders[-1].dataset.transform
@@ -313,8 +314,8 @@ class STARPromptModel(nn.Module):
             self.first_stage.prompter.align(current_task)
 
         cur_acc = self.eval_first_stage_on_task(dataset, n_seen_classes)
-        print(f'First stage accuracy: {[acc.item() for acc in cur_acc]}')
-        print(f'\tAverage: {cur_acc.mean().item():.4f}')
+        logging.info(f'First stage accuracy: {[acc.item() for acc in cur_acc]}')
+        logging.info(f'\tAverage: {cur_acc.mean().item():.4f}')
         if not self.args.nowand:
             assert wandb is not None, "wandb is not installed."
             log_dict = {f'first_stage_acc_{i}': acc.item() for i, acc in enumerate(cur_acc)}

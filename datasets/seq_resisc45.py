@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Tuple
 import torchvision.transforms as transforms
@@ -82,14 +83,14 @@ class Resisc45(Dataset):
 
         if download:
             if os.path.isdir(root) and len(os.listdir(root)) > 0:
-                print('Download not needed, files already on disk.')
+                logging.info('Download not needed, files already on disk.')
             else:
                 # download from https://people.eecs.berkeley.edu/~hendrycks/imagenet-r.tar
-                print("Downloading resisc45 dataset...")
+                logging.info("Downloading resisc45 dataset...")
                 ln = 'https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EbxMu5z5HbVIkG9qFCGbg7ABDRZvpBEA8uqVC-Em9HYVug?e=Cfc4Yc'
                 from onedrivedownloader import download
                 download(ln, filename=os.path.join(root, 'resisc45.tar.gz'), unzip=True, unzip_path=root, clean=True)
-                print("Done!")
+                logging.info("Done!")
 
         if self.train:
             data_config = yaml.load(open(smart_joint(root, 'resisc45_train.yaml')), Loader=yaml.Loader)

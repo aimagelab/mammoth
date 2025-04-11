@@ -16,6 +16,7 @@ Requires:
     * ViT-L/14@336px: "https://openaipublic.azureedge.net/clip/models/3035c92b350959924f9f00213499208652fc7ea050643e8b385c2dac08641f02/ViT-L-14-336px.pt"
 """
 
+import logging
 import torch
 import torch.nn as nn
 
@@ -111,7 +112,7 @@ class CLIP(ContinualModel):
         backbone, clip_transform = clip.load(args.clip_backbone, device=get_device())
         n_epochs = 1 if args.save_predictions else 0
         if args.n_epochs != n_epochs:
-            print(f"CLIP is a STATIC model, setting n_epochs to {n_epochs}")
+            logging.warning(f"CLIP is a STATIC model, setting n_epochs to {n_epochs}")
             args.n_epochs = n_epochs
         super().__init__(backbone, loss, args, transform, dataset=dataset)
 
@@ -136,7 +137,7 @@ class CLIP(ContinualModel):
             self.predictions = torch.cat(self.predictions, dim=0).cpu()
             self.original_labels = torch.cat(self.original_labels, dim=0).cpu()
             torch.save((self.predictions, self.original_labels), f'predictions_{self.args.dataset}_{self.current_task}.pt')
-            print(f"Predictions saved for task {self.current_task} in 'predictions_{self.args.dataset}_{self.current_task}.pt'")
+            logging.info(f"Predictions saved for task {self.current_task} in 'predictions_{self.args.dataset}_{self.current_task}.pt'")
             self.predictions = []
             self.original_labels = []
         return super().end_task(dataset)

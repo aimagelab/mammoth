@@ -3,6 +3,7 @@ This package contains utility functions for the CoDA Prompt model. Implements a 
 """
 
 import copy
+import logging
 
 import torch
 
@@ -50,7 +51,7 @@ def gram_schmidt(vv, start_c, end_c, return_in_parameter=True):
                     proj = projection(uj, vk)
                     if proj is None:
                         redo = True
-                        print('restarting!!!')
+                        logging.warning('restarting!!!')
                     else:
                         uk = uk + proj
             if not redo:

@@ -44,27 +44,27 @@ class MyImagenetR(Dataset):
         if not os.path.exists(self.root):
             if download:
                 # download from https://people.eecs.berkeley.edu/~hendrycks/imagenet-r.tar
-                print("Downloading imagenet-r dataset...")
+                logging.info("Downloading imagenet-r dataset...")
                 url = 'https://people.eecs.berkeley.edu/~hendrycks/imagenet-r.tar'
                 r = requests.get(url, allow_redirects=True)
                 if not os.path.exists(self.root):
                     os.makedirs(self.root)
-                print("Writing tar on disk...")
+                logging.info("Writing tar on disk...")
                 open(self.root + 'imagenet-r.tar', 'wb').write(r.content)
-                print("Extracting tar...")
+                logging.info("Extracting tar...")
                 os.system('tar -xf ' + self.root + 'imagenet-r.tar -C ' + self.root.rstrip('imagenet-r'))
 
                 # move all files in imagenet-r to root with shutil
                 import shutil
-                print("Moving files...")
+                logging.info("Moving files...")
                 for d in os.listdir(self.root + 'imagenet-r'):
                     shutil.move(self.root + 'imagenet-r/' + d, self.root)
 
-                print("Cleaning up...")
+                logging.info("Cleaning up...")
                 os.remove(self.root + 'imagenet-r.tar')
                 os.rmdir(self.root + 'imagenet-r')
 
-                print("Done!")
+                logging.info("Done!")
             else:
                 raise RuntimeError('Dataset not found.')
 

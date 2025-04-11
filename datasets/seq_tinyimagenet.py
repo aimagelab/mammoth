@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import logging
 import os
 from typing import Optional, Tuple
 
@@ -37,11 +38,11 @@ class TinyImagenet(Dataset):
 
         if download:
             if os.path.isdir(root) and len(os.listdir(root)) > 0:
-                print('Download not needed, files already on disk.')
+                logging.info('Download not needed, files already on disk.')
             else:
                 from onedrivedownloader import download
 
-                print('Downloading dataset')
+                logging.info('Downloading dataset')
                 ln = "https://unimore365-my.sharepoint.com/:u:/g/personal/263133_unimore_it/EVKugslStrtNpyLGbgrhjaABqRHcE3PB_r2OEaV7Jy94oQ?e=9K29aD"
                 download(ln, filename=smart_joint(root, 'tiny-imagenet-processed.zip'), unzip=True, unzip_path=root, clean=True)
 

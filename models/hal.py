@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import logging
 import sys
 import numpy as np
 import torch
@@ -76,7 +77,6 @@ class HAL(ContinualModel):
         for a_class in classes_for_this_task:
             e_t = torch.rand(self.input_shape, requires_grad=True, device=self.device)
             e_t_opt = SGD([e_t], lr=self.args.lr)
-            print(file=sys.stderr)
             for i in range(self.anchor_optimization_steps):
                 e_t_opt.zero_grad()
                 cum_loss = 0
@@ -105,7 +105,7 @@ class HAL(ContinualModel):
             e_t.requires_grad = False
             self.anchors = torch.cat((self.anchors, e_t.unsqueeze(0)))
             del e_t
-            print('Total anchors:', len(self.anchors), file=sys.stderr)
+            logging.info('Total anchors:', len(self.anchors))
 
         self.spare_model.zero_grad()
 
@@ -116,7 +116,7 @@ class HAL(ContinualModel):
         if not hasattr(self, 'anchors'):
             self.anchors = torch.zeros(tuple([0] + list(self.input_shape))).to(self.device)
         if not hasattr(self, 'phi'):
-            print('Building phi', file=sys.stderr)
+            logging.info('Building phi')
             with torch.no_grad():
                 self.phi = torch.zeros_like(self.net(inputs[0].unsqueeze(0), returnt='features'), requires_grad=False)
             assert not self.phi.requires_grad

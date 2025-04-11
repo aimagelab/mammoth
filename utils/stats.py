@@ -39,6 +39,7 @@ try:
 except BaseException:
     get_memory_gpu_mb = None
 
+import logging
 from utils.loggers import Logger
 
 
@@ -157,16 +158,16 @@ class track_system_stats:
         cpu_res, gpu_res = self.get_stats()
 
         # Print initial, average, final, and max memory usage
-        print("System stats:")
+        logging.info("System stats:")
         if cpu_res is not None:
-            print(f"\tInitial CPU memory usage: {self.initial_cpu_res:.2f} MB", flush=True)
-            print(f"\tAverage CPU memory usage: {self.avg_cpu_res:.2f} MB", flush=True)
-            print(f"\tFinal CPU memory usage: {cpu_res:.2f} MB", flush=True)
-            print(f"\tMax CPU memory usage: {self.max_cpu_res:.2f} MB", flush=True)
+            logging.info(f"\tInitial CPU memory usage: {self.initial_cpu_res:.2f} MB", flush=True)
+            logging.info(f"\tAverage CPU memory usage: {self.avg_cpu_res:.2f} MB", flush=True)
+            logging.info(f"\tFinal CPU memory usage: {cpu_res:.2f} MB", flush=True)
+            logging.info(f"\tMax CPU memory usage: {self.max_cpu_res:.2f} MB", flush=True)
 
         if gpu_res is not None:
             for gpu_id, g_res in enumerate(gpu_res):
-                print(f"\tInitial GPU {gpu_id} memory usage: {self.initial_gpu_res[gpu_id]:.2f} MB", flush=True)
-                print(f"\tAverage GPU {gpu_id} memory usage: {self.avg_gpu_res[gpu_id]:.2f} MB", flush=True)
-                print(f"\tFinal GPU {gpu_id} memory usage: {g_res:.2f} MB", flush=True)
-                print(f"\tMax GPU {gpu_id} memory usage: {self.max_gpu_res[gpu_id]:.2f} MB", flush=True)
+                logging.info(f"\tInitial GPU {gpu_id} memory usage: {self.initial_gpu_res[gpu_id]:.2f} MB", flush=True)
+                logging.info(f"\tAverage GPU {gpu_id} memory usage: {self.avg_gpu_res[gpu_id]:.2f} MB", flush=True)
+                logging.info(f"\tFinal GPU {gpu_id} memory usage: {g_res:.2f} MB", flush=True)
+                logging.info(f"\tMax GPU {gpu_id} memory usage: {self.max_gpu_res[gpu_id]:.2f} MB", flush=True)

@@ -5,6 +5,7 @@
 
 
 from argparse import Namespace
+import logging
 
 import torch
 
@@ -87,7 +88,7 @@ def train(args: Namespace):
             model.end_task(dataset)
 
         acc = evaluate(model, dataset)
-        print('Accuracy:', acc)
+        logging.info('Accuracy:', acc)
 
     if not args.disable_log:
         logger.log(acc)

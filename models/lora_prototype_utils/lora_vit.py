@@ -15,7 +15,6 @@ class VisionTransformer(MammothVP):
         """
         Load weights from a Mammoth model
         """
-        print("Loading the Vision Transformer backbone...")
         vit_model = cls(
             embed_dim=backbone.embed_dim,
             depth=backbone.depth,

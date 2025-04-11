@@ -2,6 +2,7 @@
 vit with DAP
 """
 import copy
+import logging
 import math
 import os
 from os.path import join as pjoin
@@ -314,7 +315,7 @@ def dap_load_from(model: ADPT_Transformer, weights):
 
             gs_old = int(np.sqrt(len(posemb_grid)))
             gs_new = int(np.sqrt(ntok_new))
-            print('load_pretrained: grid-size from %s to %s' % (gs_old, gs_new))
+            logging.info('load_pretrained: grid-size from %s to %s' % (gs_old, gs_new))
             posemb_grid = posemb_grid.reshape(gs_old, gs_old, -1)
 
             zoom = (gs_new / gs_old, gs_new / gs_old, 1)

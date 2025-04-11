@@ -1,4 +1,5 @@
 import copy
+import logging
 import os
 import sys
 import torch
@@ -26,7 +27,6 @@ def get_convnet(feature_extractor_type, pretrained=False):
     elif name == 'resnet50':
         return resnet50(pretrained=pretrained)
     elif name == 'vit-b-p16':
-        print("Using ViT-B/16 pretrained on ImageNet21k (NO FINETUNE ON IN1K)")
         model = vit_base_patch16_224_prompt_prototype(pretrained=pretrained, pretrain_type='in21k', num_classes=0)
         model.norm = nn.LayerNorm(model.embed_dim)  # from the original implementation
         return model
@@ -35,8 +35,8 @@ def get_convnet(feature_extractor_type, pretrained=False):
 
         del model.head
         if not os.path.exists('mocov3-vit-base-300ep.pth'):
-            print("Cannot find the pretrained model for MoCoV3-ViT-B/16")
-            print("Please download the model from https://drive.google.com/file/d/1bshDu4jEKztZZvwpTVXSAuCsDoXwCkfy/view?usp=share_link")
+            logging.error("Cannot find the pretrained model for MoCoV3-ViT-B/16")
+            logging.error("Please download the model from https://drive.google.com/file/d/1bshDu4jEKztZZvwpTVXSAuCsDoXwCkfy/view?usp=share_link")
             sys.exit(1)
 
         ckpt = torch.load('mocov3-vit-base-300ep.pth', map_location='cpu', weights_only=True)['model']  # from the original implementation

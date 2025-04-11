@@ -33,10 +33,10 @@ class CodaPrompt(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
         del backbone
-        print("-" * 20)
+        logging.info("-" * 20)
         logging.info(f"CODA-Prompt USES A CUSTOM BACKBONE: `vit_base_patch16_224.augreg_in21k_ft_in1k`.")
-        print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
-        print("-" * 20)
+        logging.info("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
+        logging.info("-" * 20)
 
         assert args.lr_scheduler is None, "CODA-Prompt uses a custom scheduler: cosine. Ignoring --lr_scheduler."
 

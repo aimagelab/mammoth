@@ -37,10 +37,10 @@ class RanPAC(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
         self.device = get_device()
-        print("-" * 20)
-        print(f"WARNING: RanPAC USES `in21k` AS DEFAULT PRETRAIN. CHANGE IT WITH `--pretrain_type` IF NEEDED.")
+        logging.warning("-" * 20)
+        logging.warning(f"RanPAC USES `in21k` AS DEFAULT PRETRAIN. CHANGE IT WITH `--pretrain_type` IF NEEDED.")
+        logging.warning("-" * 20)
         backbone = RanPAC_Model(backbone, args)
-        print("-" * 20)
 
         super().__init__(backbone, loss, args, transform, dataset=dataset)
 
@@ -90,7 +90,6 @@ class RanPAC(ContinualModel):
         label_list = torch.cat(label_list, dim=0)
 
         Y = target2onehot(label_list, self.dataset.N_CLASSES)
-        # print('Number of pre-trained feature dimensions = ',Features_f.shape[-1])
         Features_h = torch.nn.functional.relu(Features_f @ self.net._network.fc.W_rand.cpu())
 
         self.Q = self.Q + Features_h.T @ Y

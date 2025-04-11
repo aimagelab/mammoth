@@ -83,7 +83,7 @@ class ICarl(ContinualModel):
 
     def forward(self, x):
         if self.class_means is None:
-            print('Computing class means...')
+            logging.info('Computing class means...')
             with torch.no_grad():
                 self.compute_class_means()
                 self.class_means = self.class_means.squeeze()

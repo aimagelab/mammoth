@@ -1,4 +1,5 @@
 from argparse import Namespace
+import logging
 import os
 import sys
 import json
@@ -37,14 +38,14 @@ class Prompter(torch.nn.Module):
         if clip_model is not None:
             assert clip_preprocess is not None, 'Preprocess must be provided if the model is provided'
 
-        print("Loading CLIP visual encoder and the pre-computed text features...")
+        logging.info("Loading CLIP visual encoder and the pre-computed text features...")
         clip_backbone = 'ViT-L/14' if not hasattr(args, 'clip_backbone') else args.clip_backbone
         if hasattr(args, 'keys_ckpt_path') and args.keys_ckpt_path is not None:
             if args.keys_ckpt_path.endswith('.json'):
                 try:
                     key_jobnum = json.load(open(args.keys_ckpt_path, 'r'))[args.dataset][str(args.seed)]
                 except BaseException:
-                    print("key missing", args.dataset, args.seed, file=sys.stderr)
+                    logging.info("key missing", args.dataset, args.seed, file=sys.stderr)
                     raise ValueError
 
                 t = dataset.N_TASKS - 1
@@ -60,7 +61,7 @@ class Prompter(torch.nn.Module):
 
             self.keys, first_stage_args = self.load_keys()
             if first_stage_args is not None:
-                print("Keys loaded. Loading CLIP version:", first_stage_args.clip_backbone)
+                logging.info("Keys loaded. Loading CLIP version:", first_stage_args.clip_backbone)
                 clip_backbone = first_stage_args.clip_backbone
             if clip_model is None:
                 self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
@@ -70,7 +71,7 @@ class Prompter(torch.nn.Module):
                 self.clip_preprocess = clip_preprocess
         else:  # use prompt templates
             self.keys_ckpt_path = None
-            print("No keys loaded. Using default CLIP version:", clip_backbone)
+            logging.info("No keys loaded. Using default CLIP version:", clip_backbone)
             if clip_model is None:
                 self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
                 self.clip_model = self.clip_model.float()  # force fp32 when used for eval
@@ -156,7 +157,7 @@ class Prompter(torch.nn.Module):
             The keys tensor
             The arguments used in the first stage
         """
-        print(f'Loading keys from {self.keys_ckpt_path}', file=sys.stderr)
+        logging.info(f'Loading keys from {self.keys_ckpt_path}', file=sys.stderr)
         st = torch.load(self.keys_ckpt_path, weights_only=True)
         if isinstance(st, dict):
             keys = st['keys'].to(self.device)
@@ -170,7 +171,7 @@ class Prompter(torch.nn.Module):
             keys = st.to(self.device)
             self.old_args = None
             assert self.num_classes == keys.shape[0]
-        print('Keys loaded successfully', file=sys.stderr)
+        logging.info('Keys loaded successfully', file=sys.stderr)
         return keys.float(), self.old_args
 
     @torch.no_grad()
@@ -375,7 +376,7 @@ class Model(nn.Module):
                                       num_classes=num_classes,
                                       prompt_mode=args.prompt_mode).to(device)
 
-        print("Loading the Vision Transformer backbone...")
+        logging.info("Loading the Vision Transformer backbone...")
         load_dict = backbone.state_dict()
         for k in list(load_dict.keys()):
             if 'head' in k:
@@ -388,7 +389,7 @@ class Model(nn.Module):
 
         self.prompt_layers = list(range(len(self.vit.blocks)))
 
-        print("Initializing the prompter and prompt parameters...")
+        logging.info("Initializing the prompter and prompt parameters...")
         self.prompter = Prompter(args,
                                  dataset,
                                  num_classes=num_classes,

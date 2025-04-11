@@ -161,7 +161,7 @@ def set_random_seed(seed: int) -> None:
     try:
         torch.cuda.manual_seed_all(seed)
     except BaseException:
-        print('Could not set cuda seed.')
+        logging.error('Could not set cuda seed.')
 
 
 def worker_init_fn(worker_id, num_workers, seed, rank=1):
