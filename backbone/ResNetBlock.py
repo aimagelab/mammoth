@@ -269,3 +269,18 @@ def resnet34(num_classes: int, num_filters: int = 64) -> ResNet:
         ResNet network
     """
     return ResNet(BasicBlock, [3, 4, 6, 3], num_classes, num_filters)
+
+
+@register_backbone("resnet18_spr")
+def resnet18_spr(num_classes: int) -> ResNet:
+    """
+    Instantiates a ResNet18 network as used in the original `SPR <https://arxiv.org/abs/2110.07735>`_ paper.
+
+    Args:
+        num_classes: number of output classes
+
+    Returns:
+        ResNet network
+    """
+
+    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes, 64, initial_conv_k=7)  # spr uses 7x7 conv even for 32x32 images

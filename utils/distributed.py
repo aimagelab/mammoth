@@ -177,6 +177,18 @@ class CustomDP(DataParallel):
             else:
                 super().__setattr__(name, value)
 
+    def load_state_dict(self, state_dict, strict=True, assign=False):
+        """
+        Override default load_state_dict to avoid using `.module`.
+        """
+        return self.module.load_state_dict(state_dict, strict, assign)
+
+    def state_dict(self, destination=None, prefix='', keep_vars=False):
+        """
+        Override default state_dict to avoid using `.module`.
+        """
+        return self.module.state_dict(destination, prefix, keep_vars)
+
 
 def make_dp(model):
     """

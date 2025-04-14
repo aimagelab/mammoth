@@ -169,7 +169,15 @@ def build_torchvision_transform(transform_specs: List[dict]) -> transforms.Compo
             assert isinstance(spec, dict), f"Invalid transformation specification: {spec}"
             for k, v in spec.items():
                 if isinstance(v, dict):
-                    transform_list.append(getattr(transforms, k)(**v))
+                    tr = getattr(transforms, k)
+                    if k == 'RandomApply':  # will have 'p' and 'transform' keys
+                        trs_inner = []
+                        for tr_inner_name, tr_inner_args in v['transform'].items():
+                            t = getattr(transforms, tr_inner_name)(**tr_inner_args)
+                            trs_inner.append(t)
+                        transform_list.append(tr(trs_inner, v['p']))
+                    else:
+                        transform_list.append(tr(**v))
                 else:
                     transform_list.append(getattr(transforms, k)(v))
 

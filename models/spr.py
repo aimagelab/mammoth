@@ -1,20 +1,21 @@
+import tqdm
 import copy
 import logging
 import time
 import numpy as np
 import torch
 from torch import nn
-import tqdm
-from backbone import get_backbone
+import torch.nn.functional as F
+import networkx as nx
 
+from backbone import get_backbone
 from models.utils.continual_model import ContinualModel
 from utils import binary_to_boolean_type
 from utils.args import add_rehearsal_args
 from utils.bmm import BetaMixture1D
 from utils.buffer import Buffer
-import torch.nn.functional as F
-import networkx as nx
-from copy import deepcopy
+from utils.distributed import make_dp, CustomDP
+from utils.kornia_utils import to_kornia_transform
 
 
 def _get_projector_prenet(net, device=None, bn=True):
@@ -35,7 +36,7 @@ def _get_projector_prenet(net, device=None, bn=True):
 
 def init_simclr_net(model, device=None):
     model.projector = _get_projector_prenet(model, device=device, bn=False)
-    model.predictor = deepcopy(model.projector)
+    model.predictor = copy.deepcopy(model.projector)
     return model
 
 
@@ -48,8 +49,9 @@ class SimCLR:
         self.transform = transform
 
     def __call__(self, model, x):
-        xa = self.transform(x)
-        xb = self.transform(x)
+        with torch.no_grad():
+            xa = self.transform(x)
+            xb = self.transform(x)
 
         outa = model.projector(model(xa))
         outb = model.projector(model(xb))
@@ -98,10 +100,11 @@ class Spr(ContinualModel):
 
     @staticmethod
     def get_parser(parser):
-        parser.set_defaults(optimizer='adam', lr=0.0002)
+        parser.set_defaults(optimizer='adam', lr=0.0002, num_workers=0)
         add_rehearsal_args(parser)
 
         parser.add_argument('--spr_debug_mode', type=binary_to_boolean_type, default=False, help='Run SPR with just a few iterations?')
+        parser.add_argument('--spr_custom_dp', type=binary_to_boolean_type, default=False, help='Use DataParallel?')
         parser.add_argument('--delayed_buffer_size', type=int, default=500,
                             help='Size of the delayed buffer.')
         parser.add_argument('--fitting_lr', type=float, default=0.002,
@@ -128,6 +131,8 @@ class Spr(ContinualModel):
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
+        assert args.distributed == 'no', "To use SPR with distributed use `--spr_custom_dp=1`."
+
         cl_in_features = backbone.classifier.in_features
         # disable linear base net
         backbone = disable_linear(backbone)
@@ -242,6 +247,10 @@ class Spr(ContinualModel):
 
         self.expert_model.to(self.device)
 
+        if self.args.spr_custom_dp and not isinstance(self.expert_model, CustomDP):  # initialize DP only once
+            self.expert_model.to('cuda:0')
+            self.expert_model = make_dp(self.expert_model)
+
         torch.cuda.empty_cache()
 
         def _get_correlated_mask(bs):
@@ -257,7 +266,8 @@ class Spr(ContinualModel):
 
         self.expert_model.train()
         correlation_mask = _get_correlated_mask(bs).to(self.device)
-        loss_fn = SimCLR(self.transform, temp=self.args.simclr_temp, filter_bs_len=bs, correlation_mask=correlation_mask)
+        tr = to_kornia_transform(self.original_transform.transforms[-1].transforms[:-2])  # SPR does not use normalization for the expert network
+        loss_fn = SimCLR(tr, temp=self.args.simclr_temp, filter_bs_len=bs, correlation_mask=correlation_mask)
 
         sampler = torch.utils.data.RandomSampler(self.delayed_buffer, replacement=True)
 
@@ -298,6 +308,9 @@ class Spr(ContinualModel):
             mask = (1 - mask).type(torch.bool)
             return mask
 
+        if self.args.spr_custom_dp and not isinstance(self.net, CustomDP):  # initialize DP only once
+            self.net = make_dp(self.net)
+
         # total batch size = buffer size (splitted btw delay and purified)
         bs = self.args.buffer_size
         # If purified buffer is full, train using it also
@@ -307,7 +320,8 @@ class Spr(ContinualModel):
 
         self.net.train()
         correlation_mask = _get_correlated_mask(db_bs + pb_bs).to(self.device)
-        loss_fn = SimCLR(self.transform, temp=self.args.simclr_temp, filter_bs_len=db_bs + pb_bs, correlation_mask=correlation_mask)
+        tr = to_kornia_transform(self.original_transform.transforms[-1].transforms[:-2])  # SPR does not use normalization for the base network
+        loss_fn = SimCLR(tr, temp=self.args.simclr_temp, filter_bs_len=db_bs + pb_bs, correlation_mask=correlation_mask)
 
         totloss, cit = 0, 0
 
@@ -390,7 +404,7 @@ class Spr(ContinualModel):
         sched = torch.optim.lr_scheduler.StepLR(opt, step_size=self.args.fitting_sched_lr_stepsize, gamma=self.args.fitting_sched_lr_gamma)
 
         sampler = torch.utils.data.RandomSampler(self.buffer)
-        buffer_dl = self.buffer.get_dataloader(self.args, batch_size=self.args.fitting_batch_size, drop_last=True, sampler=sampler)  # , transform=self.transform NO TRANSFORM???
+        buffer_dl = self.buffer.get_dataloader(self.args, batch_size=self.args.fitting_batch_size, drop_last=True, sampler=sampler)  # NO TRANSFORM
 
         self.finetuned_model.train()
         ce_loss = nn.NLLLoss()

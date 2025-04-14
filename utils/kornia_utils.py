@@ -98,13 +98,15 @@ def _convert_interpolation_to_resample(interpolation: int) -> int:
         raise NotImplementedError(f"Interpolation mode {interpolation_name} not supported by Kornia.")
 
 
-def to_kornia_transform(transform: transforms.Compose, apply: bool = True) -> Union[List[kornia.augmentation.AugmentationBase2D], KorniaAugNoGrad]:
+def to_kornia_transform(transform: transforms.Compose, apply: bool = True, override_p: float = None) -> \
+        Union[List[kornia.augmentation.AugmentationBase2D], KorniaAugNoGrad]:
     """
     Converts PIL transforms to Kornia transforms.
 
     Args:
         transform (transforms.Compose): The torchvision transform to be converted.
         apply (bool, optional): Whether to convert the processed kornia transforms list into a KorniaAugNoGrad object. Defaults to True.
+        override_p (float, optional): Override the probability of applying the augmentations. Defaults to None (will use the default transform probability).
 
     Returns:
         Union[List[kornia.augmentation.AugmentationBase2D], KorniaAugNoGrad]: The converted Kornia transforms.
@@ -121,16 +123,17 @@ def to_kornia_transform(transform: transforms.Compose, apply: bool = True) -> Un
     ts = []
 
     for t in transform:
+        p = override_p if override_p is not None else getattr(t, 'p', 1.0)
         if isinstance(t, transforms.RandomResizedCrop):
-            ts.append(kornia.augmentation.RandomResizedCrop(size=t.size, scale=t.scale, ratio=t.ratio, resample=_convert_interpolation_to_resample(t.interpolation)))
+            ts.append(kornia.augmentation.RandomResizedCrop(size=t.size, scale=t.scale, ratio=t.ratio, resample=_convert_interpolation_to_resample(t.interpolation), p=p))
         elif isinstance(t, transforms.RandomHorizontalFlip):
-            ts.append(kornia.augmentation.RandomHorizontalFlip(p=t.p))
+            ts.append(kornia.augmentation.RandomHorizontalFlip(p=p))
         elif isinstance(t, transforms.RandomVerticalFlip):
-            ts.append(kornia.augmentation.RandomVerticalFlip(p=t.p))
+            ts.append(kornia.augmentation.RandomVerticalFlip(p=p))
         elif isinstance(t, transforms.RandomRotation):
             ts.append(kornia.augmentation.RandomRotation(degrees=t.degrees, resample=_convert_interpolation_to_resample(t.interpolation)))
         elif isinstance(t, transforms.RandomGrayscale):
-            ts.append(kornia.augmentation.RandomGrayscale(p=t.p))
+            ts.append(kornia.augmentation.RandomGrayscale(p=p))
         elif isinstance(t, transforms.RandomAffine):
             ts.append(
                 kornia.augmentation.RandomAffine(
@@ -139,35 +142,37 @@ def to_kornia_transform(transform: transforms.Compose, apply: bool = True) -> Un
                     scale=t.scale,
                     shear=t.shear,
                     resample=_convert_interpolation_to_resample(t.interpolation),
-                    fill=t.fill))
+                    fill=t.fill,
+                    p=p))
         elif isinstance(t, transforms.RandomPerspective):
-            ts.append(kornia.augmentation.RandomPerspective(distortion_scale=t.distortion_scale, p=t.p, resample=_convert_interpolation_to_resample(t.interpolation), fill=t.fill))
+            ts.append(kornia.augmentation.RandomPerspective(distortion_scale=t.distortion_scale, p=p, resample=_convert_interpolation_to_resample(t.interpolation), fill=t.fill))
         elif isinstance(t, transforms.RandomCrop):
-            ts.append(kornia.augmentation.RandomCrop(size=t.size, padding=t.padding, pad_if_needed=t.pad_if_needed, fill=t.fill, padding_mode=t.padding_mode))
+            ts.append(kornia.augmentation.RandomCrop(size=t.size, padding=t.padding, pad_if_needed=t.pad_if_needed, fill=t.fill, padding_mode=t.padding_mode, p=p))
         elif isinstance(t, transforms.RandomErasing):
-            ts.append(kornia.augmentation.RandomErasing(p=t.p, scale=t.scale, ratio=t.ratio, value=t.value, inplace=t.inplace))
+            ts.append(kornia.augmentation.RandomErasing(p=p, scale=t.scale, ratio=t.ratio, value=t.value, inplace=t.inplace))
         elif isinstance(t, transforms.ColorJitter):
-            ts.append(kornia.augmentation.ColorJitter(brightness=t.brightness, contrast=t.contrast, saturation=t.saturation, hue=t.hue))
+            ts.append(kornia.augmentation.ColorJitter(brightness=t.brightness, contrast=t.contrast, saturation=t.saturation, hue=t.hue, p=p))
         elif isinstance(t, transforms.RandomApply):
-            ts.append(kornia.augmentation.RandomApply(t.transforms, p=t.p))
-        elif isinstance(t, transforms.RandomChoice):
-            ts.append(kornia.augmentation.RandomChoice(t.transforms))
-        elif isinstance(t, transforms.RandomOrder):
-            ts.append(kornia.augmentation.RandomOrder(t.transforms))
+            # kornia doesn't support RandomApply but all the augmentations inside it support p
+            inner_transforms = []
+            for inner_t in t.transforms:
+                kornia_t = to_kornia_transform(inner_t, apply=False, override_p=p)
+                inner_transforms.append(kornia_t)
+            ts.extend(kornia_t)
         elif isinstance(t, transforms.RandomResizedCrop):
-            ts.append(kornia.augmentation.RandomResizedCrop(size=t.size, scale=t.scale, ratio=t.ratio, resample=_convert_interpolation_to_resample(t.interpolation)))
+            ts.append(kornia.augmentation.RandomResizedCrop(size=t.size, scale=t.scale, ratio=t.ratio, resample=_convert_interpolation_to_resample(t.interpolation), p=p))
         elif isinstance(t, transforms.Compose):
-            ts.extend(to_kornia_transform(t, apply=False))
+            ts.extend(to_kornia_transform(t, apply=False, p=p))
         elif isinstance(t, transforms.ToTensor) or isinstance(t, transforms.ToPILImage):
             pass
         elif isinstance(t, transforms.CenterCrop):
-            ts.append(kornia.augmentation.CenterCrop(size=t.size))
+            ts.append(kornia.augmentation.CenterCrop(size=t.size, p=p))
         elif isinstance(t, transforms.Normalize):
-            ts.append(kornia.augmentation.Normalize(mean=t.mean, std=t.std, p=1))
+            ts.append(kornia.augmentation.Normalize(mean=t.mean, std=t.std, p=p))
         elif isinstance(t, transforms.Resize):
-            ts.append(kornia.augmentation.Resize(size=t.size, antialias=t.antialias, resample=_convert_interpolation_to_resample(t.interpolation)))
+            ts.append(kornia.augmentation.Resize(size=t.size, antialias=t.antialias, resample=_convert_interpolation_to_resample(t.interpolation), p=p))
         elif "cifar10policy" in str(type(t)).lower():
-            ts.append(get_kornia_Cifar10Policy())
+            ts.append(get_kornia_Cifar10Policy())  # ignore p, will use the default p of the policy
         else:
             raise NotImplementedError
 

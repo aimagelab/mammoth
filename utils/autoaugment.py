@@ -289,8 +289,9 @@ class SubPolicy(object):
 
 
 class Cutout:
-    def __init__(self, size=16) -> None:
+    def __init__(self, size=16, p=1.0) -> None:
         self.size = size
+        self.p = p
 
     def _create_cutout_mask(self, img_height, img_width, num_channels, size):
         """Creates a zero mask used for cutout of shape `img_height` x `img_width`.
@@ -332,6 +333,9 @@ class Cutout:
         return mask, upper_coord, lower_coord
 
     def __call__(self, pil_img):
+        if random.random() > self.p:
+            return pil_img
+
         pil_img = pil_img.copy()
         img_height, img_width, num_channels = (*pil_img.size, 3)
         _, upper_coord, lower_coord = self._create_cutout_mask(
@@ -396,14 +400,14 @@ class RandomErasing(kornia.augmentation._2d.intensity.base.IntensityAugmentation
 
 
 class KorniaAugCutout(torch.nn.Module):
-    def __init__(self, img_size, patch_size=16) -> None:
+    def __init__(self, img_size, patch_size=16, p=1.0) -> None:
         super().__init__()
         self.patch_size = patch_size
         self.img_size = img_size
 
         scale = (img_size / patch_size)
         ratio = (1, 1)
-        self.base_transform = RandomErasing(p=1.0, scale=(scale, scale), ratio=ratio, same_on_batch=False, value=(125 / 255, 122 / 255, 113 / 255))
+        self.base_transform = RandomErasing(p=p, scale=(scale, scale), ratio=ratio, same_on_batch=False, value=(125 / 255, 122 / 255, 113 / 255))
 
     def __call__(self, img):
         return self.base_transform(img).squeeze(0)
