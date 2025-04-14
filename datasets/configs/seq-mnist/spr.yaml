@@ -1,0 +1,27 @@
+MEAN: 0
+STD: 1
+TRANSFORM:  
+  - RandomResizedCrop:
+      size: 28
+      scale:
+        - 0.08
+        - 1.0
+      ratio:
+        - 0.75
+        - 1.3333333333333333
+  - RandomHorizontalFlip
+  - ToTensor
+  - Normalize:
+      mean: 0
+      std: 1
+TEST_TRANSFORM:
+  - ToTensor
+  - Normalize:
+      mean: 0
+      std: 1
+n_epochs: 1
+backbone: mnistmlp
+noise_rate: 0.2
+noise_type: sym
+buffer_size: 300
+batch_size: 300 # same as batch size (will be ignored by SPR)

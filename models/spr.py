@@ -6,6 +6,7 @@ import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
+from torchvision import transforms
 import networkx as nx
 
 from backbone import get_backbone
@@ -14,15 +15,19 @@ from utils import binary_to_boolean_type
 from utils.args import add_rehearsal_args
 from utils.bmm import BetaMixture1D
 from utils.buffer import Buffer
+from utils.conf import get_device
 from utils.distributed import make_dp, CustomDP
 from utils.kornia_utils import to_kornia_transform
 
 
 def _get_projector_prenet(net, device=None, bn=True):
     device = net.device if hasattr(net, 'device') else device if device is not None else "cpu"
-    assert "resnet" in type(net).__name__.lower(), "Only resnet is supported for now"
+    assert "resnet" in type(net).__name__.lower() or "mnistmlp" in type(net).__name__.lower(), "Only resnet and simple MLP are supported for now"
 
-    sizes = [net.nf * 8, net.nf * 8, 256]
+    if "resnet" in type(net).__name__.lower():
+        sizes = [net.nf * 8, net.nf * 8, 256]
+    else:
+        sizes = [net.classifier.in_features, net.classifier.in_features, 256]
 
     layers = []
     for i in range(len(sizes) - 2):
@@ -105,8 +110,8 @@ class Spr(ContinualModel):
 
         parser.add_argument('--spr_debug_mode', type=binary_to_boolean_type, default=False, help='Run SPR with just a few iterations?')
         parser.add_argument('--spr_custom_dp', type=binary_to_boolean_type, default=False, help='Use DataParallel?')
-        parser.add_argument('--delayed_buffer_size', type=int, default=500,
-                            help='Size of the delayed buffer.')
+        parser.add_argument('--delayed_buffer_size', type=int,
+                            help='Size of the delayed buffer. If `None`, it will be set to the buffer size.')
         parser.add_argument('--fitting_lr', type=float, default=0.002,
                             help='LR used during finetuining (classifier buffer fitting on P)')
         parser.add_argument('--fitting_epochs', type=int, default=50,
@@ -133,6 +138,10 @@ class Spr(ContinualModel):
     def __init__(self, backbone, loss, args, transform, dataset=None):
         assert args.distributed == 'no', "To use SPR with distributed use `--spr_custom_dp=1`."
 
+        if args.spr_custom_dp:
+            get_device.device = 'cuda:0'
+
+        args.delayed_buffer_size = args.buffer_size if args.delayed_buffer_size is None else args.delayed_buffer_size
         cl_in_features = backbone.classifier.in_features
         # disable linear base net
         backbone = disable_linear(backbone)
@@ -232,6 +241,14 @@ class Spr(ContinualModel):
 
         return clean_idx, torch.Tensor(clean_p), corr_samples_selected, noisy_samples_selected
 
+    def get_strong_transform(self):
+        """Get strong transform for the base and expert network"""
+        if isinstance(self.original_transform.transforms, transforms.Compose):
+            tr = self.original_transform.transforms[-1].transforms[:-2]
+        else:
+            tr = self.original_transform.transforms
+        return to_kornia_transform(tr)
+
     def train_self_expert(self):
         """Train expert model with samples from delay buffer only"""
         self.finetuned_model.to("cpu")
@@ -266,18 +283,18 @@ class Spr(ContinualModel):
 
         self.expert_model.train()
         correlation_mask = _get_correlated_mask(bs).to(self.device)
-        tr = to_kornia_transform(self.original_transform.transforms[-1].transforms[:-2])  # SPR does not use normalization for the expert network
+        tr = self.get_strong_transform()  # SPR does not use normalization for the expert network
         loss_fn = SimCLR(tr, temp=self.args.simclr_temp, filter_bs_len=bs, correlation_mask=correlation_mask)
 
-        sampler = torch.utils.data.RandomSampler(self.delayed_buffer, replacement=True)
-
         self.delayed_buffer.to(self.device)
-        delayer_dl = self.delayed_buffer.get_dataloader(self.args, batch_size=bs, drop_last=True, sampler=sampler)
+        dset = torch.utils.data.TensorDataset(self.delayed_buffer.examples, self.delayed_buffer.labels)
+        delayed_sampler = torch.utils.data.RandomSampler(dset, replacement=True)
+        delayed_dl = torch.utils.data.DataLoader(dset, batch_size=bs, drop_last=False, sampler=delayed_sampler)
         totloss, cit = 0, 0
         for epoch_i in tqdm.trange(self.args.expert_train_epochs, desc="Expert network training", leave=False):
             if self.args.spr_debug_mode == 1 and epoch_i > 10:
                 break
-            for data in delayer_dl:
+            for data in delayed_dl:
                 inputs = data[0].to(self.device)
                 self.expert_opt.zero_grad()
 
@@ -320,14 +337,13 @@ class Spr(ContinualModel):
 
         self.net.train()
         correlation_mask = _get_correlated_mask(db_bs + pb_bs).to(self.device)
-        tr = to_kornia_transform(self.original_transform.transforms[-1].transforms[:-2])  # SPR does not use normalization for the base network
+        tr = self.get_strong_transform()  # SPR does not use normalization for the base network
         loss_fn = SimCLR(tr, temp=self.args.simclr_temp, filter_bs_len=db_bs + pb_bs, correlation_mask=correlation_mask)
 
         totloss, cit = 0, 0
 
-        delayed_sampler = torch.utils.data.RandomSampler(self.delayed_buffer, replacement=True)
-
-        delayed_dl = self.delayed_buffer.get_dataloader(self.args, batch_size=db_bs, drop_last=False, sampler=delayed_sampler)
+        dset = torch.utils.data.TensorDataset(self.delayed_buffer.examples, self.delayed_buffer.labels)
+        delayed_dl = torch.utils.data.DataLoader(dset, batch_size=db_bs, drop_last=False, shuffle=True)
         for epoch_i in tqdm.trange(self.args.inner_train_epochs, desc="Base network training", leave=False):
             if self.args.spr_debug_mode == 1 and epoch_i > 10:
                 break
