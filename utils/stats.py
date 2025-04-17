@@ -160,14 +160,14 @@ class track_system_stats:
         # Print initial, average, final, and max memory usage
         logging.info("System stats:")
         if cpu_res is not None:
-            logging.info(f"\tInitial CPU memory usage: {self.initial_cpu_res:.2f} MB", flush=True)
-            logging.info(f"\tAverage CPU memory usage: {self.avg_cpu_res:.2f} MB", flush=True)
-            logging.info(f"\tFinal CPU memory usage: {cpu_res:.2f} MB", flush=True)
-            logging.info(f"\tMax CPU memory usage: {self.max_cpu_res:.2f} MB", flush=True)
+            logging.info(f"\tInitial CPU memory usage: {self.initial_cpu_res:.2f} MB")
+            logging.info(f"\tAverage CPU memory usage: {self.avg_cpu_res:.2f} MB")
+            logging.info(f"\tFinal CPU memory usage: {cpu_res:.2f} MB")
+            logging.info(f"\tMax CPU memory usage: {self.max_cpu_res:.2f} MB")
 
         if gpu_res is not None:
             for gpu_id, g_res in enumerate(gpu_res):
-                logging.info(f"\tInitial GPU {gpu_id} memory usage: {self.initial_gpu_res[gpu_id]:.2f} MB", flush=True)
-                logging.info(f"\tAverage GPU {gpu_id} memory usage: {self.avg_gpu_res[gpu_id]:.2f} MB", flush=True)
-                logging.info(f"\tFinal GPU {gpu_id} memory usage: {g_res:.2f} MB", flush=True)
-                logging.info(f"\tMax GPU {gpu_id} memory usage: {self.max_gpu_res[gpu_id]:.2f} MB", flush=True)
+                logging.info(f"\tInitial GPU {gpu_id} memory usage: {self.initial_gpu_res[gpu_id]:.2f} MB")
+                logging.info(f"\tAverage GPU {gpu_id} memory usage: {self.avg_gpu_res[gpu_id]:.2f} MB")
+                logging.info(f"\tFinal GPU {gpu_id} memory usage: {g_res:.2f} MB")
+                logging.info(f"\tMax GPU {gpu_id} memory usage: {self.max_gpu_res[gpu_id]:.2f} MB")

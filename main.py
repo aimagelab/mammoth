@@ -97,7 +97,7 @@ def check_args(args, dataset=None):
             assert not args.enable_other_metrics, 'Other metrics are not supported for biased-class-il.'
 
         # check if dataset is single-label multi-class (i.e, the `get_loss` returns the cross-entropy)
-        if 'cross_entropy' in str(dataset.get_loss()) or 'CrossEntropy' in str(dataset.get_loss()):
+        if 'cross_entropy' not in str(dataset.get_loss()) and 'CrossEntropy' not in str(dataset.get_loss()):
             if args.noise_rate != 1:
                 logging.warning('Label noise is not available with multi-label datasets. If this is not multi-label, ignore this warning.')
 

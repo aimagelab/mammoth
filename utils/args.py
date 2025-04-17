@@ -260,6 +260,14 @@ def add_experiment_args(parser: ArgumentParser) -> None:
                            help='Percentage in (0-1] of labeled examples per task.')
     exp_group.add_argument('--joint', type=int, choices=(0, 1), default=0, help='Train model on Joint (single task)?')
     exp_group.add_argument('--eval_future', type=binary_to_boolean_type, default=False, help='Evaluate future tasks?')
+    exp_group.add_argument('--custom_task_order', type=str, default=None,
+                           help='Custom order of the tasks. The tasks are separated by commas or "-". Example: `--custom_task_order=0,1,2,3` or `--custom_task_order=0-3`.\n'
+                           'NOTE: this option is not supported by all datasets. If not provided, the tasks are ordered as in the dataset.\n'
+                           'NOTE: this option disables the `--permute_classes` option and is incompatible with `--custom_class_order`')
+    exp_group.add_argument('--custom_class_order', type=str, default=None,
+                           help='Custom order of the classes. The classes are separated by commas or "-". Example: `--custom_class_order=0,1,2,3` or `--custom_class_order=0-3`.\n'
+                           'NOTE: this option is not supported by all datasets. If not provided, the classes are ordered as in the dataset.\n'
+                           'NOTE: this option disables the `--permute_classes` option and is incompatible with `--custom_task_order`')
 
     validation_group = parser.add_argument_group('Validation and fitting arguments', 'Arguments used to define the validation strategy and the method used to fit the model.')
 
