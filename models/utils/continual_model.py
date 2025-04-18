@@ -203,10 +203,14 @@ class ContinualModel(nn.Module):
         self._current_task = 0
 
         try:
-            self.transform = to_kornia_transform(transform.transforms[-1].transforms)
+            if isinstance(transform.transforms, transforms.Compose):
+                tr = transform.transforms[-1].transforms
+            else:
+                tr = transform.transforms
+            self.transform = to_kornia_transform(tr)
             self.normalization_transform = to_kornia_transform(self.dataset.get_normalization_transform())
-        except BaseException:
-            logging.error("could not initialize kornia transforms.")
+        except BaseException as e:
+            logging.error(f"could not initialize kornia transforms:\n{e}")
             self.normalization_transform = transforms.Compose([transforms.ToPILImage(), self.dataset.TEST_TRANSFORM]) if hasattr(
                 self.dataset, 'TEST_TRANSFORM') else transforms.Compose([transforms.ToPILImage(), transforms.ToTensor(), self.dataset.get_normalization_transform()])
 

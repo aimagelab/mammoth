@@ -111,6 +111,9 @@ def to_kornia_transform(transform: transforms.Compose, apply: bool = True, overr
     Returns:
         Union[List[kornia.augmentation.AugmentationBase2D], KorniaAugNoGrad]: The converted Kornia transforms.
     """
+    if transform is None:
+        return lambda x: x
+
     if isinstance(transform, kornia.augmentation.AugmentationSequential) or \
             (isinstance(transform, nn.Sequential) and isinstance(transform[0], kornia.augmentation.AugmentationBase2D)):
         return transform
