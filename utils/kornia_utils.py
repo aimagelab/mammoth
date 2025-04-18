@@ -179,7 +179,7 @@ def to_kornia_transform(transform: transforms.Compose, apply: bool = True, overr
     if not apply:
         return ts
 
-    return KorniaAugNoGrad(*ts, same_on_batch=True)
+    return KorniaAugNoGrad(*ts, same_on_batch=False)
 
 
 class CustomKorniaRandAugment(kornia.augmentation.auto.PolicyAugmentBase):

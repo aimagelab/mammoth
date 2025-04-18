@@ -25,3 +25,4 @@ noise_rate: 0.2
 noise_type: sym
 buffer_size: 300
 batch_size: 300 # same as batch size (will be ignored by SPR)
+mlp_hidden_size: 512
