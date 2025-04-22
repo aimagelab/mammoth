@@ -243,6 +243,8 @@ class Spr(ContinualModel):
 
     def get_strong_transform(self):
         """Get strong transform for the base and expert network"""
+        if self.transform is None:
+            return lambda x: x
         if isinstance(self.original_transform.transforms, transforms.Compose):
             tr = self.original_transform.transforms[-1].transforms[:-2]
         else:
