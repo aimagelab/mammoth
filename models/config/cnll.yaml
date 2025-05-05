@@ -1,6 +1,8 @@
 seq-cifar10:
-  dataset_config: online
-  noise: sym
+  dataset_config: cnll
+  backbone: preact_resnet18
+  noise_type: sym
   noise_rate: 0.2
+  warmup_lr: 0.0005
   500:
     unlimited_buffer: 1

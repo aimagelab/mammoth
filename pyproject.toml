@@ -4,6 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
     "ftfy>=6.3.1",
+    "gpustat>=1.1.1",
     "kornia>=0.7.0",
     "numpy>=2.2.4",
     "onedrivedownloader>=1.1.3",

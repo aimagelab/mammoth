@@ -93,7 +93,7 @@ class Cnll(ContinualModel):
 
     @staticmethod
     def get_parser(parser):
-        parser.set_defaults(lr=0.0005)  # optimizer and lr are not used
+        parser.set_defaults(optim_mom=0.9, optim_wd=5e-4, lr=0)  # lr and optimizer are ignored
         add_rehearsal_args(parser)
 
         parser.add_argument('--cnll_debug_mode', type=binary_to_boolean_type, default=False,
@@ -108,7 +108,7 @@ class Cnll(ContinualModel):
 
         parser.add_argument('--warmup_epochs', type=int, default=5, help='Warmup epochs')
         parser.add_argument('--finetune_epochs', type=int, default=10, help='Finetuning epochs')
-        parser.add_argument('--warmup_lr', type=float, default=0.001, help='Warmup learning rate')
+        parser.add_argument('--warmup_lr', type=float, default=0.0005, help='Warmup learning rate')
 
         parser.add_argument('--subsample_clean', type=int, default=25,
                             help='Number of high confidence samples to subsample from the clean buffer (N_1 in the paper)')
@@ -120,11 +120,14 @@ class Cnll(ContinualModel):
         parser.add_argument('--lambda_u', type=float, default=30, help='Weight for unsupervised loss')
         parser.add_argument('--lambda_c', type=float, default=0.025, help='Weight for constrastive loss')
 
-        parser.add_argument('--finetune_lr', type=float, default=0.1, help='Warmup learning rate')
+        parser.add_argument('--finetune_lr', type=float, help='Learning rate using during finetuning. Default is `warmup_lr`*50')
 
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
+        logging.info("LR and optimizer are ignored in CNLL (will use warmup_lr, finetune_lr and SGD)")
+        if args.finetune_lr is None:
+            args.finetune_lr = args.warmup_lr * 50
         backbone.classifier_re = deepcopy(backbone.classifier)
         super().__init__(backbone, loss, args, transform, dataset=dataset)
 
@@ -153,9 +156,12 @@ class Cnll(ContinualModel):
         self.hard_transform = to_kornia_transform(get_hard_transform(self.args, dataset))
         self.semi_sul_loss = SemiLoss(args)
 
-    def warm_up_on_buffer(self, buffer: Buffer):
+    def warm_up_on_buffer(self, buffer: Buffer, has_fitted_once: bool):
         opt = torch.optim.SGD(self.net.parameters(), lr=self.args.warmup_lr, momentum=self.args.optim_mom, weight_decay=self.args.optim_wd)
-        sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, 240, 2e-4)
+        if has_fitted_once:
+            sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, self.args.finetuning_epochs, 2e-2)
+        else:
+            sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, 240, 2e-4)
 
         for _ in range(self.args.warmup_epochs):
             self.net.train()
@@ -242,6 +248,7 @@ class Cnll(ContinualModel):
                                      true_labels=true_y.unsqueeze(0))
 
         avg_expert_loss, avg_self_loss = -1, -1
+        has_fitted_once = False
         if self.delayed_buffer.is_full():
             if self.args.cnll_debug_mode and self.observe_it > 2:
                 return 0, 0
@@ -256,7 +263,7 @@ class Cnll(ContinualModel):
             # Warm up on D
             pret = time.time()
             logging.debug(" - Warm up...", end='')
-            avg_expert_loss = self.warm_up_on_buffer(self.delayed_buffer)
+            avg_expert_loss = self.warm_up_on_buffer(self.delayed_buffer, has_fitted_once)
             logging.debug(f" Done (s: {time.time()-pret:.2f}s)")
 
             pret = time.time()
@@ -285,6 +292,7 @@ class Cnll(ContinualModel):
             self.delayed_buffer.empty()
 
         if self.buffer.is_full():
+            has_fitted_once = True
             pret = time.time()
             logging.debug(" - Clean buffer is full, fine-tuning model on buffers...", end='')
 
