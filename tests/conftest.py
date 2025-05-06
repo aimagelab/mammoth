@@ -3,9 +3,14 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def setup_test_environ():
+def setup_test_environ(caplog):
     # setting test environment variables
     os.environ['MAMMOTH_TEST'] = '1'
+    os.environ['LOG_LEVEL'] = 'DEBUG'
+    caplog.set_level('DEBUG')
+
+    from utils import setup_logging
+    setup_logging()
 
 
 @pytest.fixture(autouse=True)

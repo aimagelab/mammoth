@@ -1,11 +1,12 @@
 import os
 import sys
+import logging
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from main import main
 
 
-def test_default(capsys):
+def test_default(caplog):
     sys.argv = ['mammoth',
                 '--model',
                 'ccic',
@@ -30,9 +31,7 @@ def test_default(capsys):
 
     main()
 
-    out, _ = capsys.readouterr()
-    # read output file and search for the string 'Saving checkpoint into'
-    namespace_args = [line for line in out.splitlines() if line.startswith('Namespace(')]
+    namespace_args = [line.split('Namespace(')[-1] for line in caplog.text.splitlines() if 'Namespace(' in line]
     assert any(namespace_args), 'Arguments not found in output'
 
     namespace_args = namespace_args[0].replace('Namespace(', '').replace(')', '')
@@ -42,7 +41,7 @@ def test_default(capsys):
     assert namespace_dict['optimizer'] == 'adam', f'Optimizer not loaded correctly, expected adam but got {namespace_dict["optimizer"]}'
 
 
-def test_default_overwrite(capsys):
+def test_default_overwrite(caplog):
     sys.argv = ['mammoth',
                 '--model',
                 'ccic',
@@ -71,9 +70,7 @@ def test_default_overwrite(capsys):
 
     main()
 
-    out, _ = capsys.readouterr()
-    # read output file and search for the string 'Saving checkpoint into'
-    namespace_args = [line for line in out.splitlines() if line.startswith('Namespace(')]
+    namespace_args = [line.split('Namespace(')[-1] for line in caplog.text.splitlines() if 'Namespace(' in line]
     assert any(namespace_args), 'Arguments not found in output'
 
     namespace_args = namespace_args[0].replace('Namespace(', '').replace(')', '')
@@ -83,7 +80,7 @@ def test_default_overwrite(capsys):
     assert namespace_dict['optimizer'] == 'adamw', f'Optimizer not loaded correctly, expected adamw but got {namespace_dict["optimizer"]}'
 
 
-def test_best_rehearsal(capsys):
+def test_best_rehearsal(caplog):
     sys.argv = ['mammoth',
                 '--model',
                 'ccic',
@@ -108,9 +105,7 @@ def test_best_rehearsal(capsys):
 
     main()
 
-    out, _ = capsys.readouterr()
-    # read output file and search for the string 'Saving checkpoint into'
-    namespace_args = [line for line in out.splitlines() if line.startswith('Namespace(')]
+    namespace_args = [line.split('Namespace(')[-1] for line in caplog.text.splitlines() if 'Namespace(' in line]
     assert any(namespace_args), 'Arguments not found in output'
 
     namespace_args = namespace_args[0].replace('Namespace(', '').replace(')', '')
@@ -125,7 +120,8 @@ def test_best_rehearsal(capsys):
     assert namespace_dict['backbone'] == 'resnet18', f'Backbone not loaded correctly, expected resnet18 but got {namespace_dict["backbone"]}'
 
 
-def test_best_base(capsys):
+def test_best_base(caplog, capsys):
+    caplog.set_level(logging.DEBUG)
     sys.argv = ['mammoth',
                 '--model',
                 'si',
@@ -146,9 +142,8 @@ def test_best_base(capsys):
 
     main()
 
-    out, err = capsys.readouterr()
-    # read output file and search for the string 'Saving checkpoint into'
-    namespace_args = [line for line in out.splitlines() if line.startswith('Namespace(')]
+    namespace_args = [line.split('Namespace(')[-1] for line in caplog.text.splitlines() if 'Namespace(' in line]
+
     assert any(namespace_args), 'Arguments not found in output'
 
     namespace_args = namespace_args[0].replace('Namespace(', '').replace(')', '')
@@ -159,6 +154,7 @@ def test_best_base(capsys):
     assert namespace_dict['dataset_config'] == '10tasks', f'Dataset config not loaded correctly, expected 10tasks but got {namespace_dict["datast_config"]}'
     assert namespace_dict['batch_size'] == '4', f'Batch size not loaded correctly, expected 4 but got {namespace_dict["batch_size"]}'
 
+    _, err = capsys.readouterr()
     last_task = [line for line in err.splitlines() if line.startswith('Accuracy for ')]
     assert any(last_task), 'Last task not found in output'
     last_task = last_task[-1].split('Accuracy for ')[-1].split()[0].strip()

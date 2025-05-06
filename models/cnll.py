@@ -262,12 +262,12 @@ class Cnll(ContinualModel):
 
             # Warm up on D
             pret = time.time()
-            logging.debug(" - Warm up...", end='')
+            logging.debug(" - Warm up...")
             avg_expert_loss = self.warm_up_on_buffer(self.delayed_buffer, has_fitted_once)
             logging.debug(f" Done (s: {time.time()-pret:.2f}s)")
 
             pret = time.time()
-            logging.debug(" - Purifying buffer...", end='')
+            logging.debug(" - Purifying buffer...")
 
             # Get clean samples from D
             clean_idxs, noisy_idxs, high_fidelity_clean_idxs, high_fidelity_noisy_idxs = self.get_partition_buffer_indexes(self.delayed_buffer)
@@ -294,7 +294,7 @@ class Cnll(ContinualModel):
         if self.buffer.is_full():
             has_fitted_once = True
             pret = time.time()
-            logging.debug(" - Clean buffer is full, fine-tuning model on buffers...", end='')
+            logging.debug(" - Clean buffer is full, fine-tuning model on buffers...")
 
             self.past_loss = self.finetune_on_buffers()
 

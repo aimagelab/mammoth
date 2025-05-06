@@ -3,6 +3,8 @@ name = "starprompt"
 version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
+    "accelerate>=1.6.0",
+    "bitsandbytes>=0.45.4",
     "ftfy>=6.3.1",
     "gpustat>=1.1.1",
     "kornia>=0.7.0",
@@ -11,6 +13,7 @@ dependencies = [
     "pillow>=11.1.0",
     "pyyaml>=6.0.2",
     "regex>=2024.11.6",
+    "sentencepiece>=0.2.0",
     "timm==0.9.8",
     "torch>=2.1.0",
     "torchvision>=0.21.0",

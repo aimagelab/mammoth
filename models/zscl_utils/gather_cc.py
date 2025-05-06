@@ -22,21 +22,21 @@ def grab(line):
         return
 
     if os.path.exists(ROOT + "/%s/%d/%d.jpg" % (split, uid % 1000, uid)):
-        logging.info("Finished", uid)
+        logging.info(f"Finished {uid}")
         return uid, caption, url
 
     # Let's not crash if anything weird happens
     try:
         dat = requests.get(url, timeout=20)
         if dat.status_code != 200:
-            logging.error("404 file", url)
+            logging.error(f"404 file: {url}")
             return
 
         # Try to parse this as an Image file, we'll fail out if not
         im = Image.open(BytesIO(dat.content))
         im.thumbnail((512, 512), PIL.Image.BICUBIC)
         if min(*im.size) < max(*im.size) / 3:
-            logging.error("Too small", url)
+            logging.error(f"Too small: {url}")
             return
 
         im.save(ROOT + "/%s/%d/%d.jpg" % (split, uid % 1000, uid))
@@ -47,13 +47,13 @@ def grab(line):
             o = Image.open(ROOT + "/%s/%d/%d.jpg" % (split, uid % 1000, uid))
             o = np.array(o)
 
-            logging.info("Success", o.shape, uid, url)
+            logging.info(f"Success {o.shape} {uid} {url}")
             return uid, caption, url
         except BaseException:
-            logging.error("Failed", uid, url)
+            logging.error(f"Failed {uid} {url}")
 
     except Exception as e:
-        logging.error("Unknown error", e)
+        logging.error(f"Unknown error: {e}")
         pass
 
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     p = mp.Pool(300)
 
     for tsv in sys.argv[1:]:
-        logging.info("Processing file", tsv)
+        logging.info(f"Processing file: {tsv}")
         assert 'val' in tsv.lower() or 'train' in tsv.lower()
         split = 'val' if 'val' in tsv.lower() else 'train'
         results = p.map(grab,
@@ -88,7 +88,7 @@ if __name__ == "__main__":
             if os.path.exists(fp):
                 out.write("%s\t%s\n" % (caption, fp))
             else:
-                logging.info("Drop", id)
+                logging.info(f"Drop: {id}")
         out.close()
 
     p.close()

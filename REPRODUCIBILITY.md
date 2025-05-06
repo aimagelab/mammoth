@@ -11,6 +11,7 @@ The following table contains a list of models implemented in Mammoth and a check
 | CCIC                      | `ccic`                   | V         |       |
 | CGIL                      | `cgil`                   | V         |       |
 | CLIP                      | `clip`                   | V         |       |
+| CNLL                      | `cnll`                   | V         |       |
 | CODA-Prompt               | `coda_prompt`            | V         |       |
 | DAP                       | `dap`                    | V         |       |
 | DER                       | `der`                    | V         |       |
@@ -52,6 +53,7 @@ The following table contains a list of models implemented in Mammoth and a check
 | SGD                       | `sgd`                    | N/A       | There is no single paper for the "SGD" model. |
 | SI                        | `si`                     | X         |       |
 | SLCA                      | `slca`                   | X         |       |
+| SPR                       | `spr`                    | V         | Training takes around 3 1/2 days on a 1080ti for `seq-mnist` |
 | STAR-Prompt               | `starprompt`             | V         |       |
 | TwF                       | `twf`                    | V         |       |
 | X-DER with CE             | `xder_ce`                | V         |       |

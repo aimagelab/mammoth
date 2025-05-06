@@ -40,7 +40,7 @@ def setup_logging():
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
     logger = logging.getLogger('root')
-    logger.setLevel(logging.INFO)
+    logger.setLevel(os.getenv('LOG_LEVEL', 'INFO'))
     logger.addHandler(handler)
     setattr(setup_logging, 'done', True)
 

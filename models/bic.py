@@ -80,7 +80,8 @@ class BiC(ContinualModel):
         if self.current_task > 0:
             self.net.eval()
 
-            logging.info("EVAL PRE", dataset.evaluate(self, dataset))
+            res = dataset.evaluate(self, dataset)
+            logging.info(f"EVAL PRE: {res}")
 
             self.evaluate_bias('pre')
 
@@ -108,7 +109,7 @@ class BiC(ContinualModel):
                     self.biasopt.step()
 
             self.corr_factors = corr_factors
-            logging.info(self.corr_factors, file=sys.stderr)
+            logging.info(self.corr_factors)
 
             self.evaluate_bias('post')
 

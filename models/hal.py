@@ -105,7 +105,7 @@ class HAL(ContinualModel):
             e_t.requires_grad = False
             self.anchors = torch.cat((self.anchors, e_t.unsqueeze(0)))
             del e_t
-            logging.info('Total anchors:', len(self.anchors))
+            logging.info(f'Total anchors: {len(self.anchors)}')
 
         self.spare_model.zero_grad()
 

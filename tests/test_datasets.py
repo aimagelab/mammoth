@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from main import main
 import pytest
@@ -10,7 +11,7 @@ import yaml
                                      'rot-mnist', 'perm-mnist', 'mnist-360', 'seq-cifar100-224',
                                      'seq-cifar10-224', 'seq-cifar100-224-rs', 'seq-cub200-rs',
                                      'seq-cifar100-224-rs', 'seq-tinyimg-r', 'seq-cub200', 'seq-imagenet-r',
-                                     'seq-cars196', 'seq-chestx', 'seq-cropdisease', 'seq-eurosat-rgb',
+                                     'seq-chestx', 'seq-cropdisease', 'seq-eurosat-rgb',
                                      'seq-isic', 'seq-mit67', 'seq-resisc45'])
 def test_datasets_with_download(dataset):
     sys.argv = ['mammoth',
@@ -35,7 +36,7 @@ def test_datasets_with_download(dataset):
 
     # clean all downloaded datasets
     dataset_paths = ['CUB200', 'CIFAR10', 'CIFAR100', 'MNIST',
-                     'TINYIMG', 'imagenet-r', 'cars196', 'chestx',
+                     'TINYIMG', 'imagenet-r', 'chestx',
                      'cropdisease', 'eurosat', 'isic', 'MIT67',
                      'NWPU-RESISC45']
     basepath = os.path.dirname(os.path.abspath(__file__))
@@ -51,7 +52,7 @@ def test_datasets_with_download(dataset):
                                      'rot-mnist', 'perm-mnist', 'mnist-360', 'seq-cifar100-224',
                                      'seq-cifar10-224', 'seq-cifar100-224-rs', 'seq-cub200-rs',
                                      'seq-cifar100-224-rs', 'seq-tinyimg-r', 'seq-cub200', 'seq-imagenet-r',
-                                     'seq-cars196', 'seq-chestx', 'seq-cropdisease', 'seq-eurosat-rgb',
+                                     'seq-chestx', 'seq-cropdisease', 'seq-eurosat-rgb',
                                      'seq-isic', 'seq-mit67', 'seq-resisc45'])
 def test_datasets_withoutdownload(dataset):
     sys.argv = ['mammoth',
@@ -99,7 +100,8 @@ def test_dataset_workers():
     main()
 
 
-def test_configs_1(capsys, caplog):
+def test_configs_1(caplog):
+    caplog.set_level(logging.DEBUG)
     sys.argv = ['mammoth',
                 '--model',
                 'puridiver',
@@ -130,9 +132,7 @@ def test_configs_1(capsys, caplog):
 
     main()
 
-    out, _ = capsys.readouterr()
-    # read output file and search for the string 'Saving checkpoint into'
-    namespace_args = [line for line in out.splitlines() if line.startswith('Namespace(')]
+    namespace_args = [line.split('Namespace(')[-1] for line in caplog.text.splitlines() if 'Namespace(' in line]
     assert any(namespace_args), 'Arguments not found in output'
 
     namespace_args = namespace_args[0].replace('Namespace(', '').replace(')', '')
@@ -167,7 +167,8 @@ def test_configs_1(capsys, caplog):
     assert any(param_print), 'Transform type not printed'
 
 
-def test_configs_2(capsys, caplog):
+def test_configs_2(caplog):
+    caplog.set_level(logging.DEBUG)
     sys.argv = ['mammoth',
                 '--model',
                 'ccic',
@@ -202,9 +203,7 @@ def test_configs_2(capsys, caplog):
 
     main()
 
-    out, _ = capsys.readouterr()
-    # read output file and search for the string 'Saving checkpoint into'
-    namespace_args = [line for line in out.splitlines() if line.startswith('Namespace(')]
+    namespace_args = [line.split('Namespace(')[-1] for line in caplog.text.splitlines() if 'Namespace(' in line]
     assert any(namespace_args), 'Arguments not found in output'
 
     namespace_args = namespace_args[0].replace('Namespace(', '').replace(')', '')

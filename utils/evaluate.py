@@ -100,7 +100,7 @@ def evaluate(model: 'ContinualModel', dataset: 'ContinualDataset', last=False, r
 
         tot_seen_samples += total
 
-        if correct > correct_mask_classes:
+        if correct > correct_mask_classes and dataset.SETTING == 'class-il':
             logging.warning("Task-IL accuracy is LOWER than Class-IL accuracy. "
                             "This should NEVER happen and probably means there is a bug somewhere. "
                             "Hint: check if the dataloader returns the targets in the correct order.")

@@ -399,7 +399,7 @@ class Spr(ContinualModel):
                                  labels=self.delayed_buffer.labels[clean_idx],
                                  true_labels=self.delayed_buffer.true_labels[clean_idx])
 
-            logging.debug("Purifying buffer took", time.time() - pret)
+            logging.debug(f"Purifying buffer took {time.time() - pret} seconds")
 
             self.delayed_buffer.empty()
 

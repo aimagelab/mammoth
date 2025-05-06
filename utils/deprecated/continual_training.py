@@ -88,7 +88,7 @@ def train(args: Namespace):
             model.end_task(dataset)
 
         acc = evaluate(model, dataset)
-        logging.info('Accuracy:', acc)
+        logging.info(f'Accuracy: {acc}')
 
     if not args.disable_log:
         logger.log(acc)

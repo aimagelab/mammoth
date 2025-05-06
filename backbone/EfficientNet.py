@@ -58,7 +58,7 @@ def load_pretrained_weights(model, model_name, weights_path=None, load_fc=True, 
     assert not ret.unexpected_keys, 'Missing keys when loading pretrained weights: {}'.format(ret.unexpected_keys)
 
     if verbose:
-        logging.info('Loaded pretrained weights for {}'.format(model_name))
+        logging.info(f'Loaded pretrained weights for {model_name}')
 
 
 _DEFAULT_BLOCKS_ARGS = [
@@ -495,7 +495,7 @@ def get_model_params_tf(model_name, override_params):
         global_params = efficientnet(
             width_coefficient, depth_coefficient, dropout_rate)
     else:
-        raise NotImplementedError('model name is not pre-defined: %s' % model_name)
+        raise NotImplementedError(f'model name is not pre-defined: {model_name}')
 
     if override_params:
         # ValueError will be raised here if override_params has fields not included
@@ -505,7 +505,7 @@ def get_model_params_tf(model_name, override_params):
     decoder = BlockDecoder()
     blocks_args = decoder.decode(global_params.blocks_args)
 
-    logging.info('EFFNET LOGGING: global_params= %s', global_params)
+    logging.info(f'EFFNET LOGGING: global_params= {global_params}')
     return blocks_args, global_params
 
 

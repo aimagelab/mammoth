@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from main import main
 
 
-def test_der_cifar100_defaultscheduler(capsys):
+def test_der_cifar100_defaultscheduler(caplog):
     N_TASKS = 10
     sys.argv = ['mammoth',
                 '--model',
@@ -34,10 +34,8 @@ def test_der_cifar100_defaultscheduler(capsys):
 
     main()
 
-    _, err = capsys.readouterr()
-
     # read output file and search for the string 'Saving checkpoint into'
-    ckpt_name = [line for line in err.splitlines() if 'Saving checkpoint into' in line]
+    ckpt_name = [line for line in caplog.text.splitlines() if 'Saving checkpoint into' in line]
     assert any(ckpt_name), f'Checkpoint not saved'
 
     ckpt_base_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip()
@@ -57,7 +55,7 @@ def test_der_cifar100_defaultscheduler(capsys):
         assert len(ckpt['buffer']['examples']) == 500, f'Buffer size not saved correctly in {ckpt_path}'
 
 
-def test_der_cifar100_customscheduler(capsys):
+def test_der_cifar100_customscheduler(caplog):
     N_TASKS = 10
     sys.argv = ['mammoth',
                 '--model',
@@ -88,12 +86,11 @@ def test_der_cifar100_customscheduler(capsys):
                 '0']
     main()
 
-    _, err = capsys.readouterr()
     # read output file and search for the string 'Saving checkpoint into'
-    ckpt_name = [line for line in err.splitlines() if 'Saving checkpoint into' in line]
+    ckpt_name = [line for line in caplog.text.splitlines() if 'Saving checkpoint into' in line]
     assert any(ckpt_name), f'Checkpoint not saved'
 
-    ckpt_base_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip()
+    ckpt_base_name = ckpt_name[0].split('Saving checkpoint into:')[-1].strip()
     ckpt_paths = [os.path.join('checkpoints', ckpt_base_name + f'_{i}.pt') for i in range(N_TASKS)]
 
     for ckpt_path in ckpt_paths:
