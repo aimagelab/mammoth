@@ -35,10 +35,10 @@ def test_der_cifar100_defaultscheduler(caplog):
     main()
 
     # read output file and search for the string 'Saving checkpoint into'
-    ckpt_name = [line for line in caplog.text.splitlines() if 'Saving checkpoint into' in line]
+    ckpt_name = [line for line in caplog.text.splitlines() if 'Saving checkpoint into:' in line]
     assert any(ckpt_name), f'Checkpoint not saved'
 
-    ckpt_base_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip()
+    ckpt_base_name = ckpt_name[0].split('Saving checkpoint into:')[-1].strip()
     ckpt_paths = [os.path.join('checkpoints', ckpt_base_name + f'_{i}.pt') for i in range(N_TASKS)]
 
     for ckpt_path in ckpt_paths:
@@ -87,7 +87,7 @@ def test_der_cifar100_customscheduler(caplog):
     main()
 
     # read output file and search for the string 'Saving checkpoint into'
-    ckpt_name = [line for line in caplog.text.splitlines() if 'Saving checkpoint into' in line]
+    ckpt_name = [line for line in caplog.text.splitlines() if 'Saving checkpoint into:' in line]
     assert any(ckpt_name), f'Checkpoint not saved'
 
     ckpt_base_name = ckpt_name[0].split('Saving checkpoint into:')[-1].strip()

@@ -45,7 +45,7 @@ def test_checkpoint_save_and_load(model, savecheck, joint, caplog):
     main()
 
     # read output file and search for the string 'Saving checkpoint into'
-    ckpt_name = [line.message for line in caplog.records if 'Saving checkpoint into' in line.message]
+    ckpt_name = [line.message for line in caplog.records if 'Saving checkpoint into:' in line.message]
     assert any(ckpt_name), f'Checkpoint not saved for model {model}'
 
     if joint == '0':
@@ -139,17 +139,17 @@ def test_checkpointing_replay(savecheck, joint, caplog):
 
     main()
 
-    # read output file and search for the string 'Saving checkpoint into'
-    ckpt_name = [line.message for line in caplog.records if 'Saving checkpoint into' in line.message]
+    # read output file and search for the string 'Saving checkpoint into:'
+    ckpt_name = [line.message for line in caplog.records if 'Saving checkpoint into:' in line.message]
     assert any(ckpt_name), f'Checkpoint not saved for derpp'
 
     if joint == '0':
         if savecheck == 'last':
-            ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_last.pt'
+            ckpt_name = ckpt_name[0].split('Saving checkpoint into:')[-1].strip() + f'_last.pt'
         elif savecheck == 'task':
-            ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_{N_TASKS-1}.pt'
+            ckpt_name = ckpt_name[0].split('Saving checkpoint into:')[-1].strip() + f'_{N_TASKS-1}.pt'
     elif joint == '1':
-        ckpt_name = ckpt_name[0].split('Saving checkpoint into')[-1].strip() + f'_joint.pt'
+        ckpt_name = ckpt_name[0].split('Saving checkpoint into:')[-1].strip() + f'_joint.pt'
 
     ckpt_path = os.path.join('checkpoints', ckpt_name)
 
