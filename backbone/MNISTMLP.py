@@ -78,5 +78,5 @@ class BaseMNISTMLP(MammothBackbone):
 @register_backbone("mnistmlp")
 def mnistmlp(mlp_hidden_size: int = 100) -> BaseMNISTMLP:
     if mlp_hidden_size != 100:
-        logging.info(f"hidden size is set to `{mlp_hidden_size}` instead of the default `100`")
+        logging.debug(f"hidden size is set to `{mlp_hidden_size}` instead of the default `100`")
     return BaseMNISTMLP(28 * 28, 10, hidden_size=mlp_hidden_size)

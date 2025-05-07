@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from main import main
 
 
-def test_dynamic_args_backbone_defaults(capsys, caplog):
+def test_dynamic_args_backbone_defaults(caplog):
     sys.argv = ['mammoth',
                 '--model',
                 'si',
@@ -33,14 +33,9 @@ def test_dynamic_args_backbone_defaults(capsys, caplog):
                 '--debug_mode',
                 '1']
 
-    logger = logging.getLogger('root')
-    logger.setLevel(logging.DEBUG)
-
     main()
 
-    out, err = capsys.readouterr()
-    # read output file and search for the string 'Saving checkpoint into'
-    namespace_args = [line for line in out.splitlines() if line.startswith('Namespace(')]
+    namespace_args = [line.split('Namespace(')[-1] for line in caplog.text.splitlines() if 'Namespace(' in line]
     assert any(namespace_args), 'Arguments not found in output'
 
     namespace_args = namespace_args[0].replace('Namespace(', '').replace(')', '')
@@ -57,7 +52,7 @@ def test_dynamic_args_backbone_defaults(capsys, caplog):
     assert 'hidden size is set to `2000` instead of the default `100`' in hidden_size_print[0], f'Hidden size print not as expected, got {hidden_size_print[0]}'
 
 
-def test_dynamic_args_backbone_override(capsys, caplog):
+def test_dynamic_args_backbone_override(caplog):
     sys.argv = ['mammoth',
                 '--model',
                 'si',
@@ -84,14 +79,9 @@ def test_dynamic_args_backbone_override(capsys, caplog):
                 '--debug_mode',
                 '1']
 
-    logger = logging.getLogger('root')
-    logger.setLevel(logging.DEBUG)
-
     main()
 
-    out, err = capsys.readouterr()
-    # read output file and search for the string 'Saving checkpoint into'
-    namespace_args = [line for line in out.splitlines() if line.startswith('Namespace(')]
+    namespace_args = [line.split('Namespace(')[-1] for line in caplog.text.splitlines() if 'Namespace(' in line]
     assert any(namespace_args), 'Arguments not found in output'
 
     namespace_args = namespace_args[0].replace('Namespace(', '').replace(')', '')
@@ -107,7 +97,7 @@ def test_dynamic_args_backbone_override(capsys, caplog):
 
 
 @pytest.mark.parametrize('transform_type', ['strong', 'weak'])
-def test_register_dataset(transform_type, capsys, caplog):
+def test_register_dataset(transform_type, caplog):
     sys.argv = ['mammoth',
                 '--model',
                 'sgd',
@@ -128,14 +118,9 @@ def test_register_dataset(transform_type, capsys, caplog):
                 '--debug_mode',
                 '1']
 
-    logger = logging.getLogger('root')
-    logger.setLevel(logging.DEBUG)
-
     main()
 
-    out, err = capsys.readouterr()
-    # read output file and search for the string 'Saving checkpoint into'
-    namespace_args = [line for line in out.splitlines() if line.startswith('Namespace(')]
+    namespace_args = [line.split('Namespace(')[-1] for line in caplog.text.splitlines() if 'Namespace(' in line]
     assert any(namespace_args), 'Arguments not found in output'
 
     namespace_args = namespace_args[0].replace('Namespace(', '').replace(')', '')

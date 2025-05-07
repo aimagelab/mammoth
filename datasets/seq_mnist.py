@@ -93,7 +93,7 @@ class SequentialMNIST(ContinualDataset):
 
     @staticmethod
     def get_transform():
-        return None
+        return SequentialMNIST.TRANSFORM
 
     @staticmethod
     def get_loss():

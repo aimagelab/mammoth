@@ -240,7 +240,7 @@ class STARPromptModel(nn.Module):
             n_seen_classes: The number of seen classes.
             loss_fn: The loss function.
         """
-        logging.info("Starting training of first stage on task", current_task)
+        logging.info(f"Starting training of first stage on task: {current_task}")
         # BEGIN-TASK
         old_train_transform = dataset.train_loader.dataset.transform
         old_test_transform = dataset.test_loaders[-1].dataset.transform

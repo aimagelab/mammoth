@@ -45,7 +45,7 @@ class Prompter(torch.nn.Module):
                 try:
                     key_jobnum = json.load(open(args.keys_ckpt_path, 'r'))[args.dataset][str(args.seed)]
                 except BaseException:
-                    logging.info("key missing", args.dataset, args.seed, file=sys.stderr)
+                    logging.info(f"key missing: {args.dataset} {args.seed}")
                     raise ValueError
 
                 t = dataset.N_TASKS - 1
@@ -61,7 +61,7 @@ class Prompter(torch.nn.Module):
 
             self.keys, first_stage_args = self.load_keys()
             if first_stage_args is not None:
-                logging.info("Keys loaded. Loading CLIP version:", first_stage_args.clip_backbone)
+                logging.info(f"Keys loaded. Loading CLIP version: {first_stage_args.clip_backbone}")
                 clip_backbone = first_stage_args.clip_backbone
             if clip_model is None:
                 self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
@@ -71,7 +71,7 @@ class Prompter(torch.nn.Module):
                 self.clip_preprocess = clip_preprocess
         else:  # use prompt templates
             self.keys_ckpt_path = None
-            logging.info("No keys loaded. Using default CLIP version:", clip_backbone)
+            logging.info(f"No keys loaded. Using default CLIP version: {clip_backbone}")
             if clip_model is None:
                 self.clip_model, self.clip_preprocess = clip.load(clip_backbone, self.device)
                 self.clip_model = self.clip_model.float()  # force fp32 when used for eval
@@ -157,7 +157,7 @@ class Prompter(torch.nn.Module):
             The keys tensor
             The arguments used in the first stage
         """
-        logging.info(f'Loading keys from {self.keys_ckpt_path}', file=sys.stderr)
+        logging.info(f'Loading keys from {self.keys_ckpt_path}')
         st = torch.load(self.keys_ckpt_path, weights_only=True)
         if isinstance(st, dict):
             keys = st['keys'].to(self.device)
@@ -171,7 +171,7 @@ class Prompter(torch.nn.Module):
             keys = st.to(self.device)
             self.old_args = None
             assert self.num_classes == keys.shape[0]
-        logging.info('Keys loaded successfully', file=sys.stderr)
+        logging.info('Keys loaded successfully')
         return keys.float(), self.old_args
 
     @torch.no_grad()

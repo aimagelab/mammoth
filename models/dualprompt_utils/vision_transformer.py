@@ -201,7 +201,7 @@ def resize_pos_embed(posemb, posemb_new, num_prefix_tokens=1, gs_new=()):
     # Rescale the grid of position embeddings when loading from state_dict. Adapted from
     # https://github.com/google-research/vision_transformer/blob/00883dd691c63a6830751563748663526e811cee/vit_jax/checkpoint.py#L224
     # modify
-    logging.info('Resized position embedding: %s to %s', posemb.shape, posemb_new.shape)
+    logging.info(f'Resized position embedding: {posemb.shape} to {posemb_new.shape}')
     ntok_new = posemb_new.shape[1]
     if num_prefix_tokens:
         posemb_prefix, posemb_grid = posemb[:, :num_prefix_tokens], posemb[0, num_prefix_tokens:]
@@ -216,7 +216,7 @@ def resize_pos_embed(posemb, posemb_new, num_prefix_tokens=1, gs_new=()):
     if not len(gs_new):  # backwards compatibility
         gs_new = [int(math.sqrt(ntok_new))] * 2
     assert len(gs_new) >= 2
-    logging.info('Position embedding grid-size from %s to %s', [gs_old, gs_old], gs_new)
+    logging.info(f'Position embedding grid-size from {[gs_old, gs_old]} to {gs_new}')
     posemb_grid = posemb_grid.reshape(1, gs_old, gs_old, -1).permute(0, 3, 1, 2)
     posemb_grid = F.interpolate(posemb_grid, size=gs_new, mode='bicubic', align_corners=False)
     posemb_grid = posemb_grid.permute(0, 2, 3, 1).reshape(1, gs_new[0] * gs_new[1], -1)

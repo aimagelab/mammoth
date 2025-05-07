@@ -293,16 +293,16 @@
   {
     "model": "spr",
     "setting": "class-il",
-    "result": 43.0,
-    "notes": "20% noise symmetric",
-    "cmd": "--model=spr --dataset=seq-cifar10 --buffer_size=500 --model_config=best --noise_type=symmetric --noise_rate=0.2"
+    "result": 85.4,
+    "notes": "20% noise symmetric, on a 1080ti takes around 3 days and a half of training",
+    "cmd": "--model=spr --dataset=seq-mnist --buffer_size=300 --model_config=best"
   },
   {
     "model": "cnll",
     "setting": "class-il",
-    "result": 65.1,
-    "notes": "20% noise symmetric",
-    "cmd": "--model=cnll --unlimited_buffer=1 --dataset=seq-cifar10 --buffer_size=500 --model_config=best --noise_type=symmetric --noise_rate=0.2"
+    "result": 68.7,
+    "notes": "20% noise symmetric with unlimited buffer",
+    "cmd": "--model cnll --dataset seq-cifar10 --buffer_size 500 --model_config best"
   },
   {
     "model": "second_order",

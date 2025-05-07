@@ -1,9 +1,0 @@
-MEAN: [0,0,0]
-STD: [1,1,1]
-TRANSFORM:
-  - ToTensor
-TEST_TRANSFORM:
-  - ToTensor
-n_epochs: 1
-backbone: resnet18
-batch_size: 10

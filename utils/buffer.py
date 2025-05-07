@@ -759,7 +759,7 @@ def fill_buffer(buffer: Buffer, dataset: 'ContinualDataset', t_idx: int, net: 'M
         samples_per_class = np.ceil(buffer.buffer_size / n_seen_classes).astype(int)
         new_bufsize = int(n_seen_classes * samples_per_class)
         if new_bufsize != buffer.buffer_size:
-            logging.info('Buffer size has bee changed to:', new_bufsize)
+            logging.info(f'Buffer size has been changed to: {new_bufsize}')
         buffer.buffer_size = new_bufsize
     else:
         samples_per_class = buffer.buffer_size // n_seen_classes

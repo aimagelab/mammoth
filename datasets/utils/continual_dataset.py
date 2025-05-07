@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 from argparse import ArgumentParser, Namespace
+import logging
 from typing import Callable, List, Optional, Tuple, Any, TYPE_CHECKING
 
 import torch
@@ -198,15 +199,6 @@ class ContinualDataset(object):
         else:
             self.N_CLASSES = self.N_CLASSES_PER_TASK
 
-        if self.args.permute_classes:
-            if not hasattr(self.args, 'class_order'):  # set only once
-                if self.args.seed is not None:
-                    np.random.seed(self.args.seed)
-                self.args.class_order = np.random.permutation(self.N_CLASSES)
-
-        if args.label_perc != 1 or args.label_perc_by_class != 1:
-            self.unlabeled_rng = np.random.RandomState(args.seed)
-
         if args.joint:
             if self.SETTING in ['class-il', 'task-il']:
                 # just set the number of classes per task to the total number of classes
@@ -216,6 +208,31 @@ class ContinualDataset(object):
                 # bit more tricky, not supported for now
                 raise NotImplementedError('Joint training is only supported for class-il and task-il.'
                                           'For other settings, please use the `joint` model with `--model=joint` and `--joint=0`')
+
+        if self.args.custom_task_order:
+            assert self.args.custom_class_order is None, 'You cannot set both custom task order and custom class order at the same time.'
+            task_order = self.args.custom_task_order.split(',') if ',' in self.args.custom_task_order else self.args.custom_task_order.split('-')
+            assert len(task_order) == self.N_TASKS, 'The custom task order must have the same number of tasks as the dataset but got {} for {} tasks'.format(len(task_order), self.N_TASKS)
+
+            task_class = [list(range(self.get_offsets(int(task_order[i])))) for i in range(self.N_TASKS)]
+
+            self.args.class_order = task_class
+            logging.info('Will use the custom task order: {}'.format(self.args.custom_task_order))
+            self.args.permute_classes = True  # will exploit class permutation
+        elif self.args.custom_class_order:
+            assert self.args.custom_task_order is None, 'You cannot set both custom task order and custom class order at the same time.'
+            class_order = self.args.custom_class_order.split(',') if ',' in self.args.custom_class_order else self.args.custom_class_order.split('-')
+            assert len(class_order) == self.N_CLASSES, 'The custom class order must have the same number of classes as the dataset but got {} for {} classes'.format(len(class_order), self.N_CLASSES)
+            self.args.class_order = list(map(int, class_order))
+            logging.info('Will use the custom class order: {}'.format(self.args.custom_class_order))
+        elif self.args.permute_classes:
+            if not hasattr(self.args, 'class_order'):  # set only once
+                if self.args.seed is not None:
+                    np.random.seed(self.args.seed)
+                self.args.class_order = np.random.permutation(self.N_CLASSES)
+
+        if args.label_perc != 1 or args.label_perc_by_class != 1:
+            self.unlabeled_rng = np.random.RandomState(args.seed)
 
         missing_fields = [field for field in self.base_fields if not hasattr(self, field) or getattr(self, field) is None]
         if len(missing_fields) > 0:

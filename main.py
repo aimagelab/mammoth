@@ -97,7 +97,7 @@ def check_args(args, dataset=None):
             assert not args.enable_other_metrics, 'Other metrics are not supported for biased-class-il.'
 
         # check if dataset is single-label multi-class (i.e, the `get_loss` returns the cross-entropy)
-        if 'cross_entropy' in str(dataset.get_loss()) or 'CrossEntropy' in str(dataset.get_loss()):
+        if 'cross_entropy' not in str(dataset.get_loss()) and 'CrossEntropy' not in str(dataset.get_loss()):
             if args.noise_rate != 1:
                 logging.warning('Label noise is not available with multi-label datasets. If this is not multi-label, ignore this warning.')
 
@@ -286,13 +286,16 @@ def parse_args():
         uid = args.conf_jobnum.split('-')[0]
         extra_ckpt_name = "" if args.ckpt_name is None else f"{args.ckpt_name}_"
         args.ckpt_name = f"{extra_ckpt_name}{args.model}_{args.dataset}_{args.dataset_config}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}_{args.n_epochs}_{str(now)}_{uid}"
-        logging.info("Saving checkpoint into", args.ckpt_name, file=sys.stderr)
+        logging.info(f"Saving checkpoint into: {args.ckpt_name}")
 
     check_args(args)
 
     if args.validation is not None:
         logging.info(f"Using {args.validation}% of the training set as validation set.")
         logging.info(f"Validation will be computed with mode `{args.validation_mode}`.")
+
+    # legacy print of the args, to make automatic parsing easier
+    logging.debug(args)
 
     logging.info('\n' + pretty_format_args(args, parser))
 
@@ -339,7 +342,7 @@ def extend_args(args, dataset):
         logging.info('`wandb_entity` and `wandb_project` not set. Disabling wandb.')
         args.nowand = 1
     else:
-        logging.info('Logging to wandb: {}/{}'.format(args.wandb_entity, args.wandb_project))
+        logging.info(f'Logging to wandb: {args.wandb_entity}/{args.wandb_project}')
         args.nowand = 0
 
 

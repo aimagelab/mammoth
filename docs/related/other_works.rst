@@ -149,3 +149,13 @@ Some of the Awesome CL works that use Mammoth
  `Original code <https://github.com/lijincm/OCD-Net>`_
 
 ..
+
+ - `CNLL: A Semi-supervised Approach For Continual Noisy Label Learning (**CVPRW 2022**) <https://www.ijcai.org/proceedings/2022/0446>`_  
+ `Original code <https://github.com/nazmul-karim170/CNLL?tab=readme-ov-file>`_
+
+..
+
+ - `Continual Learning on Noisy Data Streams via Self-Purified Replay (**ICCV 2021**) <https://arxiv.org/abs/2110.07735>`_  
+ `Original code <https://github.com/ecrireme/SPR>`_
+
+..

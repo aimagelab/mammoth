@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from main import main
 
 
-def test_first_and_second_stage(capsys):
+def test_first_and_second_stage(caplog):
     sys.argv = ['mammoth',
                 '--model',
                 'first_stage_starprompt',
@@ -27,10 +27,8 @@ def test_first_and_second_stage(capsys):
 
     main()
 
-    _, err = capsys.readouterr()
-
     # read output file and search for the string 'Saved text-encoder keys in:'
-    ckpt_name = [line for line in err.splitlines() if 'Saved text-encoder keys in:' in line]
+    ckpt_name = [line for line in caplog.text.splitlines() if 'Saved text-encoder keys in:' in line]
     assert any(ckpt_name), f'Keys not found'
 
     ckpt_path = ckpt_name[0].split('Saved text-encoder keys in:')[1].strip()

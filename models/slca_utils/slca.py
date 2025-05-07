@@ -64,7 +64,7 @@ class SLCA_Model(BaseLearner):
         self._network.fc.recall()
 
     def my_compute_class_means(self, loader, offset_1, offset_2):
-        logging.info('Computing class means...', file=sys.stderr)
+        logging.info('Computing class means...')
         class_vectors = {idx: [] for idx in range(offset_1, offset_2)}
         class_means, class_covs = {}, {}
         status = self._network.training

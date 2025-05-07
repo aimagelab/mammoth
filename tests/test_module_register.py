@@ -9,7 +9,7 @@ from main import main
 
 
 @pytest.mark.parametrize('backbone', ['resnet18', 'resnet34'])
-def test_register_backbone_resnet(backbone, capsys, caplog):
+def test_register_backbone_resnet(backbone, caplog):
     sys.argv = ['mammoth',
                 '--model',
                 'sgd',
@@ -30,14 +30,9 @@ def test_register_backbone_resnet(backbone, capsys, caplog):
                 '--debug_mode',
                 '1']
 
-    logger = logging.getLogger('root')
-    logger.setLevel(logging.DEBUG)
-
     main()
 
-    out, err = capsys.readouterr()
-    # read output file and search for the string 'Saving checkpoint into'
-    namespace_args = [line for line in out.splitlines() if line.startswith('Namespace(')]
+    namespace_args = [line.split('Namespace(')[-1] for line in caplog.text.splitlines() if 'Namespace(' in line]
     assert any(namespace_args), 'Arguments not found in output'
 
     namespace_args = namespace_args[0].replace('Namespace(', '').replace(')', '')
@@ -53,7 +48,7 @@ def test_register_backbone_resnet(backbone, capsys, caplog):
 
 
 @pytest.mark.parametrize('backbone', ['vit', 'resnet50'])
-def test_register_backbone_big(backbone, capsys, caplog):
+def test_register_backbone_big(backbone, caplog):
     sys.argv = ['mammoth',
                 '--model',
                 'sgd',
@@ -74,14 +69,9 @@ def test_register_backbone_big(backbone, capsys, caplog):
                 '--debug_mode',
                 '1']
 
-    logger = logging.getLogger('root')
-    logger.setLevel(logging.DEBUG)
-
     main()
 
-    out, err = capsys.readouterr()
-    # read output file and search for the string 'Saving checkpoint into'
-    namespace_args = [line for line in out.splitlines() if line.startswith('Namespace(')]
+    namespace_args = [line.split('Namespace(')[-1] for line in caplog.text.splitlines() if 'Namespace(' in line]
     assert any(namespace_args), 'Arguments not found in output'
 
     namespace_args = namespace_args[0].replace('Namespace(', '').replace(')', '')
