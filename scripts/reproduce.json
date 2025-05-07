@@ -323,7 +323,7 @@
     "setting": "class-il",
     "result": 61.76,
     "notes": "",
-    "cmd": "--alpha=0.2 --beta=0.1 --buffer_size=100 --dataset=seq-cifar10 --lr=0.1 --model=derpp_star --p-gamma=0.1 --p-lam=0.005 --p-eta=0.1"
+    "cmd": "--alpha=0.2 --beta=0.1 --buffer_size=100 --dataset=seq-cifar10 --lr=0.1 --model=derpp_star --p-gamma=0.1 --p-lam=0.005"
   },
   {
     "model": "er_ace_star",
