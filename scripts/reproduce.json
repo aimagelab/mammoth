@@ -317,5 +317,33 @@
     "result": 89.73,
     "notes": "IEL",
     "cmd": "--batch_size=8 --virtual_bs_n=16 --tuning_style=lora --use_iel=1 --model=second_order --dataset=seq-cifar100-224 --beta_iel=20 --lr=0.0003 --num_epochs_pretuning=3 --learning_rate_pretuning=0.01 --req_weight_cls=0.1 --simple_reg_weight_cls=0.001 --dataset_config=second_order_ta"
+  },
+  {
+    "model": "derpp_star",
+    "setting": "class-il",
+    "result": 61.76,
+    "notes": "",
+    "cmd": "--alpha=0.2 --beta=0.1 --buffer_size=100 --dataset=seq-cifar10 --lr=0.1 --model=derpp_star --p-gamma=0.1 --p-lam=0.005 --p-eta=0.1"
+  },
+  {
+    "model": "er_ace_star",
+    "setting": "class-il",
+    "result": 60.69,
+    "notes": "",
+    "cmd": "--buffer_size=100 --dataset=seq-cifar10 --lr=0.03 --model=er_ace_star --p-gamma=0.01 --p-lam=0.1"
+  },
+  {
+    "model": "er_star",
+    "setting": "class-il",
+    "result": 51.5,
+    "notes": "",
+    "cmd": "--buffer_size=100 --dataset=seq-cifar10 --lr=0.1 --model=er_star --p-gamma=0.01 --p-lam=0.1"
+  },
+  {
+    "model": "xder_rpc_star",
+    "setting": "class-il",
+    "result": 58.85,
+    "notes": "",
+    "cmd": "--alpha=0.1 --beta=0.5 --buffer_size=100 --dataset=seq-cifar10 --lr=0.03 --model=xder_rpc_star --p-gamma=0.001 --p-lam=0.01"
   }
 ]

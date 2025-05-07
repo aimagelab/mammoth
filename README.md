@@ -12,7 +12,7 @@
 
 # 🦣 Mammoth - A PyTorch Framework for Benchmarking Continual Learning
 
-_Mammoth_ is built to streamline the development and benchmark of continual learning research. With **more than 60 methods and 20 datasets**, it includes the most complete list competitors and benchmarks for research purposes.
+_Mammoth_ is built to streamline the development and benchmark of continual learning research. With **more than 70 methods and 20 datasets**, it includes the most complete list competitors and benchmarks for research purposes.
 
 The core idea of Mammoth is that it is designed to be modular, easy to extend, and - most importantly - _easy to debug_.
 
@@ -73,7 +73,7 @@ All the new additions will try to preserve the current structure of the reposito
 
 ## 🧠 Models
 
-Mammoth currently supports **more than 60** models, with new releases covering the main competitors in literature.
+Mammoth currently supports **more than 70** models, with new releases covering the main competitors in literature.
 
 <details>
 <summary><b>Click to expand model list</b></summary>

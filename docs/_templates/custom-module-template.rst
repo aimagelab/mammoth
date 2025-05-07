@@ -39,9 +39,6 @@
    
    {% for item in functions %}
    .. autofunction:: {{ item }}
-      :members:
-      :undoc-members:
-      :show-inheritance:
    {%- endfor %}
       
    {% for item in functions %}

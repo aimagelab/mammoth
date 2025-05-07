@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import random
-import matplotlib.pyplot as plt
 from PIL import Image
 
 # Attributes : '5_o_Clock_Shadow', 'Arched_Eyebrows', 'Attractive',
@@ -74,6 +73,8 @@ def assign_labels(attributes_df, partition_df, chunk_attributes, max_per_task, b
 
 
 def calculate_statistics(final_df, chunk_attributes, bias_attribute='Male'):
+    import matplotlib.pyplot as plt
+
     partition_names = ['Train', 'Validation', 'Test']
     gender_names = ['Female', 'Male']
     gender_colors = {'Female': 'red', 'Male': 'blue'}
@@ -149,6 +150,8 @@ def calculate_statistics(final_df, chunk_attributes, bias_attribute='Male'):
 
 
 def save_sample_images(final_df, root_path):
+    import matplotlib.pyplot as plt
+
     fig, axes = plt.subplots(4, 4, figsize=(20, 20))
     attributes = ['Big_Lips', 'Pale_Skin', 'Wavy_Hair', 'Bangs', 'Black_Hair', 'Wearing_Hat', 'Double_Chin', 'Arched_Eyebrows']
     bias_values = [-1, 1]  # -1 for Female, 1 for Male
