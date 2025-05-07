@@ -1,4 +1,5 @@
 from argparse import Namespace
+import logging
 import torch
 import torch.nn as nn
 from torchvision import transforms
@@ -97,7 +98,7 @@ class Llava(ContinualModel):
     def __init__(self, backbone, loss, args, transform, dataset=None):
         backbone = None
         if args.n_epochs != 0:
-            print(f"LLAVA is a STATIC model, setting n_epochs to {0}")
+            logging.warning(f"LLAVA is a STATIC model, setting n_epochs to {0}")
             args.n_epochs = 0
         super().__init__(backbone, loss, args, transform, dataset=dataset)
         denorm_transform = self.dataset.get_denormalization_transform()

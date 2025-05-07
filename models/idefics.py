@@ -1,4 +1,5 @@
 from argparse import Namespace
+import logging
 import os
 import torch
 import torch.nn as nn
@@ -17,8 +18,8 @@ except ImportError:
 try:
     from transformers import BitsAndBytesConfig, IdeficsForVisionText2Text, AutoProcessor
     from transformers.generation import GenerationConfig
-except ImportError:
-    raise ImportError("Please install the HuggingFace Transformers package by running: pip install transformers")
+except ImportError as err:
+    raise ImportError("Please install the HuggingFace Transformers package by running: pip install transformers>=4.49.0")
 
 from datasets.utils.continual_dataset import ContinualDataset
 from models.utils.continual_model import ContinualModel
@@ -118,7 +119,7 @@ class Idefics(ContinualModel):
     def __init__(self, backbone, loss, args, transform, dataset=None):
         backbone = None
         if args.n_epochs != 0:
-            print(f"IDEFICS is a STATIC model, setting n_epochs to {0}")
+            logging.warning(f"IDEFICS is a STATIC model, setting n_epochs to {0}")
             args.n_epochs = 0
         os.environ["TOKENIZERS_PARALLELISM"] = "false"  # disable tokenizers parallelism
         super().__init__(backbone, loss, args, transform, dataset=dataset)

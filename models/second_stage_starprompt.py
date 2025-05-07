@@ -1,3 +1,4 @@
+import logging
 import torch
 from copy import deepcopy
 from torch.utils.data import TensorDataset
@@ -127,7 +128,7 @@ class SecondStageStarprompt(ContinualModel):
 
         for _ti in range(self.current_task + 1):
 
-            prev_t_size, cur_t_size = self.compute_offsets(_ti)
+            prev_t_size, cur_t_size = self.get_offsets(_ti)
 
             for class_idx in range(prev_t_size, cur_t_size):
                 current_samples = self.distributions[class_idx](self.args.num_samples_gr)
@@ -214,13 +215,13 @@ class SecondStageStarprompt(ContinualModel):
             self.distributions[class_idx].fit(features_class_idx.to(self.device))
 
     def backup(self):
-        print(f"BACKUP: Task - {self.current_task} - classes from "
-              f"{self.n_past_classes} - to {self.n_seen_classes}")
+        logging.info(f"BACKUP: Task - {self.current_task} - classes from "
+                     f"{self.n_past_classes} - to {self.n_seen_classes}")
         self.classifier_state_dict = deepcopy(self.net.vit.head.state_dict())
 
     def recall(self):
-        print(f"RECALL: Task - {self.current_task} - classes from "
-              f"{self.n_past_classes} - to {self.n_seen_classes}")
+        logging.info(f"RECALL: Task - {self.current_task} - classes from "
+                     f"{self.n_past_classes} - to {self.n_seen_classes}")
 
         if self.current_task == 0 or not self.args.enable_gr:
             return
@@ -268,10 +269,10 @@ class SecondStageStarprompt(ContinualModel):
         #         logits = torch.einsum('bd,cd->bc', queries, self.net.prompter.keys.type(self.net.prompter.clip_model.dtype))
         #         task_corr += (logits.argmax(dim=-1) == labels).sum().item()
         #         task_tot += labels.shape[0]
-        #     print(f"CLIP on TASK {i+1}: {task_corr / task_tot}")
+        #     logging.info(f"CLIP on TASK {i+1}: {task_corr / task_tot}")
         #     tot_corr += task_corr
         #     tot_data += task_tot
-        # print(f"AVG CLIP ON TASKS: {tot_corr / tot_data}") # the avg of the avg != the avg of the total
+        # logging.info(f"AVG CLIP ON TASKS: {tot_corr / tot_data}") # the avg of the avg != the avg of the total
 
         # For later GR
         self.recall()
@@ -280,7 +281,7 @@ class SecondStageStarprompt(ContinualModel):
             del self.opt
 
         self.opt = self.get_optimizer()
-        self.scheduler = self.get_scheduler()
+        self.custom_scheduler = self.get_scheduler()
 
     def forward(self, x):
         x, query_x = x[:, 0], x[:, 1]  # from repeated transform

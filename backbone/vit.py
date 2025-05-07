@@ -272,6 +272,7 @@ class VisionTransformer(MammothBackbone):
         self.depth = depth
         self.drop_rate = drop_rate
         self.mlp_layer = mlp_layer
+        self.drop_path_rate = drop_path_rate
 
         self.patch_embed = embed_layer(
             img_size=img_size,
@@ -360,7 +361,7 @@ class VisionTransformer(MammothBackbone):
         for idx, blk in enumerate(self.blocks):
             AB_blk = AB.get(idx)
             if AB_blk is not None:
-                x = blk(x, AB_blk)
+                x = blk(x, AB=AB_blk)
             else:
                 x = blk(x)
             if return_all:

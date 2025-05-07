@@ -1,6 +1,6 @@
 Welcome to Mammoth's documentation!
 ===================================
-.. image:: _static/logo.png
+.. image:: _static/mammoth_logo.svg
     :alt: logo
     :align: center
     :height: 230px
@@ -9,7 +9,7 @@ Welcome to Mammoth's documentation!
 Mammoth - An benchmark Continual Learning framework for Pytorch
 ==========================================================================
 
-Mammoth is a framework for Continual Learning research. With **more than 50 methods and 20 datasets**, it includes the most complete list competitors and benchmarks for research purposes.
+Mammoth is a framework for Continual Learning research. With **more than 60 methods and 20 datasets**, it includes the most complete list competitors and benchmarks for research purposes.
 
 The core idea of Mammoth is that it is designed to be modular, easy to extend, and - most importantly - *easy to debug*.
 Ideally, all the code necessary to run the experiments is included *in the repository*, without needing to check out other repositories or install additional packages.
@@ -77,7 +77,7 @@ Setup
 Models
 ------
 
-Mammoth currently supports **more than 50 models**, with new releases covering the main competitors in literature.
+Mammoth currently supports **more than 60 models**, with new releases covering the main competitors in literature.
 
 Datasets
 --------
@@ -86,7 +86,7 @@ Datasets
 - This can be changed by changing the ``base_path`` function in ``utils/conf.py`` or using the ``--base_path`` argument.
 - The ``data/`` folder should not be tracked by git and is craeted automatically if missing.
 
-Mammoth includes **21** datasets, covering *toy classification problems* (different versions of MNIST), *standard domains* (CIFAR, Imagenet-R, TinyImagenet, MIT-67), *fine-grained classification domains* (Cars-196, CUB-200), *aerial domains* (EuroSAT-RGB, Resisc45), *medical domains* (CropDisease, ISIC, ChestX).
+Mammoth includes **23** datasets, covering *toy classification problems* (different versions of MNIST), *standard domains* (CIFAR, Imagenet-R, TinyImagenet, MIT-67), *fine-grained classification domains* (Cars-196, CUB-200), *aerial domains* (EuroSAT-RGB, Resisc45), *medical domains* (CropDisease, ISIC, ChestX).
 
 Work in progress
 ----------------

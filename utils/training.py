@@ -129,8 +129,6 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         dataset: the continual dataset at hand
         args: the arguments of the current execution
     """
-    print(args)
-
     is_fwd_enabled = True
     can_compute_fwd_beforetask = True
     random_results_class, random_results_task = [], []
@@ -163,9 +161,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 (results, results_mask_classes, csvdump) = past_res
                 logger.load(csvdump)
 
-            print('Checkpoint Loaded!')
+            logging.info('Checkpoint Loaded!')
 
-        print(file=sys.stderr)
         start_task = 0 if args.start_from is None else args.start_from
         end_task = dataset.N_TASKS if args.stop_after is None else args.stop_after
 
@@ -227,7 +224,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
                 # Scheduler is automatically reloaded after each task if defined in the dataset.
                 # If the model defines it, it becomes the job of the model to reload it.
-                scheduler = get_scheduler(model, args, reload_optim=True) if not hasattr(model, 'scheduler') else model.scheduler
+                scheduler = get_scheduler(model, args, reload_optim=True) if not hasattr(model, 'scheduler') else model.custom_scheduler
 
                 epoch = 0
                 best_ea_metric = None
@@ -244,14 +241,14 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     logging.info(f"Task {t + 1}")  # at least print the task number
 
                 while True:
-                    model.begin_epoch(epoch, dataset)
+                    model.meta_begin_epoch(epoch, dataset)
 
                     train_pbar.set_description(f"Task {t + 1} - Epoch {epoch + 1}")
 
                     train_single_epoch(model, train_loader, args, pbar=train_pbar, epoch=epoch,
                                        system_tracker=system_tracker, scheduler=scheduler)
 
-                    model.end_epoch(epoch, dataset)
+                    model.meta_end_epoch(epoch, dataset)
 
                     epoch += 1
                     if args.fitting_mode == 'epochs' and epoch >= model.args.n_epochs:
@@ -272,14 +269,14 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                         if best_ea_metric is not None and ea_metric - best_ea_metric < args.early_stopping_epsilon:
                             cur_stopping_patience -= args.early_stopping_freq
                             if cur_stopping_patience <= 0:
-                                print(f"\nEarly stopping at epoch {epoch} with metric {abs(ea_metric)}", file=sys.stderr)
+                                logging.info(f"\nEarly stopping at epoch {epoch} with metric {abs(ea_metric)}")
                                 model.load_state_dict({k: v.to(model.device) for k, v in best_ea_model.items()})
                                 break
-                            print(f"\nNo improvement at epoch {epoch} (best {abs(best_ea_metric)} | current {abs(ea_metric)}). "
-                                  f"Waiting for {cur_stopping_patience} epochs to stop.", file=sys.stderr)
+                            logging.info(f"\nNo improvement at epoch {epoch} (best {abs(best_ea_metric)} | current {abs(ea_metric)}). "
+                                         f"Waiting for {cur_stopping_patience} epochs to stop.")
                         else:
-                            print(f"\nFound better model with metric {abs(ea_metric)} at epoch {epoch}. "
-                                  f"Previous value was {abs(best_ea_metric) if best_ea_metric is not None else 'None'}", file=sys.stderr)
+                            logging.info(f"\nFound better model with metric {abs(ea_metric)} at epoch {epoch}. "
+                                         f"Previous value was {abs(best_ea_metric) if best_ea_metric is not None else 'None'}")
                             best_ea_metric = ea_metric
                             best_ea_model = copy.deepcopy({k: v.cpu() for k, v in model.state_dict().items()})
                             cur_stopping_patience = args.early_stopping_patience
@@ -312,7 +309,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             if args.eval_future:
                 avg_transf = np.mean([np.mean(task_) for task_ in results_transf])
-                print(f"Transfer Metrics  -  AVG Transfer {avg_transf:.2f}", file=sys.stderr)
+                logging.info(f"Transfer Metrics  -  AVG Transfer {avg_transf:.2f}")
                 if t < dataset.N_TASKS - 1:
                     eval_dataset.log(args, logger, transf_accs, t, dataset.SETTING, future=True)
 
@@ -325,7 +322,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
         if args.validation:
             # Final evaluation on the real test set
-            print("Starting final evaluation on the real test set...", file=sys.stderr)
+            logging.info("Starting final evaluation on the real test set...")
             del dataset
             args.validation = None
             args.validation_mode = 'current'

@@ -64,7 +64,7 @@ class SLCA_Model(BaseLearner):
         self._network.fc.recall()
 
     def my_compute_class_means(self, loader, offset_1, offset_2):
-        print('Computing class means...', file=sys.stderr)
+        logging.info('Computing class means...', file=sys.stderr)
         class_vectors = {idx: [] for idx in range(offset_1, offset_2)}
         class_means, class_covs = {}, {}
         status = self._network.training
@@ -81,7 +81,7 @@ class SLCA_Model(BaseLearner):
         for k in class_vectors.keys():
             class_means[k] = class_vectors[k].mean(dim=0)
             class_covs[k] = torch.cov(class_vectors[k].T) + torch.eye(class_means[k].shape[-1]) * 1e-4
-        print('Done.', file=sys.stderr)
+        logging.info('Done.')
         self._network.train(status)
         return class_means, class_covs
 

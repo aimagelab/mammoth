@@ -58,10 +58,10 @@ class L2P(ContinualModel):
             logging.warning("Using batch-wise prompting (i.e., majority voting) during test may lead to unfair comparison with other methods.")
 
         del backbone
-        print("-" * 20)
-        print(f"WARNING: L2P USES A CUSTOM BACKBONE: `https://storage.googleapis.com/vit_models/imagenet21k/ViT-B_16.npz` (vit_base_patch16_224_in21k_fn_in1k_old).")
-        print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
-        print("-" * 20)
+        logging.warning("-" * 20)
+        logging.warning(f"L2P USES A CUSTOM BACKBONE: `https://storage.googleapis.com/vit_models/imagenet21k/ViT-B_16.npz` (vit_base_patch16_224_in21k_fn_in1k_old).")
+        logging.warning("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
+        logging.warning("-" * 20)
 
         args.lr = args.lr * args.batch_size / 256.0  # scale learning rate by batch size
         backbone = L2PModel(args)

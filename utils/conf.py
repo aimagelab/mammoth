@@ -7,10 +7,10 @@ This module contains utility functions for configuration settings.
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import logging
 import os
+import gc
+import logging
 import random
-import sys
 from functools import partial
 
 from typing import List
@@ -50,7 +50,7 @@ def _get_gpu_memory_pynvml_all_processes(device_id: int = 0) -> int:
     return sum([proc.usedGpuMemory for proc in procs])
 
 
-def get_alloc_memory_all_devices(return_all=False) -> list[int]:
+def get_alloc_memory_all_devices(avail_devices=None, return_all=False) -> list[int]:
     """
     Returns the memory allocated on all the available devices.
     By default, tries to return the memory read from pynvml, if available.
@@ -58,12 +58,17 @@ def get_alloc_memory_all_devices(return_all=False) -> list[int]:
 
     If `return_all` is set to True, it returns a tuple with the memory reserved, allocated and from pynvml.
 
+    If `avail_devices` is set, it returns the memory only for the specified devices.
+
     Values are in Bytes.
     """
     gpu_memory_reserved = []
     gpu_memory_allocated = []
     gpu_memory_nvidiasmi = []
     for i in range(torch.cuda.device_count()):
+        if avail_devices is not None and i not in avail_devices:
+            continue
+
         _ = torch.tensor([1]).to(i)  # allocate memory to get more accurate reading from torch
         gpu_memory_reserved.append(torch.cuda.max_memory_reserved(i))
         gpu_memory_allocated.append(torch.cuda.max_memory_allocated(i))
@@ -73,6 +78,10 @@ def get_alloc_memory_all_devices(return_all=False) -> list[int]:
         except BaseException as e:
             warn_once('Could not get memory from pynvml. Maybe try `pip install --force-reinstall gpustat`.', str(e))
             gpu_memory_nvidiasmi.append(-1)
+
+        del _
+        gc.collect()
+        torch.cuda.empty_cache()
 
     if return_all:
         return gpu_memory_reserved, gpu_memory_allocated, gpu_memory_nvidiasmi
@@ -89,8 +98,7 @@ def get_device(avail_devices: str = None) -> torch.device:
     def _get_device(avail_devices: List[int] = None) -> torch.device:
         # get least used gpu by used memory
         if torch.cuda.is_available() and torch.cuda.device_count() > 0 and len(avail_devices) > 0:
-            gpu_memory = get_alloc_memory_all_devices()
-            gpu_memory = [gpu_memory[i] for i in avail_devices]
+            gpu_memory = get_alloc_memory_all_devices(avail_devices=avail_devices)
             device = torch.device(f'cuda:{avail_devices[np.argmin(gpu_memory)]}')
             return device
         try:
@@ -153,7 +161,7 @@ def set_random_seed(seed: int) -> None:
     try:
         torch.cuda.manual_seed_all(seed)
     except BaseException:
-        print('Could not set cuda seed.')
+        logging.error('Could not set cuda seed.')
 
 
 def worker_init_fn(worker_id, num_workers, seed, rank=1):

@@ -63,10 +63,10 @@ class DualPrompt(ContinualModel):
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
         del backbone
-        print("-" * 20)
+        logging.info("-" * 20)
         logging.info(f"DualPrompt USES A CUSTOM BACKBONE: `https://storage.googleapis.com/vit_models/imagenet21k/ViT-B_16.npz` (vit_base_patch16_224_in21k_fn_in1k_old).")
-        print("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
-        print("-" * 20)
+        logging.info("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
+        logging.info("-" * 20)
 
         args.lr = args.lr * args.batch_size / 256.0
         tmp_dataset = get_dataset(args) if dataset is None else dataset

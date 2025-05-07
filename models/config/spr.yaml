@@ -1,0 +1,9 @@
+seq-cifar10:
+  dataset_config: spr
+  noise: sym
+  noise_rate: 0.2
+  500:
+    expert_train_epochs: 4000
+    inner_train_epochs: 3000
+    lr: 0.0002
+    optimizer: adam

@@ -87,7 +87,7 @@ class FirstStageStarprompt(ContinualModel):
             self.net.prompter.align(self.current_task)
 
         if self.current_task == (self.n_tasks - 1) and self.args.save_first_stage_keys:
-            print('Saving text encoder outputs... ', end='', file=sys.stderr)
+            logging.info('Saving text encoder outputs... ', end='', file=sys.stderr)
             te_outputs = self.net.prompter.compute_keys(0, self.num_classes)
             os.makedirs('./coop_keys', exist_ok=True)
             st = {
@@ -99,7 +99,7 @@ class FirstStageStarprompt(ContinualModel):
             else:
                 fname = f'./coop_keys/coop_keys_{self.current_task}_{self.args.conf_jobnum}.pt'
             torch.save(st, fname)
-            print('Saved text-encoder keys in:', fname, file=sys.stderr)
+            logging.info('Saved text-encoder keys in:', fname, file=sys.stderr)
 
     def get_parameters(self):
         return [v for k, v in self.net.named_parameters() if 'prompt_parameters' in k]

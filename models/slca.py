@@ -45,10 +45,10 @@ class SLCA(ContinualModel):
     def __init__(self, backbone, loss, args, transform, dataset=None):
         self.device = get_device()
         del backbone
-        print("-" * 20)
-        print(f"WARNING: SLCA USES A CUSTOM BACKBONE: {args.feature_extractor_type}")
+        logging.warning("-" * 20)
+        logging.warning(f"SLCA USES A CUSTOM BACKBONE: {args.feature_extractor_type}")
+        logging.warning("-" * 20)
         backbone = SLCA_Model(self.device, args)
-        print("-" * 20)
 
         args.milestones = args.milestones.split(',')
         n_features = backbone._network.convnet.feature_dim
@@ -79,7 +79,7 @@ class SLCA(ContinualModel):
         self.net._cur_task += 1
         self.net._network.update_fc(self.offset_2 - self.offset_1)
         self.net._network.to(self.device)
-        self.opt, self.scheduler = self.net.get_optimizer()
+        self.opt, self.custom_scheduler = self.net.get_optimizer()
         self.net._network.train()
 
         self.opt.zero_grad()
