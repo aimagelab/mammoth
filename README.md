@@ -53,10 +53,12 @@ Mammoth currently supports **more than 50** models, with new releases covering t
 - Efficient Lifelong Learning with A-GEM (A-GEM, A-GEM-R - A-GEM with reservoir buffer): `agem`, `agem_r`.
 - AttriCLIP: A Non-Incremental Learner for Incremental Knowledge Learning (AttriCLIP): `attriclip`.
 - Bias Correction (BiC): `bic`.
+- CaSpeR-IL (on DER++, X-DER with RPC, iCaRL, and ER-ACE): `derpp_casper`, `xder_rpc_casper`, `icarl_casper`, `er_ace_casper`.
 - Continual Contrastive Interpolation Consistency (CCIC) - _Requires_ `pip install kornia`: `ccic`.
 - Continual Generative training for Incremental prompt-Learning (CGIL): `cgil`
 - Contrastive Language-Image Pre-Training (CLIP): `clip` (*static* method with no learning).
 - CODA-Prompt: COntinual Decomposed Attention-based Prompting for Rehearsal-Free Continual Learning (CODA-Prompt) - _Requires_ `pip install timm==0.9.8`: `coda-prompt`.
+- CSCCT (on DER++, X-DER with RPC, iCaRL, and ER-ACE): `derpp_cscct`, `xder_rpc_cscct`, `icarl_cscct`, `er_ace_cscct`.
 - Generating Instance-level Prompts for Rehearsal-free Continual Learning (DAP): `dap`.
 - Dark Experience for General Continual Learning: a Strong, Simple Baseline (DER & DER++): `der` and `derpp`.
 - DualPrompt: Complementary Prompting for Rehearsal-free Continual Learning (DualPrompt) - _Requires_ `pip install timm==0.9.8`: `dualprompt`.
@@ -92,6 +94,7 @@ Mammoth currently supports **more than 50** models, with new releases covering t
 - Semantic Two-level Additive Residual Prompt (STAR-Prompt): `starprompt`. Also includes the first-stage only (`first_stage_starprompt`) and second-stage only (`second_stage_starprompt`) versions.
 - Transfer without Forgetting (TwF): `twf`.
 - eXtended-DER (X-DER): `xder` (full version), `xder_ce` (X-DER with CE), `xder_rpc` (X-DER with RPC).
+- ZSCL: Zero-Shot Continual Learning: `zscl`.
 
 ## Datasets
 

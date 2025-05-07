@@ -14,6 +14,7 @@ class Model(nn.Module):
             num_classes=n_classes,
             drop_rate=0,
             drop_path_rate=0,
+            args=args
         )
         self.original_model.eval()
 
@@ -41,6 +42,7 @@ class Model(nn.Module):
             e_prompt_layer_idx=args.e_prompt_layer_idx,
             use_prefix_tune_for_e_prompt=args.use_prefix_tune_for_e_prompt,
             same_key_value=args.same_key_value,
+            args=args
         )
 
         if args.freeze:

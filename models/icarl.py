@@ -66,7 +66,6 @@ class ICarl(ContinualModel):
             assert args.dataset == 'seq-cifar100', 'The original iCaRL transform is only available for CIFAR-100.'
 
         super().__init__(backbone, loss, args, transform, dataset=dataset)
-        self.dataset = get_dataset(args)
 
         # Instantiate buffers
         self.buffer = Buffer(self.args.buffer_size)
