@@ -43,6 +43,9 @@ extra = [
 [tool.uv.sources]
 clip = { git = "https://github.com/openai/CLIP.git" }
 
+[tool.uv.workspace]
+members = ["docs"]
+
 [dependency-groups]
 dev = [
     "pytest>=8.3.5",

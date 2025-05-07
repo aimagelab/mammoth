@@ -21,7 +21,7 @@ Arguments
 	*Help*: Backbone network name.
 
 	- *Default*: ``None``
-	- *Choices*: ``resnet18, resnet18-7x7-pt, reduced-resnet18, resnet34, resnet50, resnet50-pt, resnet32, mnistmlp, vit``
+	- *Choices*: ``preact-resnet18, resnet18, resnet18-7x7-pt, reduced-resnet18, resnet34, resnet18-spr, resnet50, resnet50-pt, resnet32, mnistmlp, vit``
 
 **\-\-load_best_args** : unknown
 	*Help*: (deprecated) Loads the best arguments for each method, dataset and memory buffer. NOTE: This option is deprecated and not up to date.
@@ -64,6 +64,18 @@ Arguments
 	*Help*: Evaluate future tasks?
 
 	- *Default*: ``False``
+**\-\-custom_task_order** : str
+	*Help*: Custom order of the tasks. The tasks are separated by commas or "-". Example: `--custom_task_order=0,1,2,3` or `--custom_task_order=0-3`.
+NOTE: this option is not supported by all datasets. If not provided, the tasks are ordered as in the dataset.
+NOTE: this option disables the `--permute_classes` option and is incompatible with `--custom_class_order`
+
+	- *Default*: ``None``
+**\-\-custom_class_order** : str
+	*Help*: Custom order of the classes. The classes are separated by commas or "-". Example: `--custom_class_order=0,1,2,3` or `--custom_class_order=0-3`.
+NOTE: this option is not supported by all datasets. If not provided, the classes are ordered as in the dataset.
+NOTE: this option disables the `--permute_classes` option and is incompatible with `--custom_task_order`
+
+	- *Default*: ``None``
 
 .. rubric:: Validation and fitting arguments
 

@@ -1,0 +1,9 @@
+[project]
+name = "docs"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "furo==2023.9.10",
+    "sphinx==7.2.6",
+    "sphinx-toolbox==3.5.0",
+]
