@@ -24,7 +24,7 @@ class Model(torch.nn.Module):
         self.prompt_template = args.prompt_template
         self.device = device
         self.classes_names = self.dataset.get_class_names()
-        self.model, self.clip_preprocess, _ = clip.load(args.clip_backbone, device=self.device, jit=False)
+        self.model, self.clip_preprocess, _ = clip.load(args, args.clip_backbone, device=self.device, jit=False)
 
         self.text_tokens = clip.tokenize(
             [self.prompt_template.format(c) for c in self.classes_names]
@@ -62,6 +62,9 @@ class MoEAdapters(FutureModel):
         parser.add_argument("--clip_backbone", type=str, default='ViT-B/16', help="Clip backbone")
 
         parser.add_argument("--prompt_template", type=str, default='a bad photo of a {}.', help="Template string")
+
+        parser.add_argument("--experts_num", type=int, default=2, help="Number of experts")
+        parser.add_argument("--top_k", type=int, default=2)
 
         return parser
 

@@ -7,10 +7,10 @@ First steps
 
 See :ref:`module-utils` for more information about the most useful arguments
 
-Results and logs - WandB
-------------------------
+Results and WandB
+-----------------
 
-Mammoth logs all the results and metrics under the ``data/results`` directory (by default). You can change this directory by changing the **base_path** function in :ref:`module-utils.conf`. 
+Mammoth saves all the results and metrics under the ``data/results`` directory (by default). You can change this directory by changing the **base_path** function in :ref:`module-utils.conf` or with `--base_path=<path>`. 
 
 - The logs are organized in the following way: `<setting>/<dataset>/<model>/logs.pyd`.
 
@@ -19,12 +19,23 @@ Mammoth logs all the results and metrics under the ``data/results`` directory (b
 WandB
 ~~~~~
 
-For advanced logging, including loss values, metrics, and hyperparameters, you can use `WandB <https://wandb.ai/>`_ by providing both ``--wandb_project`` and ``--wandb_entity`` arguments. If you don't want to use WandB, you can simply omit these arguments.
+For advanced logging of loss values, metrics, and hyperparameters, you can use `WandB <https://wandb.ai/>`_ by providing both ``--wandb_project`` and ``--wandb_entity`` arguments. If you don't want to use WandB, you can simply omit these arguments.
 
 .. tip::
     By default, all arguments, loss values, and metrics are logged. Thanks to the **autolog_wandb** (:ref:`module-models`), all the variables created in the **observe** that contain *loss* or start with *_wandb_* will be logged. Thus, in order to log all the separate loss values, you can simply add ``loss = loss + loss1 + loss2`` to the **observe** function.
 
 Metrics are logged on WandB both in a raw form, separated for each task and class. This allows further analysis (e.g., with the Mammoth :ref:`Parseval <module-parseval>`). To differentiate between raw metrics logged on WandB and other aggregated metrics that may have been logged, all the raw metrics are prefixed with **RESULTS_**. This behavior can be changed by changing the prefix in the **log_accs** function in :ref:`module-utils.loggers`.
+
+Logging
+~~~~~~~
+
+Mammoth uses the `logging` library to log the status of the training. By default, the log level is set to **INFO**. You can change the log level by setting the environment variable **LOG_LEVEL** to one of the following values: **DEBUG**, **INFO**, **WARNING**, **ERROR**, or **CRITICAL**. You can also set the log level in the code by using the following command:
+
+.. code-block:: python
+
+    import logging
+    logger = logging.getLogger('root')
+    logging.basicConfig(level=logging.DEBUG)
 
 Testing
 -------

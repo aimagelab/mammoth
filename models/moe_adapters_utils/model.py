@@ -1,16 +1,19 @@
+import numpy as np
 from collections import OrderedDict
 from typing import Tuple, Union
-
-import numpy as np
+from argparse import Namespace
 import torch
 import torch.nn.functional as F
 from torch import nn
-from .adapter import Adapter
 from torch.distributions.normal import Normal
 from collections import Counter
 
+from .adapter import Adapter
+
 global_taskid = 0
-global_is_train=True
+global_is_train = True
+
+
 class SparseDispatcher(object):
     """Helper for implementing a mixture of experts.
     The purpose of this class is to create input minibatches for the
@@ -111,6 +114,7 @@ class SparseDispatcher(object):
         """
         # split nonzero gates for each expert
         return torch.split(self._nonzero_gates, self._part_sizes, dim=0)
+
 
 class Bottleneck(nn.Module):
     expansion = 4
@@ -270,7 +274,7 @@ class QuickGELU(nn.Module):
 
 
 class ResidualAttentionBlock(nn.Module):
-    def __init__(self, d_model: int, n_head: int, attn_mask: torch.Tensor = None, text_or_image=None):
+    def __init__(self, args, d_model: int, n_head: int, attn_mask: torch.Tensor = None, text_or_image=None):
         super().__init__()
         self.register_buffer("mean", torch.tensor([0.0]))
         self.register_buffer("std", torch.tensor([1.0]))
@@ -285,9 +289,9 @@ class ResidualAttentionBlock(nn.Module):
         self.attn_mask = attn_mask
         self.is_train = global_is_train
         self.step = 1
-        self.top_k = 2
+        self.top_k = args.top_k
         self.ffn_num = 64
-        self.experts_num = 2
+        self.experts_num = args.experts_num
         self.softmax = nn.Softmax(1)
         self.softplus = nn.Softplus()
         self.noisy_gating = True
@@ -295,10 +299,10 @@ class ResidualAttentionBlock(nn.Module):
         self.text_or_image = text_or_image
         if text_or_image == 'text':
             # print('text transformer')
-            self.choose_map_text = torch.zeros([ self.experts_num])
+            self.choose_map_text = torch.zeros([self.experts_num])
         else:
             # print('image transformer')
-            self.choose_map_image = torch.zeros([ self.experts_num])
+            self.choose_map_image = torch.zeros([self.experts_num])
         self.router_list = nn.ParameterList()
         self.w_noise_list = nn.ParameterList()
         for i in range(self.step):
@@ -375,8 +379,8 @@ class ResidualAttentionBlock(nn.Module):
         normal = Normal(self.mean, self.std)
         #
 
-        prob_if_in = normal.cdf((clean_values - threshold_if_in)/noise_stddev)
-        prob_if_out = normal.cdf((clean_values - threshold_if_out)/noise_stddev)
+        prob_if_in = normal.cdf((clean_values - threshold_if_in) / noise_stddev)
+        prob_if_out = normal.cdf((clean_values - threshold_if_out) / noise_stddev)
         prob = torch.where(is_in, prob_if_in, prob_if_out)
         return prob
 
@@ -451,18 +455,18 @@ class ResidualAttentionBlock(nn.Module):
 
 
 class Transformer(nn.Module):
-    def __init__(self, width: int, layers: int, heads: int, attn_mask: torch.Tensor = None, text_or_image=None):
+    def __init__(self, args, width: int, layers: int, heads: int, attn_mask: torch.Tensor = None, text_or_image=None):
         super().__init__()
         self.width = width
         self.layers = layers
-        self.resblocks = nn.Sequential(*[ResidualAttentionBlock(width, heads, attn_mask, text_or_image) for _ in range(layers)])
+        self.resblocks = nn.Sequential(*[ResidualAttentionBlock(args, width, heads, attn_mask, text_or_image) for _ in range(layers)])
 
     def forward(self, x: torch.Tensor):
         return self.resblocks(x)
 
 
 class VisualTransformer(nn.Module):
-    def __init__(self, input_resolution: int, patch_size: int, width: int, layers: int, heads: int, output_dim: int, text_or_image=None):
+    def __init__(self, args, input_resolution: int, patch_size: int, width: int, layers: int, heads: int, output_dim: int, text_or_image=None):
         super().__init__()
         self.input_resolution = input_resolution
         self.output_dim = output_dim
@@ -479,7 +483,7 @@ class VisualTransformer(nn.Module):
         self.positional_embedding = nn.Parameter(scale * torch.randn((input_resolution // patch_size) ** 2 + 1, width))
         self.ln_pre = LayerNorm(width)
 
-        self.transformer = Transformer(width, layers, heads, text_or_image=text_or_image)
+        self.transformer = Transformer(args, width, layers, heads, text_or_image=text_or_image)
 
         self.ln_post = LayerNorm(width)
         self.proj = nn.Parameter(scale * torch.randn(width, output_dim))
@@ -506,6 +510,7 @@ class VisualTransformer(nn.Module):
 
 class CLIP(nn.Module):
     def __init__(self,
+                 args,
                  embed_dim: int,
                  # vision
                  image_resolution: int,
@@ -518,7 +523,7 @@ class CLIP(nn.Module):
                  transformer_width: int,
                  transformer_heads: int,
                  transformer_layers: int,
-                 baseline = False
+                 baseline=False
                  ):
         super().__init__()
         self.baseline = baseline
@@ -537,6 +542,7 @@ class CLIP(nn.Module):
         else:
             vision_heads = vision_width // 64
             self.visual = VisualTransformer(
+                args=args,
                 input_resolution=image_resolution,
                 patch_size=vision_patch_size,
                 width=vision_width,
@@ -547,6 +553,7 @@ class CLIP(nn.Module):
             )
 
         self.transformer = Transformer(
+            args=args,
             width=transformer_width,
             layers=transformer_layers,
             heads=transformer_heads,
@@ -643,7 +650,6 @@ class CLIP(nn.Module):
         logits_per_image = logit_scale * image_features @ text_features.t()
         logits_per_text = logits_per_image.t()
         return logits_per_image, logits_per_text
-        
 
 
 def convert_weights(model: nn.Module):
@@ -670,7 +676,7 @@ def convert_weights(model: nn.Module):
     model.apply(_convert_weights_to_fp16)
 
 
-def build_model(state_dict: dict):
+def build_model(args: Namespace, state_dict: dict):
     vit = "visual.proj" in state_dict
 
     if vit:
@@ -696,7 +702,7 @@ def build_model(state_dict: dict):
     transformer_layers = len(set(k.split(".")[2] for k in state_dict if k.startswith(f"transformer.resblocks")))
 
     model = CLIP(
-        embed_dim,
+        args, embed_dim,
         image_resolution, vision_layers, vision_width, vision_patch_size,
         context_length, vocab_size, transformer_width, transformer_heads, transformer_layers
     )
