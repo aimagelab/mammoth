@@ -17,7 +17,7 @@ The following table contains a list of models implemented in Mammoth and a check
 | DER                       | `der`                    | V         |       |
 | DER++                     | `derpp`                  | V         |       |
 | DER++ LiDER               | `derpp_lider`            | V         |       |
-| DER++ & STAR              | `derpp_star`             | X         |       |
+| DER++ & STAR              | `derpp_star`             | V         |       |
 | DualPrompt                | `dualprompt`             | V         |       |
 | ER-ACE                    | `er_ace`                 | V         |       |
 | ER-ACE LiDER              | `er_ace_aer_abs`         | V         |       |
@@ -26,7 +26,7 @@ The following table contains a list of models implemented in Mammoth and a check
 | ER-ACE & STAR             | `er_ace_star`            | X         |       |
 | EwC Online                | `ewc_on`                 | X         |       |
 | ER                        | `er`                     | N/A       | This method predates modern benchmarks (R. Ratcliff. "Connectionist models of recognition memory: constraints imposed by learning and forgetting functions", 1990 -- A. Robins, "Catastrophic forgetting, rehearsal and pseudorehearsal", 1995) |
-| ER & STAR                 | `er_star`                | X         |       |
+| ER & STAR                 | `er_star`                | V         |       |
 | FDR                       | `fdr`                    | X         |       |
 | First-Stage STAR-Prompt   | `first_stage_starprompt` | V         |       |
 | GdumB LiDER               | `gdumb_lider`            | V         |       |
