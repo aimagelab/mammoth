@@ -1,0 +1,8 @@
+seq-cifar10:
+  100:
+    alpha: 0.15
+    beta: 0.15
+    lr: 0.1
+    model: derpp_star
+    p_gamma: 0.05
+    p_lam: 0.05

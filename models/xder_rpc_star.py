@@ -67,7 +67,7 @@ class XDerRPCSTAR(ContinualModel):
         parser.add_argument('--beta', type=float, required=True, help='Penalty weight.')
         add_perturb_args(parser)
         parser.add_argument('--gamma', type=float, default=0.85)
-        parser.add_argument('--eta', type=float, default=0.1)
+        parser.add_argument('--eta', type=float, default=0.001)
         parser.add_argument('--m', type=float, default=0.3)
 
         parser.add_argument('--clip_grad', type=none_or_float, default=None, metavar='NORM', help='Clip gradient norm (default: None, no clipping)')

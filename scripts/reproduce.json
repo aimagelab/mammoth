@@ -323,27 +323,27 @@
     "setting": "class-il",
     "result": 61.76,
     "notes": "",
-    "cmd": "--alpha=0.15 --beta=0.15 --buffer_size=100 --dataset=seq-cifar10 --lr=0.1 --model=derpp_star --p-gamma=0.05 --p-lam=0.05"
+    "cmd": "--buffer_size=100 --dataset=seq-cifar10 --model=derpp_star --model_config=best"
   },
   {
     "model": "er_ace_star",
     "setting": "class-il",
     "result": 60.69,
     "notes": "",
-    "cmd": "--buffer_size=100 --dataset=seq-cifar10 --lr=0.03 --model=er_ace_star --p-gamma=0.01 --p-lam=0.1"
+    "cmd": "--buffer_size=100 --dataset=seq-cifar10 --model=er_ace_star --model_config=best"
   },
   {
     "model": "er_star",
     "setting": "class-il",
     "result": 51.5,
     "notes": "",
-    "cmd": "--buffer_size=100 --dataset=seq-cifar10 --lr=0.1 --model=er_star --p-gamma=0.01 --p-lam=0.1"
+    "cmd": "--buffer_size=100 --dataset=seq-cifar10 --model=er_star --model_config=best"
   },
   {
     "model": "xder_rpc_star",
     "setting": "class-il",
     "result": 58.85,
     "notes": "",
-    "cmd": "--alpha=0.1 --beta=0.5 --buffer_size=100 --dataset=seq-cifar10 --lr=0.03 --model=xder_rpc_star --p-gamma=0.001 --p-lam=0.01"
+    "cmd": "--buffer_size 100 --dataset=seq-cifar10 --model=xder_rpc_star --model_config=best"
   }
 ]

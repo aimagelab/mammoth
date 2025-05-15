@@ -1,0 +1,7 @@
+seq-cifar10:
+  100:
+    lr: 0.1
+    model: er_star
+    p_gamma: 0.01
+    p_lam: 0.1
+    seed: 4
