@@ -9,19 +9,19 @@ Arguments
 	*Help*: Which dataset to perform experiments on.
 
 	- *Default*: ``None``
-	- *Choices*: ``seq-tinyimg, seq-mit67, seq-cars196, seq-cifar100-224-rs, seq-cifar100-224, seq-chestx, seq-celeba, seq-cifar10-224-rs, mnist-360, seq-cropdisease, seq-eurosat-rgb, seq-imagenet-r, seq-cifar100, seq-cifar10-224, perm-mnist, seq-cub200, seq-cifar10, rot-mnist, seq-resisc45, seq-mnist, seq-cub200-rs, seq-isic, seq-tinyimg-r``
+	- *Choices*: ``mnist-360, perm-mnist, rot-mnist, seq-cars196, seq-celeba, seq-chestx, seq-cifar10, seq-cifar100, seq-cifar100-224, seq-cifar100-224-rs, seq-cifar10-224, seq-cifar10-224-rs, seq-cropdisease, seq-cub200, seq-cub200-rs, seq-eurosat-rgb, seq-imagenet-r, seq-isic, seq-mit67, seq-mnist, seq-resisc45, seq-tinyimg, seq-tinyimg-r``
 
 **\-\-model** : str (with underscores replaced by dashes)
 	*Help*: Model name.
 
 	- *Default*: ``None``
-	- *Choices*: ``joint-gcl, second-stage-starprompt, lwf-mc, puridiver, xder-rpc-cscct, gdumb-lider, zscl, joint, cnll, ewc-on, xder, ranpac, hal, idefics, derpp-casper, er-ace-tricks, xder-rpc-star, sgd, si, moe-adapters, first-stage-starprompt, er-ace-aer-abs, icarl, lucir, fdr, icarl-lider, derpp, der, derpp-lider, gem, bic, llava, er-ace-casper, attriclip, second-order, starprompt, er-star, lws, coda-prompt, er-tricks, clip, pnn, er-ace, xder-ce, icarl-cscct, derpp-star, dualprompt, twf, mer, er-ace-lider, gdumb, derpp-cscct, dap, l2p, ccic, slca, agem-r, rpc, er-ace-cscct, icarl-casper, xder-rpc, gss, er-ace-star, spr, xder-rpc-casper, lwf, cgil, er, agem``
+	- *Choices*: ``agem, agem-r, attriclip, bic, ccic, cgil, clip, cnll, coda-prompt, dap, der, derpp, derpp-casper, derpp-cscct, derpp-lider, derpp-star, dualprompt, er, er-ace, er-ace-aer-abs, er-ace-casper, er-ace-cscct, er-ace-lider, er-ace-star, er-ace-tricks, er-star, er-tricks, ewc-on, fdr, first-stage-starprompt, gdumb, gdumb-lider, gem, gss, hal, icarl, icarl-casper, icarl-cscct, icarl-lider, idefics, joint, joint-gcl, l2p, llava, lucir, lwf, lwf-mc, lws, mer, moe-adapters, pnn, puridiver, ranpac, rpc, second-order, second-stage-starprompt, sgd, si, slca, spr, starprompt, twf, xder, xder-ce, xder-rpc, xder-rpc-casper, xder-rpc-cscct, xder-rpc-star, zscl``
 
 **\-\-backbone** : str (with underscores replaced by dashes)
 	*Help*: Backbone network name.
 
 	- *Default*: ``None``
-	- *Choices*: ``preact-resnet18, resnet18, resnet18-7x7-pt, reduced-resnet18, resnet34, resnet18-spr, resnet50, resnet50-pt, resnet32, mnistmlp, vit``
+	- *Choices*: ``mnistmlp, preact-resnet18, resnet18, resnet18-7x7-pt, reduced-resnet18, resnet34, resnet18-spr, resnet32, resnet50, resnet50-pt, vit``
 
 **\-\-load_best_args** : unknown
 	*Help*: (deprecated) Loads the best arguments for each method, dataset and memory buffer. NOTE: This option is deprecated and not up to date.

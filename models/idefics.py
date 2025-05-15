@@ -5,22 +5,6 @@ import torch
 import torch.nn as nn
 from torchvision import transforms
 
-try:
-    import bitsandbytes
-except ImportError:
-    raise ImportError("Please install the BitsAndBytes package by running: `pip install -i https://pypi.org/simple/ bitsandbytes`")
-
-try:
-    import accelerate
-except ImportError:
-    raise ImportError("Please install the accelerate package by running: `pip install accelerate`")
-
-try:
-    from transformers import BitsAndBytesConfig, IdeficsForVisionText2Text, AutoProcessor
-    from transformers.generation import GenerationConfig
-except ImportError as err:
-    raise ImportError("Please install the HuggingFace Transformers package by running: pip install transformers>=4.49.0")
-
 from datasets.utils.continual_dataset import ContinualDataset
 from models.utils.continual_model import ContinualModel
 from utils.args import ArgumentParser
@@ -30,6 +14,24 @@ class FinalModel(nn.Module):
     @torch.no_grad()
     def __init__(self, dataset: ContinualDataset, args: Namespace, denorm_transform, device):
         super().__init__()
+
+        # moved here to avoid having to install them when building docs
+        try:
+            import bitsandbytes
+        except ImportError:
+            raise ImportError("Please install the BitsAndBytes package by running: `pip install -i https://pypi.org/simple/ bitsandbytes`")
+
+        try:
+            import accelerate
+        except ImportError:
+            raise ImportError("Please install the accelerate package by running: `pip install accelerate`")
+
+        try:
+            from transformers import BitsAndBytesConfig, IdeficsForVisionText2Text, AutoProcessor
+            from transformers.generation import GenerationConfig
+        except ImportError as err:
+            raise ImportError("Please install the HuggingFace Transformers package by running: pip install transformers>=4.49.0")
+
 
         self.denorm_transform = denorm_transform
         self.device = device

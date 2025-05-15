@@ -16,7 +16,7 @@ from typing import Tuple
 try:
     from google_drive_downloader import GoogleDriveDownloader as gdd
 except ImportError:
-    raise ImportError("Please install the google_drive_downloader package by running: `pip install googledrivedownloader`")
+    raise ImportError("Please install the google_drive_downloader package by running: `pip install googledrivedownloader==0.4`")
 
 from datasets.utils import set_default_from_args
 from utils.conf import base_path

@@ -3,7 +3,24 @@ name = "docs"
 version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = [
+    "clip",
+    "ftfy>=6.3.1",
     "furo==2023.9.10",
+    "googledrivedownloader==0.4",
+    "kmeans-pytorch>=0.3",
+    "kornia>=0.8.1",
+    "numpy>=2.2.5",
+    "pandas>=2.2.3",
+    "qpsolvers>=4.7.0",
+    "regex>=2024.11.6",
+    "scikit-learn>=1.6.1",
     "sphinx==7.2.6",
     "sphinx-toolbox==3.5.0",
+    "timm==0.9.8",
+    "torch>=2.7.0",
+    "transformers>=4.51.3",
+    "xitorch>=0.5.1",
 ]
+
+[tool.uv.sources]
+clip = { git = "https://github.com/openai/CLIP.git" }
