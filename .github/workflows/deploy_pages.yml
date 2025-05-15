@@ -41,7 +41,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
       - name: Build docs
         run: |
-          uv run ./utils/args.py && uv run sphinx-build -j auto docs _build
+          cd docs && uv run ../utils/args.py && uv run sphinx-build -j auto . ../_build && cd ..
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
