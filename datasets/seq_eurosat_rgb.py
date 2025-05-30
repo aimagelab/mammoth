@@ -2,9 +2,7 @@ import io
 import json
 import logging
 import os
-import sys
 import zipfile
-import pandas as pd
 import requests
 import torch
 import torchvision.transforms as transforms
@@ -30,6 +28,7 @@ class MyEuroSat(Dataset):
 
     def __init__(self, root, split='train', transform=None,
                  target_transform=None) -> None:
+        import pandas as pd
 
         self.root = root
         self.split = split
@@ -65,6 +64,7 @@ class MyEuroSat(Dataset):
 
     @staticmethod
     def get_class_names():
+        import pandas as pd
         if not os.path.exists(base_path() + f'eurosat/DONE'):
             gdd.download_file_from_google_drive(file_id='1Ip7yaCWFi0eaOFUGga0lUdVi_DDQth1o',
                                                 dest_path=base_path() + 'eurosat/split.json')

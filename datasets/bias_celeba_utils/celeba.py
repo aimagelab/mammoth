@@ -5,9 +5,7 @@ Modified version of torchvision.datasets.CelebA to include bias labels and prepr
 import logging
 import os
 from collections import namedtuple
-from typing import Any, Callable, List, Optional, Tuple, Union
-import numpy as np
-import pandas as pd
+from typing import Any, Callable, Optional, Tuple
 from PIL import Image
 import torch
 from torchvision.datasets.utils import check_integrity, download_file_from_google_drive, extract_archive, verify_str_arg
@@ -45,6 +43,7 @@ class BiasCelebA(VisionDataset):
         version: int = 1,
     ) -> None:
         super().__init__(root, transform=transform, target_transform=target_transform)
+        import pandas as pd
 
         self.split = split
         self.target_type = "attr"
