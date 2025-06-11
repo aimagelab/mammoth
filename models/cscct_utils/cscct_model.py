@@ -1,3 +1,4 @@
+from abc import ABC
 import torch
 from torch.functional import F
 
@@ -18,7 +19,7 @@ def sim_matrix(a, b, eps=1e-8):
     return sim_mt
 
 
-class CscCtModel(ContinualModel):
+class CscCtModel(ContinualModel, ABC):
 
     @staticmethod
     def add_cscct_args(parser):

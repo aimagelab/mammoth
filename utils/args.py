@@ -14,7 +14,7 @@ from argparse import ArgumentParser, Namespace
 
 from backbone import REGISTERED_BACKBONES
 from datasets import get_dataset_names, get_dataset_config_names
-from models import get_all_models
+from models import get_model_names
 from models.utils.continual_model import ContinualModel
 from utils import binary_to_boolean_type, custom_str_underscore, field_with_aliases
 
@@ -136,7 +136,7 @@ def build_parsable_args(parser: ArgumentParser, spec: dict) -> None:
     for name, arg_spec in spec.items():
         # check if the argument is already defined in the parser
         if any([action.dest == name for action in parser._actions]):
-            logging.warn(f"Argument `{name}` is already defined in the parser. Skipping...")
+            logging.warning(f"Argument `{name}` is already defined in the parser. Skipping...")
             continue
 
         if isinstance(arg_spec, dict):
@@ -228,7 +228,7 @@ def add_initial_args(parser) -> ArgumentParser:
                         choices=get_dataset_names(names_only=True),
                         help='Which dataset to perform experiments on.')
     parser.add_argument('--model', type=custom_str_underscore, required=True,
-                        help='Model name.', choices=list(get_all_models().keys()))
+                        help='Model name.', choices=list(get_model_names().keys()))
     parser.add_argument('--backbone', type=custom_str_underscore, help='Backbone network name.', choices=list(REGISTERED_BACKBONES.keys()))
     parser.add_argument('--load_best_args', action='store_true',
                         help='(deprecated) Loads the best arguments for each method, dataset and memory buffer. '
@@ -642,8 +642,8 @@ if __name__ == '__main__':
             model_args_groups.append(_parse_actions(group._group_actions, group.title, group.description))
         model_filename = model_name.replace("-", "_")
         with open(f'docs/model_args/{model_filename}_args.rst', 'w') as f:
-            f.write(f'Arguments\n')
-            f.write(f'~~~~~~~~~~~\n\n')
+            f.write('Arguments\n')
+            f.write('~~~~~~~~~~~\n\n')
             for arg in model_args_groups:
                 f.write(str(arg) + '\n\n')
         print(f"Saving documentation in docs/model_args/{model_filename}_args.rst")

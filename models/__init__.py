@@ -6,18 +6,39 @@
 import os
 import sys
 from argparse import Namespace
-from typing import Dict, List
+from typing import Dict, List, Callable
 from torch import nn
 import importlib
 import inspect
+
 mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(mammoth_path)
 os.chdir(mammoth_path)
+
 from models.utils.continual_model import ContinualModel
+from utils import register_dynamic_module_fn
 from utils.conf import warn_once
 
+REGISTERED_MODELS = dict()  # dictionary containing the registered models. Template: {name: {'class': class, 'parsable_args': parsable_args}}
 
-def get_all_models() -> List[dict]:
+def register_model(name: str) -> Callable:
+    """
+    Decorator to register a ContinualModel. The decorator should be used on a class that inherits from `ContinualModel`.
+    The registered model can be accessed using the `get_model` function and can include additional keyword arguments to be set during parsing.
+
+    Differently from the `register_dataset` and `register_backbone` functions, this decorator does not infer the arguments from the signature of the class.
+    Instead, to define model-specific arguments, you should define the `get_parser` function in the model class, which should return a parser with the additional arguments.
+
+    Args:
+        name: the name of the model
+    """
+    return register_dynamic_module_fn(name, REGISTERED_MODELS, ContinualModel)
+
+
+def get_all_models_legacy() -> List[dict]:
+    """
+    Returns the list of all the available models in the models folder that follow the model naming convention (see :ref:`models`).
+    """
     return {model.split('.')[0].replace('_', '-'): model.split('.')[0] for model in os.listdir('models')
             if not model.find('__') > -1 and not os.path.isdir('models/' + model)}
 
@@ -77,21 +98,26 @@ def get_model_names() -> Dict[str, ContinualModel]:
     Returns:
         A dictionary containing the names of the available continual models and their classes.
     """
+    names = {}  # key: model name, value: model class
+    for model, model_conf in REGISTERED_MODELS.items():
+        # names[model.replace('_', '-')] = model_conf['class']
+        names[model.replace('_', '-')] = model_conf['class']
 
-    def _get_names():
-        names: Dict[str, ContinualModel] = {}
-        for model_name, model in get_all_models().items():
-            try:
-                mod = importlib.import_module('models.' + model)
-                model_classe_name = [x for x in mod.__dir__() if 'type' in str(type(getattr(mod, x)))
-                                     and 'ContinualModel' in str(inspect.getmro(getattr(mod, x))[1:])][-1]
-                c = getattr(mod, model_classe_name)
+    for model in get_all_models_legacy():  # for the models that follow the old naming convention, load the model class and check for errors
+        if model in names:  # model registered with the new convention has priority
+            continue
+
+        try:
+            mod = importlib.import_module('models.' + model.replace('-', '_'))
+            model_classes_name = [x for x in mod.__dir__() if 'type' in str(type(getattr(mod, x)))
+                                    and 'ContinualModel' in str(inspect.getmro(getattr(mod, x))[1:])
+                                    and 'ABC' not in str(inspect.getmro(getattr(mod, x)))]
+            for d in model_classes_name:
+                c = getattr(mod, d)
                 names[c.NAME.replace('_', '-')] = c
-            except Exception as e:
-                warn_once("Error in model", model)
-                names[model.replace('_', '-')] = e
-        return names
 
-    if not hasattr(get_model_names, 'names'):
-        setattr(get_model_names, 'names', _get_names())
-    return getattr(get_model_names, 'names')
+        except Exception as e:  # if an error is detected, raise the appropriate error message
+            warn_once(f'Error in model {model}')
+            warn_once(e)
+            names[model.replace('_', '-')] = e
+    return names

@@ -6,13 +6,14 @@ Such a method should take an input tensor and return a tensor representing the f
 
 The change_transform method is used to update the transformation applied to the input data. This is useful when the model is trained on a dataset and then evaluated on a different dataset. In this case, the transformation should be updated to match the new dataset.
 """
+from abc import ABC
 import torch
 
 from datasets.utils.continual_dataset import ContinualDataset
 from .continual_model import ContinualModel
 
 
-class FutureModel(ContinualModel):
+class FutureModel(ContinualModel, ABC):
     def future_forward(self, x: torch.Tensor, **kwargs) -> torch.Tensor:
         """
         Function that implements the forward pass of the model for future prediction.

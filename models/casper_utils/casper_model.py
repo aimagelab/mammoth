@@ -1,3 +1,4 @@
+from abc import ABC
 import torch
 from models.utils.continual_model import ContinualModel
 
@@ -6,7 +7,7 @@ from utils.buffer import Buffer
 from .spectral_analysis import calc_ADL_knn, calc_euclid_dist, find_eigs, normalize_A
 
 
-class CasperModel(ContinualModel):
+class CasperModel(ContinualModel, ABC):
 
     @staticmethod
     def add_casper_args(parser):

@@ -4,7 +4,7 @@ import sys
 import string
 import random
 import logging
-from typing import Callable, Type, TypeVar, Union, get_args
+from typing import Callable, Type, TypeVar, Union, get_args, get_origin, Literal
 T = TypeVar("T")
 
 
@@ -163,6 +163,12 @@ def infer_args_from_signature(signature: inspect.Signature, excluded_signature: 
                 tp = value.annotation
             elif default is not inspect.Parameter.empty:
                 tp = type(default)
+            
+            choices = None
+            if get_origin(tp) == Literal:
+                choices = get_args(tp)
+                tp = str
+
             if default is inspect.Parameter.empty and arg_name != 'num_classes':
                 parsable_args[arg_name] = {
                     'type': tp,
@@ -174,6 +180,8 @@ def infer_args_from_signature(signature: inspect.Signature, excluded_signature: 
                     'required': False,
                     'default': default if default is not inspect.Parameter.empty else None
                 }
+            if choices is not None:
+                parsable_args[arg_name]['choices'] = choices
     return parsable_args
 
 

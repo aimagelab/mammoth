@@ -1,7 +1,7 @@
 """
 Base class for all models that use the Lipschitz regularization in LiDER (https://arxiv.org/pdf/2210.06443.pdf).
 """
-
+from abc import ABC
 import logging
 import torch
 import torch.nn.functional as F
@@ -25,7 +25,7 @@ def add_lipschitz_args(parser):
                         help='Step from which to enable gradient computation.')
 
 
-class LiderOptimizer(ContinualModel):
+class LiderOptimizer(ContinualModel, ABC):
     """
     Superclass for all models that use the Lipschitz regularization in LiDER (https://arxiv.org/pdf/2210.06443.pdf).
     """

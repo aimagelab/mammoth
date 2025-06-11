@@ -26,7 +26,6 @@ extra = [
     "bitsandbytes>=0.45.4",
     "clip",
     "decorator>=5.2.1",
-    "deeplake<3.9",
     "googledrivedownloader==0.4",
     "kmeans-pytorch>=0.3",
     "onedrivedownloader==1.1.3",
@@ -38,6 +37,7 @@ extra = [
     "transformers>=4.50.3",
     "wandb>=0.19.9",
     "xitorch>=0.5.1",
+    "dotenv"
 ]
 
 [tool.uv.sources]
@@ -48,5 +48,47 @@ members = ["docs"]
 
 [dependency-groups]
 dev = [
+    "mypy>=1.16.0",
     "pytest>=8.3.5",
 ]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra"
+testpaths = "tests"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+    "ignore::RuntimeWarning",
+    "ignore::FutureWarning",
+    "ignore::Warning",
+    "ignore::SyntaxWarning",
+]
+
+[tool.ruff.lint]
+ignore = [
+    "E402"
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = [
+    "models*",
+    "datasets*",
+    "backbone*",
+    "scripts*",
+    "examples*",
+    "utils*",
+    "*.py"
+]
+exclude = [
+    "tests*",
+    "docs*",
+    "data*"
+]
+
+[tool.setuptools.package-data]
+"*" = ["*.py"]

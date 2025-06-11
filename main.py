@@ -172,8 +172,6 @@ def parse_args():
         check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args, update_cli_defaults, get_single_arg_value, \
         pretty_format_args
 
-    from models import get_all_models
-
     check_multiple_defined_arg_during_string_parse()
 
     parser = argparse.ArgumentParser(description='Mammoth - A benchmark Continual Learning framework for Pytorch', allow_abbrev=False, add_help=False)
@@ -253,9 +251,6 @@ def parse_args():
     args = clean_dynamic_args(args)
 
     # 7) final checks and updates to the arguments
-    models_dict = get_all_models()
-    args.model = models_dict[args.model]
-
     if args.lr_scheduler is not None:
         logging.info('`lr_scheduler` set to {}, overrides default from dataset.'.format(args.lr_scheduler))
 
@@ -406,7 +401,7 @@ def main(args=None):
             if torch.cuda.get_device_capability()[0] < 7:
                 raise NotImplementedError('torch.compile is not supported on this machine.')
             else:
-                raise Exception(f"torch.compile is not supported on Windows. Check https://github.com/pytorch/pytorch/issues/90768 for updates.")
+                raise Exception("torch.compile is not supported on Windows. Check https://github.com/pytorch/pytorch/issues/90768 for updates.")
 
     loss = dataset.get_loss()
     model = get_model(args, backbone, loss, dataset.get_transform(), dataset=dataset)
