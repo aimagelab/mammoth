@@ -17,6 +17,7 @@ To run the script, execute it directly or import it as a module and call the `ma
 
 # needed (don't change it)
 import numpy  # noqa
+from typing import List, Optional, Tuple, Union, TYPE_CHECKING
 import logging
 import os
 import sys
@@ -38,7 +39,12 @@ else:
 
 sys.path.insert(0, mammoth_path)
 
+if TYPE_CHECKING:
+    from models.utils.continual_model import ContinualModel
+    from datasets.utils.continual_dataset import ContinualDataset
+
 from utils import setup_logging
+
 setup_logging()
 
 if __name__ == '__main__':
@@ -102,7 +108,7 @@ def check_args(args, dataset=None):
                 logging.warning('Label noise is not available with multi-label datasets. If this is not multi-label, ignore this warning.')
 
 
-def load_configs(parser: argparse.ArgumentParser) -> dict:
+def load_configs(parser: argparse.ArgumentParser, cmd: Optional[List[str]] = None) -> dict:
     from models import get_model_class
     from models.utils import load_model_config
 
@@ -110,7 +116,9 @@ def load_configs(parser: argparse.ArgumentParser) -> dict:
     from datasets.utils import get_default_args_for_dataset, load_dataset_config
     from utils.args import fix_model_parser_backwards_compatibility, get_single_arg_value
 
-    args = parser.parse_known_args()[0]
+    cmd = cmd or sys.argv[1:]  # get the command line arguments, if not provided use sys.argv
+
+    args = parser.parse_known_args(cmd)[0]
 
     # load the model configuration
     # - get the model parser and fix the get_parser function for backwards compatibility
@@ -159,35 +167,71 @@ def add_help(parser):
     parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS, help='Show this help message and exit.')
 
 
-def parse_args():
+def parse_args(
+    cmd: Optional[List[str]] = None, return_parser_only: bool = False, verbose: bool = False
+) -> Union[argparse.Namespace, argparse.ArgumentParser]:
     """
     Parse command line arguments for the mammoth program and sets up the `args` object.
+    This function initializes the argument parser, adds the necessary arguments, and parses the command line arguments.
+    It also loads the configuration files for the model and dataset, sets defaults, and performs some checks on the arguments.
+    If `return_parser_only` is True, it returns the parser instead of the parsed arguments.
+
+    Args:
+        cmd (Optional[List[str]]): Command line arguments to parse. If None, uses `sys.argv[1:]`.
+        return_parser_only (bool): If True, returns the parser instead of the parsed arguments.
 
     Returns:
         args (argparse.Namespace): Parsed command line arguments.
     """
     from utils import create_if_not_exists
     from utils.conf import warn_once
-    from utils.args import add_initial_args, add_management_args, add_experiment_args, add_configuration_args, clean_dynamic_args, \
-        check_multiple_defined_arg_during_string_parse, add_dynamic_parsable_args, update_cli_defaults, get_single_arg_value, \
-        pretty_format_args
+    from utils.args import (
+        add_initial_args,
+        add_management_args,
+        add_experiment_args,
+        add_configuration_args,
+        clean_dynamic_args,
+        check_multiple_defined_arg_during_string_parse,
+        add_dynamic_parsable_args,
+        update_cli_defaults,
+        get_single_arg_value,
+        pretty_format_args,
+    )
+
+    cmd = cmd or sys.argv[1:]  # get the command line arguments, if not provided use sys.argv
 
     check_multiple_defined_arg_during_string_parse()
 
-    parser = argparse.ArgumentParser(description='Mammoth - A benchmark Continual Learning framework for Pytorch', allow_abbrev=False, add_help=False)
+    parser = argparse.ArgumentParser(
+        description="Mammoth - A benchmark Continual Learning framework for Pytorch",
+        allow_abbrev=False,
+        add_help=False,
+    )
 
     # 1) add arguments that include model, dataset, and backbone. These define the rest of the arguments.
     #   the backbone is optional as may be set by the dataset or the model. The dataset and model are required.
     add_initial_args(parser)
-    args = parser.parse_known_args()[0]
+    try:
+        # redirect stderr and stdout if we want only the parser
+        if return_parser_only:
+            import contextlib
+            with contextlib.redirect_stderr(None), contextlib.redirect_stdout(None):
+                args = parser.parse_known_args(cmd)[0]
+        else:
+            # parse the arguments
+            args = parser.parse_known_args(cmd)[0]
+    except SystemExit as e:
+        if return_parser_only:
+            return parser
+        raise e
 
-    if args.backbone is None:
+    if args.backbone is None and verbose:
         logging.warning('No backbone specified. Using default backbone (set by the dataset).')
 
     # 2) load the configuration arguments for the dataset and model
     add_configuration_args(parser, args)
 
-    config = load_configs(parser)
+    config = load_configs(parser, cmd)
 
     add_help(parser)
 
@@ -224,12 +268,13 @@ def parse_args():
     # 5) parse the arguments
     if args.load_best_args:
         from utils.best_args import best_args
-
-        warn_once("The `load_best_args` option is untested and not up to date.")
+        
+        if verbose:
+            warn_once("The `load_best_args` option is untested and not up to date.")
 
         is_rehearsal = any([p for p in parser._actions if p.dest == 'buffer_size'])  # check if model has a buffer
 
-        args = parser.parse_args()
+        args = parser.parse_args(cmd)
         if args.model == 'joint':
             best = best_args[args.dataset]['sgd']
         else:
@@ -241,17 +286,23 @@ def parse_args():
 
         to_parse = sys.argv[1:] + ['--' + k + '=' + str(v) for k, v in best.items()]
         to_parse.remove('--load_best_args')
+        if return_parser_only:
+            return parser
         args = parser.parse_args(to_parse)
-        if args.model == 'joint' and args.dataset == 'mnist-360':
-            args.model = 'joint_gcl'
+        if (
+            args.model == "joint" and args.dataset == "mnist-360"
+        ):  # TODO: remove this hack -> check if dataset is instance of GCLDataset
+            args.model = "joint_gcl"
     else:
-        args = parser.parse_args()
+        if return_parser_only:
+            return parser
+        args = parser.parse_args(cmd)
 
     # 6) clean dynamically loaded args
     args = clean_dynamic_args(args)
 
     # 7) final checks and updates to the arguments
-    if args.lr_scheduler is not None:
+    if args.lr_scheduler is not None and verbose:
         logging.info('`lr_scheduler` set to {}, overrides default from dataset.'.format(args.lr_scheduler))
 
     if args.seed is not None:
@@ -270,7 +321,8 @@ def parse_args():
         repo = git.Repo(path=mammoth_path)
         args.conf_git_hash = repo.head.object.hexsha
     except Exception:
-        logging.error("Could not retrieve git hash.")
+        if verbose:
+            logging.error("Could not retrieve git hash.")
         args.conf_git_hash = None
 
     if args.savecheck:
@@ -281,18 +333,20 @@ def parse_args():
         uid = args.conf_jobnum.split('-')[0]
         extra_ckpt_name = "" if args.ckpt_name is None else f"{args.ckpt_name}_"
         args.ckpt_name = f"{extra_ckpt_name}{args.model}_{args.dataset}_{args.dataset_config}_{args.buffer_size if hasattr(args, 'buffer_size') else 0}_{args.n_epochs}_{str(now)}_{uid}"
-        logging.info(f"Saving checkpoint into: {args.ckpt_name}")
+        if verbose:
+            logging.info(f"Saving checkpoint into: {args.ckpt_name}")
 
     check_args(args)
 
-    if args.validation is not None:
-        logging.info(f"Using {args.validation}% of the training set as validation set.")
-        logging.info(f"Validation will be computed with mode `{args.validation_mode}`.")
+    if verbose:
+        if args.validation is not None:
+            logging.info(f"Using {args.validation}% of the training set as validation set.")
+            logging.info(f"Validation will be computed with mode `{args.validation_mode}`.")
 
-    # legacy print of the args, to make automatic parsing easier
-    logging.debug(args)
+        # legacy print of the args, to make automatic parsing easier
+        logging.debug(args)
 
-    logging.info('\n' + pretty_format_args(args, parser))
+        logging.info('\n' + pretty_format_args(args, parser))
 
     return args
 
@@ -306,6 +360,7 @@ def extend_args(args, dataset):
 
     if hasattr(args, 'num_classes') and args.num_classes is None:
         args.num_classes = dataset.N_CLASSES
+
 
     if args.fitting_mode == 'epochs' and args.n_epochs is None and isinstance(dataset, ContinualDataset):
         args.n_epochs = dataset.get_epochs()
@@ -341,17 +396,18 @@ def extend_args(args, dataset):
         args.nowand = 0
 
 
-def main(args=None):
+def initialize(
+    args=None,
+) -> Tuple["ContinualModel", "ContinualDataset", argparse.Namespace]:
     from utils.conf import base_path, get_device
     from models import get_model
     from datasets import get_dataset
-    from utils.training import train
     from models.utils.future_model import FutureModel
     from backbone import get_backbone
 
     lecun_fix()
     if args is None:
-        args = parse_args()
+        args = parse_args(verbose=True)
 
     device = get_device(avail_devices=args.device)
     args.device = device
@@ -395,7 +451,8 @@ def main(args=None):
                 "║  • Some models MODIFY the backbone during initialization       ║\n"
                 "║    Remember to call torch.compile again after such changes     ║\n"
                 "║                                                                ║\n"
-                "╚════════════════════════════════════════════════════════════════╝")
+                "╚════════════════════════════════════════════════════════════════╝"
+            )
             backbone = torch.compile(backbone)
         else:
             if torch.cuda.get_device_capability()[0] < 7:
@@ -426,6 +483,17 @@ def main(args=None):
         setproctitle.setproctitle('{}_{}_{}'.format(args.model, args.buffer_size if 'buffer_size' in args else 0, args.dataset))
     except Exception:
         pass
+
+    return model, dataset, args
+
+def main(args=None):
+    """
+    Main function to run the Mammoth framework.
+    It loads the model and dataset, checks the arguments, and starts the training process.
+    """
+    from utils.training import train
+
+    model, dataset, args = initialize(args)
 
     train(model, dataset, args)
 

@@ -6,4 +6,8 @@ dependencies = [
     "furo==2023.9.10",
     "sphinx==7.2.6",
     "sphinx-toolbox==3.5.0",
+    "mammoth"
 ]
+
+[tool.uv.sources]
+mammoth = { workspace = true }

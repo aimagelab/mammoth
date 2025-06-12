@@ -1,10 +1,14 @@
+from argparse import Namespace
+from collections.abc import Iterable
 import inspect
 import os
 import sys
 import string
 import random
 import logging
-from typing import Callable, Type, TypeVar, Union, get_args, get_origin, Literal
+from typing import Callable, Dict, Type, TypeVar, Union, get_args, get_origin, Literal
+import torch
+import numpy as np
 T = TypeVar("T")
 
 
@@ -40,6 +44,9 @@ def setup_logging():
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
     logger = logging.getLogger('root')
+    if logger.handlers:
+        for h in logger.handlers:
+            logger.removeHandler(h)
     logger.setLevel(os.getenv('LOG_LEVEL', 'INFO'))
     logger.addHandler(handler)
     setattr(setup_logging, 'done', True)
@@ -232,3 +239,37 @@ class disable_logging:
 
     def __exit__(self, exit_type, exit_value, exit_traceback):
         logging.disable(self.old_logging_level)
+
+
+def to_parsable_obj(r: Union[Dict, Namespace, list, torch.Tensor, np.ndarray]) -> Union[Dict, list, str, int, float, bool]:
+    """
+    Convert a non-builtin object to a parsable (and loadable with `weights_only=True`) object.
+    Looking at you, Namespace.
+    """
+
+    if isinstance(r, Namespace):
+        return to_parsable_obj(vars(r))
+    if isinstance(r, list):
+        return [to_parsable_obj(x) for x in r]
+    if isinstance(r, dict):
+        return {k: to_parsable_obj(v) for k, v in r.items()}
+    else:
+        if isinstance(r, torch.Tensor):
+            r = r.detach().cpu().numpy().tolist()
+        elif isinstance(r, np.ndarray):
+            r = r.tolist()
+        if not isinstance(r, str) and isinstance(r, Iterable) and len(r) > 1:
+            return [to_parsable_obj(x) for x in r]
+        # check if type of r is builtin
+        if isinstance(r, (int, float, str, bool)):
+            try:
+                r = r.item()  # could be numpy scalar
+            except BaseException:
+                return r
+        if isinstance(r, (torch.device)):
+            return str(r)
+        if r is not None:
+            logging.warning(f"Object {r} is not parsable, returning it as str.")
+            return str(r)  # return as str if not parsable
+        
+        return None

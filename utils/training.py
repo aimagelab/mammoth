@@ -3,13 +3,14 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import json
 import numpy as np
 import copy
 import math
 import os
 import sys
 from argparse import Namespace
-from typing import Iterable
+from typing import Iterable, Optional
 import logging
 import torch
 from tqdm import tqdm
@@ -120,7 +121,7 @@ def train_single_epoch(model: ContinualModel,
 
 
 def train(model: ContinualModel, dataset: ContinualDataset,
-          args: Namespace) -> None:
+          args: Optional[Namespace] = None) -> None:
     """
     The training process, including evaluations and loggers.
 
@@ -129,6 +130,10 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         dataset: the continual dataset at hand
         args: the arguments of the current execution
     """
+    if args is None:
+        assert 'MAMMOTH_ARGS' in os.environ, "No args provided, please set the MAMMOTH_ARGS environment variable"
+        args = Namespace(**json.loads(os.environ['MAMMOTH_ARGS']))
+
     is_fwd_enabled = True
     can_compute_fwd_beforetask = True
     random_results_class, random_results_task = [], []

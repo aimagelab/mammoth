@@ -6,11 +6,14 @@ import math
 import torch
 import torch.nn as nn
 
-from typing import Callable
+from typing import Callable, Literal
 
 from utils import register_dynamic_module_fn
 
 REGISTERED_BACKBONES = dict()  # dictionary containing the registered networks. Template: {name: {'class': class, 'parsable_args': parsable_args}}
+ReturnTypes = Literal[
+    "out", "features", "both", "all"
+]  # the return type of the forward method of the backbone network
 
 
 def xavier(m: nn.Module) -> None:
@@ -24,7 +27,7 @@ def xavier(m: nn.Module) -> None:
         >>> net = nn.Sequential(nn.Linear(10, 10), nn.ReLU())
         >>> net.apply(xavier)
     """
-    if m.__class__.__name__ == 'Linear':
+    if m.__class__.__name__ == "Linear":
         fan_in = m.weight.data.size(1)
         fan_out = m.weight.data.size(0)
         std = 1.0 * math.sqrt(2.0 / (fan_in + fan_out))
@@ -71,12 +74,13 @@ class MammothBackbone(nn.Module):
         super(MammothBackbone, self).__init__()
         self.device = torch.device('cpu') if 'device' not in kwargs else kwargs['device']
 
+
     def to(self, device, *args, **kwargs):
         super(MammothBackbone, self).to(device, *args, **kwargs)
         self.device = device
         return self
 
-    def forward(self, x: torch.Tensor, returnt='out') -> torch.Tensor:
+    def forward(self, x: torch.Tensor, returnt: ReturnTypes = 'out') -> torch.Tensor:
         """
         Compute a forward pass.
 
@@ -195,6 +199,34 @@ def get_backbone(args: Namespace) -> MammothBackbone:
     parsed_args = {arg: getattr(args, arg) for arg in backbone_args.keys()}
 
     return backbone_class(**parsed_args)
+
+
+def get_backbone_names(names_only=False):
+    """
+    Return the names of the available continual backbones.
+    If an error was detected while loading the available backbones, it raises the appropriate error message.
+
+    Args:
+        names_only (bool): whether to return only the names of the available backbones
+
+    Exceptions:
+        AssertError: if the backbone is not available
+        Exception: if an error is detected in the backbone
+
+    Returns:
+        the named of the available continual backbones
+    """
+
+    names = {}  # key: backbone name, value: {'class': backbone class, 'parsable_args': parsable_args}
+    for backbone, backbone_conf in REGISTERED_BACKBONES.items():
+        names[backbone.replace("_", "-")] = {
+            "class": backbone_conf["class"],
+            "parsable_args": backbone_conf["parsable_args"],
+        }
+
+    if names_only:
+        return list(names.keys())
+    return names
 
 
 # import all files in the backbone folder to register the networks

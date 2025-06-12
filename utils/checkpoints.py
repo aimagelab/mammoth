@@ -1,11 +1,10 @@
 
 from argparse import Namespace
-from collections.abc import Iterable
 import copy
 import logging
 import random
 import string
-from typing import Dict, Union
+from typing import Dict
 import numpy as np
 import torch
 import os
@@ -13,36 +12,7 @@ import os
 from tqdm import tqdm
 import urllib.request as request
 
-from utils import smart_joint
-
-
-def to_parsable_obj(r: Union[Dict, Namespace, list, torch.Tensor, np.ndarray]) -> Union[Dict, list, str, int, float, bool]:
-    """
-    Convert a non-builtin object to a parsable (and loadable with `weights_only=True`) object.
-    Looking at you, Namespace.
-    """
-
-    if isinstance(r, Namespace):
-        return to_parsable_obj(vars(r))
-    if isinstance(r, list):
-        return [to_parsable_obj(x) for x in r]
-    if isinstance(r, dict):
-        return {k: to_parsable_obj(v) for k, v in r.items()}
-    else:
-        if isinstance(r, torch.Tensor):
-            r = r.detach().cpu().numpy().tolist()
-        elif isinstance(r, np.ndarray):
-            r = r.tolist()
-        if not isinstance(r, str) and isinstance(r, Iterable) and len(r) > 1:
-            return [to_parsable_obj(x) for x in r]
-        # check if type of r is builtin
-        if isinstance(r, (int, float, str, bool)):
-            try:
-                r = r.item()  # could be numpy scalar
-            except BaseException:
-                return r
-        return None
-
+from utils import smart_joint, to_parsable_obj
 
 def _load_mammoth_model(dict_keys, model: torch.nn.Module, args):
     for k in list(dict_keys):

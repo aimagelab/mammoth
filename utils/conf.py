@@ -13,7 +13,7 @@ import logging
 import random
 from functools import partial
 
-from typing import List
+from typing import List, Optional, Union
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
@@ -28,9 +28,9 @@ def warn_once(*msg):
     """
     msg = ' '.join([str(m) for m in msg])
     if not hasattr(warn_once, 'warned'):
-        warn_once.warned = set()
-    if msg not in warn_once.warned:
-        warn_once.warned.add(msg)
+        warn_once.warned = set() # type: ignore[unresolved-attribute]
+    if msg not in warn_once.warned: # type: ignore[unresolved-attribute]
+        warn_once.warned.add(msg) # type: ignore[unresolved-attribute]
         logging.warning(msg)
 
 
@@ -40,17 +40,17 @@ def _get_gpu_memory_pynvml_all_processes(device_id: int = 0) -> int:
     Returns the memory allocated on the GPU in Bytes.
     """
     if not hasattr(_get_gpu_memory_pynvml_all_processes, f'handle_{device_id}'):
-        torch.cuda.pynvml.nvmlInit()  # only once
-        handle = torch.cuda.pynvml.nvmlDeviceGetHandleByIndex(device_id)
+        torch.cuda.pynvml.nvmlInit() # type: ignore[possibly-unbound-attribute]
+        handle = torch.cuda.pynvml.nvmlDeviceGetHandleByIndex(device_id) # type: ignore[possibly-unbound-attribute]
         setattr(_get_gpu_memory_pynvml_all_processes, f'handle_{device_id}', handle)
 
     handle = getattr(_get_gpu_memory_pynvml_all_processes, f'handle_{device_id}')
 
-    procs = torch.cuda.pynvml.nvmlDeviceGetComputeRunningProcesses(handle)
+    procs = torch.cuda.pynvml.nvmlDeviceGetComputeRunningProcesses(handle) # type: ignore[possibly-unbound-attribute]
     return sum([proc.usedGpuMemory for proc in procs])
 
 
-def get_alloc_memory_all_devices(avail_devices=None, return_all=False) -> list[int]:
+def get_alloc_memory_all_devices(avail_devices=None, return_all=False) -> Union[list[int], tuple[list[int], list[int], list[int]]]:
     """
     Returns the memory allocated on all the available devices.
     By default, tries to return the memory read from pynvml, if available.
@@ -91,11 +91,11 @@ def get_alloc_memory_all_devices(avail_devices=None, return_all=False) -> list[i
         return gpu_memory_allocated
 
 
-def get_device(avail_devices: str = None) -> torch.device:
+def get_device(avail_devices: Optional[str] = None) -> torch.device:
     """
     Returns the least used GPU device if available else MPS or CPU.
     """
-    def _get_device(avail_devices: List[int] = None) -> torch.device:
+    def _get_device(avail_devices: List[int] = []) -> torch.device:
         # get least used gpu by used memory
         if torch.cuda.is_available() and torch.cuda.device_count() > 0 and len(avail_devices) > 0:
             gpu_memory = get_alloc_memory_all_devices(avail_devices=avail_devices)
@@ -114,14 +114,14 @@ def get_device(avail_devices: str = None) -> torch.device:
     # Permanently store the chosen device
     if not hasattr(get_device, 'device'):
         if avail_devices is not None:
-            avail_devices = [int(d) for d in avail_devices.split(',')]
+            devices_list = [int(d) for d in avail_devices.split(',')]
         else:
-            avail_devices = list(range(torch.cuda.device_count())) if torch.cuda.is_available() else []
+            devices_list = list(range(torch.cuda.device_count())) if torch.cuda.is_available() else []
 
-        get_device.device = _get_device(avail_devices=avail_devices)
+        get_device.device = _get_device(avail_devices=devices_list) # type: ignore[unresolved-attribute]
         logging.info(f'Using device {get_device.device}')
 
-    return get_device.device
+    return get_device.device # type: ignore[unresolved-attribute]
 
 
 def base_path(override=None) -> str:
