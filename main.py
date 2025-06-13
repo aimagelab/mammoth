@@ -43,11 +43,13 @@ if TYPE_CHECKING:
     from models.utils.continual_model import ContinualModel
     from datasets.utils.continual_dataset import ContinualDataset
 
-from utils import setup_logging
+from utils import in_notebook, setup_logging
 
 setup_logging()
 
 if __name__ == '__main__':
+    from utils import globals # noqa: F401
+    
     logging.info(f"Running Mammoth! on {socket.gethostname()}. ")
     logging.debug("If you see this message more than once, you are probably importing something wrong!")
 
@@ -222,6 +224,7 @@ def parse_args(
         update_cli_defaults,
         get_single_arg_value,
         pretty_format_args,
+        set_defaults_args
     )
 
     cmd = cmd or sys.argv[1:]  # get the command line arguments, if not provided use sys.argv
@@ -265,7 +268,7 @@ def parse_args(
     
     # - merge args with the defaults from the checkpoint (if it was loaded)
     args = merge_namespace(args, ckpt_args)
-    parser.set_defaults(**vars(args))  # set the defaults in the parser
+    set_defaults_args(parser, **vars(args))  # set the defaults in the parser
 
     if args.backbone is None and verbose:
         logging.warning('No backbone specified. Using default backbone (set by the dataset).')
@@ -282,7 +285,7 @@ def parse_args(
     # - get the chosen backbone. The CLI argument takes precedence over the configuration file.
     backbone = args.backbone
     if backbone is None:
-        if 'backbone' in config:
+        if 'backbone' in config and config['backbone'] is not None:
             backbone = config['backbone']
         else:
             backbone = get_single_arg_value(parser, 'backbone')
@@ -297,7 +300,7 @@ def parse_args(
 
     # - merge and set the defaults for the arguments
     args = merge_namespace(args, ckpt_args)
-    parser.set_defaults(**vars(args))  # set the defaults in the parser
+    set_defaults_args(parser, **vars(args))  # set the defaults in the parser
 
     # 5) Once all arguments are in the parser, we can set the defaults using the loaded configuration
     update_cli_defaults(parser, config)
@@ -396,6 +399,10 @@ def parse_args(
         logging.debug(args)
 
         logging.info('\n' + pretty_format_args(args, parser))
+
+    if in_notebook():
+        logging.info("Running in a notebook environment. Forcefully setting num_workers=0 to prevent issues with multiprocessing.")
+        args.num_workers = 0
 
     return args
 

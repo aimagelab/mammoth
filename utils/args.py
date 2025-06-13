@@ -48,6 +48,15 @@ def get_single_arg_value(parser: ArgumentParser, arg_name: str):
                 return sys.argv[i + 1]
     return None
 
+def set_defaults_args(parser: ArgumentParser, **kwargs) -> None:
+    """
+    Wraps the `set_defaults` method of the parser to avoid setting None values as defaults.
+    """
+
+    for key, value in kwargs.items():
+        if value is not None:
+            parser.set_defaults(**{key: value})
+
 
 def update_cli_defaults(parser: ArgumentParser, cnf: dict) -> None:
     """

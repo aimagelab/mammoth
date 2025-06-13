@@ -1,5 +1,8 @@
-
+import signal
+import uuid
 import functools
+import os
+import sys
 from argparse import Namespace
 import copy
 import logging
@@ -8,12 +11,12 @@ import string
 from typing import Callable, Dict, Optional, Tuple, Union
 import numpy as np
 import torch
-import os
 
 from tqdm.auto import tqdm
 import urllib.request as request
 
 from utils import smart_joint, to_parsable_obj, in_notebook
+from utils.globals import GLOBALS 
 from utils.conf import get_checkpoint_path
 
 def _load_mammoth_model(dict_keys, model: torch.nn.Module, args):
@@ -292,12 +295,7 @@ def can_save_and_exit(fn: Callable) -> Callable:
     Returns:
         the wrapped function
     """
-    import signal
-    import sys
-    import uuid
-
     wrapped = hasattr(can_save_and_exit, 'wrapped')
-        
     ckpt_path = get_checkpoint_path()
     tmp_filename = str(uuid.uuid4())
     ckpt_path = os.path.join(ckpt_path, 'paused', tmp_filename)
@@ -306,42 +304,50 @@ def can_save_and_exit(fn: Callable) -> Callable:
 
     @functools.wraps(fn)
     def wrapped_fn(*args, **kwargs):
-        def handle_sigint(signum, frame):
-            current = frame
-            while current:
-                if current.f_code == fn.__code__:
-                    _locals = current.f_locals
-                    break
-                current = current.f_back
-
+        if not wrapped:
             if not in_notebook():
-                if 'args' not in _locals: # not initialized yet, can safely exit
-                    logging.info("SIGINT received before initialization. Exiting...")
-                    sys.exit(0)
+                signal.signal(signal.SIGINT, _get_sigint_handler(fn, ckpt_path))
+                signal.signal(signal.SIGTERM, _get_sigint_handler(fn, ckpt_path))
+            else:
+                def _ignore_sigint(signum, frame):
+                    global GLOBALS
+                    logging.info("SIGINT received in notebook. Ignoring to prevent kernel crash.")
+                    GLOBALS['SHOULD_STOP'] = True  # type: ignore[assignment]
+                signal.signal(signal.SIGINT, _ignore_sigint)
 
-                logging.info("SIGINT received. Saving checkpoint and exiting...")
-                exp_args = _locals.get('args')
-                model = _locals.get('model')
-                scheduler = _locals.get('scheduler')
-                if exp_args.save_after_interrupt:
-                    save_mammoth_checkpoint(_locals['cur_task'], _locals['end_task'], exp_args,
-                                            model,
-                                            results=[_locals['results'], _locals['results_mask_classes'], _locals['logger'].dump()],
-                                            optimizer_st=model.opt.state_dict() if hasattr(model, 'opt') else None,
-                                            scheduler_st=scheduler.state_dict() if scheduler is not None else None,
-                                            checkpoint_name=ckpt_path)
-                sys.exit(0)
-
-        if not in_notebook():
-            if not wrapped:
-                signal.signal(signal.SIGINT, handle_sigint)
-                signal.signal(signal.SIGTERM, handle_sigint)
-            
         try:
             return fn(*args, **kwargs)
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, SystemExit):
             pass
-            
+
     setattr(can_save_and_exit, 'wrapped', True) # avoid re-registering the signal handler
 
     return wrapped_fn
+
+def _get_sigint_handler(fn: Callable, ckpt_path: str) -> Callable:
+    def _handle_sigint_terminal(signum, frame):
+        current = frame
+        while current:
+            if current.f_code == fn.__code__:
+                _locals = current.f_locals
+                break
+            current = current.f_back
+
+        if not in_notebook():
+            if 'args' not in _locals: # not initialized yet, can safely exit
+                logging.info("SIGINT received before initialization. Exiting...")
+                sys.exit(0)
+
+            logging.info("SIGINT received. Saving checkpoint and exiting...")
+            exp_args = _locals.get('args')
+            model = _locals.get('model')
+            scheduler = _locals.get('scheduler')
+            if exp_args.save_after_interrupt:
+                save_mammoth_checkpoint(_locals['cur_task'], _locals['end_task'], exp_args,
+                                        model,
+                                        results=[_locals['results'], _locals['results_mask_classes'], _locals['logger'].dump()],
+                                        optimizer_st=model.opt.state_dict() if hasattr(model, 'opt') else None,
+                                        scheduler_st=scheduler.state_dict() if scheduler is not None else None,
+                                        checkpoint_name=ckpt_path)
+            sys.exit(0)
+    return _handle_sigint_terminal

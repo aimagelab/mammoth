@@ -3,6 +3,7 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
+import sys
 import json
 import numpy as np
 import copy
@@ -20,6 +21,7 @@ from models.utils.continual_model import ContinualModel
 from models.utils.future_model import FutureModel
 
 from utils import disable_logging
+from utils.globals import GLOBALS
 from utils.checkpoints import mammoth_load_checkpoint, save_mammoth_checkpoint, can_save_and_exit
 from utils.loggers import log_extra_metrics, Logger
 from utils.schedulers import get_scheduler
@@ -76,13 +78,18 @@ def train_single_epoch(model: ContinualModel,
     Returns:
         the number of iterations performed in the current epoch
     """
+    global GLOBALS
     train_iter = iter(train_loader)
     i = 0
 
     while True:
+        if GLOBALS['SHOULD_STOP']:
+            logging.info("Training stopped by signal handler.")
+            sys.exit(0)
         try:
             data = next(train_iter)
         except StopIteration:
+            print("STOP ITERATION")
             break
         if args.debug_mode and i > model.get_debug_iters():
             break
@@ -129,6 +136,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     """
     logging.info(f"Current working directory: {os.getcwd()}.")
     logging.info(f"Main process PID: {os.getpid()}")
+
+    GLOBALS['SHOULD_STOP'] = False # reset the global stop flag
 
     if args is None:
         assert 'MAMMOTH_ARGS' in os.environ, "No args provided, please set the MAMMOTH_ARGS environment variable"
