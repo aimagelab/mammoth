@@ -2,7 +2,6 @@ import signal
 import uuid
 import functools
 import os
-import sys
 from argparse import Namespace
 import copy
 import logging
@@ -326,6 +325,8 @@ def can_save_and_exit(fn: Callable) -> Callable:
 
 def _get_sigint_handler(fn: Callable, ckpt_path: str) -> Callable:
     def _handle_sigint_terminal(signum, frame):
+        global GLOBALS
+
         current = frame
         while current:
             if current.f_code == fn.__code__:
@@ -333,21 +334,21 @@ def _get_sigint_handler(fn: Callable, ckpt_path: str) -> Callable:
                 break
             current = current.f_back
 
-        if not in_notebook():
-            if 'args' not in _locals: # not initialized yet, can safely exit
-                logging.info("SIGINT received before initialization. Exiting...")
-                sys.exit(0)
+        if 'args' not in _locals: # not initialized yet, can safely exit
+            logging.info("SIGINT received before initialization. Exiting...")
+            GLOBALS['SHOULD_STOP'] = True
 
-            logging.info("SIGINT received. Saving checkpoint and exiting...")
-            exp_args = _locals.get('args')
-            model = _locals.get('model')
-            scheduler = _locals.get('scheduler')
-            if exp_args.save_after_interrupt:
-                save_mammoth_checkpoint(_locals['cur_task'], _locals['end_task'], exp_args,
-                                        model,
-                                        results=[_locals['results'], _locals['results_mask_classes'], _locals['logger'].dump()],
-                                        optimizer_st=model.opt.state_dict() if hasattr(model, 'opt') else None,
-                                        scheduler_st=scheduler.state_dict() if scheduler is not None else None,
-                                        checkpoint_name=ckpt_path)
-            sys.exit(0)
+        logging.info("SIGINT received. Saving checkpoint and exiting...")
+        exp_args = _locals.get('args')
+        model = _locals.get('model')
+        scheduler = _locals.get('scheduler')
+        if exp_args.save_after_interrupt:
+            save_mammoth_checkpoint(_locals['cur_task'], _locals['end_task'], exp_args,
+                                    model,
+                                    results=[_locals['results'], _locals['results_mask_classes'], _locals['logger'].dump()],
+                                    optimizer_st=model.opt.state_dict() if hasattr(model, 'opt') else None,
+                                    scheduler_st=scheduler.state_dict() if scheduler is not None else None,
+                                    checkpoint_name=ckpt_path)
+        
+        GLOBALS['SHOULD_STOP'] = True
     return _handle_sigint_terminal

@@ -84,3 +84,6 @@ mammoth = "."
 
 [tool.setuptools.package-data]
 mammoth = ["**/*.py"]
+
+[tool.setuptools.exclude-package-data]
+mammoth = ["examples/**/*"]

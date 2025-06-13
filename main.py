@@ -550,7 +550,10 @@ def main(args=None):
     Main function to run the Mammoth framework.
     It loads the model and dataset, checks the arguments, and starts the training process.
     """
+    import multiprocessing
     from utils.training import train
+
+    multiprocessing.set_start_method('spawn', force=True)  # use spawn to avoid issues with fork on Windows
 
     model, dataset, args = initialize(args)
 
