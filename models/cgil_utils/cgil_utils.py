@@ -5,7 +5,7 @@ from typing import Optional
 
 import torch
 import torch.nn.functional as F
-from tqdm import tqdm, trange
+from tqdm.auto import tqdm, trange
 
 from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset

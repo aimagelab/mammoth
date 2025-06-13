@@ -5,7 +5,7 @@ from torch import optim
 from torch.nn import functional as F
 from models.ranpac_utils.inc_net import RanPACNet
 from torch.distributions.multivariate_normal import MultivariateNormal
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from datasets import get_dataset
 import sys
 

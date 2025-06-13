@@ -6,7 +6,7 @@ from typing import Any, Union, List
 
 from PIL import Image
 import torch
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from torchvision.transforms import Compose, Resize, CenterCrop, ToTensor, Normalize
 
 from .model_2 import build_model

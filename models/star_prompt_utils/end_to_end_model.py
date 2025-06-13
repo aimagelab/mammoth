@@ -5,7 +5,7 @@ import torch
 from torch import nn
 from torch.utils.data import TensorDataset
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 try:
     import wandb
 except ImportError:

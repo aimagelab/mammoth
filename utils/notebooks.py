@@ -47,9 +47,6 @@ def initalize_args(
     Returns:
         Namespace: A namespace containing the model and dataset names, and additional arguments.
     """
-    os.environ["MAMMOTH_NOTEBOOK"] = (
-        "1"  # Set this to indicate that we are running in a notebook environment
-    )
     from main import parse_args
 
     exp_str = [

@@ -220,14 +220,14 @@ def add_configuration_args(parser: ArgumentParser, args: Namespace) -> None:
                               'If not provided, the `default` configuration is used.')
 
 
-def add_initial_args(parser) -> ArgumentParser:
+def add_initial_args(parser, strict=True) -> ArgumentParser:
     """
     Returns the initial parser for the arguments.
     """
-    parser.add_argument('--dataset', type=custom_str_underscore, required=True,
+    parser.add_argument('--dataset', type=custom_str_underscore, required=strict,
                         choices=get_dataset_names(names_only=True),
                         help='Which dataset to perform experiments on.')
-    parser.add_argument('--model', type=custom_str_underscore, required=True,
+    parser.add_argument('--model', type=custom_str_underscore, required=strict,
                         help='Model name.', choices=list(get_model_names().keys()))
     parser.add_argument('--backbone', type=custom_str_underscore, help='Backbone network name.', choices=list(REGISTERED_BACKBONES.keys()))
     parser.add_argument('--load_best_args', action='store_true',
@@ -351,6 +351,8 @@ def add_management_args(parser: ArgumentParser) -> None:
                            help='Permute classes before splitting into tasks? This applies the seed before permuting if the `seed` argument is present.')
     mng_group.add_argument('--base_path', type=str, default="./data/",
                            help='The base path where to save datasets, logs, results.')
+    mng_group.add_argument('--checkpoint_path', type=str, default="./checkpoints/",
+                           help='The path where to save the checkpoints.')
     mng_group.add_argument('--results_path', type=str, default="results/",
                            help='The path where to save the results. NOTE: this path is relative to `base_path`.')
     mng_group.add_argument('--device', type=str,
@@ -383,10 +385,11 @@ def add_management_args(parser: ArgumentParser) -> None:
                            help='Save the model checkpoint with metadata in a single pickle file with the old structure (`old_pickle`) '
                            'or with the new, `safe` structure (default)?. NOTE: the `old_pickle` structure requires `weights_only=False`, which will be '
                            'deprecated by PyTorch.')
-    mng_group.add_argument('--loadcheck', type=str, default=None, help='Path of the checkpoint to load (.pt file for the specific task)')
     mng_group.add_argument('--ckpt_name', type=str, help='(optional) checkpoint save name.')
     mng_group.add_argument('--start_from', type=int, default=None, help="Task to start from")
     mng_group.add_argument('--stop_after', type=int, default=None, help="Task limit")
+    mng_group.add_argument('--save_after_interrupt', type=binary_to_boolean_type, default=1,
+                           help='Whether to save the model checkpoint after an interrupt - SigInt (default: True).')
 
     wandb_group = parser.add_argument_group('Wandb arguments', 'Arguments to manage logging on Wandb.')
 

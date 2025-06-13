@@ -11,6 +11,16 @@ import torch
 import numpy as np
 T = TypeVar("T")
 
+def in_notebook():
+    # implementation from tqdm autonotebook
+    try:
+        get_ipython = sys.modules['IPython'].get_ipython
+        if 'IPKernelApp' not in get_ipython().config:  # pragma: no cover
+            return False # running in console mode
+        # running in notebook mode
+        return True
+    except Exception:
+        return False
 
 def check_fn_dynamic_type(fn: T, tp: Type[T], strict=True) -> bool:
     """

@@ -114,7 +114,7 @@ def get_device(avail_devices: Optional[str] = None) -> torch.device:
     # Permanently store the chosen device
     if not hasattr(get_device, 'device'):
         if avail_devices is not None:
-            devices_list = [int(d) for d in avail_devices.split(',')]
+            devices_list = [int(d.strip(':')[-1]) for d in avail_devices.split(',')]
         else:
             devices_list = list(range(torch.cuda.device_count())) if torch.cuda.is_available() else []
 
@@ -145,6 +145,26 @@ def base_path(override=None) -> str:
         setattr(base_path, 'path', './data/')
     return getattr(base_path, 'path')
 
+def get_checkpoint_path(override=None) -> str:
+    """
+    Returns the path where to save the checkpoints.
+
+    Args:
+        override: the path to override the default one. Once set, it is stored and used for all the next calls.
+
+    Returns:
+        the checkpoint path (default: `./checkpoints/`)
+    """
+    if override is not None:
+        if not os.path.exists(override):
+            os.makedirs(override)
+        if not override.endswith('/'):
+            override += '/'
+        setattr(get_checkpoint_path, 'path', override)
+
+    if not hasattr(get_checkpoint_path, 'path'):
+        setattr(get_checkpoint_path, 'path', './checkpoints/')
+    return getattr(get_checkpoint_path, 'path')
 
 def set_random_seed(seed: int) -> None:
     """

@@ -6,7 +6,7 @@
 from collections import defaultdict
 from argparse import ArgumentParser
 from copy import deepcopy
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 import torch
 from torch.optim.lr_scheduler import CosineAnnealingLR

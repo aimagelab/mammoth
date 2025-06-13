@@ -2,7 +2,7 @@ import logging
 import torch
 from copy import deepcopy
 from torch.utils.data import TensorDataset
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from argparse import ArgumentParser
 
 try:

@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from functools import partial
 
 import torch

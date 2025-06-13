@@ -8,7 +8,7 @@ This model is required for the `domain-il` scenario, while `class-il` and `task-
 import math
 import torch
 from models.utils.continual_model import ContinualModel
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from utils.conf import create_seeded_dataloader
 from utils.schedulers import get_scheduler

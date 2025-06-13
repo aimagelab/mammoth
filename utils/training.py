@@ -8,13 +8,11 @@ import numpy as np
 import copy
 import math
 import os
-import sys
 from argparse import Namespace
 from typing import Iterable, Optional
 import logging
 import torch
-from tqdm import tqdm
-
+from tqdm.auto import tqdm
 from datasets import get_dataset
 from datasets.utils.continual_dataset import ContinualDataset, MammothDatasetWrapper
 from datasets.utils.gcl_dataset import GCLDataset
@@ -22,7 +20,7 @@ from models.utils.continual_model import ContinualModel
 from models.utils.future_model import FutureModel
 
 from utils import disable_logging
-from utils.checkpoints import mammoth_load_checkpoint, save_mammoth_checkpoint
+from utils.checkpoints import mammoth_load_checkpoint, save_mammoth_checkpoint, can_save_and_exit
 from utils.loggers import log_extra_metrics, Logger
 from utils.schedulers import get_scheduler
 from utils.stats import track_system_stats
@@ -56,7 +54,6 @@ def _to_device(name: str, x, device):
             return x.to(device, dtype=torch.long)
         return x.to(device)
     return x
-
 
 def train_single_epoch(model: ContinualModel,
                        train_loader: Iterable,
@@ -119,7 +116,7 @@ def train_single_epoch(model: ContinualModel,
     if scheduler is not None and args.scheduler_mode == 'epoch':
         scheduler.step()
 
-
+@can_save_and_exit
 def train(model: ContinualModel, dataset: ContinualDataset,
           args: Optional[Namespace] = None) -> None:
     """
@@ -130,6 +127,9 @@ def train(model: ContinualModel, dataset: ContinualDataset,
         dataset: the continual dataset at hand
         args: the arguments of the current execution
     """
+    logging.info(f"Current working directory: {os.getcwd()}.")
+    logging.info(f"Main process PID: {os.getpid()}")
+
     if args is None:
         assert 'MAMMOTH_ARGS' in os.environ, "No args provided, please set the MAMMOTH_ARGS environment variable"
         args = Namespace(**json.loads(os.environ['MAMMOTH_ARGS']))
@@ -160,7 +160,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 model.meta_end_task(dataset)
 
         if args.loadcheck is not None:
-            model, past_res = mammoth_load_checkpoint(args, model)
+            model, past_res = mammoth_load_checkpoint(args.loadcheck, model, args=args)
 
             if not args.disable_log and past_res is not None:
                 (results, results_mask_classes, csvdump) = past_res
@@ -185,7 +185,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             eval_dataset = dataset
 
         torch.cuda.empty_cache()
-        for t in range(start_task, end_task):
+        for cur_task in range(start_task, end_task):
             model.net.train()
             train_loader, _ = dataset.get_data_loaders()
 
@@ -221,11 +221,11 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     is_fwd_enabled = False
 
             if not args.inference_only and args.n_epochs > 0:
-                if t and args.enable_other_metrics:
+                if cur_task and args.enable_other_metrics:
                     accs = eval_dataset.evaluate(model, eval_dataset, last=True)
-                    results[t - 1] = results[t - 1] + accs[0]
+                    results[cur_task - 1] = results[cur_task - 1] + accs[0]
                     if dataset.SETTING == 'class-il':
-                        results_mask_classes[t - 1] = results_mask_classes[t - 1] + accs[1]
+                        results_mask_classes[cur_task - 1] = results_mask_classes[cur_task - 1] + accs[1]
 
                 # Scheduler is automatically reloaded after each task if defined in the dataset.
                 # If the model defines it, it becomes the job of the model to reload it.
@@ -243,12 +243,12 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 train_pbar = tqdm(train_loader, total=n_iterations,  # train_loader is actually ignored, will update the progress bar manually
                                   disable=args.non_verbose, mininterval=mininterval)
                 if args.non_verbose:
-                    logging.info(f"Task {t + 1}")  # at least print the task number
+                    logging.info(f"Task {cur_task + 1}")  # at least print the task number
 
                 while True:
                     model.meta_begin_epoch(epoch, dataset)
 
-                    train_pbar.set_description(f"Task {t + 1} - Epoch {epoch + 1}")
+                    train_pbar.set_description(f"Task {cur_task + 1} - Epoch {epoch + 1}")
 
                     train_single_epoch(model, train_loader, args, pbar=train_pbar, epoch=epoch,
                                        system_tracker=system_tracker, scheduler=scheduler)
@@ -289,7 +289,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                     if args.eval_epochs is not None and (epoch > 0 or args.eval_epochs) and epoch % args.eval_epochs == 0 and epoch < model.args.n_epochs:
                         epoch_accs = eval_dataset.evaluate(model, eval_dataset)
 
-                        eval_dataset.log(args, logger, epoch_accs, t, dataset.SETTING, epoch=epoch)
+                        eval_dataset.log(args, logger, epoch_accs, cur_task, dataset.SETTING, epoch=epoch)
 
                 train_pbar.close()
 
@@ -297,13 +297,13 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
             accs = eval_dataset.evaluate(model, eval_dataset)
 
-            if args.eval_future and t < dataset.N_TASKS - 1:
-                transf_accs = accs[0][t + 1:], accs[1][t + 1:]
-                accs = accs[0][:t + 1], accs[1][:t + 1]
+            if args.eval_future and cur_task < dataset.N_TASKS - 1:
+                transf_accs = accs[0][cur_task + 1:], accs[1][cur_task + 1:]
+                accs = accs[0][:cur_task + 1], accs[1][:cur_task + 1]
                 results_transf.append(transf_accs[0])
                 results_mask_classes_transf.append(transf_accs[1])
 
-            logged_accs = eval_dataset.log(args, logger, accs, t, dataset.SETTING)
+            logged_accs = eval_dataset.log(args, logger, accs, cur_task, dataset.SETTING)
 
             if dataset.SETTING != 'biased-class-il':
                 results.append(accs[0])
@@ -315,11 +315,11 @@ def train(model: ContinualModel, dataset: ContinualDataset,
             if args.eval_future:
                 avg_transf = np.mean([np.mean(task_) for task_ in results_transf])
                 logging.info(f"Transfer Metrics  -  AVG Transfer {avg_transf:.2f}")
-                if t < dataset.N_TASKS - 1:
-                    eval_dataset.log(args, logger, transf_accs, t, dataset.SETTING, future=True)
+                if cur_task < dataset.N_TASKS - 1:
+                    eval_dataset.log(args, logger, transf_accs, cur_task, dataset.SETTING, future=True)
 
             if args.savecheck:
-                save_mammoth_checkpoint(t, end_task, args,
+                save_mammoth_checkpoint(cur_task, end_task, args,
                                         model,
                                         results=[results, results_mask_classes, logger.dump()],
                                         optimizer_st=model.opt.state_dict() if hasattr(model, 'opt') else None,
@@ -341,13 +341,13 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
         if args.enable_other_metrics:
             bwt, bwt_mask_class = logger.add_bwt(results, results_mask_classes)
-            log_extra_metrics(args, bwt, bwt_mask_class, 'Backward Transfer', t)
+            log_extra_metrics(args, bwt, bwt_mask_class, 'Backward Transfer', cur_task)
             forgetting, forgetting_mask_class = logger.add_forgetting(results, results_mask_classes)
-            log_extra_metrics(args, forgetting, forgetting_mask_class, 'Forgetting', t)
+            log_extra_metrics(args, forgetting, forgetting_mask_class, 'Forgetting', cur_task)
             if is_fwd_enabled:
                 fwt, fwt_mask_class = logger.add_fwt(results, random_results_class,
                                                      results_mask_classes, random_results_task)
-                log_extra_metrics(args, fwt, fwt_mask_class, 'Forward Transfer', t)
+                log_extra_metrics(args, fwt, fwt_mask_class, 'Forward Transfer', cur_task)
             else:
                 logging.warning("Forward Transfer metric incompatible with the current model, skipped.")
 

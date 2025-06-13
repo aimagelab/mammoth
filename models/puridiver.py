@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import Union
 import numpy as np
@@ -5,8 +6,7 @@ from sklearn.mixture import GaussianMixture
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-import tqdm
-import logging
+from tqdm.auto import trange
 
 from datasets.utils.continual_dataset import ContinualDataset
 from models.utils.continual_model import ContinualModel
@@ -150,7 +150,7 @@ class PuriDivER(ContinualModel):
         try:
             self.hard_transform = to_kornia_transform(hard_transform)
         except NotImplementedError as e:
-            _logging.error('Kornia not available, raising error instead of using PIL transforms (would be waaay too slow).')
+            logging.error('Kornia not available, raising error instead of using PIL transforms (would be waaay too slow).')
             # NOTE: uncomment the following line if you want to use PIL transforms
             # self.hard_transform = hard_transform
             raise e
@@ -374,7 +374,7 @@ class PuriDivER(ContinualModel):
         for param_group in self.opt.param_groups:
             param_group["lr"] = self.args.lr
 
-        with tqdm.trange(self.args.buffer_fitting_epochs) as pbar:
+        with trange(self.args.buffer_fitting_epochs) as pbar:
             for epoch in pbar:
                 if self.args.debug_mode and epoch > self.args.warmup_buffer_fitting_epochs + 50:
                     break

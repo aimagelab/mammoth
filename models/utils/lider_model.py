@@ -5,7 +5,7 @@ from abc import ABC
 import logging
 import torch
 import torch.nn.functional as F
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from typing import List
 from models.utils.continual_model import ContinualModel
 

@@ -3,7 +3,7 @@ import os
 import torch
 from typing import List, Dict
 from typing import Tuple, Union
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import json
 from PIL import Image
 import torchvision.transforms as transforms

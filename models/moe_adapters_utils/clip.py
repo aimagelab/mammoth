@@ -9,7 +9,7 @@ from typing import Union, List
 
 import torch
 from torchvision.transforms import Compose, Resize, CenterCrop, ToTensor, Normalize, RandomResizedCrop, InterpolationMode
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from .model import build_model
 from .tokenizer import SimpleTokenizer as _Tokenizer

@@ -1,6 +1,6 @@
 from typing import Tuple, TYPE_CHECKING
 import numpy as np
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import torch
 import torch.nn.functional as F
 

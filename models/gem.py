@@ -6,19 +6,7 @@
 
 import numpy as np
 import torch
-import os
 from utils.conf import warn_once
-
-try:
-    import quadprog as solver
-except ImportError:
-    warn_once("`quadprog` not found, trying with `qpsolvers`. Note that the code is only tested with `quadprog`.")
-    try:
-        import qpsolvers as solver
-    except ImportError:
-        solver = None
-        warn_once('Warning: qpsolvers not found (GEM and A-GEM will not work)')
-        raise ImportError
 
 from models.utils.continual_model import ContinualModel
 from utils.args import add_rehearsal_args, ArgumentParser
@@ -62,7 +50,7 @@ def overwrite_grad(params, newgrad, grad_dims):
         count += 1
 
 
-def project2cone2(gradient, memories, margin=0.5, eps=1e-3):
+def project2cone2(solver, gradient, memories, margin=0.5, eps=1e-3):
     """
         Solves the GEM dual QP described in the paper given a proposed
         gradient "gradient", and a memory of task gradients "memories".
@@ -99,7 +87,6 @@ class Gem(ContinualModel):
         return parser
 
     def __init__(self, backbone, loss, args, transform, dataset=None):
-        assert solver is not None, 'GEM requires quadprog (linux only, python <= 3.10) or qpsolvers (cross-platform)'
         super(Gem, self).__init__(backbone, loss, args, transform, dataset=dataset)
         self.buffer = Buffer(self.args.buffer_size)
 
@@ -110,6 +97,17 @@ class Gem(ContinualModel):
 
         self.grads_cs = []
         self.grads_da = torch.zeros(np.sum(self.grad_dims)).to(self.device)
+
+        try:
+            import quadprog as solver
+        except ImportError:
+            warn_once("`quadprog` not found, trying with `qpsolvers`. Note that the code is only tested with `quadprog`.")
+            try:
+                import qpsolvers as solver
+            except ImportError:
+                raise Exception('GEM requires quadprog (linux only, python <= 3.10) or qpsolvers (cross-platform)')
+            
+        self.solver = solver
 
     def end_task(self, dataset):
         self.grads_cs.append(torch.zeros(
@@ -147,7 +145,7 @@ class Gem(ContinualModel):
             dot_prod = torch.mm(self.grads_da.unsqueeze(0),
                                 torch.stack(self.grads_cs).T)
             if (dot_prod < 0).sum() != 0:
-                project2cone2(self.grads_da.unsqueeze(1),
+                project2cone2(self.solver, self.grads_da.unsqueeze(1),
                               torch.stack(self.grads_cs).T, margin=self.args.gamma)
                 # copy gradients back
                 overwrite_grad(self.parameters, self.grads_da,

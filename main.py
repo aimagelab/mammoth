@@ -48,7 +48,8 @@ from utils import setup_logging
 setup_logging()
 
 if __name__ == '__main__':
-    logging.info(f"Running Mammoth! on {socket.gethostname()}. (if you see this message more than once, you are probably importing something wrong)")
+    logging.info(f"Running Mammoth! on {socket.gethostname()}. ")
+    logging.debug("If you see this message more than once, you are probably importing something wrong!")
 
     from utils.conf import warn_once
     try:
@@ -68,6 +69,31 @@ def lecun_fix():
     opener.addheaders = [('User-agent', 'Mozilla/5.0')]
     urllib.request.install_opener(opener)
 
+
+def merge_namespace(args: argparse.Namespace, ckpt_args: argparse.Namespace) -> argparse.Namespace:
+    """
+    Merge the command line arguments with the checkpoint arguments.
+    If a key is present in both, the value from the command line arguments takes precedence.
+    """
+    if ckpt_args is None:
+        return args
+
+    # convert both args to dictionaries
+    args_dict = vars(args)
+    ckpt_args_dict = vars(ckpt_args)
+
+    # merge the dictionaries
+    out_dict = ckpt_args_dict.copy()  # start with the checkpoint args
+    for key, value in args_dict.items():
+        if value is None and key in ckpt_args_dict:
+            # if the value is None, use the value from the checkpoint
+            out_dict[key] = ckpt_args_dict[key]
+        else:
+            # otherwise, use the value from the command line arguments
+            out_dict[key] = value
+        
+    # convert back to Namespace
+    return argparse.Namespace(**out_dict)
 
 def check_args(args, dataset=None):
     """
@@ -208,9 +234,21 @@ def parse_args(
         add_help=False,
     )
 
-    # 1) add arguments that include model, dataset, and backbone. These define the rest of the arguments.
+    # 1) if loadcheck is provided, load the args from the checkpoint as defaults
+    parser.add_argument('--loadcheck', type=str, default=None, help='Path of the checkpoint to load (.pt file for the specific task)')
+    args = parser.parse_known_args(cmd)[0]
+
+    ckpt_args = None
+    if args.loadcheck is not None:
+        from utils.checkpoints import mammoth_load_checkpoint
+
+        # load the checkpoint and set the defaults  
+        ckpt_args = mammoth_load_checkpoint(args.loadcheck, return_only_args=True)
+        ckpt_args.device = None  # remove the device from the checkpoint args, as it will be set later
+
+    # 2) add arguments that include model, dataset, and backbone. These define the rest of the arguments.
     #   the backbone is optional as may be set by the dataset or the model. The dataset and model are required.
-    add_initial_args(parser)
+    add_initial_args(parser, strict=ckpt_args is None)
     try:
         # redirect stderr and stdout if we want only the parser
         if return_parser_only:
@@ -224,18 +262,22 @@ def parse_args(
         if return_parser_only:
             return parser
         raise e
+    
+    # - merge args with the defaults from the checkpoint (if it was loaded)
+    args = merge_namespace(args, ckpt_args)
+    parser.set_defaults(**vars(args))  # set the defaults in the parser
 
     if args.backbone is None and verbose:
         logging.warning('No backbone specified. Using default backbone (set by the dataset).')
 
-    # 2) load the configuration arguments for the dataset and model
+    # 3) load the configuration arguments for the dataset and model
     add_configuration_args(parser, args)
 
     config = load_configs(parser, cmd)
 
     add_help(parser)
 
-    # 3) add the remaining arguments
+    # 4) add the remaining arguments
 
     # - get the chosen backbone. The CLI argument takes precedence over the configuration file.
     backbone = args.backbone
@@ -253,7 +295,11 @@ def parse_args(
     add_management_args(parser)
     add_experiment_args(parser)
 
-    # 4) Once all arguments are in the parser, we can set the defaults using the loaded configuration
+    # - merge and set the defaults for the arguments
+    args = merge_namespace(args, ckpt_args)
+    parser.set_defaults(**vars(args))  # set the defaults in the parser
+
+    # 5) Once all arguments are in the parser, we can set the defaults using the loaded configuration
     update_cli_defaults(parser, config)
 
     # force call type on all default values to fix values (https://docs.python.org/3/library/argparse.html#type)
@@ -265,7 +311,7 @@ def parse_args(
                 if not isinstance(action.default, (list, tuple)) or (action.type is not list and action.type is not tuple):
                     action.default = [action.type(v) for v in action.default]
 
-    # 5) parse the arguments
+    # 6) parse the arguments
     if args.load_best_args:
         from utils.best_args import best_args
         
@@ -298,10 +344,13 @@ def parse_args(
             return parser
         args = parser.parse_args(cmd)
 
-    # 6) clean dynamically loaded args
+    # 7) clean dynamically loaded args
     args = clean_dynamic_args(args)
 
-    # 7) final checks and updates to the arguments
+    # - merge args with the defaults from the checkpoint (if it was loaded)
+    args = merge_namespace(args, ckpt_args)
+
+    # 8) final checks and updates to the arguments
     if args.lr_scheduler is not None and verbose:
         logging.info('`lr_scheduler` set to {}, overrides default from dataset.'.format(args.lr_scheduler))
 
@@ -399,7 +448,7 @@ def extend_args(args, dataset):
 def initialize(
     args=None,
 ) -> Tuple["ContinualModel", "ContinualDataset", argparse.Namespace]:
-    from utils.conf import base_path, get_device
+    from utils.conf import base_path, get_device, get_checkpoint_path
     from models import get_model
     from datasets import get_dataset
     from models.utils.future_model import FutureModel
@@ -414,6 +463,9 @@ def initialize(
 
     # set base path
     base_path(args.base_path)
+
+    # set checkpoint path
+    get_checkpoint_path(args.checkpoint_path)
 
     if args.code_optimization != 0:
         torch.set_float32_matmul_precision('high' if args.code_optimization == 1 else 'medium')
