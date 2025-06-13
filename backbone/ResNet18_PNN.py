@@ -166,7 +166,7 @@ class ResNetPNN(ResNet):
         raise NotImplementedError("Unknown return type")
 
 
-def resnet18_pnn(nclasses: int, nf: int = 64,
+def resnet18_pnn(num_classes: int, nf: int = 64,
                  old_cols: List[nn.Module] = None, x_shape: torch.Size = None):
     """
     Instantiates a ResNet18 network.
@@ -180,5 +180,5 @@ def resnet18_pnn(nclasses: int, nf: int = 64,
     """
     if old_cols is None:
         old_cols = []
-    return ResNetPNN(BasicBlockPnn, [2, 2, 2, 2], nclasses, nf,
+    return ResNetPNN(BasicBlockPnn, [2, 2, 2, 2], num_classes, nf,
                      old_cols=old_cols, x_shape=x_shape)

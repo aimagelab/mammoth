@@ -247,7 +247,7 @@ def save_mammoth_checkpoint(task: int, end_task: int, args: Namespace, model: to
             save_obj['buffer'] = model.buffer.serialize()
 
     torch.save(save_obj, checkpoint_name + '.pt')
-    logging.info(f"Checkpoint for task {task} saved at {checkpoint_name}")
+    logging.warning(f"Checkpoint for task {task} saved at {checkpoint_name}")
 
 
 def _check_loaded_args(args, loaded_args):

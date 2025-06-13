@@ -34,7 +34,7 @@ def register_dataset(name: str) -> Callable:
         name: the name of the dataset
     """
 
-    return register_dynamic_module_fn(name, REGISTERED_DATASETS, ContinualDataset)
+    return register_dynamic_module_fn(name, REGISTERED_DATASETS, ContinualDataset, ignore_args=['self','args'])
 
 
 def get_all_datasets_legacy() -> List[str]:

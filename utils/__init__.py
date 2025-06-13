@@ -157,23 +157,35 @@ def random_id(length=8, alphabet=string.ascii_letters + string.digits):
     return ''.join(random.choices(alphabet, k=length))
 
 
-def infer_args_from_signature(signature: inspect.Signature, excluded_signature: inspect.Signature = None) -> dict:
+def infer_args_from_signature(signature: inspect.Signature, excluded_signature: inspect.Signature = None, ignore_args: list = None) -> dict:
     """
     Load the arguments of a function from its signature.
 
     Args:
         signature: the signature of the function
+        excluded_signature: the signature of the function to be excluded from the arguments
+        ignore_args: a list of arguments to be ignored when inferring the arguments from the signature
+
+    This function will return a dictionary with the arguments of the function, their type, and whether they are required or not.
+    If an argument has a default value, it will be included in the dictionary as well.
 
     Returns:
         the inferred arguments
     """
-    excluded_args = {} if excluded_signature is None else list(excluded_signature.parameters.keys())
+    excluded_args = [] if excluded_signature is None else list(excluded_signature.parameters.keys())
     parsable_args = {}
 
-    for arg_name, value in list(signature.parameters.items()):
+    if ignore_args is None:
+        ignore_args = []
+    else:
+        print(ignore_args)
+    
+    excluded_args += ignore_args
+    n_ignored_args = len(ignore_args)
+    for i, (arg_name, value) in enumerate(signature.parameters.items()):
         if arg_name in excluded_args:
             continue
-        if arg_name != 'self' and not arg_name.startswith('_'):
+        if arg_name != 'self' and not arg_name.startswith('_') and i>=n_ignored_args: 
             default = value.default
             tp = str
             if value.annotation is not inspect._empty:
@@ -202,7 +214,7 @@ def infer_args_from_signature(signature: inspect.Signature, excluded_signature: 
     return parsable_args
 
 
-def register_dynamic_module_fn(name: str, register: dict, tp: Type[T]):
+def register_dynamic_module_fn(name: str, register: dict, tp: Type[T], ignore_args: list = None) -> Callable[[Union[T, Callable]], T]:
     """
     Register a dynamic module in the specified dictionary.
 
@@ -211,6 +223,7 @@ def register_dynamic_module_fn(name: str, register: dict, tp: Type[T]):
         register: the dictionary where the module will be registered
         cls: the class to be registered
         tp: the type of the class, used to dynamically infer the arguments
+        ignore_args: a list of arguments to be ignored when inferring the arguments from the signature
     """
     name = name.replace('_', '-').lower()
 
@@ -227,7 +240,7 @@ def register_dynamic_module_fn(name: str, register: dict, tp: Type[T]):
         else:
             raise ValueError(f"The registered class must be a subclass of {tp.__class__.__name__} or a function returning {tp.__class__.__name__}")
 
-        parsable_args = infer_args_from_signature(signature)
+        parsable_args = infer_args_from_signature(signature, ignore_args=ignore_args)
         register[name] = {'class': target, 'parsable_args': parsable_args}
         return target
 

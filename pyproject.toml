@@ -51,6 +51,8 @@ dev = [
     "ipykernel>=6.29.5",
     "mypy>=1.16.0",
     "pytest>=8.3.5",
+    "types-six>=1.17.0.20250515",
+    "types-tqdm>=4.67.0.20250516",
 ]
 
 [tool.pytest.ini_options]
@@ -78,12 +80,13 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = ["mammoth"]
 py-modules = []
+include-package-data = true
 
 [tool.setuptools.package-dir]
 mammoth = "."
 
 [tool.setuptools.package-data]
-mammoth = ["**/*.py"]
+mammoth = ["models/config/*.yaml", "datasets/config/*.yaml"]
 
 [tool.setuptools.exclude-package-data]
-mammoth = ["examples/**/*"]
+mammoth = ["data/*", "data/**/*", "tests/*", "tests/**/*", "dist/*", "dist/**/*", "docs/*", "docs/**/*"]
