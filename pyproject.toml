@@ -1,7 +1,24 @@
 [project]
 name = "mammoth"
-version = "0.1.0"
+version = "0.2.0"
+readme = "README.md"
+description = "The Mammoth framework for Continual Learning research."
+license = { file = "LICENSE" }
 requires-python = ">=3.10"
+authors = [{ name = "The Mammoth Team" }]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Environment :: GPU :: NVIDIA CUDA"
+]
+keywords = [
+    "continual-learning",
+    "deep-learning",
+    "pytorch",
+]
 dependencies = [
     "accelerate>=1.6.0",
     "bitsandbytes>=0.45.4",
@@ -19,6 +36,10 @@ dependencies = [
     "torchvision>=0.21.0",
     "tqdm>=4.67.1",
 ]
+
+[project.urls]
+Repository = "https://github.com/aimagelab/mammoth"
+Documentation = "https://aimagelab.github.io/mammoth/"
 
 [project.optional-dependencies]
 extra = [

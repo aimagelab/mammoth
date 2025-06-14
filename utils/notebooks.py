@@ -65,7 +65,7 @@ def get_avail_args(
     args: dict[str, Any] = {},
 ) -> Tuple[dict[str, dict], dict[str, dict]]:
     """
-    Get the available arguments for the Mammoth Lite framework.
+    Get the available arguments for the Mammoth framework.
     This function returns two lists: one for required arguments and one for optional arguments.
     Each list contains dictionaries with:
     - the name of the argument as the key

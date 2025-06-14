@@ -9,19 +9,19 @@ Arguments
 	*Help*: Which dataset to perform experiments on.
 
 	- *Default*: ``None``
-	- *Choices*: ``seq-tinyimg, seq-mit67, seq-cars196, seq-cifar100-224-rs, seq-cifar100-224, seq-chestx, seq-celeba, seq-cifar10-224-rs, mnist-360, seq-cropdisease, seq-eurosat-rgb, seq-imagenet-r, seq-cifar100, seq-cifar10-224, perm-mnist, seq-cub200, seq-cifar10, rot-mnist, seq-resisc45, seq-mnist, seq-cub200-rs, seq-isic, seq-tinyimg-r``
+	- *Choices*: ``seq-cifar100, seq-cub200, seq-cub200-rs, seq-cifar10, perm-mnist, seq-mnist, seq-resisc45, seq-cifar10-224-rs, seq-cropdisease, seq-isic, seq-tinyimg, seq-tinyimg-r, seq-celeba, seq-imagenet-r, seq-chestx, seq-mit67, seq-cars196, rot-mnist, mnist-360, seq-cifar100-224, seq-cifar10-224, seq-cifar100-224-rs, seq-eurosat-rgb``
 
 **\-\-model** : str (with underscores replaced by dashes)
 	*Help*: Model name.
 
 	- *Default*: ``None``
-	- *Choices*: ``joint-gcl, second-stage-starprompt, lwf-mc, puridiver, joint, cnll, ewc-on, xder, ranpac, hal, idefics, er-ace-tricks, xder-rpc-star, sgd, si, first-stage-starprompt, er-ace-aer-abs, icarl, lucir, fdr, derpp, der, gem, bic, llava, attriclip, second-order, starprompt, er-star, lws, coda-prompt, er-tricks, clip, pnn, er-ace, xder-ce, derpp-star, dualprompt, twf, mer, gdumb, dap, l2p, ccic, slca, agem-r, rpc, xder-rpc, gss, er-ace-star, spr, lwf, er, agem``
+	- *Choices*: ``derpp, xder-rpc, xder-ce, er-ace, ewc-on, er-ace-aer-abs, er-tricks, coda-prompt, sgd, er, er-ace-star, er-star, clip, joint-gcl, gss, icarl, lwf-mc, agem, twf, lwf, llava, dualprompt, xder-rpc-star, lws, starprompt, mer, bic, lucir, second-stage-starprompt, ranpac, hal, der, slca, gdumb, idefics, rpc, puridiver, dap, xder, spr, attriclip, derpp-star, joint, si, cnll, first-stage-starprompt, gem, fdr, er-ace-tricks, l2p, pnn, agem-r, ccic, second-order``
 
 **\-\-backbone** : str (with underscores replaced by dashes)
 	*Help*: Backbone network name.
 
 	- *Default*: ``None``
-	- *Choices*: ``preact-resnet18, resnet18, resnet18-7x7-pt, reduced-resnet18, resnet34, resnet18-spr, resnet50, resnet50-pt, efficientnet, resnet32, mnistmlp, vit``
+	- *Choices*: ``resnet50, resnet50-pt, resnet32, preact-resnet18, resnet18, resnet18-7x7-pt, reduced-resnet18, resnet34, resnet18-spr, efficientnet, vit, mnistmlp``
 
 **\-\-load_best_args** : unknown
 	*Help*: (deprecated) Loads the best arguments for each method, dataset and memory buffer. NOTE: This option is deprecated and not up to date.
@@ -203,6 +203,10 @@ NOTE: this option disables the `--permute_classes` option and is incompatible wi
 	*Help*: The base path where to save datasets, logs, results.
 
 	- *Default*: ``./data/``
+**\-\-checkpoint_path** : str
+	*Help*: The path where to save the checkpoints.
+
+	- *Default*: ``./checkpoints/``
 **\-\-results_path** : str
 	*Help*: The path where to save the results. NOTE: this path is relative to `base_path`.
 
@@ -263,10 +267,6 @@ NOTE: this option disables the `--permute_classes` option and is incompatible wi
 
 	- *Default*: ``safe``
 	- *Choices*: ``old_pickle, safe``
-**\-\-loadcheck** : str
-	*Help*: Path of the checkpoint to load (.pt file for the specific task)
-
-	- *Default*: ``None``
 **\-\-ckpt_name** : str
 	*Help*: (optional) checkpoint save name.
 
@@ -279,6 +279,10 @@ NOTE: this option disables the `--permute_classes` option and is incompatible wi
 	*Help*: Task limit
 
 	- *Default*: ``None``
+**\-\-save_after_interrupt** : 0|1|True|False -> bool
+	*Help*: Whether to save the model checkpoint after an interrupt - SigInt (default: True).
+
+	- *Default*: ``1``
 
 .. rubric:: Wandb arguments
 
