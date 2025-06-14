@@ -156,7 +156,7 @@ def load_configs(parser: argparse.ArgumentParser, cmd: Optional[List[str]] = Non
     is_rehearsal = any([p for p in parser._actions if p.dest == 'buffer_size'])
     buffer_size = None
     if is_rehearsal:  # get buffer size
-        buffer_size = get_single_arg_value(parser, 'buffer_size')
+        buffer_size = get_single_arg_value(parser, 'buffer_size', cmd)
         assert buffer_size is not None, "Buffer size not found in the arguments. Please specify it with --buffer_size."
         try:
             buffer_size = int(buffer_size)  # try convert to int, check if it is a valid number

@@ -4,6 +4,7 @@
 # LICENSE file in the root directory of this source tree.
 import logging
 import sys
+from typing import List, Optional
 
 if __name__ == '__main__':
     import os
@@ -19,7 +20,7 @@ from models.utils.continual_model import ContinualModel
 from utils import binary_to_boolean_type, custom_str_underscore, field_with_aliases
 
 
-def get_single_arg_value(parser: ArgumentParser, arg_name: str):
+def get_single_arg_value(parser: ArgumentParser, arg_name: str, cmd: Optional[List[str]] = None):
     """
     Returns the value of a single argument without explicitly parsing the arguments.
 
@@ -30,6 +31,7 @@ def get_single_arg_value(parser: ArgumentParser, arg_name: str):
     Returns:
         str: the value of the argument
     """
+    cmd = cmd or sys.argv[1:]
     action = [action for action in parser._actions if action.dest == arg_name]
     assert len(action) == 1, f'Argument {arg_name} not found in the parser.'
     action = action[0]
@@ -39,13 +41,13 @@ def get_single_arg_value(parser: ArgumentParser, arg_name: str):
         return action.default
 
     # otherwise, search for the argument in the sys.argv
-    for i, arg in enumerate(sys.argv):
+    for i, arg in enumerate(cmd):
         arg_k = arg.split('=')[0]
         if arg_k in action.option_strings or arg_k == action.dest:
             if len(arg.split('=')) == 2:
                 return arg.split('=')[1]
             else:
-                return sys.argv[i + 1]
+                return cmd[i + 1]
     return None
 
 def set_defaults_args(parser: ArgumentParser, **kwargs) -> None:

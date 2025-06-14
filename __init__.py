@@ -12,7 +12,8 @@ sys.path.insert(0, root)
 from utils import globals
 from models import get_model_names, register_model, ContinualModel
 from datasets import get_dataset_names, register_dataset
-from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders, MammothDatasetWrapper as MammothDataset
+from datasets.utils import set_default_from_args
+from datasets.utils.continual_dataset import ContinualDataset, store_masked_loaders
 from backbone import get_backbone_names, register_backbone, MammothBackbone, ReturnTypes
 from utils.notebooks import load_runner, get_avail_args
 from utils.training import train
@@ -33,7 +34,6 @@ __all__ = [
     "ContinualModel",
     "ContinualDataset",
     "MammothBackbone",
-    "MammothDataset",
     "base_path",
     "get_device",
     "ReturnTypes",
@@ -41,4 +41,5 @@ __all__ = [
     "add_rehearsal_args",
     "globals",
     "store_masked_loaders",
+    "set_default_from_args",
 ]

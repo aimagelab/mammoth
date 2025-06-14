@@ -230,13 +230,18 @@ def register_dynamic_module_fn(name: str, register: dict, tp: Type[T], ignore_ar
     def register_network_fn(target: Union[T, Callable]) -> T:
         # check if the name is already registered
         if name in register:
-            raise ValueError(f"Name {name} already registered!")
+            if not in_notebook():
+                raise ValueError(f"Name {name} already registered!")
+            else:
+                logging.warning(f"Name {name} already registered, overwriting it.")
 
         # check if `cls` is a subclass of `T`
         if inspect.isfunction(target):
             signature = inspect.signature(target)
         elif isinstance(target, tp) or issubclass(target, tp):
             signature = inspect.signature(target.__init__)
+            if not hasattr(target, 'NAME'):
+                setattr(target, 'NAME', name)  # set the name of the class
         else:
             raise ValueError(f"The registered class must be a subclass of {tp.__class__.__name__} or a function returning {tp.__class__.__name__}")
 
