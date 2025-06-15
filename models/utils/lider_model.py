@@ -1,7 +1,7 @@
 """
 Base class for all models that use the Lipschitz regularization in LiDER (https://arxiv.org/pdf/2210.06443.pdf).
 """
-from abc import ABC
+from abc import ABC, abstractmethod
 import logging
 import torch
 import torch.nn.functional as F
@@ -221,3 +221,8 @@ class LiderOptimizer(ContinualModel, ABC):
         loss = F.l1_loss(lip_values, tgt)
 
         return loss
+
+    @abstractmethod
+    def observe(self, inputs: torch.Tensor, labels: torch.Tensor,
+                not_aug_inputs: torch.Tensor, epoch: int = None) -> float:
+        pass

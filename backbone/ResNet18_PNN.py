@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.functional import avg_pool2d, relu
 
+from backbone import register_backbone
 from backbone.ResNetBlock import BasicBlock, ResNet, conv3x3
 from backbone.utils.modules import AlphaModule, ListModule
 
@@ -165,7 +166,7 @@ class ResNetPNN(ResNet):
 
         raise NotImplementedError("Unknown return type")
 
-
+@register_backbone('resnet18_pnn')
 def resnet18_pnn(num_classes: int, nf: int = 64,
                  old_cols: List[nn.Module] = None, x_shape: torch.Size = None):
     """

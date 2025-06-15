@@ -109,9 +109,9 @@ def get_model_names() -> Dict[str, ContinualModel]:
 
         try:
             mod = importlib.import_module('models.' + model.replace('-', '_'))
-            model_classes_name = [x for x in mod.__dir__() if 'type' in str(type(getattr(mod, x)))
+            model_classes_name = [x for x in mod.__dir__() if inspect.isclass(getattr(mod, x))
                                     and 'ContinualModel' in str(inspect.getmro(getattr(mod, x))[1:])
-                                    and 'ABC' not in str(inspect.getmro(getattr(mod, x)))]
+                                    and not inspect.isabstract(getattr(mod, x))]
             for d in model_classes_name:
                 c = getattr(mod, d)
                 names[c.NAME.replace('_', '-')] = c

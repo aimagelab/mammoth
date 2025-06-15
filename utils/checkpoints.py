@@ -1,4 +1,5 @@
 import signal
+import sys
 import uuid
 import functools
 import os
@@ -186,7 +187,7 @@ def mammoth_load_checkpoint(checkpoint_path: str,
             # Mammoth checkpoint
             model = _load_mammoth_model(saved_obj['model'], model, args)
             if 'buffer' in saved_obj:
-                loading_model = saved_obj['args'].model
+                loading_model = args.model
                 if args.model != loading_model:
                     logging.warning(f'The loaded model was trained with a different model: {loading_model}')
                 model.load_buffer(saved_obj['buffer'])
@@ -327,7 +328,12 @@ def _get_sigint_handler(fn: Callable, ckpt_path: str) -> Callable:
     def _handle_sigint_terminal(signum, frame):
         global GLOBALS
 
+        if GLOBALS['SHOULD_STOP']: # should have stopped already, forcing
+            logging.info("SIGINT received again. Forcing exit...")
+            sys.exit(1)
+
         current = frame
+        _locals = {}
         while current:
             if current.f_code == fn.__code__:
                 _locals = current.f_locals

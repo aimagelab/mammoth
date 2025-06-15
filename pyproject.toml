@@ -58,7 +58,9 @@ extra = [
     "transformers>=4.50.3",
     "wandb>=0.19.9",
     "xitorch>=0.5.1",
-    "dotenv"
+    "dotenv",
+    "gdown",
+    "matplotlib",
 ]
 
 [tool.uv.sources]
@@ -71,7 +73,9 @@ members = ["docs"]
 dev = [
     "ipykernel>=6.29.5",
     "mypy>=1.16.0",
+    "pandas-stubs>=2.2.3.250527",
     "pytest>=8.3.5",
+    "types-pyyaml>=6.0.12.20250516",
     "types-six>=1.17.0.20250515",
     "types-tqdm>=4.67.0.20250516",
 ]

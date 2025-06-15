@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 import torch
 from models.utils.continual_model import ContinualModel
 
@@ -52,3 +52,8 @@ class CasperModel(ContinualModel, ABC):
 
         # gaps = evals[1:] - evals[:-1]
         return evals[:n + 1].sum() - evals[n + 1]
+
+    @abstractmethod
+    def observe(self, inputs: torch.Tensor, labels: torch.Tensor,
+                not_aug_inputs: torch.Tensor, epoch: int = None) -> float:
+        pass
