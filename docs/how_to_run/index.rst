@@ -31,6 +31,32 @@ This will tell you about the available models, datasets. For method- or dataset-
 
     python main.py --model <model_name> --dataset <dataset_name> --help
 
+Installation
+~~~~~~~~~~~~
+
+Before running Mammoth, ensure you have installed the required dependencies. You can do this by running:
+
+.. code-block:: bash
+
+    # to install the basic dependencies
+    pip install -r requirements.txt
+    # to install all dependencies, including the optional ones
+    pip install -r requirements.txt -r requirements-optional.txt
+    
+
+or if you are using UV:
+
+.. code-block:: bash
+
+    # install the basic dependencies
+    uv sync
+    # to install all dependencies, including the optional ones
+    uv sync --extra extra
+
+.. note::
+
+    Some models and datasets may require additional dependencies. You can find these in the `requirements-optional.txt` file.
+
 Common Options
 ~~~~~~~~~~~~~~
 
