@@ -243,11 +243,14 @@ def parse_args(
 
     ckpt_args = None
     if args.loadcheck is not None:
-        from utils.checkpoints import mammoth_load_checkpoint
+        from utils.checkpoints import mammoth_load_checkpoint, OnlyArgsError
 
-        # load the checkpoint and set the defaults  
-        ckpt_args = mammoth_load_checkpoint(args.loadcheck, return_only_args=True)
-        ckpt_args.device = None  # remove the device from the checkpoint args, as it will be set later
+        # load the checkpoint and set the defaults 
+        try:
+            ckpt_args = mammoth_load_checkpoint(args.loadcheck, return_only_args=True)
+            ckpt_args.device = None  # remove the device from the checkpoint args, as it will be set later
+        except OnlyArgsError:
+            pass
 
     # 2) add arguments that include model, dataset, and backbone. These define the rest of the arguments.
     #   the backbone is optional as may be set by the dataset or the model. The dataset and model are required.

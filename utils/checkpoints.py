@@ -111,6 +111,9 @@ def _download_from_raw_url(url: str, root: str, filename: str = None) -> str:
 
     return download_target
 
+class OnlyArgsError(Exception):
+    """Raised when the checkpoint does not contain any arguments and `return_only_args` is True."""
+    pass
 
 def mammoth_load_checkpoint(checkpoint_path: str,
                             model: Optional[torch.nn.Module] = None,
@@ -200,7 +203,8 @@ Expect a checkpoint either with:
 - simple state_dict WITH NO 'args' KEY""")
 
     else:
-        assert not return_only_args, "Cannot return only args when the checkpoint does not contain them."
+        if return_only_args:
+            raise OnlyArgsError('The checkpoint does not contain any arguments. Cannot return only args.')
         # Model only checkpoint
         model = _load_net(saved_obj, model, ignore_classifier=ignore_classifier)
 

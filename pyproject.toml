@@ -1,5 +1,5 @@
 [project]
-name = "mammoth"
+name = "mammoth-cl"
 version = "0.2.0"
 readme = "README.md"
 description = "The Mammoth framework for Continual Learning research."

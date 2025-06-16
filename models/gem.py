@@ -104,6 +104,7 @@ class Gem(ContinualModel):
             warn_once("`quadprog` not found, trying with `qpsolvers`. Note that the code is only tested with `quadprog`.")
             try:
                 import qpsolvers as solver
+                raise Exception('QPSolvers is just a suggestion but does not work at the moment. To make it work, you need to set it up properly (and remove this exception).')
             except ImportError:
                 raise Exception('GEM requires quadprog (linux only, python <= 3.10) or qpsolvers (cross-platform)')
             
