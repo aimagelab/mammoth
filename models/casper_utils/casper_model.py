@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import torch
 from models.utils.continual_model import ContinualModel
 
@@ -6,7 +7,7 @@ from utils.buffer import Buffer
 from .spectral_analysis import calc_ADL_knn, calc_euclid_dist, find_eigs, normalize_A
 
 
-class CasperModel(ContinualModel):
+class CasperModel(ContinualModel, ABC):
 
     @staticmethod
     def add_casper_args(parser):
@@ -51,3 +52,8 @@ class CasperModel(ContinualModel):
 
         # gaps = evals[1:] - evals[:-1]
         return evals[:n + 1].sum() - evals[n + 1]
+
+    @abstractmethod
+    def observe(self, inputs: torch.Tensor, labels: torch.Tensor,
+                not_aug_inputs: torch.Tensor, epoch: int = None) -> float:
+        pass

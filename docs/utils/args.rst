@@ -9,19 +9,19 @@ Arguments
 	*Help*: Which dataset to perform experiments on.
 
 	- *Default*: ``None``
-	- *Choices*: ``mnist-360, perm-mnist, rot-mnist, seq-cars196, seq-celeba, seq-chestx, seq-cifar10, seq-cifar100, seq-cifar100-224, seq-cifar100-224-rs, seq-cifar10-224, seq-cifar10-224-rs, seq-cropdisease, seq-cub200, seq-cub200-rs, seq-eurosat-rgb, seq-imagenet-r, seq-isic, seq-mit67, seq-mnist, seq-resisc45, seq-tinyimg, seq-tinyimg-r``
+	- *Choices*: ``seq-cifar100, seq-cub200, seq-cub200-rs, seq-cifar10, perm-mnist, seq-mnist, seq-resisc45, seq-cifar10-224-rs, seq-cropdisease, seq-isic, seq-tinyimg, seq-tinyimg-r, seq-celeba, seq-imagenet-r, seq-chestx, seq-mit67, seq-cars196, rot-mnist, mnist-360, seq-cifar100-224, seq-cifar10-224, seq-cifar100-224-rs, seq-eurosat-rgb``
 
 **\-\-model** : str (with underscores replaced by dashes)
 	*Help*: Model name.
 
 	- *Default*: ``None``
-	- *Choices*: ``agem, agem-r, attriclip, bic, ccic, cgil, clip, cnll, coda-prompt, dap, der, derpp, derpp-casper, derpp-cscct, derpp-lider, derpp-star, dualprompt, er, er-ace, er-ace-aer-abs, er-ace-casper, er-ace-cscct, er-ace-lider, er-ace-star, er-ace-tricks, er-star, er-tricks, ewc-on, fdr, first-stage-starprompt, gdumb, gdumb-lider, gem, gss, hal, icarl, icarl-casper, icarl-cscct, icarl-lider, idefics, joint, joint-gcl, l2p, llava, lucir, lwf, lwf-mc, lws, mer, moe-adapters, pnn, puridiver, ranpac, rpc, second-order, second-stage-starprompt, sgd, si, slca, spr, starprompt, twf, xder, xder-ce, xder-rpc, xder-rpc-casper, xder-rpc-cscct, xder-rpc-star, zscl``
+	- *Choices*: ``derpp, xder-rpc, xder-ce, er-ace, ewc-on, er-ace-aer-abs, er-tricks, coda-prompt, sgd, er, er-ace-star, er-star, clip, joint-gcl, gss, icarl, lwf-mc, agem, twf, lwf, llava, dualprompt, xder-rpc-star, lws, starprompt, mer, bic, lucir, second-stage-starprompt, ranpac, hal, der, slca, gdumb, idefics, rpc, puridiver, dap, xder, spr, attriclip, derpp-star, joint, si, cnll, first-stage-starprompt, gem, fdr, er-ace-tricks, l2p, pnn, agem-r, ccic, second-order``
 
 **\-\-backbone** : str (with underscores replaced by dashes)
 	*Help*: Backbone network name.
 
 	- *Default*: ``None``
-	- *Choices*: ``mnistmlp, preact-resnet18, resnet18, resnet18-7x7-pt, reduced-resnet18, resnet34, resnet18-spr, resnet32, resnet50, resnet50-pt, vit``
+	- *Choices*: ``resnet50, resnet50-pt, resnet32, preact-resnet18, resnet18, resnet18-7x7-pt, reduced-resnet18, resnet34, resnet18-spr, efficientnet, vit, mnistmlp``
 
 **\-\-load_best_args** : unknown
 	*Help*: (deprecated) Loads the best arguments for each method, dataset and memory buffer. NOTE: This option is deprecated and not up to date.
@@ -203,6 +203,10 @@ NOTE: this option disables the `--permute_classes` option and is incompatible wi
 	*Help*: The base path where to save datasets, logs, results.
 
 	- *Default*: ``./data/``
+**\-\-checkpoint_path** : str
+	*Help*: The path where to save the checkpoints.
+
+	- *Default*: ``./checkpoints/``
 **\-\-results_path** : str
 	*Help*: The path where to save the results. NOTE: this path is relative to `base_path`.
 
@@ -263,10 +267,6 @@ NOTE: this option disables the `--permute_classes` option and is incompatible wi
 
 	- *Default*: ``safe``
 	- *Choices*: ``old_pickle, safe``
-**\-\-loadcheck** : str
-	*Help*: Path of the checkpoint to load (.pt file for the specific task)
-
-	- *Default*: ``None``
 **\-\-ckpt_name** : str
 	*Help*: (optional) checkpoint save name.
 
@@ -279,6 +279,10 @@ NOTE: this option disables the `--permute_classes` option and is incompatible wi
 	*Help*: Task limit
 
 	- *Default*: ``None``
+**\-\-save_after_interrupt** : 0|1|True|False -> bool
+	*Help*: Whether to save the model checkpoint after an interrupt - SigInt (default: True).
+
+	- *Default*: ``1``
 
 .. rubric:: Wandb arguments
 

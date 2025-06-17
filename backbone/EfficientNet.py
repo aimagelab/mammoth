@@ -7,23 +7,24 @@ import logging
 import math
 import re
 from functools import partial
+from typing import Literal, get_args
 
 import torch
 from torch import nn
 from torch.nn import functional as F
 from torch.utils import model_zoo
 
-from backbone import MammothBackbone
+from backbone import MammothBackbone, register_backbone
 
 url_map = {
-    'efficientnet-b0': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b0-355c32eb.pth',
-    'efficientnet-b1': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b1-f1951068.pth',
-    'efficientnet-b2': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b2-8bb594d6.pth',
-    'efficientnet-b3': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b3-5fb5a3c3.pth',
-    'efficientnet-b4': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b4-6ed6700e.pth',
-    'efficientnet-b5': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b5-b6417697.pth',
-    'efficientnet-b6': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b6-c76e70fd.pth',
-    'efficientnet-b7': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b7-dcc49843.pth',
+    'b0': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b0-355c32eb.pth',
+    'b1': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b1-f1951068.pth',
+    'b2': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b2-8bb594d6.pth',
+    'b3': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b3-5fb5a3c3.pth',
+    'b4': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b4-6ed6700e.pth',
+    'b5': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b5-b6417697.pth',
+    'b6': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b6-c76e70fd.pth',
+    'b7': 'https://github.com/lukemelas/EfficientNet-PyTorch/releases/download/1.0/efficientnet-b7-dcc49843.pth',
 }
 
 
@@ -391,31 +392,6 @@ class BlockDecoder(object):
         return block_strings
 
 
-def efficientnet_params(model_name):
-    """Map EfficientNet model name to parameter coefficients.
-
-    Args:
-        model_name (str): Model name to be queried.
-
-    Returns:
-        params_dict[model_name]: A (width,depth,res,dropout) tuple.
-    """
-    params_dict = {
-        # Coefficients:   width,depth,res,dropout
-        'efficientnet-b0': (1.0, 1.0, 224, 0.2),
-        'efficientnet-b1': (1.0, 1.1, 240, 0.2),
-        'efficientnet-b2': (1.1, 1.2, 260, 0.3),
-        'efficientnet-b3': (1.2, 1.4, 300, 0.3),
-        'efficientnet-b4': (1.4, 1.8, 380, 0.4),
-        'efficientnet-b5': (1.6, 2.2, 456, 0.4),
-        'efficientnet-b6': (1.8, 2.6, 528, 0.5),
-        'efficientnet-b7': (2.0, 3.1, 600, 0.5),
-        'efficientnet-b8': (2.2, 3.6, 672, 0.5),
-        'efficientnet-l2': (4.3, 5.3, 800, 0.5),
-    }
-    return params_dict[model_name]
-
-
 def efficientnet(width_coefficient=None, depth_coefficient=None, image_size=None,
                  dropout_rate=0.2, drop_connect_rate=0.2, num_classes=1000, include_top=True):
     """Create BlockArgs and GlobalParams for efficientnet model.
@@ -434,7 +410,7 @@ def efficientnet(width_coefficient=None, depth_coefficient=None, image_size=None
         blocks_args, global_params.
     """
 
-    # Blocks args for the whole model(efficientnet-b0 by default)
+    # Blocks args for the whole model(b0 by default)
     # It will be modified in the construction of EfficientNet Class according to model
     blocks_args = [
         'r1_k3_s11_e1_i32_o16_se0.25',
@@ -519,7 +495,7 @@ def get_model_params(model_name, override_params):
     Returns:
         blocks_args, global_params
     """
-    if model_name.startswith('efficientnet'):
+    if model_name in get_args(VALID_MODELS):
         w, d, s, p = efficientnet_params(model_name)
         # note: all models have drop connect rate = 0.2
         blocks_args, global_params = efficientnet(
@@ -536,25 +512,25 @@ def efficientnet_params(model_name):
     """Get efficientnet params based on model name."""
     params_dict = {
         # (width_coefficient, depth_coefficient, resolution, dropout_rate)
-        'efficientnet-b0': (1.0, 1.0, 224, 0.2),
-        'efficientnet-b1': (1.0, 1.1, 240, 0.2),
-        'efficientnet-b2': (1.1, 1.2, 260, 0.3),
-        'efficientnet-b3': (1.2, 1.4, 300, 0.3),
-        'efficientnet-b4': (1.4, 1.8, 380, 0.4),
-        'efficientnet-b5': (1.6, 2.2, 456, 0.4),
-        'efficientnet-b6': (1.8, 2.6, 528, 0.5),
-        'efficientnet-b7': (2.0, 3.1, 600, 0.5),
-        'efficientnet-b8': (2.2, 3.6, 672, 0.5),
-        'efficientnet-l2': (4.3, 5.3, 800, 0.5),
+        'b0': (1.0, 1.0, 224, 0.2),
+        'b1': (1.0, 1.1, 240, 0.2),
+        'b2': (1.1, 1.2, 260, 0.3),
+        'b3': (1.2, 1.4, 300, 0.3),
+        'b4': (1.4, 1.8, 380, 0.4),
+        'b5': (1.6, 2.2, 456, 0.4),
+        'b6': (1.8, 2.6, 528, 0.5),
+        'b7': (2.0, 3.1, 600, 0.5),
+        'b8': (2.2, 3.6, 672, 0.5),
+        'l2': (4.3, 5.3, 800, 0.5),
     }
     return params_dict[model_name]
 
 
-VALID_MODELS = (
-    'efficientnet-b0', 'efficientnet-b1', 'efficientnet-b2', 'efficientnet-b3',
-    'efficientnet-b4', 'efficientnet-b5', 'efficientnet-b6', 'efficientnet-b7',
-    'efficientnet-b8',
-)
+VALID_MODELS = Literal[
+    'b0', 'b1', 'b2', 'b3',
+    'b4', 'b5', 'b6', 'b7',
+    'b8', 'l2'
+]
 
 
 class MBConvBlock(nn.Module):
@@ -679,7 +655,7 @@ class EfficientNet(MammothBackbone):
         >>> import torch
         >>> from efficientnet.model import EfficientNet
         >>> inputs = torch.rand(1, 3, 224, 224)
-        >>> model = EfficientNet.from_pretrained('efficientnet-b0')
+        >>> model = EfficientNet.from_pretrained('b0')
         >>> model.eval()
         >>> outputs = model(inputs)
     """
@@ -767,7 +743,7 @@ class EfficientNet(MammothBackbone):
                 >>> import torch
                 >>> from efficientnet.model import EfficientNet
                 >>> inputs = torch.rand(1, 3, 224, 224)
-                >>> model = EfficientNet.from_pretrained('efficientnet-b0')
+                >>> model = EfficientNet.from_pretrained('b0')
                 >>> endpoints = model.extract_endpoints(inputs)
                 >>> print(endpoints['reduction_1'].shape)  # torch.Size([1, 16, 112, 112])
                 >>> print(endpoints['reduction_2'].shape)  # torch.Size([1, 24, 56, 56])
@@ -939,8 +915,9 @@ class EfficientNet(MammothBackbone):
         Returns:
             bool: Is a valid name or not.
         """
-        if model_name not in VALID_MODELS:
-            raise ValueError('model_name should be one of: ' + ', '.join(VALID_MODELS))
+        valid_models = get_args(VALID_MODELS)
+        if model_name not in valid_models:
+            raise ValueError('model_name should be one of: ' + ', '.join(valid_models))
 
     def _change_in_channels(self, in_channels):
         """Adjust model's first convolution layer to in_channels, if in_channels not equals 3.
@@ -953,19 +930,20 @@ class EfficientNet(MammothBackbone):
             out_channels = round_filters(32, self._global_params)
             self._conv_stem = Conv2d(in_channels, out_channels, kernel_size=3, stride=2, bias=False)
 
-
-def mammoth_efficientnet(nclasses: int, model_name: str, pretrained=False):
+@register_backbone('efficientnet')
+def mammoth_efficientnet(num_classes: int, efficientnet_type: VALID_MODELS, pretrained: bool = False):
     """
-    Instantiates a ResNet18 network.
+    Instantiates an EfficientNet network.
 
     Args:
-        nclasses: number of output classes
-        nf: number of filters
+        num_classes: number of output classes
+        model_name: name of the EfficientNet model
+        pretrained: whether to use pretrained weights 
 
     Returns:
-        ResNet network
+        EfficientNet network
     """
     if not pretrained:
-        return EfficientNet.from_name(model_name=model_name, num_classes=nclasses)
+        return EfficientNet.from_name(model_name=efficientnet_type, num_classes=num_classes)
     else:
-        return EfficientNet.from_pretrained(model_name=model_name, num_classes=nclasses)
+        return EfficientNet.from_pretrained(model_name=efficientnet_type, num_classes=num_classes)

@@ -258,7 +258,7 @@ def resnet18(num_classes: int, num_filters: int = 64) -> ResNet:
 
 
 @register_backbone("resnet18_7x7_pt")
-def resnet18(num_classes: int) -> ResNet:
+def resnet18_7x7(num_classes: int) -> ResNet:
     """
     Instantiates a ResNet18 network with a 7x7 initial convolution and pretrained weights.
 
@@ -268,7 +268,7 @@ def resnet18(num_classes: int) -> ResNet:
     Returns:
         ResNet network
     """
-    from torchvision.models import ResNet18_Weights
+    from torchvision.models import ResNet18_Weights # type: ignore[import-untyped]
     net = ResNet(BasicBlock, [2, 2, 2, 2], num_classes, 64, initial_conv_k=7)
     pretrain_weights = ResNet18_Weights.DEFAULT
     st = pretrain_weights.get_state_dict(progress=True, check_hash=True)
@@ -284,7 +284,7 @@ def resnet18(num_classes: int) -> ResNet:
 
 
 @register_backbone("reduced-resnet18")
-def resnet18(num_classes: int) -> ResNet:
+def reduced_resnet18(num_classes: int) -> ResNet:
     """
     Instantiates a ResNet18 network with a third of the parameters, as used in `Gradient Episodic Memory for Continual Learning`
 

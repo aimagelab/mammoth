@@ -1,12 +1,26 @@
+from argparse import Namespace
+from collections.abc import Iterable
 import inspect
 import os
 import sys
 import string
 import random
 import logging
-from typing import Callable, Type, TypeVar, Union, get_args
+from typing import Callable, Dict, Type, TypeVar, Union, get_args, get_origin, Literal
+import torch
+import numpy as np
 T = TypeVar("T")
 
+def in_notebook():
+    # implementation from tqdm autonotebook
+    try:
+        get_ipython = sys.modules['IPython'].get_ipython
+        if 'IPKernelApp' not in get_ipython().config:  # pragma: no cover
+            return False # running in console mode
+        # running in notebook mode
+        return True
+    except Exception:
+        return False
 
 def check_fn_dynamic_type(fn: T, tp: Type[T], strict=True) -> bool:
     """
@@ -40,6 +54,9 @@ def setup_logging():
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(formatter)
     logger = logging.getLogger('root')
+    if logger.handlers:
+        for h in logger.handlers:
+            logger.removeHandler(h)
     logger.setLevel(os.getenv('LOG_LEVEL', 'INFO'))
     logger.addHandler(handler)
     setattr(setup_logging, 'done', True)
@@ -140,29 +157,47 @@ def random_id(length=8, alphabet=string.ascii_letters + string.digits):
     return ''.join(random.choices(alphabet, k=length))
 
 
-def infer_args_from_signature(signature: inspect.Signature, excluded_signature: inspect.Signature = None) -> dict:
+def infer_args_from_signature(signature: inspect.Signature, excluded_signature: inspect.Signature = None, ignore_args: list = None) -> dict:
     """
     Load the arguments of a function from its signature.
 
     Args:
         signature: the signature of the function
+        excluded_signature: the signature of the function to be excluded from the arguments
+        ignore_args: a list of arguments to be ignored when inferring the arguments from the signature
+
+    This function will return a dictionary with the arguments of the function, their type, and whether they are required or not.
+    If an argument has a default value, it will be included in the dictionary as well.
 
     Returns:
         the inferred arguments
     """
-    excluded_args = {} if excluded_signature is None else list(excluded_signature.parameters.keys())
+    excluded_args = [] if excluded_signature is None else list(excluded_signature.parameters.keys())
     parsable_args = {}
 
-    for arg_name, value in list(signature.parameters.items()):
+    if ignore_args is None:
+        ignore_args = []
+    else:
+        print(ignore_args)
+    
+    excluded_args += ignore_args
+    n_ignored_args = len(ignore_args)
+    for i, (arg_name, value) in enumerate(signature.parameters.items()):
         if arg_name in excluded_args:
             continue
-        if arg_name != 'self' and not arg_name.startswith('_'):
+        if arg_name != 'self' and not arg_name.startswith('_') and i>=n_ignored_args: 
             default = value.default
             tp = str
             if value.annotation is not inspect._empty:
                 tp = value.annotation
             elif default is not inspect.Parameter.empty:
                 tp = type(default)
+            
+            choices = None
+            if get_origin(tp) == Literal:
+                choices = get_args(tp)
+                tp = str
+
             if default is inspect.Parameter.empty and arg_name != 'num_classes':
                 parsable_args[arg_name] = {
                     'type': tp,
@@ -174,10 +209,12 @@ def infer_args_from_signature(signature: inspect.Signature, excluded_signature: 
                     'required': False,
                     'default': default if default is not inspect.Parameter.empty else None
                 }
+            if choices is not None:
+                parsable_args[arg_name]['choices'] = choices
     return parsable_args
 
 
-def register_dynamic_module_fn(name: str, register: dict, tp: Type[T]):
+def register_dynamic_module_fn(name: str, register: dict, tp: Type[T], ignore_args: list = None) -> Callable[[Union[T, Callable]], T]:
     """
     Register a dynamic module in the specified dictionary.
 
@@ -186,23 +223,29 @@ def register_dynamic_module_fn(name: str, register: dict, tp: Type[T]):
         register: the dictionary where the module will be registered
         cls: the class to be registered
         tp: the type of the class, used to dynamically infer the arguments
+        ignore_args: a list of arguments to be ignored when inferring the arguments from the signature
     """
     name = name.replace('_', '-').lower()
 
     def register_network_fn(target: Union[T, Callable]) -> T:
         # check if the name is already registered
         if name in register:
-            raise ValueError(f"Name {name} already registered!")
+            if not in_notebook():
+                raise ValueError(f"Name {name} already registered!")
+            else:
+                logging.warning(f"Name {name} already registered, overwriting it.")
 
         # check if `cls` is a subclass of `T`
         if inspect.isfunction(target):
             signature = inspect.signature(target)
         elif isinstance(target, tp) or issubclass(target, tp):
             signature = inspect.signature(target.__init__)
+            if not hasattr(target, 'NAME'):
+                setattr(target, 'NAME', name)  # set the name of the class
         else:
             raise ValueError(f"The registered class must be a subclass of {tp.__class__.__name__} or a function returning {tp.__class__.__name__}")
 
-        parsable_args = infer_args_from_signature(signature)
+        parsable_args = infer_args_from_signature(signature, ignore_args=ignore_args)
         register[name] = {'class': target, 'parsable_args': parsable_args}
         return target
 
@@ -224,3 +267,37 @@ class disable_logging:
 
     def __exit__(self, exit_type, exit_value, exit_traceback):
         logging.disable(self.old_logging_level)
+
+
+def to_parsable_obj(r: Union[Dict, Namespace, list, torch.Tensor, np.ndarray]) -> Union[Dict, list, str, int, float, bool]:
+    """
+    Convert a non-builtin object to a parsable (and loadable with `weights_only=True`) object.
+    Looking at you, Namespace.
+    """
+
+    if isinstance(r, Namespace):
+        return to_parsable_obj(vars(r))
+    if isinstance(r, list):
+        return [to_parsable_obj(x) for x in r]
+    if isinstance(r, dict):
+        return {k: to_parsable_obj(v) for k, v in r.items()}
+    else:
+        if isinstance(r, torch.Tensor):
+            r = r.detach().cpu().numpy().tolist()
+        elif isinstance(r, np.ndarray):
+            r = r.tolist()
+        if not isinstance(r, str) and isinstance(r, Iterable) and len(r) > 1:
+            return [to_parsable_obj(x) for x in r]
+        # check if type of r is builtin
+        if isinstance(r, (int, float, str, bool)):
+            try:
+                r = r.item()  # could be numpy scalar
+            except BaseException:
+                return r
+        if isinstance(r, (torch.device)):
+            return str(r)
+        if r is not None:
+            logging.warning(f"Object {r} is not parsable, returning it as str.")
+            return str(r)  # return as str if not parsable
+        
+        return None

@@ -3,7 +3,7 @@ from typing import List
 import torch.nn.functional as F
 import torch
 from torch.utils.data import TensorDataset
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 from utils.conf import create_seeded_dataloader
 try:

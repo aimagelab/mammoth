@@ -8,7 +8,7 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torch.distributions.beta import Beta
 from argparse import ArgumentParser
-import tqdm
+from tqdm.auto import tqdm, trange
 import numpy as np
 
 from datasets.utils.continual_dataset import ContinualDataset
@@ -237,7 +237,7 @@ class ErAceAerAbs(ContinualModel):
 
     def mixmatch_epoch(self, net: nn.Module, opt: torch.optim.Optimizer, loader: DataLoader):
         net.train()
-        with tqdm.tqdm(loader, desc=' - MixMatch epoch', leave=False) as pbar:
+        with tqdm(loader, desc=' - MixMatch epoch', leave=False) as pbar:
             for i, data in enumerate(pbar):
                 if self.args.debug_mode and i > 10:
                     break
@@ -353,7 +353,7 @@ class ErAceAerAbs(ContinualModel):
             opt, T_0=1, T_mult=2, eta_min=self.args.buffer_fitting_lr * 0.01
         )
 
-        for e in tqdm.trange(self.args.buffer_fitting_epochs, desc='Fitting on buffer with MixMatch'):
+        for e in trange(self.args.buffer_fitting_epochs, desc='Fitting on buffer with MixMatch'):
             _, amb_idxs, probs = self.split_data(test_loader=not_aug_loader, model=self.net)
             amb_idxs, probs = torch.from_numpy(amb_idxs), torch.from_numpy(probs)
             corr_lab = torch.ones(len(train_dataset))
@@ -376,7 +376,7 @@ class ErAceAerAbs(ContinualModel):
             opt, T_0=1, T_mult=2, eta_min=self.args.buffer_fitting_lr * 0.01
         )
 
-        for e in tqdm.trange(self.args.buffer_fitting_epochs, desc='Fitting on buffer with CE'):
+        for e in trange(self.args.buffer_fitting_epochs, desc='Fitting on buffer with CE'):
             for i, data in enumerate(train_loader):
                 if self.args.debug_mode and i > 10:
                     break

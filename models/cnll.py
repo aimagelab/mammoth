@@ -1,10 +1,9 @@
 import logging
-import sys
 import time
 import numpy as np
 import torch
 from torch import nn
-import tqdm
+from tqdm.auto import trange
 from typing import TYPE_CHECKING
 from copy import deepcopy
 import torch.nn.functional as F
@@ -332,15 +331,15 @@ class Cnll(ContinualModel):
 
     def ssl_loss(self, all_inputs, all_targets, batch_size, c_iter):
         idx = torch.randperm(all_inputs.size(0))
-        l = np.random.beta(self.args.mixup_alpha, self.args.mixup_alpha)
-        l = max(l, 1 - l)
+        alpha_b = np.random.beta(self.args.mixup_alpha, self.args.mixup_alpha)
+        alpha = max(alpha_b, 1 - alpha_b)
 
         input_a, input_b = all_inputs, all_inputs[idx]
         target_a, target_b = all_targets, all_targets[idx]
 
         # Mixup
-        mixed_input = l * input_a + (1 - l) * input_b
-        mixed_target = l * target_a + (1 - l) * target_b
+        mixed_input = alpha * input_a + (1 - alpha) * input_b
+        mixed_target = alpha * target_a + (1 - alpha) * target_b
 
         feats = self.net(mixed_input, 'features')
         logits1, logits = self.net.classifier(feats), self.net.classifier_re(feats)
@@ -383,7 +382,7 @@ class Cnll(ContinualModel):
         noisy_dl = torch.utils.data.DataLoader(noisy_dset, batch_size=self.args.batch_size, shuffle=True, drop_last=True)
 
         noisy_iter = iter(noisy_dl)
-        for epoch in tqdm.trange(self.args.finetune_epochs, desc="Buffer fitting", leave=False, disable=True):
+        for epoch in trange(self.args.finetune_epochs, desc="Buffer fitting", leave=False, disable=True):
             avgloss = 0
             if self.args.cnll_debug_mode == 1 and epoch > 2:
                 break

@@ -6,7 +6,7 @@ Datasets can be included either by registering them using the `register_dataset`
 
 import os
 import sys
-from typing import Callable
+from typing import Callable, List, Union
 import importlib
 import inspect
 from argparse import Namespace
@@ -33,13 +33,11 @@ def register_dataset(name: str) -> Callable:
     Args:
         name: the name of the dataset
     """
-    if hasattr(get_dataset_names, 'names'):  # reset the cache of the dataset names
-        del get_dataset_names.names
 
-    return register_dynamic_module_fn(name, REGISTERED_DATASETS, ContinualDataset)
+    return register_dynamic_module_fn(name, REGISTERED_DATASETS, ContinualDataset, ignore_args=['self','args'])
 
 
-def get_all_datasets_legacy():
+def get_all_datasets_legacy() -> List[str]:
     """
     Returns the list of all the available datasets in the datasets folder that follow the old naming convention.
     """
@@ -48,7 +46,7 @@ def get_all_datasets_legacy():
             if not model.find('__') > -1 and 'py' in model]
 
 
-def get_dataset_names(names_only=False):
+def get_dataset_names(names_only=False) -> Union[List[str], dict]:
     """
     Return the names of the available continual dataset.
     If an error was detected while loading the available datasets, it raises the appropriate error message.
@@ -64,7 +62,7 @@ def get_dataset_names(names_only=False):
         the named of the available continual datasets
     """
 
-    def _dataset_names():
+    def _dataset_names() -> dict:
         names = {}  # key: dataset name, value: {'class': dataset class, 'parsable_args': parsable_args}
         for dataset, dataset_conf in REGISTERED_DATASETS.items():
             names[dataset.replace('_', '-')] = {'class': dataset_conf['class'], 'parsable_args': dataset_conf['parsable_args']}
@@ -99,15 +97,14 @@ def get_dataset_names(names_only=False):
                 names[dataset.replace('_', '-')] = e
         return names
 
-    if not hasattr(get_dataset_names, 'names'):
-        setattr(get_dataset_names, 'names', _dataset_names())
-    names = getattr(get_dataset_names, 'names')
+    names_and_args = _dataset_names()
     if names_only:
-        return list(names.keys())
-    return names
+        names: List[str] = list(names_and_args.keys())
+        return names
+    return names_and_args
 
 
-def get_dataset_config_names(dataset: str):
+def get_dataset_config_names(dataset: str) -> List[str]:
     """
     Return the names of the available continual dataset configurations.
 
@@ -117,18 +114,11 @@ def get_dataset_config_names(dataset: str):
     The configurations are stored in the `datasets/configs/<dataset>` folder.
     """
 
-    def _dataset_config_names(dataset):
-        names = []
-        if os.path.exists(f'datasets/configs/{dataset}'):
-            names = [dset_config.split('.yaml')[0] for dset_config in os.listdir(f'datasets/configs/{dataset}')
-                     if dset_config.endswith('.yaml') and not dset_config.startswith('__')]
-        return names
-
-    if not hasattr(get_dataset_config_names, 'names'):
-        setattr(get_dataset_config_names, 'names', {})
-    if dataset not in get_dataset_config_names.names:
-        get_dataset_config_names.names[dataset] = _dataset_config_names(dataset)
-    return get_dataset_config_names.names[dataset]
+    names = []
+    if os.path.exists(f'datasets/configs/{dataset}'):
+        names = [dset_config.split('.yaml')[0] for dset_config in os.listdir(f'datasets/configs/{dataset}')
+                    if dset_config.endswith('.yaml') and not dset_config.startswith('__')]
+    return names
 
 
 def get_dataset_class(args: Namespace, return_args=False) -> ContinualDataset:

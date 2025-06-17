@@ -2,7 +2,7 @@ import math
 from dataclasses import dataclass
 
 import torch
-import tqdm
+from tqdm.auto import trange
 
 
 @dataclass
@@ -147,7 +147,7 @@ class DiffusionCA(torch.nn.Module):
         self.train()
         loader = torch.utils.data.DataLoader(ds, batch_size=64, shuffle=True, num_workers=0, drop_last=False)
         iters = 0
-        with tqdm.trange(self.n_iters, desc=f"Training Diffusion [{self.class_idx}]") as pbar:
+        with trange(self.n_iters, desc=f"Training Diffusion [{self.class_idx}]") as pbar:
             for epoch in pbar:
                 for data in loader:
                     self.optimizer.zero_grad()

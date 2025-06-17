@@ -6,7 +6,7 @@ except ImportError as e:
     raise e
 
 import os
-import torchvision.transforms as transforms
+import torchvision.transforms as transforms # type: ignore[import-untyped]
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 import numpy as np
@@ -17,11 +17,10 @@ from typing import Tuple
 import yaml
 
 from datasets.utils import set_default_from_args
-from utils import smart_joint
 from utils.conf import base_path
 from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
 from datasets.transforms.denormalization import DeNormalize
-from torchvision.transforms.functional import InterpolationMode
+from torchvision.transforms.functional import InterpolationMode # type: ignore[import-untyped]
 
 
 class MyImagenetR(Dataset):
@@ -43,6 +42,7 @@ class MyImagenetR(Dataset):
 
         if not os.path.exists(self.root):
             if download:
+                os.makedirs(self.root, exist_ok=True)
                 # download from https://people.eecs.berkeley.edu/~hendrycks/imagenet-r.tar
                 logging.info("Downloading imagenet-r dataset...")
                 url = 'https://people.eecs.berkeley.edu/~hendrycks/imagenet-r.tar'

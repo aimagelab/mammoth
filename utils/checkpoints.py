@@ -1,48 +1,23 @@
-
+import signal
+import sys
+import uuid
+import functools
+import os
 from argparse import Namespace
-from collections.abc import Iterable
 import copy
 import logging
 import random
 import string
-from typing import Dict, Union
+from typing import Callable, Dict, Optional, Tuple, Union
 import numpy as np
 import torch
-import os
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import urllib.request as request
 
-from utils import smart_joint
-
-
-def to_parsable_obj(r: Union[Dict, Namespace, list, torch.Tensor, np.ndarray]) -> Union[Dict, list, str, int, float, bool]:
-    """
-    Convert a non-builtin object to a parsable (and loadable with `weights_only=True`) object.
-    Looking at you, Namespace.
-    """
-
-    if isinstance(r, Namespace):
-        return to_parsable_obj(vars(r))
-    if isinstance(r, list):
-        return [to_parsable_obj(x) for x in r]
-    if isinstance(r, dict):
-        return {k: to_parsable_obj(v) for k, v in r.items()}
-    else:
-        if isinstance(r, torch.Tensor):
-            r = r.detach().cpu().numpy().tolist()
-        elif isinstance(r, np.ndarray):
-            r = r.tolist()
-        if not isinstance(r, str) and isinstance(r, Iterable) and len(r) > 1:
-            return [to_parsable_obj(x) for x in r]
-        # check if type of r is builtin
-        if isinstance(r, (int, float, str, bool)):
-            try:
-                r = r.item()  # could be numpy scalar
-            except BaseException:
-                return r
-        return None
-
+from utils import smart_joint, to_parsable_obj, in_notebook
+from utils.globals import GLOBALS 
+from utils.conf import get_checkpoint_path
 
 def _load_mammoth_model(dict_keys, model: torch.nn.Module, args):
     for k in list(dict_keys):
@@ -64,19 +39,16 @@ def _load_mammoth_model(dict_keys, model: torch.nn.Module, args):
     return model
 
 
-def _load_net(dict_keys, model: torch.nn.Module, args, ignore_classifier=True):
+def _load_net(dict_keys, model: torch.nn.Module, ignore_classifier=True):
     """
     Load a model from a checkpoint. Handles DataParallel and DistributedDataParallel checkpoints.
     If ignore_classifier is True, the classifier weights are not loaded.
     """
     for k in list(dict_keys):
-        if args.distributed != 'dp':
+        if k.startswith('module.'): # remove 'module.' prefix if present
             dict_keys[k.replace('module.', '')] = dict_keys.pop(k)
-        elif 'module' not in k:
-            if 'net' in k:
-                dict_keys[k.replace('net.', 'net.module.')] = dict_keys.pop(k)
-            else:
-                dict_keys[f'module.{k}'] = dict_keys.pop(k)
+        else: #remove '.module.' if present
+            dict_keys[k.replace('.module.', '.')] = dict_keys.pop(k)
 
     if not ignore_classifier:
         cl_weights = [dict_keys[k] for k in list(dict_keys.keys()) if 'classifier' in k]
@@ -139,8 +111,15 @@ def _download_from_raw_url(url: str, root: str, filename: str = None) -> str:
 
     return download_target
 
+class OnlyArgsError(Exception):
+    """Raised when the checkpoint does not contain any arguments and `return_only_args` is True."""
+    pass
 
-def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=False) -> torch.nn.Module:
+def mammoth_load_checkpoint(checkpoint_path: str,
+                            model: Optional[torch.nn.Module] = None,
+                            ignore_classifier=False,
+                            args: Optional[Namespace]=None,
+                            return_only_args: bool=False) -> Union[Namespace, Tuple[torch.nn.Module, Optional[Dict[str, Union[float, int]]]]]:
     """
     Loads the keys from the given checkpoint.
     - Handles DataParallel and DistributedDataParallel checkpoints.
@@ -148,24 +127,29 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
     - Handles head initialization for LUCIR.
 
     Args:
-        args: the model with the checkpoint loaded.
-        model: the model to be loaded.
+        checkpoint_path: the path to the checkpoint file or URL.
+        model: the model to be loaded. It can be None ONLY with `return_only_args=True`.
         ignore_classifier: whether to ignore the classifier weights.
+        args: the current arguments. If provided, it will check if the loaded arguments match the current ones.
+        return_only_args: if True, only returns the loaded arguments and not the model.
 
     Returns:
         the model with the checkpoint loaded.
     """
+    assert model is not None or return_only_args, "Model must be provided if return_only_args is False."
+
     # check if checkpoint is a URL
-    if args.loadcheck.startswith('http'):
-        if 'sharepoint' in args.loadcheck:
+    if checkpoint_path.startswith('http'):
+        if 'sharepoint' in checkpoint_path:
             try:
                 from onedrivedownloader import download
             except ImportError:
                 raise ImportError('OneDriveDownloader is required to download from Sharepoint. Please install it with "pip install onedrivedownloader"')
 
             logging.info('Downloading checkpoint using OneDriveDownloader...')
-            args.loadcheck = download(args.loadcheck, filename='checkpoints/', unzip=True, unzip_path='checkpoints/', clean=True)
-        elif 'drive.google.com' in args.loadcheck:
+            checkpoint_path = download(checkpoint_path, filename=get_checkpoint_path(),
+                                      unzip=True, unzip_path=get_checkpoint_path(), clean=True)
+        elif 'drive.google.com' in checkpoint_path:
             try:
                 from google_drive_downloader import GoogleDriveDownloader as gdd
             except ImportError:
@@ -174,59 +158,77 @@ def mammoth_load_checkpoint(args, model: torch.nn.Module, ignore_classifier=Fals
             logging.info('Downloading checkpoint using GoogleDriveDownloader...')
             # get random filename
             filename = _get_random_filename()
-            gdd.download_file_from_google_drive(file_id=args.loadcheck.split('/')[-2],
-                                                dest_path=f'checkpoints/{filename}', unzip=True)
-            args.loadcheck = f'checkpoints/{filename}'
-        elif args.loadcheck.startswith('https://huggingface.co/'):
+            dest = os.path.join(get_checkpoint_path(), filename)
+            gdd.download_file_from_google_drive(file_id=checkpoint_path.split('/')[-2],
+                                                dest_path=dest, unzip=True)
+            checkpoint_path = dest
+        elif checkpoint_path.startswith('https://huggingface.co/'):
             logging.info('Downloading checkpoints from HuggingFace...')
-            filename = args.loadcheck.split('/')[-1].split('?')[0]
-            args.loadcheck = _download_from_raw_url(args.loadcheck, 'checkpoints/', filename=filename)
+            filename = checkpoint_path.split('/')[-1].split('?')[0]
+            checkpoint_path = _download_from_raw_url(checkpoint_path, get_checkpoint_path(), filename=filename)
         else:
             logging.warning('Attempting to download raw checkpoint. Make sure to check the URL.')
-            args.loadcheck = _download_from_raw_url(args.loadcheck, 'checkpoints/')
+            checkpoint_path = _download_from_raw_url(checkpoint_path, get_checkpoint_path())
 
-        logging.info(f'Checkpoint downloaded to {args.loadcheck}')
+        logging.info(f'Checkpoint downloaded to {checkpoint_path}')
     else:
-        if not os.path.exists(args.loadcheck):
+        if not os.path.exists(checkpoint_path):
             raise ValueError('The given checkpoint does not exist.')
 
-    saved_obj = torch.load(args.loadcheck, map_location=torch.device("cpu"), weights_only=True)
+    saved_obj = torch.load(checkpoint_path, map_location=torch.device("cpu"), weights_only=True)
 
-    if 'args' in saved_obj and 'model' in saved_obj:
-        saved_obj['args'] = Namespace(**saved_obj['args'])  # convert back to Namespace
-        _check_loaded_args(args, saved_obj['args'])
-        # Mammoth checkpoint
-        model = _load_mammoth_model(saved_obj['model'], model, args)
-        if 'buffer' in saved_obj:
-            loading_model = saved_obj['args'].model
-            if args.model != loading_model:
-                logging.warning(f'The loaded model was trained with a different model: {loading_model}')
-            model.load_buffer(saved_obj['buffer'])
+    if 'args' in saved_obj:
+        ckpt_args = Namespace(**saved_obj['args'])  # convert back to Namespace
+        if args:
+            _check_loaded_args(args, ckpt_args)
+        else:
+            args = ckpt_args
+        if return_only_args:
+            return args
+        
+        if 'model' in saved_obj:
+            # Mammoth checkpoint
+            model = _load_mammoth_model(saved_obj['model'], model, args)
+            if 'buffer' in saved_obj:
+                loading_model = args.model
+                if args.model != loading_model:
+                    logging.warning(f'The loaded model was trained with a different model: {loading_model}')
+                model.load_buffer(saved_obj['buffer'])
 
-        return model, saved_obj['results']
+            return model, saved_obj['results']
+        else:
+            raise ValueError("""The checkpoint is not in a valid format.
+Expect a checkpoint either with:
+- 'args' and 'model' keys (Mammoth checkpoint)
+- simple state_dict WITH NO 'args' KEY""")
+
     else:
+        if return_only_args:
+            raise OnlyArgsError('The checkpoint does not contain any arguments. Cannot return only args.')
         # Model only checkpoint
-        model = _load_net(saved_obj, model, args, ignore_classifier=ignore_classifier)
+        model = _load_net(saved_obj, model, ignore_classifier=ignore_classifier)
 
         return model, None
 
 
 def save_mammoth_checkpoint(task: int, end_task: int, args: Namespace, model: torch.nn.Module, results=None,
                             optimizer_st: Dict[str, torch.Tensor] = None,
-                            scheduler_st: Dict[str, torch.Tensor] = None):
+                            scheduler_st: Dict[str, torch.Tensor] = None,
+                            checkpoint_name: str = None):
     """
     Save a checkpoint for the model for the given task.
     Handles saving as a single file (will require `weights_only=False)` or separate weights (can be loaded safely with `weights_only=True`).
     """
-    if args.savecheck == 'task':
-        checkpoint_name = f'checkpoints/{args.ckpt_name}_joint' if args.joint else f'checkpoints/{args.ckpt_name}_{task}'
-    elif args.savecheck == 'last':
-        if task == end_task - 1:
-            checkpoint_name = f'checkpoints/{args.ckpt_name}_joint' if args.joint else f'checkpoints/{args.ckpt_name}_last'
+    if checkpoint_name is None:
+        if args.savecheck == 'task':
+            checkpoint_name = os.path.join(get_checkpoint_path(), f'{args.ckpt_name}_joint') if args.joint else os.path.join(get_checkpoint_path(), f'{args.ckpt_name}_{task}')
+        elif args.savecheck == 'last':
+            if task == end_task - 1:
+                checkpoint_name = os.path.join(get_checkpoint_path(), f'{args.ckpt_name}_joint') if args.joint else os.path.join(get_checkpoint_path(), f'{args.ckpt_name}_last')   
+            else:
+                return
         else:
-            return
-    else:
-        raise ValueError(f'Invalid savecheck mode: {args.savecheck}')
+            raise ValueError(f'Invalid savecheck mode: {args.savecheck}')
 
     if args.save_checkpoint_mode == 'old_pickle':
         save_obj = {
@@ -250,7 +252,7 @@ def save_mammoth_checkpoint(task: int, end_task: int, args: Namespace, model: to
             save_obj['buffer'] = model.buffer.serialize()
 
     torch.save(save_obj, checkpoint_name + '.pt')
-    logging.info(f"Checkpoint for task {task} saved at {checkpoint_name}")
+    logging.warning(f"Checkpoint for task {task} saved at {checkpoint_name}")
 
 
 def _check_loaded_args(args, loaded_args):
@@ -277,3 +279,86 @@ def _check_loaded_args(args, loaded_args):
             logging.warning(mismatched_args)
         else:
             raise ValueError('The loaded model was trained with different arguments: {}'.format(mismatched_args))
+
+def can_save_and_exit(fn: Callable) -> Callable:
+    """
+    Wraps a function to catch KeyboardInterrupt and SigInt signals. 
+
+    If running in a Jupyter notebook, this will prevent the kernel from crashing
+    when the user interrupts the execution of a cell and retain the current state.
+
+    If running in a script, this will:
+     - catch the KeyboardInterrupt and exit gracefully
+     - catch the SigInt and save a checkpoint before exiting
+    This is useful for training scripts where you want to be able to stop the training
+    process and save the current state of the model.
+
+    Args:
+        fn: the function to be wrapped
+
+    Returns:
+        the wrapped function
+    """
+    wrapped = hasattr(can_save_and_exit, 'wrapped')
+    ckpt_path = get_checkpoint_path()
+    tmp_filename = str(uuid.uuid4())
+    ckpt_path = os.path.join(ckpt_path, 'paused', tmp_filename)
+    if not os.path.exists(os.path.dirname(ckpt_path)):
+        os.makedirs(os.path.dirname(ckpt_path))
+
+    @functools.wraps(fn)
+    def wrapped_fn(*args, **kwargs):
+        if not wrapped:
+            if not in_notebook():
+                signal.signal(signal.SIGINT, _get_sigint_handler(fn, ckpt_path))
+                signal.signal(signal.SIGTERM, _get_sigint_handler(fn, ckpt_path))
+            else:
+                def _ignore_sigint(signum, frame):
+                    global GLOBALS
+                    logging.info("SIGINT received in notebook. Ignoring to prevent kernel crash.")
+                    GLOBALS['SHOULD_STOP'] = True  # type: ignore[assignment]
+                signal.signal(signal.SIGINT, _ignore_sigint)
+
+        try:
+            return fn(*args, **kwargs)
+        except (KeyboardInterrupt, SystemExit):
+            pass
+
+    setattr(can_save_and_exit, 'wrapped', True) # avoid re-registering the signal handler
+
+    return wrapped_fn
+
+def _get_sigint_handler(fn: Callable, ckpt_path: str) -> Callable:
+    def _handle_sigint_terminal(signum, frame):
+        global GLOBALS
+
+        if GLOBALS['SHOULD_STOP']: # should have stopped already, forcing
+            logging.info("SIGINT received again. Forcing exit...")
+            sys.exit(1)
+
+        current = frame
+        _locals = {}
+        while current:
+            if current.f_code == fn.__code__:
+                _locals = current.f_locals
+                break
+            current = current.f_back
+
+        if 'args' not in _locals: # not initialized yet, can safely exit
+            logging.info("SIGINT received before initialization. Exiting...")
+            GLOBALS['SHOULD_STOP'] = True
+
+        logging.info("SIGINT received. Saving checkpoint and exiting...")
+        exp_args = _locals.get('args')
+        model = _locals.get('model')
+        scheduler = _locals.get('scheduler')
+        if exp_args.save_after_interrupt:
+            save_mammoth_checkpoint(_locals['cur_task'], _locals['end_task'], exp_args,
+                                    model,
+                                    results=[_locals['results'], _locals['results_mask_classes'], _locals['logger'].dump()],
+                                    optimizer_st=model.opt.state_dict() if hasattr(model, 'opt') else None,
+                                    scheduler_st=scheduler.state_dict() if scheduler is not None else None,
+                                    checkpoint_name=ckpt_path)
+        
+        GLOBALS['SHOULD_STOP'] = True
+    return _handle_sigint_terminal

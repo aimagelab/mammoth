@@ -2,7 +2,7 @@ import math
 from torch import nn
 from torch.nn import functional as F
 
-from backbone import MammothBackbone, register_backbone, xavier
+from backbone import MammothBackbone, register_backbone
 
 
 EPS_BATCH_NORM = 1e-4

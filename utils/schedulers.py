@@ -27,7 +27,7 @@ def get_scheduler(model: ContinualModel, args: Namespace, reload_optim=True) -> 
                 assert args.lr_milestones is not None, 'MultiStepLR requires `--lr_milestones`'
                 sched = MultiStepLR(model.opt, milestones=args.lr_milestones, gamma=args.sched_multistep_lr_gamma)
             elif args.lr_scheduler.lower() == 'cosine':
-                sched = CosineAnnealingLR(model.opt, T_max=args.n_epochs, verbose=True)
+                sched = CosineAnnealingLR(model.opt, T_max=args.n_epochs)
 
         if sched is None:
             raise ValueError('Unknown scheduler: {}'.format(args.lr_scheduler))

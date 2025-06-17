@@ -333,7 +333,7 @@ if __name__ == "__main__":
     import os
     import torchvision
     from PIL import Image
-    from tqdm import tqdm
+    from tqdm.auto import tqdm
 
     os.makedirs('../data/results/mnist360images/tmp/train', exist_ok=True)
     for i, (x, y, _) in tqdm(enumerate(train), total=len(train)):

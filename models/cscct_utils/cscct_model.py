@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import torch
 from torch.functional import F
 
@@ -18,7 +19,7 @@ def sim_matrix(a, b, eps=1e-8):
     return sim_mt
 
 
-class CscCtModel(ContinualModel):
+class CscCtModel(ContinualModel, ABC):
 
     @staticmethod
     def add_cscct_args(parser):
@@ -74,3 +75,8 @@ class CscCtModel(ContinualModel):
         super().end_task(dataset)
         self.old_net = deepcopy(self.net.eval())
         self.net.train()
+
+    @abstractmethod
+    def observe(self, inputs: torch.Tensor, labels: torch.Tensor,
+                not_aug_inputs: torch.Tensor, epoch: int = None) -> float:
+        pass

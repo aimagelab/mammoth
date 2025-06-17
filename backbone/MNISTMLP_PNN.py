@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from backbone import MammothBackbone, num_flat_features, xavier
+from backbone import MammothBackbone, num_flat_features, register_backbone, xavier
 from backbone.utils.modules import AlphaModule, ListModule
 
 
@@ -113,3 +113,8 @@ class MNISTMLP_PNN(MammothBackbone):
             return x
 
         raise NotImplementedError("Unknown return type")
+
+@register_backbone("mnistmlp_pnn")
+def mnistmlp_pnn(num_classes: int, input_size: int,
+                 old_cols: List[AlphaModule] = None) -> MNISTMLP_PNN:
+    return MNISTMLP_PNN(input_size, num_classes, old_cols)

@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING, Any, Callable, Tuple
 import torch
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 if TYPE_CHECKING:
     from models.utils.continual_model import ContinualModel

@@ -6,7 +6,7 @@ from torch.nn import functional as F
 from models.slca_utils.base import BaseLearner
 from models.slca_utils.inc_net import FinetuneIncrementalNet
 from torch.distributions.multivariate_normal import MultivariateNormal
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from datasets import get_dataset
 import sys
 

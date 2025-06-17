@@ -2,7 +2,7 @@ from typing import Tuple
 
 import torch
 import torch.nn as nn
-import tqdm
+from tqdm.auto import trange
 
 try:
     import wandb
@@ -128,7 +128,7 @@ class VariationalAutoEncoder(nn.Module):
         sched = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=n_iters // 10, T_mult=2)
         self.train()
         loader = torch.utils.data.DataLoader(x, batch_size=64, shuffle=True, num_workers=0, drop_last=False)
-        with tqdm.trange(n_iters, desc=f"Training VAE [{class_idx}]") as t:
+        with trange(n_iters, desc=f"Training VAE [{class_idx}]") as t:
             for _ in t:
                 for batch in loader:
                     if len(batch) == 1:

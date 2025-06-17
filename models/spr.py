@@ -1,4 +1,4 @@
-import tqdm
+from tqdm.auto import trange
 import copy
 import logging
 import time
@@ -293,7 +293,7 @@ class Spr(ContinualModel):
         delayed_sampler = torch.utils.data.RandomSampler(dset, replacement=True)
         delayed_dl = torch.utils.data.DataLoader(dset, batch_size=bs, drop_last=False, sampler=delayed_sampler)
         totloss, cit = 0, 0
-        for epoch_i in tqdm.trange(self.args.expert_train_epochs, desc="Expert network training", leave=False):
+        for epoch_i in trange(self.args.expert_train_epochs, desc="Expert network training", leave=False):
             if self.args.spr_debug_mode == 1 and epoch_i > 10:
                 break
             for data in delayed_dl:
@@ -346,7 +346,7 @@ class Spr(ContinualModel):
 
         dset = torch.utils.data.TensorDataset(self.delayed_buffer.examples, self.delayed_buffer.labels)
         delayed_dl = torch.utils.data.DataLoader(dset, batch_size=db_bs, drop_last=False, shuffle=True)
-        for epoch_i in tqdm.trange(self.args.inner_train_epochs, desc="Base network training", leave=False):
+        for epoch_i in trange(self.args.inner_train_epochs, desc="Base network training", leave=False):
             if self.args.spr_debug_mode == 1 and epoch_i > 10:
                 break
             for data in delayed_dl:
@@ -426,7 +426,7 @@ class Spr(ContinualModel):
 
         self.finetuned_model.train()
         ce_loss = nn.NLLLoss()
-        for epoch in tqdm.trange(self.args.fitting_epochs, desc="Buffer fitting", leave=False, disable=True):
+        for epoch in trange(self.args.fitting_epochs, desc="Buffer fitting", leave=False, disable=True):
             if self.args.spr_debug_mode == 1 and epoch > 10:
                 break
             for dat in buffer_dl:

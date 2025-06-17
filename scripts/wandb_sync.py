@@ -5,7 +5,7 @@ from functools import partial
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 if 'scripts' in os.path.dirname(os.path.abspath(__file__)):
     mammoth_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -18,6 +18,29 @@ The core idea of Mammoth is that it is designed to be modular, easy to extend, a
 
 With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
 
+## 📖 Table of Contents
+
+- [Documentation](#documentation)
+  - [Getting Started](https://aimagelab.github.io/mammoth/getting_started/index.html)
+  - [How to Run](https://aimagelab.github.io/mammoth/how_to_run/index.html)
+  - [How to Upgrade](https://aimagelab.github.io/mammoth/how_to_upgrade/index.html)
+  - [Models Reference](https://aimagelab.github.io/mammoth/models/index.html)
+  - [Datasets Reference](https://aimagelab.github.io/mammoth/datasets/index.html)
+  - [Backbone Reference](https://aimagelab.github.io/mammoth/backbone/index.html)
+  - [Utils Reference](https://aimagelab.github.io/mammoth/utils/index.html)
+- [Setup](#setup)
+- [Examples](#examples)
+  - [Run a model](#run-a-model)
+  - [Build a new model](#build-a-new-model)
+  - [Build a new dataset](#build-a-new-dataset)
+- [New Features](#new-features)
+- [Update Roadmap](#update-roadmap)
+- [Models](#models)
+- [Datasets](#datasets)
+- [Citing the library](#citing-the-library)
+- [On the reproducibility of Mammoth](#on-the-reproducibility-of-mammoth)
+- [Contributing](#contributing)
+
 ## 📚 Documentation
 
 <p align="center">
@@ -60,6 +83,15 @@ See the [documentation](https://aimagelab.github.io/mammoth/models/build_a_model
 
 See the [documentation](https://aimagelab.github.io/mammoth/datasets/build_a_dataset.html) for a detailed guide on how to create a new dataset.
 
+
+## 🆕 New Features
+
+- `--loadcheck` option now can load the arguments saved from the checkpoint, so you can resume the training from the last checkpoint by just running `python main.py --loadcheck <checkpoint_name>`.
+- The training now captures the SIGINT signal (Ctrl+C) to gracefully stop the training process and save the current state. The checkpoint is saved in `checkpoints/paused/` directory. This can be disabled by setting `--save_after_interrupt=0` in the command line.
+- Add the option `--checkpoint_path` to specify a custom path for saving checkpoints. By default, checkpoints are saved in the `checkpoints/` directory.
+- Now Mammoth can be installed with pip to be used as a library. You can install it with `pip install -e .` (or just `uv sync`) and then import it in your Python scripts. Examples of usage can be found in the `examples/` directory.
+
+  NOTE: Mammoth is not yet available on PyPI, so you need to clone the repository and run the command above to install it.
 
 ## 🗺️ Update Roadmap
 

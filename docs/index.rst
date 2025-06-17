@@ -42,6 +42,7 @@
    :hidden:
    :caption: How to ...
 
+   Run Mammoth <how_to_run/index.rst>
    Upgrade to the new Mammoth! <how_to_upgrade/index.rst>
    Run STAR-Prompt <how_to_run/starprompt.rst>
 

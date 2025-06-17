@@ -1,11 +1,11 @@
 """
 Base class for all models that use the Lipschitz regularization in LiDER (https://arxiv.org/pdf/2210.06443.pdf).
 """
-
+from abc import ABC, abstractmethod
 import logging
 import torch
 import torch.nn.functional as F
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from typing import List
 from models.utils.continual_model import ContinualModel
 
@@ -25,7 +25,7 @@ def add_lipschitz_args(parser):
                         help='Step from which to enable gradient computation.')
 
 
-class LiderOptimizer(ContinualModel):
+class LiderOptimizer(ContinualModel, ABC):
     """
     Superclass for all models that use the Lipschitz regularization in LiDER (https://arxiv.org/pdf/2210.06443.pdf).
     """
@@ -221,3 +221,8 @@ class LiderOptimizer(ContinualModel):
         loss = F.l1_loss(lip_values, tgt)
 
         return loss
+
+    @abstractmethod
+    def observe(self, inputs: torch.Tensor, labels: torch.Tensor,
+                not_aug_inputs: torch.Tensor, epoch: int = None) -> float:
+        pass

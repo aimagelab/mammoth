@@ -2,9 +2,9 @@
 Utility functions for models.
 """
 
-from argparse import ArgumentParser, Namespace
+from argparse import Namespace
 import os
-import sys
+import logging
 
 import yaml
 
@@ -51,7 +51,7 @@ def load_model_config(args: Namespace, buffer_size: int = None) -> dict:
             if args.model_config == 'best':
                 raise FileNotFoundError(f'Model configuration file {args.model_config} not found in {filepath}')
             else:
-                warn_once(f'Trying to load default configuration for model {args.model} but no configuration file found in {filepath}.')
+                logging.info(f'Trying to load default configuration for model {args.model} but no configuration file found in {filepath}.')
                 return {}
     else:
         if filepath is None or not os.path.exists(filepath):

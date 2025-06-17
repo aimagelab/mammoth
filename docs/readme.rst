@@ -7,7 +7,7 @@ Welcome to Mammoth's documentation!
     :width: 230px
 
 Mammoth - An benchmark Continual Learning framework for Pytorch
-==========================================================================
+===============================================================
 
 Mammoth is a framework for Continual Learning research. With **more than 70 methods and 20 datasets**, it includes the most complete list competitors and benchmarks for research purposes.
 
@@ -16,9 +16,11 @@ Ideally, all the code necessary to run the experiments is included *in the repos
 
 With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
 
-**NEW: BIASED AND NOISY DATASETS** We have introduced datasets with *biased* and *noisy* labels. Noisy labels are generated on the fly and are available for all single-label multi-class datasets (the majority, only `seq_celeba` is currently multi-label). 
+**NEW: IMPORT MAMMOTH** Mammoth can now be imported as a package in your code. This allows you to use the models, datasets, and utilities directly in your code. You can find examples of how to use Mammoth in the `examples/` folder. You can also import Mammoth in your code with `import mammoth` and use the models, datasets, and utilities directly.
 
-**NEW: REPRODUCIBILITY** We are working on making all the configurations to reproduce the results of the models available in the repository. Many models already have their configurations available in the ``models/configs/`` folder and can be loaded with the ``--model_config`` argument set to `best`. You can see all the models with configurations available in the `REPRODUCIBILITY.md` file.
+**BIASED AND NOISY DATASETS** We have introduced datasets with *biased* and *noisy* labels. Noisy labels are generated on the fly and are available for all single-label multi-class datasets (the majority, only `seq_celeba` is currently multi-label). 
+
+**REPRODUCIBILITY** We are working on making all the configurations to reproduce the results of the models available in the repository. Many models already have their configurations available in the ``models/configs/`` folder and can be loaded with the ``--model_config`` argument set to `best`. You can see all the models with configurations available in the `REPRODUCIBILITY.md` file.
 
 **DATASET CONFIGURATIONS** We now support *configuration files* for the datasets with the new ``--dataset_config`` argument. This allows for more flexibility in the dataset definition. See more in :ref:`dataset-configurations`.
 

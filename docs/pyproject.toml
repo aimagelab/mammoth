@@ -16,11 +16,8 @@ dependencies = [
     "scikit-learn>=1.6.1",
     "sphinx==7.2.6",
     "sphinx-toolbox==3.5.0",
-    "timm==0.9.8",
-    "torch>=2.7.0",
-    "transformers>=4.51.3",
-    "xitorch>=0.5.1",
+    "mammoth"
 ]
 
 [tool.uv.sources]
-clip = { git = "https://github.com/openai/CLIP.git" }
+mammoth_cl = { workspace = true }

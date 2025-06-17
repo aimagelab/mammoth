@@ -54,13 +54,11 @@ from functools import partial
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.utils.checkpoint
 
-from timm.layers import PatchEmbed, Mlp as TimmMlp, DropPath, trunc_normal_, lecun_normal_, resample_patch_embed, \
-    resample_abs_pos_embed
-from timm.models._builder import build_model_with_cfg
-from timm.models._manipulate import named_apply
-from timm.models.vision_transformer import _load_weights
+from timm.layers import PatchEmbed, Mlp as TimmMlp, DropPath, trunc_normal_, lecun_normal_, resample_patch_embed, resample_abs_pos_embed # type: ignore[import-untyped]
+from timm.models._builder import build_model_with_cfg # type: ignore[import-untyped]
+from timm.models._manipulate import named_apply # type: ignore[import-untyped]
+from timm.models.vision_transformer import _load_weights # type: ignore[import-untyped]
 
 from backbone.utils.layers import IncrementalClassifier
 from backbone import MammothBackbone, register_backbone
@@ -646,7 +644,7 @@ def create_vision_transformer(variant, base_class=VisionTransformer, pretrained=
         _filter_fn = filter_fn
 
     if variant == 'vit_base_patch16_224_in21k_fn_in1k_old':
-        from timm.models import resolve_pretrained_cfg
+        from timm.models import resolve_pretrained_cfg # type: ignore[import-untyped]
         from backbone.utils.vit_default_cfg import default_cfgs
 
         pretrained_cfg = resolve_pretrained_cfg(variant, pretrained_cfg=default_cfgs[variant].default)
@@ -701,5 +699,5 @@ def vit_base_patch16_224_prompt_prototype(pretrained=False, pretrain_type='in21k
 
 
 @register_backbone("vit")
-def vit_backbone(num_classes, pretrained=True, pretrain_type='in21k-ft-in1k'):
+def vit_backbone(num_classes: int, pretrained=True, pretrain_type='in21k-ft-in1k'):
     return vit_base_patch16_224_prompt_prototype(pretrained=pretrained, pretrain_type=pretrain_type, num_classes=num_classes)
