@@ -1,6 +1,6 @@
 [project]
 name = "mammoth-cl"
-version = "0.2.0"
+version = "0.2.2"
 readme = "README.md"
 description = "The Mammoth framework for Continual Learning research."
 license = { file = "LICENSE" }
@@ -109,9 +109,3 @@ include-package-data = true
 
 [tool.setuptools.package-dir]
 mammoth = "."
-
-[tool.setuptools.package-data]
-mammoth = ["models/config/*.yaml", "datasets/config/*.yaml"]
-
-[tool.setuptools.exclude-package-data]
-mammoth = ["data/*", "data/**/*", "tests/*", "tests/**/*", "dist/*", "dist/**/*", "docs/*", "docs/**/*"]

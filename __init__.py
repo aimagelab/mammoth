@@ -1,14 +1,3 @@
-import sys
-import os
-root = os.getcwd()
-# while we do not have the `pyproject.toml` file in the root directory
-while not os.path.exists(os.path.join(root, "pyproject.toml")):
-    root = os.path.dirname(root)
-    if root == '/':
-        raise FileNotFoundError("Could not find pyproject.toml in the directory tree.")
-os.chdir(root)
-sys.path.insert(0, root)
-
 from utils import globals
 from models import get_model_names, register_model, ContinualModel
 from datasets import get_dataset_names, register_dataset

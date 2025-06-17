@@ -89,7 +89,9 @@ See the [documentation](https://aimagelab.github.io/mammoth/datasets/build_a_dat
 - `--loadcheck` option now can load the arguments saved from the checkpoint, so you can resume the training from the last checkpoint by just running `python main.py --loadcheck <checkpoint_name>`.
 - The training now captures the SIGINT signal (Ctrl+C) to gracefully stop the training process and save the current state. The checkpoint is saved in `checkpoints/paused/` directory. This can be disabled by setting `--save_after_interrupt=0` in the command line.
 - Add the option `--checkpoint_path` to specify a custom path for saving checkpoints. By default, checkpoints are saved in the `checkpoints/` directory.
-- Now Mammoth can be installed with pip to be used as a library. You can install it with `pip install -e .` and then import it in your Python scripts. Examples of usage can be found in the `examples/` directory.
+- Now Mammoth can be installed with pip to be used as a library. You can install it with `pip install -e .` (or just `uv sync`) and then import it in your Python scripts. Examples of usage can be found in the `examples/` directory.
+
+  NOTE: Mammoth is not yet available on PyPI, so you need to clone the repository and run the command above to install it.
 
 ## 🗺️ Update Roadmap
 
