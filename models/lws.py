@@ -18,7 +18,7 @@ from models.utils.continual_model import ContinualModel
 
 class LwS(ContinualModel):
     """
-    Implementation of "Towards Unbiased Continual Learning: Avoiding Forgetting in the Presence of Spurious Correlations"
+    Implementation of "Towards Unbiased Continual Learning: Avoiding Forgetting in the Presence of Spurious Correlations (WACV 2025)"
     """
     NAME = 'lws'
     COMPATIBILITY = ['biased-class-il']
