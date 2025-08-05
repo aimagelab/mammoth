@@ -417,9 +417,11 @@ def extend_args(args, dataset):
     from datasets import ContinualDataset
     dataset: ContinualDataset = dataset  # noqa, used for type hinting
 
-    if hasattr(args, 'num_classes') and args.num_classes is None:
-        args.num_classes = dataset.N_CLASSES
-
+    if hasattr(args, 'num_classes'):
+        if args.num_classes is None:
+            args.num_classes = int(dataset.N_CLASSES)
+        else:
+            args.num_classes = int(args.num_classes)
 
     if args.fitting_mode == 'epochs' and args.n_epochs is None and isinstance(dataset, ContinualDataset):
         args.n_epochs = dataset.get_epochs()
