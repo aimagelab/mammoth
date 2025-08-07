@@ -7,7 +7,7 @@ Note:
 """
 
 import logging
-from utils.args import *
+from argparse import ArgumentParser
 from models.utils.continual_model import ContinualModel
 import torch
 from datasets import get_dataset
@@ -27,6 +27,7 @@ class CodaPrompt(ContinualModel):
         parser.add_argument('--mu', type=float, default=0.0, help='weight of ortho prompt loss')
         parser.add_argument('--pool_size', type=int, default=100, help='pool size')
         parser.add_argument('--prompt_len', type=int, default=8, help='prompt length')
+        parser.add_argument('--ortho_mu', type=float, default=0, help='weight of ortho penalty')
         parser.add_argument('--virtual_bs_iterations', '--virtual_bs_n', dest='virtual_bs_iterations',
                             type=int, default=1, help="virtual batch size iterations")
         return parser
@@ -34,7 +35,7 @@ class CodaPrompt(ContinualModel):
     def __init__(self, backbone, loss, args, transform, dataset=None):
         del backbone
         logging.info("-" * 20)
-        logging.info(f"CODA-Prompt USES A CUSTOM BACKBONE: `vit_base_patch16_224.augreg_in21k_ft_in1k`.")
+        logging.info("CODA-Prompt USES A CUSTOM BACKBONE: `vit_base_patch16_224.augreg_in21k_ft_in1k`.")
         logging.info("Pretrained on Imagenet 21k and finetuned on ImageNet 1k.")
         logging.info("-" * 20)
 
@@ -43,7 +44,7 @@ class CodaPrompt(ContinualModel):
         self.dataset = get_dataset(args)
         self.n_classes = self.dataset.N_CLASSES
         self.n_tasks = self.dataset.N_TASKS
-        backbone = Model(num_classes=self.n_classes, pt=True, prompt_param=[self.n_tasks, [args.pool_size, args.prompt_len, 0]])
+        backbone = Model(num_classes=self.n_classes, pt=True, prompt_param=[self.n_tasks, [args.pool_size, args.prompt_len, args.ortho_mu]])
         super().__init__(backbone, loss, args, transform, dataset=dataset)
         self.net.task_id = 0
         self.opt = self.get_optimizer()
