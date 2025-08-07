@@ -15,13 +15,13 @@ Arguments
 	*Help*: Model name.
 
 	- *Default*: ``None``
-	- *Choices*: ``derpp, xder-rpc, xder-ce, er-ace, ewc-on, er-ace-aer-abs, er-tricks, coda-prompt, sgd, er, er-ace-star, er-star, clip, joint-gcl, gss, icarl, lwf-mc, agem, twf, lwf, llava, dualprompt, xder-rpc-star, lws, starprompt, mer, bic, lucir, second-stage-starprompt, ranpac, hal, der, slca, gdumb, idefics, rpc, puridiver, dap, xder, spr, attriclip, derpp-star, joint, si, cnll, first-stage-starprompt, gem, fdr, er-ace-tricks, l2p, pnn, agem-r, ccic, second-order``
+	- *Choices*: ``derpp, xder-rpc, xder-ce, er-ace, ewc-on, er-ace-aer-abs, er-tricks, coda-prompt, xder-rpc-cscct, sgd, icarl-cscct, er, cgil, er-ace-star, er-star, clip, gdumb-lider, joint-gcl, derpp-casper, gss, zscl, derpp-cscct, icarl, lwf-mc, agem, twf, lwf, llava, derpp-lider, dualprompt, xder-rpc-star, lws, moe-adapters, starprompt, mer, bic, lucir, second-stage-starprompt, ranpac, hal, der, slca, icarl-lider, gdumb, er-ace-casper, idefics, rpc, puridiver, dap, xder, spr, attriclip, derpp-star, joint, si, cnll, first-stage-starprompt, gem, icarl-casper, fdr, er-ace-tricks, er-ace-lider, l2p, pnn, agem-r, ccic, er-ace-cscct, second-order, xder-rpc-casper``
 
 **\-\-backbone** : str (with underscores replaced by dashes)
 	*Help*: Backbone network name.
 
 	- *Default*: ``None``
-	- *Choices*: ``resnet50, resnet50-pt, resnet32, preact-resnet18, resnet18, resnet18-7x7-pt, reduced-resnet18, resnet34, resnet18-spr, efficientnet, vit, mnistmlp``
+	- *Choices*: ``resnet50, resnet50-pt, resnet32, preact-resnet18, resnet18, resnet18-7x7-pt, reduced-resnet18, resnet34, resnet18-spr, efficientnet, vit, mnistmlp-pnn, mnistmlp, resnet18-pnn``
 
 **\-\-load_best_args** : unknown
 	*Help*: (deprecated) Loads the best arguments for each method, dataset and memory buffer. NOTE: This option is deprecated and not up to date.

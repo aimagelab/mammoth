@@ -16,8 +16,10 @@ dependencies = [
     "scikit-learn>=1.6.1",
     "sphinx==7.2.6",
     "sphinx-toolbox==3.5.0",
-    "mammoth"
+    "timm==0.9.8",
+    "xitorch>=0.5.1",
+    "transformers>=4.50.3",
 ]
 
 [tool.uv.sources]
-mammoth_cl = { workspace = true }
+mammoth = { workspace = true }
