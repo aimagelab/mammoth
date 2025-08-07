@@ -39,6 +39,9 @@ jobs:
           python-version: "3.10"
       - name: Install uv
         uses: astral-sh/setup-uv@v5
+      - name: Install dependencies
+        run: |
+          uv sync --extra extra
       - name: Build docs
         run: |
           cd docs && uv run ../utils/args.py && uv run sphinx-build -j auto . ../_build && cd ..
