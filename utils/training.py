@@ -156,7 +156,7 @@ def train(model: ContinualModel, dataset: ContinualDataset,
     model.net.to(model.device)
     torch.cuda.empty_cache()
 
-    with track_system_stats(logger) as system_tracker:
+    with track_system_stats(logger, device=args.device) as system_tracker:
         results, results_mask_classes = [], []
 
         if args.eval_future:
