@@ -71,7 +71,7 @@ def train(args: Namespace):
     model.net.to(model.device)
     torch.cuda.empty_cache()
 
-    with track_system_stats(logger) as system_tracker:
+    with track_system_stats(logger, device=args.device) as system_tracker:
         epoch, i = 0, 0
         model.net.train()
 
