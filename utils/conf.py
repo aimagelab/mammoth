@@ -80,8 +80,8 @@ def get_alloc_memory_all_devices(avail_devices=None, return_all=False) -> Union[
             gpu_memory_nvidiasmi.append(-1)
 
         del _
-        gc.collect()
-        torch.cuda.empty_cache()
+        # gc.collect()
+        # torch.cuda.empty_cache()
 
     if return_all:
         return gpu_memory_reserved, gpu_memory_allocated, gpu_memory_nvidiasmi

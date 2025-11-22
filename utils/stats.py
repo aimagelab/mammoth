@@ -22,9 +22,9 @@ try:
 except BaseException:
     get_memory_mb = None
 
-try:
-    import torch
+import torch
 
+try:
     if torch.cuda.is_available():
         from utils.conf import get_alloc_memory_all_devices
 
