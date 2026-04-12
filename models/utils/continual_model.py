@@ -13,7 +13,7 @@ The `get_optimizer` method returns the optimizer to be used for training. Defaul
 
 The `load_buffer` method is called when a buffer is loaded. Default: do nothing.
 
-The `meta_observe`, `meta_begin_task` and `meta_end_task` methods are wrappers for `observe`, `begin_task` and `end_task` methods, respectively. They take care of updating the internal counters and of logging to wandb if installed.
+The `meta_observe`, `meta_begin_task`, `meta_end_task` and `meta_end_eval` methods are wrappers for `observe`, `begin_task`, `end_task` and `end_eval` methods, respectively. They take care of updating the internal counters and of logging to wandb if installed.
 
 The `autolog_wandb` method is used to automatically log to wandb all variables starting with "_wandb_" or "loss" in the observe function. It is called by `meta_observe` if wandb is installed. It can be overridden to add custom logging.
 """
@@ -367,6 +367,12 @@ class ContinualModel(nn.Module):
         """
         pass
 
+    def end_eval(self, dataset: 'ContinualDataset', accs: Tuple[List, List]) -> None:
+        """
+        Called after task-level evaluation.
+        """
+        pass
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Computes a forward pass.
@@ -480,6 +486,17 @@ class ContinualModel(nn.Module):
 
         self.end_task(dataset)
         self._current_task += 1
+
+    def meta_end_eval(self, dataset, accs):
+        """
+        Wrapper for `end_eval` method.
+        """
+        current_task = self._current_task
+        self._current_task = self._current_task - 1 if self._current_task > 0 else 0
+        try:
+            self.end_eval(dataset, accs)
+        finally:
+            self._current_task = current_task
 
     @abstractmethod
     def observe(self, inputs: torch.Tensor, labels: torch.Tensor,

@@ -29,6 +29,8 @@ Task-related attributes
 
 - **current_task**: the index of the current task (starting from 0). This attribute is automatically updated at the end of each task (*after* the **end_task**).
 
+  During **meta_end_eval**, this value is temporarily set to the task that has just been evaluated.
+
 - **n_classes_current_task**: the number of classes in the current task.
 
 - **n_past_classes**: the total number of classes seen so far (past).
@@ -62,11 +64,13 @@ The `ContinualModel` class defines a few important methods that can be overridde
 
 1. **begin_task**, **end_task**: These methods are called at the beginning and end of each task, respectively. They can be overridden to perform additional operations at the beginning and end of each task. They take a single argument, `dataset`, which is the current task dataset.
 
-2. **begin_epoch**, **end_epoch**: Same as above, but for each epoch. They also take the input `epoch` as an argument.
+2. **end_eval**: This method is called after each task-level evaluation. It takes `dataset` and `accs` as arguments, where `accs` is a tuple containing class-il and task-il accuracies.
 
-3. **get_parameters**: This method returns the parameters that should be optimized by the optimizer. By default, it returns all the parameters of the model, but it can be overridden to optimize only a subset of the parameters.
+3. **begin_epoch**, **end_epoch**: Same as above, but for each epoch. They also take the input `epoch` as an argument.
 
-4. **get_optimizer**: This method returns the optimizer used to update the model parameters. It calls the `get_parameters` method to get the parameters to optimize.
+4. **get_parameters**: This method returns the parameters that should be optimized by the optimizer. By default, it returns all the parameters of the model, but it can be overridden to optimize only a subset of the parameters.
+
+5. **get_optimizer**: This method returns the optimizer used to update the model parameters. It calls the `get_parameters` method to get the parameters to optimize.
 
 Mystical methods
 ~~~~~~~~~~~~~~~~

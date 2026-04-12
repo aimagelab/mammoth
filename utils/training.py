@@ -312,6 +312,8 @@ def train(model: ContinualModel, dataset: ContinualDataset,
                 results_transf.append(transf_accs[0])
                 results_mask_classes_transf.append(transf_accs[1])
 
+            model.meta_end_eval(eval_dataset, accs)
+
             logged_accs = eval_dataset.log(args, logger, accs, cur_task, dataset.SETTING)
 
             if dataset.SETTING != 'biased-class-il':

@@ -88,12 +88,14 @@ Other notable modules
 
 - :ref:`buffer <module-utils.buffer>`: contains the `Buffer` class, which is used to store the data for the replay buffer.  
 
-- :ref:`training <module-utils.training>`: contains the `train` function, which is responsible for training the model, and the `evaluate` function, which is responsible for evaluating the model. The `train` function iterates over all the tasks and supports `3` utility functions: `begin_task`, `end_task`, and `observe`:
+- :ref:`training <module-utils.training>`: contains the `train` function, which is responsible for training the model, and the `evaluate` function, which is responsible for evaluating the model. The `train` function iterates over all the tasks and supports `4` utility functions: `begin_task`, `end_task`, `observe`, and `end_eval`:
 
   - `begin_task`: called at the beginning of each task. It is useful if the model needs to set its internal state before     starting the task (e.g., calculating some preliminary statistics or adding new parameters for the new task).  
 
   - `end_task`: called at the end of each task. This function can be used to save the model after each task or perform some last-minute operations before the task ends (for example, in the case of `gdumb` it can be used to train on the data currently stored in the buffer).  
 
   - `observe`: called at each training step. It should contain *all the logic to train the model on the current batch*, including updating the replay buffer and the target network (if applicable). It should also return the loss value for the current batch.  
+
+  - `end_eval`: called after each task-level evaluation. It can be used to compute and log custom post-evaluation metrics that depend on the final accuracies of the just-evaluated task.
 
 - :ref:`conf <module-utils.conf>`: contains some utility functions such as the default path where to download the datasets (`base_path`) and the default device to use (`get_device`). 

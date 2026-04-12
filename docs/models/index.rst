@@ -47,7 +47,7 @@ The **ContinualModel** loads the backbone model (i.e., the model used to compute
 Handling Begin and End of tasks and epochs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Besides the **observe** and **forward** methods, the **ContinualModel** provides the **begin_task** and **end_task** methods, which are called at the beginning and at the end of each task respectively, and the **begin_epoch** and **end_epoch** methods, which are called at the beginning and at the end of each epoch respectively. These methods can be overridden to implement custom behavior. For example, the **end_task** method can be used to save the model parameters at the end of each task.
+Besides the **observe** and **forward** methods, the **ContinualModel** provides the **begin_task** and **end_task** methods, which are called at the beginning and at the end of each task respectively, the **begin_epoch** and **end_epoch** methods, which are called at the beginning and at the end of each epoch respectively, and the **end_eval** method, which is called after task-level evaluation. These methods can be overridden to implement custom behavior. For example, the **end_task** method can be used to save the model parameters at the end of each task.
 
 Model arguments
 ---------------
@@ -91,7 +91,7 @@ Other utility methods
 Advanced usage
 ---------------
 
-The **ContinualModel** class relies on a few hooks to automatically update its internal attributes. These hooks are called before the **begin_task**, **end_task**, and **observe** methods (**meta_begin_task**, **meta_end_task**, and **meta_observe** respectively). If you want to implement a custom behavior, you can override these hooks. 
+The **ContinualModel** class relies on a few hooks to automatically update its internal attributes. These hooks are called before the **begin_task**, **end_task**, and **observe** methods (**meta_begin_task**, **meta_end_task**, and **meta_observe** respectively), and after task-level evaluation (**meta_end_eval**). If you want to implement a custom behavior, you can override these hooks.
 
 .. note::
     The **meta_observe** is responsible for removing the *unlabeled* samples (i.e., those with an associated label set to ``-1``) from the batch if the model does not support the ``--label_perc_by_class`` and ``--label_perc_by_task`` parameters.

@@ -42,6 +42,16 @@ In Mammoth, a model is defined as a class that inherits from the base class :ref
     
         The method receives as input the current input batch (i.e., **x**) and must return the output of the model.
 
+3. **end_eval** (*optional*): This method is called after each task-level evaluation and can be used to compute custom post-evaluation metrics.
+
+    .. code-block:: python
+
+        def end_eval(self, dataset, accs):
+            class_il_accs, task_il_accs = accs
+            ...
+
+    The method receives the current dataset and a tuple ``accs`` containing class-il and task-il accuracies.
+
 
 Basic example - the `sgd` model
 --------------------------------

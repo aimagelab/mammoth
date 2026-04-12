@@ -718,7 +718,7 @@ class TAK(ContinualModel):
                     "Task": self.current_task,
                 }
             )
-        if self.current_task == self.num_total_tasks:
+        if self.current_task == self.num_total_tasks-1:
             self.compute_metrics_by_alpha()
 
     def penalty_weight(self):
@@ -932,11 +932,12 @@ class TAK(ContinualModel):
         else:
             metric_name = f"alpha_sweep_{sweep_id}"
             norm_metric_name = f"norm_alpha_sweep_{sweep_id}"
-        if not hasattr(self, "_alpha_metric_defined"):
-            wandb.define_metric("alpha")
-            self._alpha_metric_defined = True
-        wandb.define_metric(metric_name, step_metric="alpha")
-        wandb.define_metric(norm_metric_name, step_metric="alpha")
+        if self.args.nowand == 0:
+            if not hasattr(self, "_alpha_metric_defined"):
+                wandb.define_metric("alpha")
+                self._alpha_metric_defined = True
+            wandb.define_metric(metric_name, step_metric="alpha")
+            wandb.define_metric(norm_metric_name, step_metric="alpha")
 
         alphas = np.arange(
             self.args.alpha_sweep_start,
@@ -958,10 +959,11 @@ class TAK(ContinualModel):
                 f"Alpha: {alpha} - Acc: {sum(accs_mask_classes) / len(accs_mask_classes):.4f} - Norm Acc: {sum(norm_mask_acc) / len(norm_mask_acc):.4f}"
             )
             print(f"single tasks accs: {accs_mask_classes}")
-            wandb.log(
-                {
-                    "alpha": alpha,
-                    metric_name: sum(accs_mask_classes) / len(accs_mask_classes),
-                    norm_metric_name: sum(norm_mask_acc) / len(norm_mask_acc),
-                }
-            )
+            if self.args.nowand == 0:
+                wandb.log(
+                    {
+                        "alpha": alpha,
+                        metric_name: sum(accs_mask_classes) / len(accs_mask_classes),
+                        norm_metric_name: sum(norm_mask_acc) / len(norm_mask_acc),
+                    }
+                )
