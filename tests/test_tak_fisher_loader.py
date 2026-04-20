@@ -72,3 +72,39 @@ def test_fisher_loader_http(fisher_cache_dir):
     finally:
         server.shutdown()
         server.server_close()
+
+
+def test_fisher_loader_fallback_dataset_name(tmp_path):
+    fallback_dataset_name = "seq-8vision"
+    runtime_dataset_name = "seq-cifar100-224"
+    _write_fake_fisher_files(str(tmp_path), fallback_dataset_name, task_id=0)
+
+    loader = FisherLoader(
+        str(tmp_path),
+        runtime_dataset_name,
+        torch.device("cpu"),
+        fp_precision="fp32",
+        fallback_dataset_name=fallback_dataset_name,
+    )
+
+    num_ggT, num_aaT = loader.load_kfac(0, only_counts=True)
+    assert num_ggT == 7
+    assert num_aaT == 7
+
+    ggT, aaT, ffT, num_ggT, num_aaT = loader.load_kfac(0)
+    assert num_ggT == 7
+    assert num_aaT == 7
+    assert "w" in ggT and "w" in aaT and "w" in ffT
+
+
+def test_fisher_loader_available_tasks_single_checkpoint(tmp_path):
+    dataset_name = "seq-8vision"
+    _write_fake_fisher_files(str(tmp_path), dataset_name, task_id=0)
+
+    loader = FisherLoader(
+        str(tmp_path), dataset_name, torch.device("cpu"), fp_precision="fp32"
+    )
+
+    assert loader.has_task(0)
+    assert not loader.has_task(1)
+    assert loader.get_available_task_ids(4) == [0]

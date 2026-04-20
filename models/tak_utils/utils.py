@@ -4,10 +4,13 @@ import torch
 import math
 import os
 import hashlib
+import json
 import logging
+import re
 import warnings
 import urllib.request
-from urllib.parse import urljoin
+from urllib.error import HTTPError
+from urllib.parse import quote, urljoin
 
 from utils import binary_to_boolean_type
 from models.utils.continual_model import ContinualModel
@@ -273,12 +276,174 @@ def make_psd(x, to64=False):
 
 
 class FisherLoader:
-    def __init__(self, fisher_cache, dataset_name, device, fp_precision="fp32"):
+    def __init__(
+        self,
+        fisher_cache,
+        dataset_name,
+        device,
+        fp_precision="fp32",
+        fallback_dataset_name=None,
+    ):
         self.dataset_name = dataset_name
+        self.fallback_dataset_name = fallback_dataset_name
         self.device = device
         self.fisher_cache = fisher_cache
         self.fp_precision = fp_precision
         self.postprocessing = None
+        self._dataset_name_hints: list[str] | None = None
+
+    @staticmethod
+    def _append_unique(items: list[str], value: str | None) -> None:
+        if value and value not in items:
+            items.append(value)
+
+    def _extract_path_dataset_hints(self) -> list[str]:
+        hints: list[str] = []
+        if not isinstance(self.fisher_cache, str):
+            return hints
+
+        parts = self.fisher_cache.replace("@", "/").split("/")
+        for part in parts:
+            if not part.startswith("fisher_"):
+                continue
+            dataset_hint = part[len("fisher_") :].strip()
+            if dataset_hint in {"", "cache"}:
+                continue
+            self._append_unique(hints, dataset_hint)
+            if not dataset_hint.startswith("seq-"):
+                self._append_unique(hints, f"seq-{dataset_hint}")
+
+        return hints
+
+    def _list_cache_entries(self) -> list[str]:
+        if self._is_hf_source():
+            repo_id, base_path, revision = self._parse_hf_source(self.fisher_cache)
+            encoded_repo = quote(repo_id, safe="")
+            encoded_revision = quote(revision, safe="")
+            encoded_base_path = quote(base_path.strip("/"), safe="/")
+            endpoint = (
+                f"https://huggingface.co/api/models/{encoded_repo}/tree/{encoded_revision}"
+            )
+            if encoded_base_path:
+                endpoint = f"{endpoint}/{encoded_base_path}"
+            try:
+                with urllib.request.urlopen(endpoint) as response:
+                    payload = json.loads(response.read().decode("utf-8"))
+                if not isinstance(payload, list):
+                    return []
+                return [
+                    item["path"]
+                    for item in payload
+                    if isinstance(item, dict)
+                    and item.get("type") == "file"
+                    and isinstance(item.get("path"), str)
+                ]
+            except Exception:
+                return []
+
+        if self._is_http_source():
+            return []
+
+        try:
+            return [
+                os.path.join(self.fisher_cache, name)
+                for name in os.listdir(self.fisher_cache)
+            ]
+        except Exception:
+            return []
+
+    def _extract_dataset_hints_from_entries(self) -> list[str]:
+        hints: list[str] = []
+        pattern = re.compile(
+            r"^(?P<dataset>.+)_task_\d+_(?:num_(?:aaT|ggT)|aaT|ggT|ffT)\.pt$"
+        )
+        for entry in self._list_cache_entries():
+            filename = os.path.basename(entry)
+            match = pattern.match(filename)
+            if not match:
+                continue
+            dataset_hint = match.group("dataset")
+            self._append_unique(hints, dataset_hint)
+        return hints
+
+    def _get_dataset_name_hints(self) -> list[str]:
+        if self._dataset_name_hints is not None:
+            return self._dataset_name_hints
+
+        hints: list[str] = []
+        for hint in self._extract_path_dataset_hints():
+            self._append_unique(hints, hint)
+        for hint in self._extract_dataset_hints_from_entries():
+            self._append_unique(hints, hint)
+
+        self._dataset_name_hints = hints
+        return hints
+
+    def _dataset_name_candidates(self) -> list[str]:
+        names = [self.dataset_name]
+        if (
+            self.fallback_dataset_name is not None
+            and self.fallback_dataset_name not in names
+        ):
+            names.append(self.fallback_dataset_name)
+        for hint in self._get_dataset_name_hints():
+            self._append_unique(names, hint)
+        return names
+
+    def _try_resolve_file(self, filename: str) -> str | None:
+        try:
+            file_path = self._resolve_file(filename)
+        except FileNotFoundError:
+            return None
+        except HTTPError as e:
+            if e.code == 404:
+                return None
+            raise
+        except Exception as e:
+            if e.__class__.__name__ in {"EntryNotFoundError", "LocalEntryNotFoundError"}:
+                return None
+            raise
+
+        if os.path.exists(file_path):
+            return file_path
+        return None
+
+    def _resolve_count_paths(self, task_id: int) -> tuple[str, str, str]:
+        for dataset_name in self._dataset_name_candidates():
+            base_name = f"{dataset_name}_task_{task_id}"
+            aaT_count_path = self._try_resolve_file(f"{base_name}_num_aaT.pt")
+            ggT_count_path = self._try_resolve_file(f"{base_name}_num_ggT.pt")
+
+            if aaT_count_path is None and ggT_count_path is None:
+                continue
+
+            if aaT_count_path is None or ggT_count_path is None:
+                raise FileNotFoundError(
+                    f"Incomplete Fisher counts for `{base_name}` in `{self.fisher_cache}`. "
+                    "Expected both `_num_aaT.pt` and `_num_ggT.pt`."
+                )
+
+            return base_name, aaT_count_path, ggT_count_path
+
+        expected = [f"{name}_task_{task_id}" for name in self._dataset_name_candidates()]
+        raise FileNotFoundError(
+            f"Fisher cache for task {task_id} not found in `{self.fisher_cache}`. "
+            f"Tried dataset prefixes: {expected}."
+        )
+
+    def has_task(self, task_id: int) -> bool:
+        try:
+            self._resolve_count_paths(task_id)
+            return True
+        except FileNotFoundError:
+            return False
+
+    def get_available_task_ids(self, max_tasks: int) -> list[int]:
+        task_ids = []
+        for task_id in range(max_tasks):
+            if self.has_task(task_id):
+                task_ids.append(task_id)
+        return task_ids
 
     def _is_hf_source(self) -> bool:
         return isinstance(self.fisher_cache, str) and self.fisher_cache.startswith(
@@ -405,24 +570,18 @@ class FisherLoader:
         ]
         | tuple[int, int]
     ):
-        base_name = f"{self.dataset_name}_task_{task_id}"
-        fisher_cache_path_num_aaT = self._resolve_file(f"{base_name}_num_aaT.pt")
-        fisher_cache_path_num_ggT = self._resolve_file(f"{base_name}_num_ggT.pt")
+        base_name, fisher_cache_path_num_aaT, fisher_cache_path_num_ggT = (
+            self._resolve_count_paths(task_id)
+        )
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            if os.path.exists(fisher_cache_path_num_aaT):
-                assert os.path.exists(fisher_cache_path_num_ggT)
-                cur_num_aaT: int = torch.load(
-                    fisher_cache_path_num_aaT, map_location="cpu"
-                ).item()
-                cur_num_ggT: int = torch.load(
-                    fisher_cache_path_num_ggT, map_location="cpu"
-                ).item()
-            else:
-                raise FileNotFoundError(
-                    f"Fisher cache file {fisher_cache_path_num_aaT} or {fisher_cache_path_num_ggT} not found. "
-                )
+            cur_num_aaT: int = torch.load(
+                fisher_cache_path_num_aaT, map_location="cpu"
+            ).item()
+            cur_num_ggT: int = torch.load(
+                fisher_cache_path_num_ggT, map_location="cpu"
+            ).item()
 
         if only_counts:
             logging.info(
@@ -430,13 +589,19 @@ class FisherLoader:
             )
             return cur_num_ggT, cur_num_aaT
 
-        fisher_cache_path_aaT = self._resolve_file(f"{base_name}_aaT.pt")
-        fisher_cache_path_ggT = self._resolve_file(f"{base_name}_ggT.pt")
-        fisher_cache_path_ffT = self._resolve_file(f"{base_name}_ffT.pt")
+        fisher_cache_path_aaT = self._try_resolve_file(f"{base_name}_aaT.pt")
+        fisher_cache_path_ggT = self._try_resolve_file(f"{base_name}_ggT.pt")
+        fisher_cache_path_ffT = self._try_resolve_file(f"{base_name}_ffT.pt")
 
-        assert os.path.exists(fisher_cache_path_aaT)
-        assert os.path.exists(fisher_cache_path_ggT)
-        assert os.path.exists(fisher_cache_path_ffT)
+        if (
+            fisher_cache_path_aaT is None
+            or fisher_cache_path_ggT is None
+            or fisher_cache_path_ffT is None
+        ):
+            raise FileNotFoundError(
+                f"Incomplete Fisher tensors for `{base_name}` in `{self.fisher_cache}`. "
+                "Expected `_aaT.pt`, `_ggT.pt`, and `_ffT.pt`."
+            )
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")

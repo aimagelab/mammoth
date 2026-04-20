@@ -186,6 +186,14 @@ class TAK(ContinualModel):
             "using `hf://<owner>/<repo>/<optional/subpath>@<optional_revision>`.",
         )
         kfac_group.add_argument(
+            "--fisher_dataset_name",
+            type=str,
+            default=None,
+            required=False,
+            help="Optional fallback dataset prefix for Fisher cache files. "
+            "By default TAK first looks for `<dataset>_task_<id>_*`.",
+        )
+        kfac_group.add_argument(
             "--train_percent",
             type=str,
             default="1.0",
@@ -348,7 +356,11 @@ class TAK(ContinualModel):
         )
 
         self.fisher_loader = FisherLoader(
-            self.args.fisher_cache, dataset.NAME, self.device, fp_precision="fp32"
+            self.args.fisher_cache,
+            dataset.NAME,
+            self.device,
+            fp_precision="fp32",
+            fallback_dataset_name=self.args.fisher_dataset_name,
         )
 
         self.optimizer_builder = OptimizerBuilder(cmd_args=self.args)
@@ -382,6 +394,7 @@ class TAK(ContinualModel):
         self.norm_acc, self.norm_mask_acc = [], []
 
         self.task_loaded = False
+        self.has_fisher_penalty = False
 
     def create_param_like(self, param, requires_grad):
         return [
@@ -492,6 +505,7 @@ class TAK(ContinualModel):
         self.delta_w_names = list(self.delta_w_dict.keys())
 
         if not self.args.load_fisher:
+            self.has_fisher_penalty = False
             if (
                 self.args.fisher_task_id is None
                 or self.current_task == self.args.fisher_task_id
@@ -513,44 +527,60 @@ class TAK(ContinualModel):
                     f"it is not the specified task {self.args.fisher_task_id}."
                 )
         else:
-            counts = [
-                self.fisher_loader.load_kfac(t, only_counts=True)
-                for t in range(dataset.N_TASKS)
-            ]
-            tot_ggT = sum(
-                [
-                    cnt[0]
-                    for idx_cnt, cnt in enumerate(counts)
-                    if idx_cnt != self.current_task
-                ]
-            )
-            tot_aaT = sum(
-                [
-                    cnt[1]
-                    for idx_cnt, cnt in enumerate(counts)
-                    if idx_cnt != self.current_task
-                ]
-            )
-
-            assert tot_ggT == tot_aaT
-
+            self.tasks_ggT = {}
+            self.tasks_ffT = {}
+            self.tasks_aaT = {}
             self.coeffs = []
-            num_penalties = dataset.N_TASKS - 1 if self.args.fisher_ideal else 1
 
-            for t in range(dataset.N_TASKS):
-                ggT, aaT, ffT, cur_num_ggT, cur_num_aaT = self.fisher_loader.load_kfac(
-                    t
+            available_task_ids = self.fisher_loader.get_available_task_ids(
+                dataset.N_TASKS
+            )
+            if len(available_task_ids) == 0:
+                raise FileNotFoundError(
+                    f"No Fisher cache files found in `{self.args.fisher_cache}` for dataset "
+                    f"`{dataset.NAME}`"
+                    + (
+                        f" or fallback `{self.args.fisher_dataset_name}`"
+                        if self.args.fisher_dataset_name
+                        else ""
+                    )
+                    + "."
                 )
-                assert cur_num_ggT == cur_num_aaT
-                coeff = cur_num_ggT / tot_ggT
 
-                if t == 0:
-                    for key in aaT.keys():
-                        if key in self.tasks_ggT.keys():
-                            for p_l in range(num_penalties):
-                                self.tasks_aaT[key][p_l].zero_()
-                                self.tasks_ggT[key][p_l].zero_()
-                        else:
+            penalty_task_ids = [
+                task_id
+                for task_id in available_task_ids
+                if task_id != self.current_task
+            ]
+            self.has_fisher_penalty = len(penalty_task_ids) > 0
+
+            if len(penalty_task_ids) == 0:
+                print(
+                    "No Fisher cache tasks available for regularization against past tasks "
+                    f"at current task {self.current_task}."
+                )
+            else:
+                counts_by_task = {
+                    task_id: self.fisher_loader.load_kfac(task_id, only_counts=True)
+                    for task_id in penalty_task_ids
+                }
+                tot_ggT = sum(cnt[0] for cnt in counts_by_task.values())
+                tot_aaT = sum(cnt[1] for cnt in counts_by_task.values())
+
+                assert tot_ggT == tot_aaT
+
+                num_penalties = len(penalty_task_ids) if self.args.fisher_ideal else 1
+
+                for penalty_idx, task_id in enumerate(penalty_task_ids):
+                    ggT, aaT, ffT, cur_num_ggT, cur_num_aaT = self.fisher_loader.load_kfac(
+                        task_id
+                    )
+                    assert cur_num_ggT == cur_num_aaT
+                    coeff = cur_num_ggT / tot_ggT
+                    self.coeffs.append(coeff)
+
+                    if penalty_idx == 0:
+                        for key in aaT.keys():
                             self.tasks_aaT[key] = [
                                 torch.zeros_like(aaT[key]) for _ in range(num_penalties)
                             ]
@@ -558,14 +588,8 @@ class TAK(ContinualModel):
                                 torch.zeros_like(ggT[key]) for _ in range(num_penalties)
                             ]
 
-                    for key in ffT.keys():
-                        if key in self.tasks_ffT.keys():
-                            self.tasks_ffT[key].zero_()
-                        else:
+                        for key in ffT.keys():
                             self.tasks_ffT[key] = torch.zeros_like(ffT[key])
-
-                if t != self.current_task:
-                    self.coeffs.append(coeff)
 
                     for key in ffT.keys():
                         self.tasks_ffT[key].add_(ffT[key] / tot_ggT)
@@ -580,11 +604,10 @@ class TAK(ContinualModel):
                             )
                             self.tasks_ggT[key][0].add_(ggT[key])
                         else:
-                            t_hat = t if t <= self.current_task else t - 1
-                            self.tasks_ggT[key][t_hat].copy_(ggT[key])
-                            self.tasks_aaT[key][t_hat].copy_(aaT[key])
+                            self.tasks_ggT[key][penalty_idx].copy_(ggT[key])
+                            self.tasks_aaT[key][penalty_idx].copy_(aaT[key])
 
-                del aaT, ggT, ffT
+                    del aaT, ggT, ffT
 
         all_params = [
             p for param_list in self.delta_w_dict.values() for p in param_list
@@ -810,7 +833,8 @@ class TAK(ContinualModel):
         loss.backward()
 
         if (
-            (self.args.load_fisher)
+            self.args.load_fisher
+            and self.has_fisher_penalty
             and (self.task_iteration > 0)
             and (self.task_iteration % self.args.virtual_bs_n == 0)
         ):
