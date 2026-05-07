@@ -18,6 +18,18 @@ The core idea of Mammoth is that it is designed to be modular, easy to extend, a
 
 With Mammoth, nothing is set in stone. You can easily add new models, datasets, training strategies, or functionalities.
 
+## 📢 News
+
+### [Task Arithmetic with KFAC regularization](https://arxiv.org/pdf/2602.17385)
+* Accepted @ ICLR 2026
+
+You can now run it as:
+
+```bash
+python main.py --loadcheck <hf-checkpoint-url>
+python main.py --model tak --load_fisher 1 --fisher_cache hf://<user-or-org>/<repo>/<path>
+```
+
 ## 📖 Table of Contents
 
 - [Documentation](https://aimagelab.github.io/mammoth/index.html)
@@ -98,7 +110,6 @@ Useful options:
 - `--revision <branch-or-tag>`
 - `--exclude <glob>` (can be repeated)
 - `--dry-run`
-
 
 ## 🆕 New Features
 
