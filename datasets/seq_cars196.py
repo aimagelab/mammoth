@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import torch
 import pickle
 from typing import List, Dict
@@ -52,6 +53,16 @@ def load_and_preprocess_cars196(class_names: List[str], dataset: Dict[str, List[
 
 class MyCars196(Dataset):
     N_CLASSES = 196
+    HF_REPO_ID = 'aimagelab-ta/cars196'
+    HF_REPO_TYPE = 'dataset'
+    HF_REVISION = 'main'
+    REQUIRED_FILES = (
+        'train_images.pt',
+        'train_labels.pt',
+        'test_images.pt',
+        'test_labels.pt',
+    )
+    CLASS_NAME_FILES = ('class_names.json', 'class_names.pkl')
 
     """
     Overrides the CIFAR100 dataset to change the getitem function.
@@ -71,13 +82,10 @@ class MyCars196(Dataset):
         self.target_transform = target_transform
         self.not_aug_transform = transforms.ToTensor()
 
+        self.ensure_dataset_files(root)
+
         train_str = 'train' if train else 'test'
-        if not os.path.exists(f'{root}/{train_str}_images.pt'):
-            raise FileNotFoundError("Automatic download of the Stanford Cars196 is broken. "
-                                    "See `https://github.com/pytorch/vision/issues/7545#issuecomment-1631441616`")
-            # once downloaded, ensure the data is pre-processed and cached.
-            # See `self.load_and_preprocess_dataset(root, train_str)` for more details.
-        else:
+        if os.path.exists(f'{root}/{train_str}_images.pt'):
             logging.info(f"Loading pre-processed {train_str} dataset...")
             self.data = torch.load(f'{root}/{train_str}_images.pt', weights_only=True)
             self.targets = torch.load(f'{root}/{train_str}_labels.pt', weights_only=True)
@@ -87,8 +95,77 @@ class MyCars196(Dataset):
             elif os.path.exists(base_path() + f'cars196/class_names.pkl'):
                 with open(base_path() + f'cars196/class_names.pkl', 'rb') as f:
                     self.class_names = pickle.load(f)
+        else:
+            raise FileNotFoundError(
+                f'Could not find preprocessed split files in `{root}` after attempting download from '
+                f'`{MyCars196.HF_REPO_ID}`.'
+            )
 
         self.class_names = MyCars196.get_class_names()
+
+    @classmethod
+    def _download_file_from_hf(cls, root: str, filename: str) -> None:
+        try:
+            from huggingface_hub import hf_hub_download
+        except ImportError as e:
+            raise ImportError(
+                'huggingface_hub is required to download CARS196 automatically. '
+                'Install it with `pip install huggingface_hub`.'
+            ) from e
+
+        downloaded_path = hf_hub_download(
+            repo_id=cls.HF_REPO_ID,
+            filename=filename,
+            repo_type=cls.HF_REPO_TYPE,
+            revision=cls.HF_REVISION,
+        )
+
+        target_path = os.path.join(root, filename)
+        target_dir = os.path.dirname(target_path)
+        if target_dir:
+            os.makedirs(target_dir, exist_ok=True)
+        shutil.copy2(downloaded_path, target_path)
+
+    @classmethod
+    def ensure_dataset_files(cls, root: str) -> None:
+        os.makedirs(root, exist_ok=True)
+
+        missing_required = [
+            filename for filename in cls.REQUIRED_FILES
+            if not os.path.exists(os.path.join(root, filename))
+        ]
+        has_class_names = any(
+            os.path.exists(os.path.join(root, filename))
+            for filename in cls.CLASS_NAME_FILES
+        )
+
+        if not missing_required and has_class_names:
+            return
+
+        if missing_required:
+            logging.info(
+                'Missing CARS196 files in `%s`. Downloading from `hf://%s@%s`.',
+                root,
+                cls.HF_REPO_ID,
+                cls.HF_REVISION,
+            )
+            for filename in missing_required:
+                cls._download_file_from_hf(root, filename)
+
+        if not has_class_names:
+            class_name_error = None
+            for filename in cls.CLASS_NAME_FILES:
+                try:
+                    cls._download_file_from_hf(root, filename)
+                    has_class_names = True
+                    break
+                except Exception as e:
+                    class_name_error = e
+            if not has_class_names:
+                raise FileNotFoundError(
+                    f'Could not find/download class names for CARS196 in `{root}`. '
+                    f'Expected one of: {cls.CLASS_NAME_FILES}.'
+                ) from class_name_error
 
     def load_and_preprocess_dataset(self, root, train_str='train'):
         self.data, self.targets, class_idx_to_name = load_and_preprocess_cars196(self.class_names, self.dataset)
