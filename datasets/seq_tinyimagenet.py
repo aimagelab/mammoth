@@ -17,8 +17,9 @@ from torch.utils.data import Dataset
 
 from backbone.ResNetBlock import resnet18
 from datasets.transforms.denormalization import DeNormalize
+from datasets.utils.hf_download import ensure_required_files_from_hf
 from datasets.utils.continual_dataset import (ContinualDataset, fix_class_names_order,
-                                              store_masked_loaders)
+                                               store_masked_loaders)
 from utils import smart_joint
 from utils.conf import base_path
 from datasets.utils import set_default_from_args
@@ -26,6 +27,18 @@ from datasets.utils import set_default_from_args
 
 class TinyImagenet(Dataset):
     """Defines the Tiny Imagenet dataset."""
+
+    HF_REPO_ID = 'aimagelab-ta/tinyimg'
+    HF_REVISION = 'main'
+
+    @staticmethod
+    def _required_files() -> list[str]:
+        files = []
+        for split in ('train', 'val'):
+            for prefix in ('x', 'y'):
+                for idx in range(1, 21):
+                    files.append(f'processed/{prefix}_{split}_{idx:02d}.npy')
+        return files
 
     def __init__(self, root: str, train: bool = True, transform: Optional[nn.Module] = None,
                  target_transform: Optional[nn.Module] = None, download: bool = False) -> None:
@@ -36,15 +49,37 @@ class TinyImagenet(Dataset):
         self.target_transform = target_transform
         self.download = download
 
-        if download:
-            if os.path.isdir(root) and len(os.listdir(root)) > 0:
-                logging.info('Download not needed, files already on disk.')
-            else:
-                from onedrivedownloader import download
+        required_files = TinyImagenet._required_files()
+        missing_files = [
+            f for f in required_files if not os.path.isfile(smart_joint(root, f))
+        ]
+        if missing_files:
+            if not download:
+                raise FileNotFoundError(f'Missing TinyImageNet files in `{root}`: {missing_files[:5]}...')
 
-                logging.info('Downloading dataset')
+            try:
+                ensure_required_files_from_hf(
+                    local_dir=root,
+                    required_relpaths=required_files,
+                    repo_id=TinyImagenet.HF_REPO_ID,
+                    revision=TinyImagenet.HF_REVISION,
+                )
+            except Exception as e:
+                logging.warning('HF download for TinyImageNet failed, falling back to OneDrive: %s', e)
+                from onedrivedownloader import download
+                logging.info('Downloading TinyImageNet dataset from OneDrive')
                 ln = "https://unimore365-my.sharepoint.com/:u:/g/personal/263133_unimore_it/EVKugslStrtNpyLGbgrhjaABqRHcE3PB_r2OEaV7Jy94oQ?e=9K29aD"
                 download(ln, filename=smart_joint(root, 'tiny-imagenet-processed.zip'), unzip=True, unzip_path=root, clean=True)
+
+            missing_files = [
+                f for f in required_files if not os.path.isfile(smart_joint(root, f))
+            ]
+            if missing_files:
+                raise FileNotFoundError(
+                    f'Missing TinyImageNet files in `{root}` after download: {missing_files[:5]}...'
+                )
+        else:
+            logging.info('Download not needed, files already on disk.')
 
         self.data = []
         for num in range(20):

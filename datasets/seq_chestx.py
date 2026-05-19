@@ -9,6 +9,7 @@ from PIL import Image
 from typing import Tuple
 
 from datasets.utils import set_default_from_args
+from datasets.utils.hf_download import ensure_required_files_from_hf
 from utils import smart_joint
 from utils.conf import base_path
 from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
@@ -19,6 +20,14 @@ from utils.prompt_templates import templates
 
 class ChestX(Dataset):
     N_CLASSES = 6
+    HF_REPO_ID = 'aimagelab-ta/chestx'
+    HF_REVISION = 'main'
+    REQUIRED_FILES = [
+        'train_images.pkl',
+        'train_labels.pkl',
+        'test_images.pkl',
+        'test_labels.pkl',
+    ]
 
     """
     To reduce the effect of the severe imbalance in the dataset, we drop the two classes with the smallest and largest amount of samples.
@@ -44,15 +53,32 @@ class ChestX(Dataset):
         self.transform = transform
         self.target_transform = target_transform
 
-        if not os.path.exists(f'{root}/train_images.pkl'):
-            if download:
-                from onedrivedownloader import download
+        missing_files = [
+            f for f in ChestX.REQUIRED_FILES if not os.path.isfile(smart_joint(root, f))
+        ]
+        if missing_files:
+            if not download:
+                raise FileNotFoundError(f'Missing ChestX files in `{root}`: {missing_files}')
 
-                logging.info('Downloading dataset')
+            try:
+                ensure_required_files_from_hf(
+                    local_dir=root,
+                    required_relpaths=ChestX.REQUIRED_FILES,
+                    repo_id=ChestX.HF_REPO_ID,
+                    revision=ChestX.HF_REVISION,
+                )
+            except Exception as e:
+                logging.warning('HF download for ChestX failed, falling back to OneDrive: %s', e)
+                from onedrivedownloader import download
+                logging.info('Downloading ChestX dataset from OneDrive')
                 ln = "https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EfmFCiLaGlpFgtAuv0YLpeYBeR54I7YHK75bu_Ex78mADA?e=K8rHpZ"
                 download(ln, filename=smart_joint(root, 'chestx.zip'), unzip=True, unzip_path=root.rstrip('chestx'), clean=True)
-            else:
-                raise FileNotFoundError(f'File not found: {root}/train_images.pkl')
+
+            missing_files = [
+                f for f in ChestX.REQUIRED_FILES if not os.path.isfile(smart_joint(root, f))
+            ]
+            if missing_files:
+                raise FileNotFoundError(f'Missing ChestX files in `{root}` after download: {missing_files}')
 
         if train:
             filename_labels = f'{self.root}/train_labels.pkl'

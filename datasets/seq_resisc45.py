@@ -1,5 +1,6 @@
 import logging
 import os
+import tarfile
 from typing import Tuple
 import torchvision.transforms as transforms
 import torch.nn.functional as F
@@ -9,6 +10,7 @@ from PIL import Image
 import yaml
 
 from datasets.utils import set_default_from_args
+from datasets.utils.hf_download import download_dataset_file, download_dataset_snapshot_with_patterns
 from utils import smart_joint
 from utils.conf import base_path
 from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
@@ -20,6 +22,11 @@ from utils.prompt_templates import templates
 class Resisc45(Dataset):
 
     N_CLASSES = 45
+    HF_REPO_ID = 'aimagelab-ta/resisc45'
+    HF_REVISION = 'main'
+    REQUIRED_SPLITS = ['resisc45_train.yaml', 'resisc45_test.yaml']
+    ARCHIVE_FILENAME = 'resisc45_images.tar.gz'
+    READY_FILE = 'DONE'
     LABELS = [
         'airplane',
         'airport',
@@ -81,16 +88,7 @@ class Resisc45(Dataset):
             transforms.ToTensor()]
         )
 
-        if download:
-            if os.path.isdir(root) and len(os.listdir(root)) > 0:
-                logging.info('Download not needed, files already on disk.')
-            else:
-                # download from https://people.eecs.berkeley.edu/~hendrycks/imagenet-r.tar
-                logging.info("Downloading resisc45 dataset...")
-                ln = 'https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EbxMu5z5HbVIkG9qFCGbg7ABDRZvpBEA8uqVC-Em9HYVug?e=Cfc4Yc'
-                from onedrivedownloader import download
-                download(ln, filename=os.path.join(root, 'resisc45.tar.gz'), unzip=True, unzip_path=root, clean=True)
-                logging.info("Done!")
+        self._ensure_local_data(root=root, download=download)
 
         if self.train:
             data_config = yaml.load(open(smart_joint(root, 'resisc45_train.yaml')), Loader=yaml.Loader)
@@ -99,6 +97,75 @@ class Resisc45(Dataset):
 
         self.data = np.array([smart_joint(root, d) for d in data_config['data']])
         self.targets = np.array(data_config['targets']).astype(np.int16)
+
+    @classmethod
+    def _download_from_legacy_source(cls, root: str) -> None:
+        logging.info('Downloading RESISC45 dataset from OneDrive...')
+        ln = 'https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EbxMu5z5HbVIkG9qFCGbg7ABDRZvpBEA8uqVC-Em9HYVug?e=Cfc4Yc'
+        from onedrivedownloader import download
+        download(ln, filename=os.path.join(root, 'resisc45.tar.gz'), unzip=True, unzip_path=root, clean=True)
+        logging.info('Done!')
+
+    @staticmethod
+    def _extract_archive(archive_path: str, root: str) -> None:
+        if not os.path.isfile(archive_path):
+            raise FileNotFoundError(f'Archive not found: {archive_path}')
+        with tarfile.open(archive_path, 'r:gz') as tar:
+            tar.extractall(root)
+
+    @classmethod
+    def _ensure_local_data(cls, root: str, download: bool) -> None:
+        os.makedirs(root, exist_ok=True)
+        ready_path = smart_joint(root, cls.READY_FILE)
+        split_paths = [smart_joint(root, f) for f in cls.REQUIRED_SPLITS]
+
+        if os.path.isfile(ready_path) and all(os.path.isfile(path) for path in split_paths):
+            return
+
+        if all(os.path.isfile(path) for path in split_paths) and not os.path.isfile(ready_path):
+            with open(ready_path, 'w') as f:
+                f.write('')
+            return
+
+        if not download:
+            raise FileNotFoundError(
+                f'Missing RESISC45 metadata in `{root}`. '
+                f'Expected `{cls.READY_FILE}` and split files {cls.REQUIRED_SPLITS}.'
+            )
+
+        try:
+            missing_splits = [
+                split_name for split_name, split_path in zip(cls.REQUIRED_SPLITS, split_paths)
+                if not os.path.isfile(split_path)
+            ]
+            if missing_splits:
+                download_dataset_snapshot_with_patterns(
+                    local_dir=root,
+                    repo_id=cls.HF_REPO_ID,
+                    revision=cls.HF_REVISION,
+                    allow_patterns=cls.REQUIRED_SPLITS,
+                )
+
+            archive_path = download_dataset_file(
+                repo_id=cls.HF_REPO_ID,
+                local_dir=root,
+                filename=cls.ARCHIVE_FILENAME,
+                revision=cls.HF_REVISION,
+            )
+            cls._extract_archive(archive_path=archive_path, root=root)
+            with open(ready_path, 'w') as f:
+                f.write('')
+        except Exception as e:
+            logging.warning('HF archive download for RESISC45 failed, falling back to OneDrive: %s', e)
+            cls._download_from_legacy_source(root)
+            with open(ready_path, 'w') as f:
+                f.write('')
+
+        if not os.path.isfile(ready_path) or not all(os.path.isfile(path) for path in split_paths):
+            raise FileNotFoundError(
+                f'RESISC45 dataset is not marked as ready in `{root}`. '
+                f'Missing `{cls.READY_FILE}` or split files {cls.REQUIRED_SPLITS}.'
+            )
 
     def __len__(self):
         return len(self.targets)

@@ -8,6 +8,7 @@ from PIL import Image
 from typing import Tuple
 
 from datasets.utils import set_default_from_args
+from datasets.utils.hf_download import ensure_required_files_from_hf
 from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
 from datasets.transforms.denormalization import DeNormalize
 from utils import smart_joint
@@ -22,6 +23,13 @@ class MyCUB200(Dataset):
     """
     IMG_SIZE = 224
     N_CLASSES = 200
+    HF_REPO_ID = 'aimagelab-ta/cub200'
+    HF_REVISION = 'main'
+    REQUIRED_FILES = ['train_data.npz', 'test_data.npz']
+
+    @classmethod
+    def _missing_required_files(cls, root: str) -> list[str]:
+        return [f for f in cls.REQUIRED_FILES if not os.path.isfile(smart_joint(root, f))]
 
     def __init__(self, root, train=True, transform=None,
                  target_transform=None, download=True) -> None:
@@ -34,14 +42,30 @@ class MyCUB200(Dataset):
         self.target_transform = target_transform
         self.download = download
 
-        if download:
-            if os.path.isdir(root) and len(os.listdir(root)) > 0:
-                logging.info('Download not needed, files already on disk.')
-            else:
+        missing_files = MyCUB200._missing_required_files(root)
+        if missing_files:
+            if not download:
+                raise FileNotFoundError(f'Missing CUB200 files in `{root}`: {missing_files}')
+
+            try:
+                ensure_required_files_from_hf(
+                    local_dir=root,
+                    required_relpaths=MyCUB200.REQUIRED_FILES,
+                    repo_id=MyCUB200.HF_REPO_ID,
+                    revision=MyCUB200.HF_REVISION,
+                )
+            except Exception as e:
+                logging.warning('HF download for CUB200 failed, falling back to OneDrive: %s', e)
                 from onedrivedownloader import download
                 ln = '<iframe src="https://onedrive.live.com/embed?cid=D3924A2D106E0039&resid=D3924A2D106E0039%21110&authkey=AIEfi5nlRyY1yaE" width="98" height="120" frameborder="0" scrolling="no"></iframe>'
-                logging.info('Downloading dataset')
+                logging.info('Downloading CUB200 dataset from OneDrive')
                 download(ln, filename=smart_joint(root, 'cub_200_2011.zip'), unzip=True, unzip_path=root, clean=True)
+
+            missing_files = MyCUB200._missing_required_files(root)
+            if missing_files:
+                raise FileNotFoundError(f'Missing CUB200 files in `{root}` after download: {missing_files}')
+        else:
+            logging.info('Download not needed, files already on disk.')
 
         data_file = np.load(smart_joint(root, 'train_data.npz' if train else 'test_data.npz'), allow_pickle=True)
 

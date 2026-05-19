@@ -1,3 +1,4 @@
+import logging
 import os
 import torchvision.transforms as transforms
 import torch.nn.functional as F
@@ -8,6 +9,7 @@ from PIL import Image
 from typing import Tuple
 
 from datasets.utils import set_default_from_args
+from datasets.utils.hf_download import ensure_required_files_from_hf
 from utils import smart_joint
 from utils.conf import base_path
 from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
@@ -18,6 +20,14 @@ from utils.prompt_templates import templates
 
 class Isic(Dataset):
     N_CLASSES = 6
+    HF_REPO_ID = 'aimagelab-ta/isic'
+    HF_REVISION = 'main'
+    REQUIRED_FILES = [
+        'train_images.pkl',
+        'train_labels.pkl',
+        'test_images.pkl',
+        'test_labels.pkl',
+    ]
 
     LABELS = ['melanoma',
               'basal cell carcinoma',
@@ -39,13 +49,31 @@ class Isic(Dataset):
         self.target_transform = target_transform
 
         split = 'train' if train else 'test'
-        if not os.path.exists(f'{root}/{split}_images.pkl'):
-            if download:
-                ln = 'https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/ERM64PkPkFtJhmiUQkVvE64BR900MbIHtJVA_CR4KKhy8A?e=OsrQr5'
+        missing_files = [
+            f for f in Isic.REQUIRED_FILES if not os.path.isfile(smart_joint(root, f))
+        ]
+        if missing_files:
+            if not download:
+                raise FileNotFoundError(f'Missing ISIC files in `{root}`: {missing_files}')
+
+            try:
+                ensure_required_files_from_hf(
+                    local_dir=root,
+                    required_relpaths=Isic.REQUIRED_FILES,
+                    repo_id=Isic.HF_REPO_ID,
+                    revision=Isic.HF_REVISION,
+                )
+            except Exception as e:
+                logging.warning('HF download for ISIC failed, falling back to OneDrive: %s', e)
                 from onedrivedownloader import download
+                ln = 'https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/ERM64PkPkFtJhmiUQkVvE64BR900MbIHtJVA_CR4KKhy8A?e=OsrQr5'
                 download(ln, filename=smart_joint(root, 'isic.tar.gz'), unzip=True, unzip_path=root.rstrip('isic'), clean=True)
-            else:
-                raise FileNotFoundError(f'File not found: {root}/{split}_images.pkl')
+
+            missing_files = [
+                f for f in Isic.REQUIRED_FILES if not os.path.isfile(smart_joint(root, f))
+            ]
+            if missing_files:
+                raise FileNotFoundError(f'Missing ISIC files in `{root}` after download: {missing_files}')
 
         filename_labels = f'{self.root}/{split}_labels.pkl'
         filename_images = f'{self.root}/{split}_images.pkl'
