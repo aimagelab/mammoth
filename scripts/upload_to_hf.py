@@ -19,6 +19,31 @@ Examples:
     --local-dir /path/to/files \
     --pattern "**/*" \
     --dry-run
+
+  # Upload folder in a single commit (avoids per-file commit limits)
+  uv run python scripts/upload_to_hf.py \
+    --repo-id your-user/your-dataset \
+    --repo-type dataset \
+    --local-dir data/your_dataset \
+    --pattern "**/*" \
+    --upload-mode folder
+
+  # Upload large folder with resilient uploader
+  uv run python scripts/upload_to_hf.py \
+    --repo-id your-user/your-dataset \
+    --repo-type dataset \
+    --local-dir data/your_dataset \
+    --pattern "**/*" \
+    --upload-mode large-folder
+
+  # Upload folder in batches (multiple commits)
+  uv run python scripts/upload_to_hf.py \
+    --repo-id your-user/your-dataset \
+    --repo-type dataset \
+    --local-dir data/your_dataset \
+    --pattern "images/**" \
+    --upload-mode folder \
+    --batch-size 5000
 """
 
 from __future__ import annotations
@@ -57,6 +82,24 @@ def parse_args() -> argparse.Namespace:
         "--dry-run", action="store_true", help="List files without uploading"
     )
     parser.add_argument(
+        "--upload-mode",
+        default="per-file",
+        choices=["per-file", "folder", "large-folder"],
+        help="Upload strategy: per-file (default), folder, or large-folder",
+    )
+    parser.add_argument(
+        "--num-workers",
+        type=int,
+        default=None,
+        help="Number of workers for --upload-mode large-folder",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=0,
+        help="When > 0 and --upload-mode=folder, split uploads into commit batches of this size",
+    )
+    parser.add_argument(
         "--exclude",
         action="append",
         default=[],
@@ -87,6 +130,8 @@ def main() -> None:
     local_dir = Path(args.local_dir)
     if not local_dir.exists() or not local_dir.is_dir():
         raise ValueError(f"Local directory not found: {local_dir}")
+    if args.batch_size < 0:
+        raise ValueError("--batch-size must be >= 0")
 
     files = sorted([p for p in local_dir.glob(args.pattern) if p.is_file()])
     selected_files = []
@@ -110,27 +155,124 @@ def main() -> None:
     )
 
     print(f"Found {len(selected_files)} files to upload")
-    for file_path, rel in selected_files:
-        path_in_repo = (
-            rel if not args.remote_dir else f"{args.remote_dir.rstrip('/')}/{rel}"
-        )
-        if args.dry_run:
-            print(f"[DRY-RUN] {file_path} -> {args.repo_id}:{path_in_repo}")
-            continue
 
-        api.upload_file(
-            path_or_fileobj=str(file_path),
-            path_in_repo=path_in_repo,
-            repo_id=args.repo_id,
-            repo_type=args.repo_type,
-            revision=args.revision,
-        )
-        print(f"Uploaded: {file_path} -> {path_in_repo}")
+    if args.upload_mode == "per-file":
+        for file_path, rel in selected_files:
+            path_in_repo = (
+                rel if not args.remote_dir else f"{args.remote_dir.rstrip('/')}/{rel}"
+            )
+            if args.dry_run:
+                print(f"[DRY-RUN] {file_path} -> {args.repo_id}:{path_in_repo}")
+                continue
+
+            api.upload_file(
+                path_or_fileobj=str(file_path),
+                path_in_repo=path_in_repo,
+                repo_id=args.repo_id,
+                repo_type=args.repo_type,
+                revision=args.revision,
+            )
+            print(f"Uploaded: {file_path} -> {path_in_repo}")
+    elif args.upload_mode == "folder":
+        if args.batch_size > 0:
+            total_batches = (len(selected_files) + args.batch_size - 1) // args.batch_size
+            if args.dry_run:
+                print(
+                    f"[DRY-RUN] upload folder in {total_batches} batches, "
+                    f"batch_size={args.batch_size}, remote_dir={args.remote_dir or '<root>'}"
+                )
+            else:
+                from huggingface_hub import CommitOperationAdd
+
+            for batch_idx in range(total_batches):
+                start = batch_idx * args.batch_size
+                end = min((batch_idx + 1) * args.batch_size, len(selected_files))
+                chunk = selected_files[start:end]
+
+                if args.dry_run:
+                    print(
+                        f"[DRY-RUN] batch {batch_idx + 1}/{total_batches}: "
+                        f"{len(chunk)} files"
+                    )
+                    continue
+
+                operations = []
+                for file_path, rel in chunk:
+                    path_in_repo = (
+                        rel if not args.remote_dir else f"{args.remote_dir.rstrip('/')}/{rel}"
+                    )
+                    operations.append(
+                        CommitOperationAdd(
+                            path_in_repo=path_in_repo,
+                            path_or_fileobj=str(file_path),
+                        )
+                    )
+
+                api.create_commit(
+                    repo_id=args.repo_id,
+                    repo_type=args.repo_type,
+                    revision=args.revision,
+                    operations=operations,
+                    commit_message=(
+                        f"Upload batch {batch_idx + 1}/{total_batches} "
+                        f"({start + 1}-{end} of {len(selected_files)})"
+                    ),
+                )
+                print(
+                    f"Uploaded batch {batch_idx + 1}/{total_batches}: "
+                    f"{len(chunk)} files"
+                )
+        else:
+            if args.dry_run:
+                print(
+                    f"[DRY-RUN] upload_folder local_dir={local_dir} pattern={args.pattern} "
+                    f"exclude={args.exclude} remote_dir={args.remote_dir or '<root>'}"
+                )
+            else:
+                api.upload_folder(
+                    repo_id=args.repo_id,
+                    folder_path=str(local_dir),
+                    path_in_repo=args.remote_dir or None,
+                    repo_type=args.repo_type,
+                    revision=args.revision,
+                    allow_patterns=args.pattern,
+                    ignore_patterns=args.exclude or None,
+                )
+                print(
+                    f"Uploaded folder: {local_dir} -> {args.repo_id}:{args.remote_dir or '/'} "
+                    f"(pattern={args.pattern})"
+                )
+    else:
+        if args.dry_run:
+            print(
+                f"[DRY-RUN] upload_large_folder local_dir={local_dir} pattern={args.pattern} "
+                f"exclude={args.exclude}"
+            )
+        else:
+            api.upload_large_folder(
+                repo_id=args.repo_id,
+                folder_path=str(local_dir),
+                repo_type=args.repo_type,
+                revision=args.revision,
+                allow_patterns=args.pattern,
+                ignore_patterns=args.exclude or None,
+                num_workers=args.num_workers,
+                print_report=True,
+            )
+            print(
+                f"Uploaded large folder: {local_dir} -> {args.repo_id}:{args.remote_dir or '/'} "
+                f"(pattern={args.pattern})"
+            )
 
     if args.dry_run:
         print("Dry run complete, no files uploaded.")
     else:
-        print(f"Upload complete: https://huggingface.co/{args.repo_id}")
+        if args.repo_type == "dataset":
+            print(f"Upload complete: https://huggingface.co/datasets/{args.repo_id}")
+        elif args.repo_type == "space":
+            print(f"Upload complete: https://huggingface.co/spaces/{args.repo_id}")
+        else:
+            print(f"Upload complete: https://huggingface.co/{args.repo_id}")
 
 
 if __name__ == "__main__":

@@ -9,6 +9,7 @@ from PIL import Image
 from typing import Tuple
 
 from datasets.utils import set_default_from_args
+from datasets.utils.hf_download import ensure_required_files_from_hf, download_dataset_file
 from utils import smart_joint
 from utils.conf import base_path
 from datasets.utils.continual_dataset import ContinualDataset, fix_class_names_order, store_masked_loaders
@@ -18,6 +19,14 @@ from utils.prompt_templates import templates
 
 
 class CropDisease(Dataset):
+    HF_REPO_ID = 'aimagelab-ta/cropdisease'
+    HF_REVISION = 'main'
+    REQUIRED_SPLITS = ['train.json', 'test.json']
+    PARQUET_FILES = {
+        'train': 'cropdisease_train.parquet',
+        'test': 'cropdisease_test.parquet',
+    }
+    READY_FILE = 'DONE'
 
     LABELS = [
         "Apple___Apple_scab",
@@ -70,22 +79,111 @@ class CropDisease(Dataset):
             transforms.ToTensor()]
         )
 
-        if download:
-            if os.path.isdir(root) and len(os.listdir(root)) > 0:
-                logging.info('Download not needed, files already on disk.')
-            else:
-                from onedrivedownloader import download
-                ln = "https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EZUaXKQUAVBPrhjHTUdflDEBNu0YiPWrdpAdDhnEU4nD2A?e=GPrCYF"
-                logging.info('Downloading dataset')
-                parent_dir = os.path.dirname(root)
-                download(ln, filename=os.path.join(root, 'cropdisease.tar.gz'), unzip=True, unzip_path=parent_dir, clean=True)
-
         filename = smart_joint(root, ('train' if train else 'test') + '.json')
+
+        self._ensure_local_data(root=root, filename=filename, download=download)
+
         with open(filename) as f:
             data_config = json.load(f)
 
         self.data = np.array([smart_joint(root, 'images', d) for d in data_config['data']])
         self.targets = np.array(data_config['labels']).astype(np.int16)
+
+    @classmethod
+    def _download_from_legacy_source(cls, root: str) -> None:
+        from onedrivedownloader import download
+        ln = "https://unimore365-my.sharepoint.com/:u:/g/personal/215580_unimore_it/EZUaXKQUAVBPrhjHTUdflDEBNu0YiPWrdpAdDhnEU4nD2A?e=GPrCYF"
+        logging.info('Downloading CropDisease dataset from OneDrive')
+        parent_dir = os.path.dirname(root)
+        download(ln, filename=os.path.join(root, 'cropdisease.tar.gz'), unzip=True, unzip_path=parent_dir, clean=True)
+
+    @classmethod
+    def _extract_images_from_parquet(cls, root: str) -> None:
+        import pyarrow.parquet as pq
+        from tqdm.auto import tqdm
+
+        image_root = smart_joint(root, 'images')
+        os.makedirs(image_root, exist_ok=True)
+
+        written = 0
+        for parquet_name in cls.PARQUET_FILES.values():
+            parquet_path = smart_joint(root, parquet_name)
+            if not os.path.isfile(parquet_path):
+                raise FileNotFoundError(f'Parquet file not found: {parquet_path}')
+
+            parquet_file = pq.ParquetFile(parquet_path)
+            total_rows = parquet_file.metadata.num_rows if parquet_file.metadata is not None else None
+            pbar = tqdm(total=total_rows, desc=f'Extracting {parquet_name}', leave=False)
+            for batch in parquet_file.iter_batches(columns=['filename', 'image_bytes'], batch_size=512):
+                data = batch.to_pydict()
+                for relname, image_bytes in zip(data['filename'], data['image_bytes']):
+                    out_path = smart_joint(image_root, relname)
+                    if os.path.isfile(out_path):
+                        continue
+
+                    with open(out_path, 'wb') as f:
+                        f.write(bytes(image_bytes))
+                    written += 1
+                pbar.update(batch.num_rows)
+            pbar.close()
+
+        logging.info('Extracted %d CropDisease images from parquet', written)
+
+    @classmethod
+    def _ensure_local_data(cls, root: str, filename: str, download: bool) -> None:
+        os.makedirs(root, exist_ok=True)
+        ready_path = smart_joint(root, cls.READY_FILE)
+        split_paths = [smart_joint(root, split_file) for split_file in cls.REQUIRED_SPLITS]
+
+        if os.path.isfile(ready_path) and all(os.path.isfile(path) for path in split_paths):
+            return
+
+        if not download:
+            raise FileNotFoundError(
+                f'Missing CropDisease metadata in `{root}`. '
+                f'Expected `{cls.READY_FILE}` and split files {cls.REQUIRED_SPLITS}.'
+            )
+
+        try:
+            missing_splits = [
+                split_name for split_name, split_path in zip(cls.REQUIRED_SPLITS, split_paths)
+                if not os.path.isfile(split_path)
+            ]
+            if missing_splits:
+                ensure_required_files_from_hf(
+                    local_dir=root,
+                    required_relpaths=cls.REQUIRED_SPLITS,
+                    repo_id=cls.HF_REPO_ID,
+                    revision=cls.HF_REVISION,
+                )
+
+            for parquet_name in cls.PARQUET_FILES.values():
+                parquet_path = smart_joint(root, parquet_name)
+                if not os.path.isfile(parquet_path):
+                    download_dataset_file(
+                        repo_id=cls.HF_REPO_ID,
+                        local_dir=root,
+                        filename=parquet_name,
+                        revision=cls.HF_REVISION,
+                    )
+
+            cls._extract_images_from_parquet(root)
+            with open(ready_path, 'w') as f:
+                f.write('')
+        except Exception as e:
+            logging.warning('HF parquet download for CropDisease failed, falling back to OneDrive: %s', e)
+            cls._download_from_legacy_source(root)
+            with open(ready_path, 'w') as f:
+                f.write('')
+
+        if not os.path.isfile(filename):
+            raise FileNotFoundError(f'File not found after download: {filename}')
+
+        if not os.path.isfile(ready_path) or not all(os.path.isfile(path) for path in split_paths):
+            raise FileNotFoundError(
+                f'CropDisease dataset is not marked as ready in `{root}`. '
+                f'Missing `{cls.READY_FILE}` or split files {cls.REQUIRED_SPLITS}.'
+            )
 
     def __len__(self):
         return len(self.targets)
