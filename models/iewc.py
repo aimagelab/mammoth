@@ -2,6 +2,7 @@
 Implementation of Improved Elastic Weight Consolidation (IEWC) from the paper
 "Improved Elastic Weight Consolidation as an Optimization Constraint for Continual Learning"
 Paper: https://arxiv.org/abs/2611.16039
+Code: https://github.com/Axym-Labs/iewc
 
 IEWC keeps the online EWC penalty of `ewc_on` and only changes the diagonal importance.
 Each old sample contributes its squared parameter gradient divided by its own squared
@@ -17,6 +18,9 @@ As in `ewc_on`, the penalty is `e_lambda * sum_i F_i (theta_i - theta*_i)^2`, so
 corresponds to `lambda / 2` in the paper. The importance has a different scale than in `ewc_on`,
 so `e_lambda` has to be tuned separately. Unlike `ewc_on`, samples are not weighted by p(y|x)
 and the importance is computed with the backbone in eval mode.
+
+Note: the ImageNet-R gain reported in the paper (+2.00 pts) is measured against the observed-label
+empirical Fisher with uniform weighting, not against the p(y|x)-weighted estimate used by `ewc_on`.
 """
 
 import torch
@@ -76,6 +80,9 @@ def iewc_importance(net, loss_fn, batches, kappa=1e-2, sample_weighting='uniform
     Returns:
         the importance (same shape as `net.get_params()`) and the mean-normalized sample weights
     """
+    if not callable(sample_weighting) and sample_weighting not in ('uniform', 'rdw'):
+        raise ValueError(f'Unknown sample weighting: {sample_weighting}')
+
     device = next(net.parameters()).device
     was_training = net.training
     net.eval()
@@ -96,8 +103,6 @@ def iewc_importance(net, loss_fn, batches, kappa=1e-2, sample_weighting='uniform
 
     # pass 2: per-sample parameter gradients
     fish = torch.zeros_like(net.get_params())
-    if not callable(sample_weighting) and sample_weighting not in ('uniform', 'rdw'):
-        raise ValueError(f'Unknown sample weighting: {sample_weighting}')
     basis = ResidualBasis(fish.numel(), rdw_max_basis) if sample_weighting == 'rdw' else None
     weights = torch.ones(len(scales))
     n = 0
@@ -141,7 +146,8 @@ class IEWC(EwcOn):
         parser.add_argument('--sample_weighting', type=str, default='uniform', choices=['uniform', 'rdw'],
                             help='Per-sample aggregation weights: `uniform` or residual-diversity weighting (`rdw`).')
         parser.add_argument('--rdw_max_basis', type=int, default=64,
-                            help='Maximum number of earlier gradient directions kept by `rdw`.')
+                            help='Maximum number of earlier gradient directions kept by `rdw`. '
+                            'The basis is stored densely on CPU (rdw_max_basis x num_params floats, ~2.9 GB for ResNet-18 with the default).')
         return parser
 
     def output_scale(self, output_grads):
