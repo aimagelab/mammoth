@@ -158,6 +158,7 @@ Mammoth currently supports **more than 70** models, with new releases covering t
 - Greedy Sampler and Dumb Learner (GDumb): `gdumb`.
 - Hindsight Anchor Learning (HAL): `hal`.
 - Image-aware Decoder Enhanced à la Flamingo with Interleaved Cross-attentionS (IDEFICS): `idefics` (*static* method with no learning).
+- Improved Elastic Weight Consolidation (IEWC): `iewc`.
 - Incremental Classifier and Representation Learning (iCaRL): `icarl`.
 - Joint training for the General Continual setting: `joint_gcl` (_only for General Continual_).
 - Large Language and Vision Assistant (LLAVA): `llava` (*static* method with no learning).

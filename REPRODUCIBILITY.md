@@ -37,6 +37,7 @@ The following table contains a list of models implemented in Mammoth and a check
 | iCaRL LiDER               | `icarl_lider`            | V         |       |
 | iCaRL                     | `icarl`                  | V         |       |
 | IEL                       | `iel`                    | V         | The model is `second_order` with `use_iel=1`. |
+| IEWC                      | `iewc`                   | X         |       |
 | ITA                       | `ita`                    | V         | The model is `second_order` with `use_iel=0`. |
 | Joint GCL                 | `joint_gcl`              | N/A       | There is no single paper for the "joint" model. |
 | Joint                     | `joint`                  | N/A       | There is no single paper for the "joint" model. |
