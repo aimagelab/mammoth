@@ -352,13 +352,13 @@ def train(model: ContinualModel, dataset: ContinualDataset,
 
         if args.enable_other_metrics:
             bwt, bwt_mask_class = logger.add_bwt(results, results_mask_classes)
-            log_extra_metrics(args, bwt, bwt_mask_class, 'Backward Transfer', cur_task)
+            log_extra_metrics(args, bwt, bwt_mask_class, 'Backward Transfer', cur_task, setting=logger.setting)
             forgetting, forgetting_mask_class = logger.add_forgetting(results, results_mask_classes)
-            log_extra_metrics(args, forgetting, forgetting_mask_class, 'Forgetting', cur_task)
+            log_extra_metrics(args, forgetting, forgetting_mask_class, 'Forgetting', cur_task, setting=logger.setting)
             if is_fwd_enabled:
                 fwt, fwt_mask_class = logger.add_fwt(results, random_results_class,
                                                      results_mask_classes, random_results_task)
-                log_extra_metrics(args, fwt, fwt_mask_class, 'Forward Transfer', cur_task)
+                log_extra_metrics(args, fwt, fwt_mask_class, 'Forward Transfer', cur_task, setting=logger.setting)
             else:
                 logging.warning("Forward Transfer metric incompatible with the current model, skipped.")
 

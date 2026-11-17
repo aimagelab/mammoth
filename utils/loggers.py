@@ -12,7 +12,7 @@ from contextlib import suppress
 import logging
 import os
 import sys
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 import numpy as np
 
@@ -368,7 +368,8 @@ def log_accs(args: Namespace, logger: Logger, accs, t: int, setting: str, epoch=
         wandb.log(d2)
 
 
-def log_extra_metrics(args, metric: float, metric_mask_class: float, metric_name: str, t: int, prefix="RESULT"):
+def log_extra_metrics(args, metric: float, metric_mask_class: Optional[float], metric_name: str, t: int,
+                      prefix="RESULT", setting: str = 'class-il'):
     """
     Logs the accuracy values and other metrics.
 
@@ -376,18 +377,26 @@ def log_extra_metrics(args, metric: float, metric_mask_class: float, metric_name
 
     Args:
         args: The arguments for logging.
-        metric: Class-IL version of the metric `metric_name`.
+        metric: Class-IL (or Domain-IL) version of the metric `metric_name`.
         metric_mask_class: Task-IL version of the metric `metric_name`.
+            It is `None` for settings where Task-IL is not defined (e.g., Domain-IL).
         metric_name: The name of the metric.
         t: The task index.
-        epoch: The epoch number (optional).
         prefix: The prefix for the metrics (default="RESULT").
+        setting: The setting of the benchmark, used to label the main metric (default='class-il').
     """
+    main_label = 'Domain-IL' if setting in ('domain-il', 'general-continual') else 'Class-IL'
 
-    print(f'{metric_name}: [Class-IL]: {metric:.2f} \t [Task-IL]: {metric_mask_class:.2f}', file=sys.stderr)
-    print(f'\tRaw {metric_name} values: Class-IL {metric} | Task-IL {metric_mask_class}', file=sys.stderr)
+    if metric_mask_class is None:
+        print(f'{metric_name}: [{main_label}]: {metric:.2f}', file=sys.stderr)
+        print(f'\tRaw {metric_name} values: {main_label} {metric}', file=sys.stderr)
+    else:
+        print(f'{metric_name}: [{main_label}]: {metric:.2f} \t [Task-IL]: {metric_mask_class:.2f}', file=sys.stderr)
+        print(f'\tRaw {metric_name} values: {main_label} {metric} | Task-IL {metric_mask_class}', file=sys.stderr)
 
-    log_dict = {f'{prefix}_class_{metric_name}': metric, f'{prefix}_task_{metric_name}': metric_mask_class, 'Task': t}
+    log_dict = {f'{prefix}_class_{metric_name}': metric, 'Task': t}
+    if metric_mask_class is not None:
+        log_dict[f'{prefix}_task_{metric_name}'] = metric_mask_class
 
     if not args.nowand:
         wandb.log(log_dict)
